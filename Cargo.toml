@@ -1,0 +1,24 @@
+[workspace]
+members = [
+    "crates/seacad-dxf-core",
+    "crates/seacad-cli",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.97.1"
+authors = ["SeaCad"]
+repository = "https://github.com/seaflower205/SeaCad"
+license-file = "LICENSE"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+unwrap_used = "deny"

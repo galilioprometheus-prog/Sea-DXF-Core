@@ -1,0 +1,19 @@
+[package]
+name = "seacad-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license-file.workspace = true
+description = "SeaCad DXF verification command-line interface"
+
+[[bin]]
+name = "seacad"
+path = "src/main.rs"
+
+[dependencies]
+seacad-dxf-core = { path = "../seacad-dxf-core" }
+
+[lints]
+workspace = true

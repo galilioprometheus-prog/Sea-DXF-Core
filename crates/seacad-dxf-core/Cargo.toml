@@ -1,0 +1,12 @@
+[package]
+name = "seacad-dxf-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license-file.workspace = true
+description = "SeaCad lossless DXF core"
+
+[lints]
+workspace = true
