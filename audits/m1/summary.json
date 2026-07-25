@@ -1,0 +1,36 @@
+{
+    "contract":  "seacad-legacy-dxf-audit/v1",
+    "schema_version":  1,
+    "source_id":  "legacy-cad-2026-07-23",
+    "legacy_git_head":  "1f10da8ef39420c9290dc326b5bb1746d22ab280",
+    "selection":  "DXF parser, lossless core, DXF adapters/tests/evidence/docs/tools, CAD fixtures, and DXF fuzz assets; build outputs excluded",
+    "asset_count":  907,
+    "total_bytes":  4874645,
+    "manifest_sha256":  "40dfd838eeb271823390ed83a31ff457e29e0d6ca70c0d0db281b376d817f674",
+    "cad_fixture_count":  15,
+    "direct_transfer_approved_count":  0,
+    "counts_by_kind":  {
+                           "cad_fixture":  15,
+                           "documentation":  291,
+                           "evidence":  2,
+                           "fuzz_seed":  223,
+                           "metadata":  5,
+                           "production_code":  253,
+                           "test":  109,
+                           "tool":  9
+                       },
+    "counts_by_git_state":  {
+                                "tracked_clean":  10,
+                                "tracked_modified":  1,
+                                "untracked":  896
+                            },
+    "counts_by_disposition":  {
+                                  "private_corpus_only":  2,
+                                  "quarantine_generated_seed":  223,
+                                  "quarantine_pending_attestation":  13,
+                                  "reexpress_behavior":  109,
+                                  "reference_only":  298,
+                                  "rewrite_clean_room":  253,
+                                  "rewrite_if_needed":  9
+                              }
+}

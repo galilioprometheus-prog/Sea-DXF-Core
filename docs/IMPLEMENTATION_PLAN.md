@@ -1,6 +1,6 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M0 active
+Status: M1 complete; awaiting user approval for M2
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
