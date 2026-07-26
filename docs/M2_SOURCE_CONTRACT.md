@@ -28,7 +28,8 @@ bounds and integer overflow.
 - Strict accepts only standard-conforming framing.
 - Compatible may apply only recoveries explicitly added to the allowlist at M3.
 - Selecting Compatible does not authorize semantic guessing.
-- Until M3, the modes are contract values only; no parser consumes them.
+- M3.2 first consumes the modes for ASCII group framing; its allowlist is
+  maintained in `docs/M3_ASCII_FRAMING_CONTRACT.md`.
 
 ## Stable codes
 

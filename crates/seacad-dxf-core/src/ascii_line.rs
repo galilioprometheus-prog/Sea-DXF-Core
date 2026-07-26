@@ -35,6 +35,43 @@ impl DxfAsciiLineEnding {
     }
 }
 
+/// Byte-exact location metadata for one physical ASCII line.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfAsciiLineMetadata {
+    line_index: u64,
+    content_span: ByteSpan,
+    terminator_span: ByteSpan,
+    full_span: ByteSpan,
+    ending: DxfAsciiLineEnding,
+}
+
+impl DxfAsciiLineMetadata {
+    #[must_use]
+    pub const fn line_index(self) -> u64 {
+        self.line_index
+    }
+
+    #[must_use]
+    pub const fn content_span(self) -> ByteSpan {
+        self.content_span
+    }
+
+    #[must_use]
+    pub const fn terminator_span(self) -> ByteSpan {
+        self.terminator_span
+    }
+
+    #[must_use]
+    pub const fn full_span(self) -> ByteSpan {
+        self.full_span
+    }
+
+    #[must_use]
+    pub const fn ending(self) -> DxfAsciiLineEnding {
+        self.ending
+    }
+}
+
 /// Borrowed, byte-exact view of one physical line.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct DxfAsciiPhysicalLine<'a> {
@@ -91,6 +128,17 @@ impl<'a> DxfAsciiPhysicalLine<'a> {
     #[must_use]
     pub const fn ending(self) -> DxfAsciiLineEnding {
         self.ending
+    }
+
+    #[must_use]
+    pub const fn metadata(self) -> DxfAsciiLineMetadata {
+        DxfAsciiLineMetadata {
+            line_index: self.line_index,
+            content_span: self.content_span,
+            terminator_span: self.terminator_span,
+            full_span: self.full_span,
+            ending: self.ending,
+        }
     }
 }
 

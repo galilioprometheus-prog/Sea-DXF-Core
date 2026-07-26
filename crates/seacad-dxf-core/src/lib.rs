@@ -5,6 +5,7 @@
 
 #![forbid(unsafe_code)]
 
+mod ascii_group;
 mod ascii_line;
 mod diagnostic;
 mod error;
@@ -16,7 +17,10 @@ mod source;
 mod source_id;
 mod source_scan;
 
-pub use ascii_line::{DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiPhysicalLine};
+pub use ascii_group::{DxfAsciiGroup, DxfAsciiGroupCursor, DxfGroupCode};
+pub use ascii_line::{
+    DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
+};
 pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

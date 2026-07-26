@@ -62,6 +62,12 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Warning,
     };
 
+    /// Compatible mode ignored a UTF-8 BOM before the first ASCII group code.
+    pub const UTF8_BOM_IGNORED: Self = Self {
+        value: "DXF-W0201",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -138,5 +144,9 @@ mod tests {
         assert_eq!(diagnostic.code().to_string(), "DXF-W0001");
         assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Warning);
         assert_eq!(diagnostic.span(), span);
+
+        let bom = DxfDiagnostic::new(DxfDiagnosticCode::UTF8_BOM_IGNORED, span);
+        assert_eq!(bom.code().as_str(), "DXF-W0201");
+        assert_eq!(bom.severity(), DxfDiagnosticSeverity::Warning);
     }
 }

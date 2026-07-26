@@ -1,5 +1,7 @@
 use std::{fmt, io};
 
+use crate::diagnostic::ByteSpan;
+
 /// Stable machine-readable code for a fatal DXF operation error.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfErrorCode(&'static str);
@@ -11,6 +13,8 @@ impl DxfErrorCode {
     pub const RECORD_LIMIT_EXCEEDED: Self = Self("DXF-E0102");
     pub const VALUE_LIMIT_EXCEEDED: Self = Self("DXF-E0103");
     pub const OFFSET_OVERFLOW: Self = Self("DXF-E0105");
+    pub const INVALID_ASCII_GROUP_CODE: Self = Self("DXF-E0201");
+    pub const MISSING_ASCII_GROUP_VALUE: Self = Self("DXF-E0202");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -60,6 +64,12 @@ pub enum DxfError {
         offset: u64,
         requested: u64,
     },
+    InvalidAsciiGroupCode {
+        span: ByteSpan,
+    },
+    MissingAsciiGroupValue {
+        group_code_span: ByteSpan,
+    },
 }
 
 impl DxfError {
@@ -92,6 +102,8 @@ impl DxfError {
                 DxfResource::ValueBytes => DxfErrorCode::VALUE_LIMIT_EXCEEDED,
             },
             Self::OffsetOverflow { .. } => DxfErrorCode::OFFSET_OVERFLOW,
+            Self::InvalidAsciiGroupCode { .. } => DxfErrorCode::INVALID_ASCII_GROUP_CODE,
+            Self::MissingAsciiGroupValue { .. } => DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
         }
     }
 }
@@ -123,6 +135,20 @@ impl fmt::Display for DxfError {
                 "{}: byte offset {offset} plus request {requested} overflows u64",
                 self.code()
             ),
+            Self::InvalidAsciiGroupCode { span } => write!(
+                formatter,
+                "{}: invalid ASCII group code at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::MissingAsciiGroupValue { group_code_span } => write!(
+                formatter,
+                "{}: ASCII group at byte span [{}, {}) has no value line",
+                self.code(),
+                group_code_span.start(),
+                group_code_span.end()
+            ),
         }
     }
 }
@@ -133,10 +159,10 @@ impl std::error::Error for DxfError {}
 mod tests {
     use std::io;
 
-    use super::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+    use super::{ByteSpan, DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 
     #[test]
-    fn every_fatal_variant_has_the_stable_code() {
+    fn every_fatal_variant_has_the_stable_code() -> Result<(), io::Error> {
         let cases = [
             (
                 DxfError::from_io(DxfIoOperation::Read, &io::Error::from(io::ErrorKind::Other)),
@@ -167,6 +193,21 @@ mod tests {
                 DxfErrorCode::OFFSET_OVERFLOW,
                 "DXF-E0105",
             ),
+            (
+                DxfError::InvalidAsciiGroupCode {
+                    span: ByteSpan::new(2, 5).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::INVALID_ASCII_GROUP_CODE,
+                "DXF-E0201",
+            ),
+            (
+                DxfError::MissingAsciiGroupValue {
+                    group_code_span: ByteSpan::new(7, 10)
+                        .ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
+                "DXF-E0202",
+            ),
         ];
 
         for (error, code, text) in cases {
@@ -174,6 +215,7 @@ mod tests {
             assert_eq!(error.code().as_str(), text);
             assert!(error.to_string().starts_with(text));
         }
+        Ok(())
     }
 
     #[test]

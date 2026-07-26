@@ -1,7 +1,7 @@
 # Format Support Matrix
 
-SeaCad through M3.1 can classify the physical representation and frame raw
-ASCII lines, but makes no validated file-format support claim.
+SeaCad through M3.2 can frame validated raw ASCII group pairs, but makes no
+validated document-level file-format support claim.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
