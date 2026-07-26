@@ -18,7 +18,9 @@ custom, proxy, and non-public payloads remain exact opaque data.
 
 ## Source and provenance
 
-- Treat every earlier workspace under `D:\Backups` as read-only.
+- Treat every earlier workspace outside the current SeaCad repository as
+  read-only, regardless of later path moves. Known legacy trees include sibling
+  directories matching `D:\SeaCad\cad_*` and the former `D:\Backups` location.
 - Do not fork, vendor, copy, translate, or line-by-line port an external parser.
 - Official Autodesk documentation is normative. External implementations may
   be isolated behavioral oracles only.

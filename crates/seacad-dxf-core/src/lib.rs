@@ -1,9 +1,23 @@
 //! Lossless DXF core for SeaCad.
 //!
-//! Milestone M0 establishes crate boundaries only. DXF parsing starts in a
-//! later, separately approved milestone.
+//! Raw source bytes remain authoritative. Public contracts are designed for
+//! bounded, synchronous operation on untrusted input.
 
 #![forbid(unsafe_code)]
+
+mod diagnostic;
+mod error;
+mod limits;
+mod progress;
+mod read_options;
+
+pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
+pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use progress::{
+    DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
+};
+pub use read_options::{DxfReadMode, DxfReadOptions};
 
 /// Returns the SeaCad DXF core package version.
 #[must_use]
