@@ -1,11 +1,12 @@
 # M3 ASCII framing contract
 
-Status: M3.2 group-code/value framing complete
+Status: M3.3 immutable raw ASCII document complete
 
 M3.1 establishes the byte-preserving physical layer. M3.2 adds bounded ASCII
-group framing and freezes the first Strict/Compatible recovery rule. It still
-does not claim that a framed stream is a valid DXF document or provide a
-Verbatim writer.
+group framing and freezes the first Strict/Compatible recovery rule. M3.3 adds
+the terminal EOF envelope, a source-backed immutable raw document, and a
+one-pass SHA-256 identity. It still does not validate sections or `$ACADVER`
+and does not yet provide a Verbatim writer.
 
 ## Normative basis
 
@@ -22,7 +23,9 @@ Autodesk specifies the binary representation by its exact 22-byte sentinel:
 
 The Autodesk pages do not define every physical newline and BOM acceptance
 case. Those cases were measured with AutoCAD Core Console 2027; the isolated
-receipt is in `docs/audits/M3_2_AUTOCAD_2027_FRAMING_ORACLE.md`.
+physical receipt is in
+`docs/audits/M3_2_AUTOCAD_2027_FRAMING_ORACLE.md`, and the EOF-envelope receipt
+is in `docs/audits/M3_3_AUTOCAD_2027_EOF_ORACLE.md`.
 
 ## M3.1 physical representation probe
 
@@ -101,12 +104,53 @@ single BOM at absolute byte zero because BOM recovery was explicitly approved
 for Compatible framing. The recovery is observable, byte-anchored, and never
 changes raw source bytes. Strict mirrors the oracle rejection.
 
-Missing terminal `0/EOF` is not a group-pair error when all physical lines
-still form complete pairs. AutoCAD rejected the synthetic missing-EOF document;
-SeaCad will enforce the document envelope at M3.3 rather than smuggle document
-semantics into this cursor.
+M3.3 applies this document-envelope policy after group framing:
 
-## Stable M3.2 codes
+| Envelope case | Strict | Compatible |
+| --- | --- | --- |
+| Exact group code `0` and exact value bytes `EOF` | Accept | Accept |
+| EOF value without a final line terminator | Accept | Accept |
+| Space/tab around the EOF value | Reject as missing EOF | Recover with `DXF-W0202` |
+| Lowercase or mixed-case EOF value | Not an EOF marker | Not an EOF marker |
+| Completely paired stream without EOF | Reject with `DXF-E0203` | Open recovered with `DXF-W0203` |
+| Any source bytes after the first recognized EOF group | Reject with `DXF-E0204` | Preserve as opaque tail with `DXF-W0204` |
+
+Compatible whitespace and missing-EOF recovery are explicit SeaCad recovery
+rules. AutoCAD rejected those inputs. Compatible trailing-tail recovery is
+supported by AutoCAD evidence: duplicate EOF, a group after EOF, blank/space
+lines, and SUB bytes were ignored after the first EOF. SeaCad does not discard
+that tail; it records one exact source span and excludes it from group or
+semantic interpretation. A lowercase `eof` may therefore occur in a recovered
+missing-EOF document, but it is never reclassified as the EOF marker.
+
+The envelope deliberately does not require HEADER, section ordering, or a
+recognized version. AutoCAD's rejection of a file containing only `0/EOF` is
+a document-structure result owned by M4, not a reason to mix semantics into
+the M3 framing layer.
+
+## Immutable raw ASCII document
+
+`DxfAsciiRawDocument` owns only immutable framing metadata and keeps a borrowed
+reference to the bounded `DxfByteSource`. Every `DxfAsciiRawGroup` carries its
+occurrence, validated code, exact content/full spans, and both line endings.
+Payload bytes remain in the source and are available through bounded
+`read_span`; Debug output never includes payload or paths.
+
+Opening computes `DxfSourceId` over every observed byte while the line cursor
+parses it. Bytes already read ahead by the fixed 8 KiB parser buffer are not
+read again. If Compatible stops at EOF before physical source end, hashing
+continues forward in fixed 64 KiB chunks. Thus successful open reads every
+source byte exactly once, retains no full-file copy, and reports monotonic
+progress/cancellation. The stored source ID is the identity observed during
+open and will become the transaction precondition in M11.
+
+Raw group metadata is capped at 56 bytes on supported 64-bit targets. The Safe
+five-million-record ceiling therefore has a metadata upper bound of about 267
+MiB before allocator overhead, independent of value payload size. This is a
+deliberate large-file tradeoff: random group access without loading a 300 MiB
+DXF payload into a second in-memory copy.
+
+## Stable M3.3 codes
 
 Fatal errors:
 
@@ -114,12 +158,17 @@ Fatal errors:
 | --- | --- |
 | `DXF-E0201` | Invalid ASCII group-code bytes or numeric domain |
 | `DXF-E0202` | Group-code line has no following value line |
+| `DXF-E0203` | Strict document has no exact terminal `0/EOF` marker |
+| `DXF-E0204` | Strict document has source bytes after its EOF group |
 
 Non-fatal diagnostics:
 
 | Code | Meaning |
 | --- | --- |
 | `DXF-W0201` | Compatible mode ignored a UTF-8 BOM before the first group code |
+| `DXF-W0202` | Compatible mode recognized EOF after trimming ASCII space/tab |
+| `DXF-W0203` | Compatible mode opened a paired stream without EOF |
+| `DXF-W0204` | Compatible mode preserved opaque bytes after EOF |
 
 Errors and diagnostics contain byte spans, never source payloads or paths.
 Custom Debug implementations also omit raw group-code and value content.
@@ -133,14 +182,13 @@ before and after potentially blocking reads.
 
 Retained diagnostics never exceed the selected profile limit. On the first
 excess diagnostic, the final retained entry becomes `DXF-W0001`; subsequent
-diagnostics are suppressed. M3.2 currently has only one possible recovery per
-source, but the cap behavior is implemented and tested for future framing
-rules.
+diagnostics are suppressed. Document-level diagnostics share the same cap as
+group framing diagnostics.
 
 ## Dependency and support boundary
 
-M3.2 adds no dependency, imports no legacy code or fixture bytes, and does not
-change the support matrix. It validates physical group pairs only. M3.3 is the
-next boundary: terminal EOF/document envelope and an immutable raw ASCII
-document. Verbatim round-trip and initial CLI commands follow in later M3
-checkpoints.
+M3.3 adds no dependency, imports no legacy code or fixture bytes, and does not
+claim version/section support. It reuses the reviewed `sha2` dependency added
+at M2.3. The independent AutoCAD envelope receipt is in
+`docs/audits/M3_3_AUTOCAD_2027_EOF_ORACLE.md`. Verbatim copy and initial CLI
+commands remain later M3 checkpoints.

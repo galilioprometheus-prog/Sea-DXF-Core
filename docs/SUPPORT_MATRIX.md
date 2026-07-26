@@ -1,7 +1,9 @@
 # Format Support Matrix
 
-SeaCad through M3.2 can frame validated raw ASCII group pairs, but makes no
-validated document-level file-format support claim.
+SeaCad through M3.3 can open an immutable raw ASCII framing document, enforce
+or recover its EOF envelope, and attach a one-pass SHA-256 source identity. It
+still makes no versioned or semantic file-format support claim because section
+accounting and `$ACADVER` validation begin at M4.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

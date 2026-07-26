@@ -315,7 +315,7 @@ fn parse_ascii_group_code(raw: &[u8]) -> Option<DxfGroupCode> {
     DxfGroupCode::new(i16::try_from(signed).ok()?)
 }
 
-fn trim_horizontal_ascii(bytes: &[u8]) -> Option<&[u8]> {
+pub(crate) fn trim_horizontal_ascii(bytes: &[u8]) -> Option<&[u8]> {
     let mut start = 0_usize;
     while matches!(bytes.get(start), Some(b' ' | b'\t')) {
         start = start.checked_add(1)?;

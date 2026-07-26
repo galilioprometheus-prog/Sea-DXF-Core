@@ -68,6 +68,24 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Warning,
     };
 
+    /// Compatible mode recognized an EOF value with horizontal padding.
+    pub const ASCII_EOF_WHITESPACE_IGNORED: Self = Self {
+        value: "DXF-W0202",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
+    /// Compatible mode opened a completely paired ASCII stream without EOF.
+    pub const ASCII_EOF_MISSING_RECOVERED: Self = Self {
+        value: "DXF-W0203",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
+    /// Compatible mode preserved but did not parse source bytes after EOF.
+    pub const ASCII_TRAILING_DATA_IGNORED: Self = Self {
+        value: "DXF-W0204",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -148,5 +166,17 @@ mod tests {
         let bom = DxfDiagnostic::new(DxfDiagnosticCode::UTF8_BOM_IGNORED, span);
         assert_eq!(bom.code().as_str(), "DXF-W0201");
         assert_eq!(bom.severity(), DxfDiagnosticSeverity::Warning);
+
+        let envelope_codes = [
+            (DxfDiagnosticCode::ASCII_EOF_WHITESPACE_IGNORED, "DXF-W0202"),
+            (DxfDiagnosticCode::ASCII_EOF_MISSING_RECOVERED, "DXF-W0203"),
+            (DxfDiagnosticCode::ASCII_TRAILING_DATA_IGNORED, "DXF-W0204"),
+        ];
+        for (code, expected) in envelope_codes {
+            let diagnostic = DxfDiagnostic::new(code, span);
+            assert_eq!(diagnostic.code().as_str(), expected);
+            assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Warning);
+            assert_eq!(diagnostic.span(), span);
+        }
     }
 }

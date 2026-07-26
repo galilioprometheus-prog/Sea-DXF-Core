@@ -15,6 +15,8 @@ impl DxfErrorCode {
     pub const OFFSET_OVERFLOW: Self = Self("DXF-E0105");
     pub const INVALID_ASCII_GROUP_CODE: Self = Self("DXF-E0201");
     pub const MISSING_ASCII_GROUP_VALUE: Self = Self("DXF-E0202");
+    pub const MISSING_ASCII_EOF: Self = Self("DXF-E0203");
+    pub const TRAILING_ASCII_DATA: Self = Self("DXF-E0204");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -70,6 +72,12 @@ pub enum DxfError {
     MissingAsciiGroupValue {
         group_code_span: ByteSpan,
     },
+    MissingAsciiEof {
+        at_offset: u64,
+    },
+    TrailingAsciiData {
+        span: ByteSpan,
+    },
 }
 
 impl DxfError {
@@ -104,6 +112,8 @@ impl DxfError {
             Self::OffsetOverflow { .. } => DxfErrorCode::OFFSET_OVERFLOW,
             Self::InvalidAsciiGroupCode { .. } => DxfErrorCode::INVALID_ASCII_GROUP_CODE,
             Self::MissingAsciiGroupValue { .. } => DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
+            Self::MissingAsciiEof { .. } => DxfErrorCode::MISSING_ASCII_EOF,
+            Self::TrailingAsciiData { .. } => DxfErrorCode::TRAILING_ASCII_DATA,
         }
     }
 }
@@ -148,6 +158,18 @@ impl fmt::Display for DxfError {
                 self.code(),
                 group_code_span.start(),
                 group_code_span.end()
+            ),
+            Self::MissingAsciiEof { at_offset } => write!(
+                formatter,
+                "{}: ASCII document has no terminal 0/EOF marker at byte offset {at_offset}",
+                self.code()
+            ),
+            Self::TrailingAsciiData { span } => write!(
+                formatter,
+                "{}: strict ASCII document has trailing data at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
             ),
         }
     }
@@ -207,6 +229,18 @@ mod tests {
                 },
                 DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
                 "DXF-E0202",
+            ),
+            (
+                DxfError::MissingAsciiEof { at_offset: 12 },
+                DxfErrorCode::MISSING_ASCII_EOF,
+                "DXF-E0203",
+            ),
+            (
+                DxfError::TrailingAsciiData {
+                    span: ByteSpan::new(12, 18).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::TRAILING_ASCII_DATA,
+                "DXF-E0204",
             ),
         ];
 
