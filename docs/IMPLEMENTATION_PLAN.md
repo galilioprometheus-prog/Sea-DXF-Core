@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M3.5 inspect/verify CLI and JSON v1 complete; awaiting user approval
-for M3.6 Vietnamese localization
+Status: M3 lossless ASCII framing and bilingual inspect/verify CLI complete;
+awaiting user approval for M4.1 dialect registry and `$ACADVER` discovery
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

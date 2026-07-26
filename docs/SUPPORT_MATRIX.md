@@ -1,11 +1,12 @@
 # Format Support Matrix
 
-SeaCad through M3.5 can open an immutable raw ASCII framing document, enforce
+SeaCad through M3.6 can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity, and
 write a separately verified byte-identical copy. The CLI now exposes
-`inspect` and `verify` with JSON v1, stable exits, and path redaction. It still
-makes no versioned or semantic file-format support claim because section
-accounting and `$ACADVER` validation begin at M4.
+`inspect` and `verify` with English/Vietnamese human output, JSON v1, stable
+exits, and path redaction. It still makes no versioned or semantic file-format
+support claim because section accounting and `$ACADVER` validation begin at
+M4.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

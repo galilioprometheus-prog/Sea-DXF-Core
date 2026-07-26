@@ -1,6 +1,6 @@
 # M3 ASCII framing contract
 
-Status: M3.5 inspect/verify CLI and JSON v1 complete
+Status: M3 complete through M3.6 bilingual CLI
 
 M3.1 establishes the byte-preserving physical layer. M3.2 adds bounded ASCII
 group framing and freezes the first Strict/Compatible recovery rule. M3.3 adds
@@ -9,7 +9,8 @@ one-pass SHA-256 identity. It still does not validate sections or `$ACADVER`
 and therefore does not claim versioned semantic support. M3.4 adds a
 create-new-only Verbatim writer with source preconditions and output
 verification. M3.5 exposes these raw-framing decisions through stable
-`inspect` and `verify` commands.
+`inspect` and `verify` commands. M3.6 adds explicit English/Vietnamese human
+output without changing JSON v1 machine identifiers.
 
 ## Normative basis
 
@@ -231,13 +232,32 @@ framing and returns success only for Strict conformance. Even when explicitly
 opened with `verify --mode compatible`, a recovered document returns
 `CLI-E0004` and exit 1; it is never described as verified.
 
-Both commands support Safe/Large profiles, English text, and JSON schema v1.
-Paths are hidden unless `--show-path` is explicit. Machine keys, status values,
-and codes remain English and stable; Vietnamese human-output localization is
-isolated to M3.6. The complete contract is in `docs/CLI_JSON_V1.md`.
+Both commands support Safe/Large profiles and JSON schema v1. Paths are hidden
+unless `--show-path` is explicit. The complete contract is in
+`docs/CLI_JSON_V1.md`.
 
 M3.5 adds reviewed CLI-only dependencies on Clap, Serde, and serde_json. It
 imports no legacy code or fixture bytes and makes no version/section support
 claim. Dependency evidence and deterministic CLI vectors are in
 `docs/audits/M3_5_CLI_DEPENDENCY_REVIEW.md` and
 `docs/audits/M3_5_CLI_RECEIPT.md`.
+
+## M3.6 explicit localization boundary
+
+Human output defaults to English. `--lang vi` selects Vietnamese root help,
+subcommand help, usage failures, report labels, statuses, severity labels, and
+descriptions for every CLI/core error code known at M3.6. Selection is
+explicit: SeaCad never infers language from the operating system, terminal,
+path, or DXF bytes. The option is global and works before or after a
+subcommand; `--lang=vi` is equivalent.
+
+JSON schema v1 is language-neutral. It records the effective `en` or `vi` in
+`options.language`, but keys, status/format/conformance/severity values, stable
+codes, and `error.message` remain English. Deterministic tests require
+localized and English success reports to differ only in that declared
+language field.
+
+M3.6 adds no dependency, source fixture, external code, or support claim. Its
+Unicode, help/error, redaction, JSON-equivalence, implementation-hash, and
+native smoke evidence is recorded in
+`docs/audits/M3_6_CLI_LOCALIZATION_RECEIPT.md`.

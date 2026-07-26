@@ -1,24 +1,30 @@
 # SeaCad CLI and JSON schema v1
 
-Status: M3.5 contract
+Status: M3.6 contract
 
-M3.5 exposes the first operational SeaCad commands. They inspect lossless raw
+M3 exposes the first operational SeaCad commands. They inspect lossless raw
 ASCII DXF framing only; version, section, entity, and geometry semantics begin
 in later milestones.
 
 ## Commands
 
 ```text
-seacad inspect FILE [--mode strict|compatible] [--json] [--large] [--show-path]
-seacad verify FILE [--mode strict|compatible] [--json] [--large] [--show-path]
+seacad inspect FILE [--mode strict|compatible] [--lang en|vi] [--json] [--large] [--show-path]
+seacad verify FILE [--mode strict|compatible] [--lang en|vi] [--json] [--large] [--show-path]
 ```
 
 `inspect` defaults to Compatible mode so explicitly permitted framing
 recoveries remain visible. `verify` defaults to Strict mode. `--large` opts in
 to the Large resource profile; Safe remains the default. `--json` selects the
-stable machine-readable report. Human-readable output is English in M3.5;
-Vietnamese localization is isolated to M3.6 and will not rename JSON keys,
-codes, or status values.
+stable machine-readable report.
+
+`--lang en` selects English human help and reports and remains the default.
+`--lang vi` selects Vietnamese. Language selection is explicit and does not
+depend on the operating-system locale, terminal locale, filename, or document
+contents. Root help, subcommand help, usage failures, labels, statuses,
+severity labels, and all currently known CLI/core error codes have Vietnamese
+human text. A future unknown error code falls back to its English technical
+message rather than hiding detail.
 
 Paths are redacted by default in both text and JSON. `--show-path` is the only
 way to request the input path. Source IDs are SHA-256 identities of the bytes,
@@ -53,7 +59,7 @@ as JSON `null`, not omitted.
 | `error` | object or null | Stable code and English message for a failed outcome |
 
 `options` contains `read_mode` (`strict` or `compatible`),
-`resource_profile` (`safe` or `large`), and `language` (`en` in M3.5).
+`resource_profile` (`safe` or `large`), and `language` (`en` or `vi`).
 `source.id` is a lowercase 64-hex SHA-256 string when the complete source could
 be scanned, `source.bytes` is an unsigned byte count when the file opened, and
 `source.path` is `null` unless `--show-path` was explicitly supplied.
@@ -98,6 +104,13 @@ offsets `start` and `end`.
 Core failures retain their stable `DXF-E...` codes and recoveries retain their
 `DXF-W...` diagnostic codes. English `message` text is descriptive and is not
 a machine contract; automation must branch on codes and status values.
+
+JSON is never translated. `--lang vi --json` records `"language": "vi"`, but
+keys, command/status values, format/conformance/severity values, codes, and
+`error.message` remain English v1 data. For the same successful input and
+options, the English and Vietnamese JSON reports differ only at
+`options.language`. This rule lets one script consume reports from every human
+language.
 
 ## Current boundary
 

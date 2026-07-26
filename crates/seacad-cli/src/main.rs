@@ -2,6 +2,8 @@
 
 #![forbid(unsafe_code)]
 
+mod locale;
+
 use std::{
     env,
     ffi::OsString,
@@ -17,6 +19,8 @@ use seacad_dxf_core::{
     DxfResourceProfile, NoopDxfReadObserver, probe_dxf_physical_format, scan_dxf_source,
 };
 use serde::Serialize;
+
+use crate::locale::{CliLanguage, write_usage_error};
 
 const JSON_SCHEMA_VERSION: &str = "v1";
 const CLI_INTERNAL_ERROR: &str = "CLI-E0001";
@@ -35,17 +39,22 @@ fn main() -> ExitCode {
 }
 
 fn run(args: Vec<OsString>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
-    let matches = match cli_command().try_get_matches_from(args) {
+    let language = CliLanguage::detect(&args);
+    let matches = match cli_command(language).try_get_matches_from(args) {
         Ok(matches) => matches,
         Err(error) => {
             let is_display = matches!(
                 error.kind(),
                 ErrorKind::DisplayHelp | ErrorKind::DisplayVersion
             );
+            let is_help_on_missing =
+                error.kind() == ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand;
             let write_result = if is_display {
                 write!(stdout, "{error}")
+            } else if is_help_on_missing {
+                write_command_help(stderr, language)
             } else {
-                write!(stderr, "{error}")
+                write_usage_error(stderr, &error, language)
             };
             return if write_result.is_err() {
                 1
@@ -60,7 +69,8 @@ fn run(args: Vec<OsString>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u
     let options = match CliOptions::from_matches(&matches) {
         Ok(options) => options,
         Err(message) => {
-            let _ignored = writeln!(stderr, "{CLI_INTERNAL_ERROR}: {message}");
+            let label = language.pick("Internal CLI error", "Lỗi nội bộ CLI");
+            let _ignored = writeln!(stderr, "{CLI_INTERNAL_ERROR}: {label}: {message}");
             return 1;
         }
     };
@@ -68,20 +78,26 @@ fn run(args: Vec<OsString>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u
     let write_result = if options.json {
         render_json(stdout, &outcome.report)
     } else if outcome.exit_code == 0 {
-        render_text(stdout, &outcome.report)
+        render_text(stdout, &outcome.report, options.language)
     } else {
-        render_text(stderr, &outcome.report)
+        render_text(stderr, &outcome.report, options.language)
     };
     if let Err(error) = write_result {
-        let _ignored = writeln!(
-            stderr,
-            "{CLI_OUTPUT_ERROR}: failed to write CLI output ({:?})",
-            error.kind()
-        );
+        let message = options
+            .language
+            .pick("failed to write CLI output", "không thể ghi đầu ra CLI");
+        let _ignored = writeln!(stderr, "{CLI_OUTPUT_ERROR}: {message} ({:?})", error.kind());
         1
     } else {
         outcome.exit_code
     }
+}
+
+fn write_command_help(writer: &mut dyn Write, language: CliLanguage) -> io::Result<()> {
+    let mut buffer = Vec::new();
+    cli_command(language).write_help(&mut buffer)?;
+    buffer.push(b'\n');
+    writer.write_all(&buffer)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -104,6 +120,7 @@ struct CliOptions {
     input: PathBuf,
     read_mode: DxfReadMode,
     profile: DxfResourceProfile,
+    language: CliLanguage,
     json: bool,
     show_path: bool,
 }
@@ -129,73 +146,163 @@ impl CliOptions {
         } else {
             DxfResourceProfile::Safe
         };
+        let language = matches
+            .get_one::<String>("language")
+            .and_then(|value| CliLanguage::from_code(value))
+            .ok_or("invalid language parser state")?;
         Ok(Self {
             action,
             input,
             read_mode,
             profile,
+            language,
             json: matches.get_flag("json"),
             show_path: matches.get_flag("show-path"),
         })
     }
 }
 
-fn cli_command() -> Command {
+fn cli_command(language: CliLanguage) -> Command {
+    let options_heading = language.pick("Options", "Tùy chọn");
     Command::new("seacad")
         .version(seacad_dxf_core::core_version())
-        .about("Lossless DXF inspection and verification")
+        .about(language.pick(
+            "Lossless DXF inspection and verification",
+            "Kiểm tra và xác minh DXF không làm mất dữ liệu",
+        ))
+        .override_usage(language.pick("seacad [OPTIONS] <COMMAND>", "seacad [TÙY_CHỌN] <LỆNH>"))
+        .help_template(language.help_template())
+        .subcommand_help_heading(language.pick("Commands", "Lệnh"))
+        .subcommand_value_name(language.pick("COMMAND", "LỆNH"))
         .subcommand_required(true)
         .arg_required_else_help(true)
         .disable_help_subcommand(true)
+        .disable_help_flag(true)
+        .disable_version_flag(true)
         .arg(
             Arg::new("json")
                 .long("json")
                 .action(ArgAction::SetTrue)
                 .global(true)
-                .help("Emit stable JSON schema v1"),
+                .help_heading(options_heading)
+                .help(language.pick("Emit stable JSON schema v1", "Xuất JSON schema v1 ổn định")),
         )
         .arg(
             Arg::new("large")
                 .long("large")
                 .action(ArgAction::SetTrue)
                 .global(true)
-                .help("Opt in to the Large resource profile"),
+                .help_heading(options_heading)
+                .help(language.pick(
+                    "Opt in to the Large resource profile",
+                    "Chủ động dùng hồ sơ tài nguyên Large",
+                )),
         )
         .arg(
             Arg::new("show-path")
                 .long("show-path")
                 .action(ArgAction::SetTrue)
                 .global(true)
-                .help("Include the input path in output"),
+                .help_heading(options_heading)
+                .help(language.pick(
+                    "Include the input path in output",
+                    "Hiện đường dẫn đầu vào trong kết quả",
+                )),
         )
+        .arg(
+            Arg::new("language")
+                .long("lang")
+                .value_name(language.pick("LANG", "NGÔN_NGỮ"))
+                .value_parser(["en", "vi"])
+                .default_value("en")
+                .hide_default_value(true)
+                .hide_possible_values(true)
+                .global(true)
+                .help_heading(options_heading)
+                .help(language.pick(
+                    "Human output language: en (default) or vi",
+                    "Ngôn ngữ hiển thị: en (mặc định) hoặc vi",
+                )),
+        )
+        .arg(localized_help_arg(language, options_heading))
+        .arg(localized_version_arg(language, options_heading))
         .subcommand(file_command(
+            language,
             "inspect",
-            "Inspect raw ASCII DXF framing; Compatible mode is the default",
+            language.pick(
+                "Inspect raw ASCII DXF framing; Compatible mode is the default",
+                "Kiểm tra framing DXF ASCII thô; mặc định là Compatible",
+            ),
             "compatible",
         ))
         .subcommand(file_command(
+            language,
             "verify",
-            "Verify strict raw ASCII DXF framing; Strict mode is the default",
+            language.pick(
+                "Verify strict raw ASCII DXF framing; Strict mode is the default",
+                "Xác minh framing DXF ASCII nghiêm ngặt; mặc định là Strict",
+            ),
             "strict",
         ))
 }
 
-fn file_command(name: &'static str, about: &'static str, default_mode: &'static str) -> Command {
+fn file_command(
+    language: CliLanguage,
+    name: &'static str,
+    about: &'static str,
+    default_mode: &'static str,
+) -> Command {
+    let options_heading = language.pick("Options", "Tùy chọn");
+    let usage = match (language, name) {
+        (CliLanguage::Vietnamese, "inspect") => "seacad inspect [TÙY_CHỌN] <TỆP>",
+        (CliLanguage::Vietnamese, "verify") => "seacad verify [TÙY_CHỌN] <TỆP>",
+        (CliLanguage::English, "inspect") => "seacad inspect [OPTIONS] <FILE>",
+        (CliLanguage::English, "verify") => "seacad verify [OPTIONS] <FILE>",
+        _ => "seacad [OPTIONS] <FILE>",
+    };
     Command::new(name)
         .about(about)
+        .override_usage(usage)
+        .help_template(language.help_template())
+        .disable_help_flag(true)
         .arg(
             Arg::new("input")
-                .value_name("FILE")
+                .value_name(language.pick("FILE", "TỆP"))
                 .required(true)
                 .value_parser(value_parser!(PathBuf))
-                .help("DXF file to read"),
+                .help_heading(language.pick("Arguments", "Đối số"))
+                .help(language.pick("DXF file to read", "Tệp DXF cần đọc")),
         )
         .arg(
             Arg::new("mode")
                 .long("mode")
+                .value_name(language.pick("MODE", "CHẾ_ĐỘ"))
                 .value_parser(["strict", "compatible"])
-                .default_value(default_mode),
+                .default_value(default_mode)
+                .hide_default_value(true)
+                .hide_possible_values(true)
+                .help_heading(options_heading)
+                .help(language.pick("Framing read mode", "Chế độ đọc framing")),
         )
+        .arg(localized_help_arg(language, options_heading))
+}
+
+fn localized_help_arg(language: CliLanguage, heading: &'static str) -> Arg {
+    Arg::new("help")
+        .short('h')
+        .long("help")
+        .action(ArgAction::Help)
+        .help_heading(heading)
+        .help(language.pick("Print help", "In trợ giúp"))
+}
+
+fn localized_version_arg(language: CliLanguage, heading: &'static str) -> Arg {
+    Arg::new("version")
+        .short('V')
+        .long("version")
+        .action(ArgAction::Version)
+        .help_heading(heading)
+        .help(language.pick("Print version", "In phiên bản"))
 }
 
 struct CliOutcome {
@@ -388,7 +495,7 @@ fn base_report(options: &CliOptions) -> CliReport {
         options: OptionsReport {
             read_mode: read_mode_name(options.read_mode),
             resource_profile: profile_name(options.profile),
-            language: "en",
+            language: options.language.code(),
         },
         source: SourceReport {
             id: None,
@@ -476,74 +583,207 @@ fn render_json(writer: &mut dyn Write, report: &CliReport) -> io::Result<()> {
     writeln!(writer)
 }
 
-fn render_text(writer: &mut dyn Write, report: &CliReport) -> io::Result<()> {
+fn render_text(
+    writer: &mut dyn Write,
+    report: &CliReport,
+    language: CliLanguage,
+) -> io::Result<()> {
     writeln!(writer, "SeaCad {}", report.command)?;
-    writeln!(writer, "Status: {}", status_text(report.status))?;
-    writeln!(writer, "Read mode: {}", report.options.read_mode)?;
     writeln!(
         writer,
-        "Resource profile: {}",
-        report.options.resource_profile
+        "{}: {}",
+        language.pick("Status", "Trạng thái"),
+        status_text(language, report.status)
     )?;
     writeln!(
         writer,
-        "Physical format: {}",
-        physical_text(report.format.physical)
+        "{}: {}",
+        language.pick("Read mode", "Chế độ đọc"),
+        read_mode_text(language, report.options.read_mode)
+    )?;
+    writeln!(
+        writer,
+        "{}: {}",
+        language.pick("Resource profile", "Hồ sơ tài nguyên"),
+        profile_text(language, report.options.resource_profile)
+    )?;
+    writeln!(
+        writer,
+        "{}: {}",
+        language.pick("Physical format", "Định dạng vật lý"),
+        physical_text(language, report.format.physical)
     )?;
     if let Some(path) = &report.source.path {
-        writeln!(writer, "Path: {path}")?;
+        writeln!(writer, "{}: {path}", language.pick("Path", "Đường dẫn"))?;
     }
     if let Some(bytes) = report.source.bytes {
-        writeln!(writer, "Bytes: {bytes}")?;
+        writeln!(writer, "{}: {bytes}", language.pick("Bytes", "Số byte"))?;
     }
     if let Some(source_id) = &report.source.id {
-        writeln!(writer, "Source ID: {source_id}")?;
+        writeln!(
+            writer,
+            "{}: {source_id}",
+            language.pick("Source ID", "ID nguồn")
+        )?;
     }
     if let Some(document) = &report.document {
-        writeln!(writer, "Conformance: {}", document.conformance)?;
-        writeln!(writer, "Groups: {}", document.groups)?;
-        let eof = document
-            .eof_occurrence
-            .map_or_else(|| "absent".to_owned(), |value| value.to_string());
-        writeln!(writer, "EOF occurrence: {eof}")?;
-        writeln!(writer, "Trailing bytes: {}", document.trailing_bytes)?;
+        writeln!(
+            writer,
+            "{}: {}",
+            language.pick("Conformance", "Mức tuân thủ"),
+            conformance_text(language, document.conformance)
+        )?;
+        writeln!(
+            writer,
+            "{}: {}",
+            language.pick("Groups", "Số group"),
+            document.groups
+        )?;
+        let eof = document.eof_occurrence.map_or_else(
+            || language.pick("absent", "không có").to_owned(),
+            |value| value.to_string(),
+        );
+        writeln!(
+            writer,
+            "{}: {eof}",
+            language.pick("EOF occurrence", "Vị trí EOF")
+        )?;
+        writeln!(
+            writer,
+            "{}: {}",
+            language.pick("Trailing bytes", "Byte phía sau EOF"),
+            document.trailing_bytes
+        )?;
     }
-    writeln!(writer, "Diagnostics: {}", report.diagnostics.len())?;
+    writeln!(
+        writer,
+        "{}: {}",
+        language.pick("Diagnostics", "Chẩn đoán"),
+        report.diagnostics.len()
+    )?;
     for diagnostic in &report.diagnostics {
         if let Some(span) = &diagnostic.span {
             writeln!(
                 writer,
                 "  {} {} [{}, {})",
-                diagnostic.code, diagnostic.severity, span.start, span.end
+                diagnostic.code,
+                severity_text(language, diagnostic.severity),
+                span.start,
+                span.end
             )?;
         } else {
-            writeln!(writer, "  {} {}", diagnostic.code, diagnostic.severity)?;
+            writeln!(
+                writer,
+                "  {} {}",
+                diagnostic.code,
+                severity_text(language, diagnostic.severity)
+            )?;
         }
     }
     if let Some(error) = &report.error {
-        writeln!(writer, "Error {}: {}", error.code, error.message)?;
+        writeln!(
+            writer,
+            "{} {}: {}",
+            language.pick("Error", "Lỗi"),
+            error.code,
+            error_text(language, &error.code, &error.message)
+        )?;
     }
     Ok(())
 }
 
-fn status_text(status: &str) -> &str {
-    match status {
-        "ok" => "OK",
-        "verified" => "VERIFIED",
-        "recovered" => "RECOVERED",
-        "not_verified" => "NOT VERIFIED",
-        "invalid" => "INVALID",
-        "unsupported" => "UNSUPPORTED",
+fn status_text(language: CliLanguage, status: &str) -> &str {
+    match (language, status) {
+        (CliLanguage::English, "ok") => "OK",
+        (CliLanguage::English, "verified") => "VERIFIED",
+        (CliLanguage::English, "recovered") => "RECOVERED",
+        (CliLanguage::English, "not_verified") => "NOT VERIFIED",
+        (CliLanguage::English, "invalid") => "INVALID",
+        (CliLanguage::English, "unsupported") => "UNSUPPORTED",
+        (CliLanguage::Vietnamese, "ok") => "TỐT",
+        (CliLanguage::Vietnamese, "verified") => "ĐÃ XÁC MINH",
+        (CliLanguage::Vietnamese, "recovered") => "ĐÃ PHỤC HỒI",
+        (CliLanguage::Vietnamese, "not_verified") => "CHƯA XÁC MINH",
+        (CliLanguage::Vietnamese, "invalid") => "KHÔNG HỢP LỆ",
+        (CliLanguage::Vietnamese, "unsupported") => "CHƯA HỖ TRỢ",
         _ => status,
     }
 }
 
-fn physical_text(physical: &str) -> &str {
-    match physical {
-        "ascii_candidate" => "ASCII DXF candidate",
-        "binary" => "Binary DXF",
-        "unknown" => "Unknown",
+fn physical_text(language: CliLanguage, physical: &str) -> &str {
+    match (language, physical) {
+        (CliLanguage::English, "ascii_candidate") => "ASCII DXF candidate",
+        (CliLanguage::English, "binary") => "Binary DXF",
+        (CliLanguage::English, "unknown") => "Unknown",
+        (CliLanguage::Vietnamese, "ascii_candidate") => "ứng viên DXF ASCII",
+        (CliLanguage::Vietnamese, "binary") => "DXF nhị phân",
+        (CliLanguage::Vietnamese, "unknown") => "không xác định",
         _ => physical,
+    }
+}
+
+fn read_mode_text(language: CliLanguage, mode: &str) -> &str {
+    match (language, mode) {
+        (CliLanguage::Vietnamese, "strict") => "nghiêm ngặt (strict)",
+        (CliLanguage::Vietnamese, "compatible") => "tương thích (compatible)",
+        _ => mode,
+    }
+}
+
+fn profile_text(language: CliLanguage, profile: &str) -> &str {
+    match (language, profile) {
+        (CliLanguage::Vietnamese, "safe") => "an toàn (safe)",
+        (CliLanguage::Vietnamese, "large") => "lớn (large)",
+        _ => profile,
+    }
+}
+
+fn conformance_text(language: CliLanguage, conformance: &str) -> &str {
+    match (language, conformance) {
+        (CliLanguage::Vietnamese, "strict") => "nghiêm ngặt (strict)",
+        (CliLanguage::Vietnamese, "recovered") => "đã phục hồi (recovered)",
+        _ => conformance,
+    }
+}
+
+fn severity_text(language: CliLanguage, severity: &str) -> &str {
+    match (language, severity) {
+        (CliLanguage::Vietnamese, "info") => "thông tin",
+        (CliLanguage::Vietnamese, "warning") => "cảnh báo",
+        (CliLanguage::Vietnamese, "error") => "lỗi",
+        _ => severity,
+    }
+}
+
+fn error_text<'a>(language: CliLanguage, code: &str, english: &'a str) -> &'a str {
+    if language == CliLanguage::English {
+        return english
+            .strip_prefix(code)
+            .and_then(|message| message.strip_prefix(": "))
+            .unwrap_or(english);
+    }
+    match code {
+        CLI_INTERNAL_ERROR => "trạng thái nội bộ của CLI không hợp lệ",
+        CLI_UNSUPPORTED_FORMAT => "định dạng DXF này chưa được hỗ trợ",
+        CLI_UNKNOWN_FORMAT => "nguồn không phải ứng viên DXF ASCII hoặc Binary đã biết",
+        CLI_RECOVERED_NOT_VERIFIED => {
+            "framing phục hồi chỉ được kiểm tra hoặc sao chép nguyên trạng"
+        }
+        CLI_OUTPUT_ERROR => "không thể ghi đầu ra CLI",
+        "DXF-E0001" => "thao tác vào/ra thất bại",
+        "DXF-E0002" => "thao tác đã bị hủy",
+        "DXF-E0101" => "nguồn vượt giới hạn số byte",
+        "DXF-E0102" => "nguồn vượt giới hạn số record",
+        "DXF-E0103" => "giá trị vượt giới hạn số byte",
+        "DXF-E0105" => "offset byte bị tràn số nguyên",
+        "DXF-E0201" => "group code ASCII không hợp lệ",
+        "DXF-E0202" => "group ASCII không có dòng giá trị",
+        "DXF-E0203" => "tài liệu ASCII không có marker 0/EOF kết thúc",
+        "DXF-E0204" => "tài liệu ASCII nghiêm ngặt có dữ liệu sau EOF",
+        "DXF-E0301" => "định danh nguồn đã thay đổi",
+        "DXF-E0302" => "độ dài đầu ra Verbatim không khớp",
+        "DXF-E0303" => "định danh đầu ra Verbatim không khớp",
+        _ => english,
     }
 }
 
@@ -618,6 +858,42 @@ mod tests {
     }
 
     #[test]
+    fn vietnamese_help_and_usage_errors_are_localized() -> Result<(), Box<dyn Error>> {
+        let (help_exit, help, help_error) = invoke(["seacad", "--lang", "vi", "--help"])?;
+        assert_eq!(help_exit, 0);
+        assert!(help_error.is_empty());
+        assert!(help.contains("Cách dùng:"));
+        assert!(help.contains("Lệnh:"));
+        assert!(help.contains("Tùy chọn:"));
+        assert!(help.contains("Kiểm tra và xác minh DXF không làm mất dữ liệu"));
+        assert!(!help.contains("Usage:"));
+        assert!(!help.contains("[OPTIONS]"));
+        assert!(!help.contains("possible values"));
+
+        let (missing_exit, _, missing_help) = invoke(["seacad", "--lang", "vi"])?;
+        assert_eq!(missing_exit, 2);
+        assert!(missing_help.contains("Cách dùng:"));
+        assert!(missing_help.contains("Lệnh:"));
+        assert!(!missing_help.contains("Usage:"));
+
+        let (subcommand_exit, subcommand_help, _) =
+            invoke(["seacad", "inspect", "--lang=vi", "--help"])?;
+        assert_eq!(subcommand_exit, 0);
+        assert!(subcommand_help.contains("Đối số:"));
+        assert!(subcommand_help.contains("Tệp DXF cần đọc"));
+        assert!(subcommand_help.contains("--mode <CHẾ_ĐỘ>"));
+        assert!(!subcommand_help.contains("[default:"));
+        assert!(!subcommand_help.contains("possible values"));
+
+        let (usage_exit, _, usage_error) = invoke(["seacad", "--lang", "vi", "unknown"])?;
+        assert_eq!(usage_exit, 2);
+        assert!(usage_error.contains("Lỗi: không nhận ra lệnh"));
+        assert!(usage_error.contains("Cách dùng:"));
+        assert!(!usage_error.contains("error:"));
+        Ok(())
+    }
+
+    #[test]
     fn inspect_json_is_v1_and_hides_path_by_default() -> Result<(), Box<dyn Error>> {
         let directory = TestDirectory::new()?;
         let input = directory.write("private-name.dxf", STRICT)?;
@@ -659,6 +935,72 @@ mod tests {
         assert_eq!(report["schema_version"], "v1");
         assert_eq!(report["options"]["language"], "en");
         assert_eq!(report["source"]["path"], input_text);
+        Ok(())
+    }
+
+    #[test]
+    fn vietnamese_human_output_preserves_codes_and_redaction() -> Result<(), Box<dyn Error>> {
+        let directory = TestDirectory::new()?;
+        let valid = directory.write("ten-rieng.dxf", STRICT)?;
+        let valid_text = path_text(&valid)?;
+        let success = invoke_file("inspect", &valid, &["--lang", "vi"])?;
+        assert_eq!(success.0, 0);
+        assert!(success.2.is_empty());
+        assert!(!success.1.contains(valid_text));
+        assert!(success.1.contains("Trạng thái: TỐT"));
+        assert!(success.1.contains("Chế độ đọc: tương thích (compatible)"));
+        assert!(success.1.contains("Số group: 4"));
+
+        let recovered = directory.write("thieu-eof.dxf", b"0\nSECTION\n0\nENDSEC\n")?;
+        let failure = invoke_file(
+            "verify",
+            &recovered,
+            &["--mode", "compatible", "--lang", "vi"],
+        )?;
+        assert_eq!(failure.0, 1);
+        assert!(failure.1.is_empty());
+        assert!(failure.2.contains("Trạng thái: CHƯA XÁC MINH"));
+        assert!(failure.2.contains("DXF-W0203 cảnh báo"));
+        assert!(failure.2.contains("Lỗi CLI-E0004:"));
+        assert!(!failure.2.contains("Recovered framing"));
+        Ok(())
+    }
+
+    #[test]
+    fn json_v1_changes_only_declared_language_for_localized_success() -> Result<(), Box<dyn Error>>
+    {
+        let directory = TestDirectory::new()?;
+        let input = directory.write("stable-json.dxf", STRICT)?;
+        let english = invoke_file("inspect", &input, &["--json"])?;
+        let vietnamese = invoke_file("inspect", &input, &["--json", "--lang", "vi"])?;
+        assert_eq!(english.0, 0);
+        assert_eq!(vietnamese.0, 0);
+
+        let english_report: Value = serde_json::from_str(&english.1)?;
+        let mut vietnamese_report: Value = serde_json::from_str(&vietnamese.1)?;
+        assert_eq!(english_report["options"]["language"], "en");
+        assert_eq!(vietnamese_report["options"]["language"], "vi");
+        assert_eq!(vietnamese_report["status"], "ok");
+        vietnamese_report["options"]["language"] = Value::String("en".to_owned());
+        assert_eq!(vietnamese_report, english_report);
+
+        let recovered = directory.write("json-error.dxf", b"0\nSECTION\n0\nENDSEC\n")?;
+        let failed = invoke_file(
+            "verify",
+            &recovered,
+            &["--mode", "compatible", "--json", "--lang", "vi"],
+        )?;
+        assert_eq!(failed.0, 1);
+        let failed_report: Value = serde_json::from_str(&failed.1)?;
+        assert_eq!(failed_report["status"], "not_verified");
+        assert_eq!(
+            failed_report["error"]["code"],
+            super::CLI_RECOVERED_NOT_VERIFIED
+        );
+        assert_eq!(
+            failed_report["error"]["message"],
+            "Recovered framing is inspect/verbatim-only and is not verified"
+        );
         Ok(())
     }
 
