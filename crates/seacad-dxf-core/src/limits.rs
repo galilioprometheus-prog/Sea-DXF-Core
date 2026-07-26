@@ -61,6 +61,16 @@ impl DxfResourceLimits {
     pub const fn max_diagnostics(self) -> u64 {
         self.max_diagnostics
     }
+
+    #[cfg(test)]
+    pub(crate) const fn test_with_max_source_bytes(max_source_bytes: u64) -> Self {
+        Self {
+            max_source_bytes,
+            max_records: u64::MAX,
+            max_value_bytes: u64::MAX,
+            max_diagnostics: u64::MAX,
+        }
+    }
 }
 
 #[cfg(test)]

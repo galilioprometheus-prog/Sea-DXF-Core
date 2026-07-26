@@ -10,6 +10,7 @@ mod error;
 mod limits;
 mod progress;
 mod read_options;
+mod source;
 
 pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
@@ -18,6 +19,7 @@ pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
 };
 pub use read_options::{DxfReadMode, DxfReadOptions};
+pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 
 /// Returns the SeaCad DXF core package version.
 #[must_use]

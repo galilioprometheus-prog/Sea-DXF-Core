@@ -1,9 +1,10 @@
 # M2 bounded-source contract
 
-Status: M2.1 complete; API contract only
+Status: M2.2 complete; bounded byte sources
 
 M2.1 freezes the public safety types used by later source readers and parsers.
-It does not claim DXF framing, file I/O, hashing, or format support.
+M2.2 implements bounded byte access only. Neither milestone claims DXF framing,
+hashing, or format support.
 
 ## Default behavior
 
@@ -63,12 +64,29 @@ trait directly, and a no-op observer is provided.
 `Send + Sync`, allowing a UI or worker controller to request cooperative
 cancellation without making the core asynchronous.
 
+## Byte sources (M2.2)
+
+`DxfByteSource` is a synchronous `Send + Sync` random-access contract. Its
+`len()` is the source length captured at construction. `read_at` may return a
+partial read near EOF; `read_exact_at` either fills the destination or returns
+a path-redacted unexpected-EOF error. Every request validates `offset + length`
+before indexing or I/O.
+
+`DxfMemorySource` borrows an immutable byte slice without copying it.
+`DxfFileSource` owns an already-open file or opens a path, records metadata
+length, and uses a mutex-protected seek/read cursor. The mutex makes concurrent
+callers safe and portable across Windows, macOS, and Linux. It does not mmap or
+allocate a buffer proportional to file size.
+
+File reads are clamped to the accepted length snapshot. Later external growth
+is not exposed; shrinkage is reported as EOF by exact reads. M2.3 will bind the
+observed byte stream to SHA-256 and wire progress/cancellation.
+
 ## Dependency and support boundary
 
-M2.1 adds no dependency and remains standard-library-only. It also imports no
+M2.2 adds no dependency and remains standard-library-only. It also imports no
 legacy source, test, fixture, or corpus bytes. The support matrix remains
 unchanged.
 
-M2.2 will implement bounded in-memory and file-backed byte sources with
-`u64` offsets. M2.3 will add the reviewed streaming SHA-256 and wire progress
-and cancellation into source scanning.
+M2.3 will add the reviewed streaming SHA-256 and wire progress/cancellation
+into bounded source scanning.
