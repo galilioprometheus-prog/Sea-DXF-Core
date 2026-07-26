@@ -17,6 +17,7 @@ mod read_options;
 mod source;
 mod source_id;
 mod source_scan;
+mod verbatim;
 
 pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
 pub use ascii_group::{DxfAsciiGroup, DxfAsciiGroupCursor, DxfGroupCode};
@@ -34,6 +35,7 @@ pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
+pub use verbatim::DxfVerbatimWriteReceipt;
 
 /// Returns the SeaCad DXF core package version.
 #[must_use]

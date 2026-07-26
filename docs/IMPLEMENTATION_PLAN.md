@@ -1,6 +1,6 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M3.3 immutable raw ASCII document complete; awaiting user approval for M3.4
+Status: M3.4 verified Verbatim writer complete; awaiting user approval for M3.5
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

@@ -1,6 +1,6 @@
 use std::{fmt, io};
 
-use crate::diagnostic::ByteSpan;
+use crate::{diagnostic::ByteSpan, source_id::DxfSourceId};
 
 /// Stable machine-readable code for a fatal DXF operation error.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -17,6 +17,9 @@ impl DxfErrorCode {
     pub const MISSING_ASCII_GROUP_VALUE: Self = Self("DXF-E0202");
     pub const MISSING_ASCII_EOF: Self = Self("DXF-E0203");
     pub const TRAILING_ASCII_DATA: Self = Self("DXF-E0204");
+    pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
+    pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
+    pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -33,10 +36,15 @@ impl fmt::Display for DxfErrorCode {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfIoOperation {
+    Create,
+    Flush,
     Metadata,
     Open,
     Read,
+    Remove,
     Seek,
+    Sync,
+    Write,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -78,6 +86,18 @@ pub enum DxfError {
     TrailingAsciiData {
         span: ByteSpan,
     },
+    SourceIdentityMismatch {
+        expected: DxfSourceId,
+        observed: DxfSourceId,
+    },
+    VerbatimOutputLengthMismatch {
+        expected: u64,
+        observed: u64,
+    },
+    VerbatimOutputIdentityMismatch {
+        expected: DxfSourceId,
+        observed: DxfSourceId,
+    },
 }
 
 impl DxfError {
@@ -114,6 +134,13 @@ impl DxfError {
             Self::MissingAsciiGroupValue { .. } => DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
             Self::MissingAsciiEof { .. } => DxfErrorCode::MISSING_ASCII_EOF,
             Self::TrailingAsciiData { .. } => DxfErrorCode::TRAILING_ASCII_DATA,
+            Self::SourceIdentityMismatch { .. } => DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
+            Self::VerbatimOutputLengthMismatch { .. } => {
+                DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH
+            }
+            Self::VerbatimOutputIdentityMismatch { .. } => {
+                DxfErrorCode::VERBATIM_OUTPUT_IDENTITY_MISMATCH
+            }
         }
     }
 }
@@ -171,6 +198,21 @@ impl fmt::Display for DxfError {
                 span.start(),
                 span.end()
             ),
+            Self::SourceIdentityMismatch { expected, observed } => write!(
+                formatter,
+                "{}: source identity changed from {expected} to {observed}",
+                self.code()
+            ),
+            Self::VerbatimOutputLengthMismatch { expected, observed } => write!(
+                formatter,
+                "{}: verbatim output length {observed} differs from expected {expected}",
+                self.code()
+            ),
+            Self::VerbatimOutputIdentityMismatch { expected, observed } => write!(
+                formatter,
+                "{}: verbatim output identity {observed} differs from expected {expected}",
+                self.code()
+            ),
         }
     }
 }
@@ -181,10 +223,12 @@ impl std::error::Error for DxfError {}
 mod tests {
     use std::io;
 
-    use super::{ByteSpan, DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+    use super::{ByteSpan, DxfError, DxfErrorCode, DxfIoOperation, DxfResource, DxfSourceId};
 
     #[test]
     fn every_fatal_variant_has_the_stable_code() -> Result<(), io::Error> {
+        let expected_id = DxfSourceId::from_sha256([1_u8; DxfSourceId::BYTE_LEN]);
+        let observed_id = DxfSourceId::from_sha256([2_u8; DxfSourceId::BYTE_LEN]);
         let cases = [
             (
                 DxfError::from_io(DxfIoOperation::Read, &io::Error::from(io::ErrorKind::Other)),
@@ -241,6 +285,30 @@ mod tests {
                 },
                 DxfErrorCode::TRAILING_ASCII_DATA,
                 "DXF-E0204",
+            ),
+            (
+                DxfError::SourceIdentityMismatch {
+                    expected: expected_id,
+                    observed: observed_id,
+                },
+                DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
+                "DXF-E0301",
+            ),
+            (
+                DxfError::VerbatimOutputLengthMismatch {
+                    expected: 12,
+                    observed: 13,
+                },
+                DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH,
+                "DXF-E0302",
+            ),
+            (
+                DxfError::VerbatimOutputIdentityMismatch {
+                    expected: expected_id,
+                    observed: observed_id,
+                },
+                DxfErrorCode::VERBATIM_OUTPUT_IDENTITY_MISMATCH,
+                "DXF-E0303",
             ),
         ];
 
