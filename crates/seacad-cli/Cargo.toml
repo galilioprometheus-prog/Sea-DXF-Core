@@ -13,7 +13,10 @@ name = "seacad"
 path = "src/main.rs"
 
 [dependencies]
+clap = { version = "=4.6.4", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions"] }
 seacad-dxf-core = { path = "../seacad-dxf-core" }
+serde = { version = "=1.0.229", default-features = false, features = ["derive", "std"] }
+serde_json = { version = "=1.0.151", default-features = false, features = ["std"] }
 
 [lints]
 workspace = true

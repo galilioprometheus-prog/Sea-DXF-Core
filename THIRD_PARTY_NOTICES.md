@@ -30,3 +30,40 @@ The exact checksums, enabled feature tree, build-script review, and advisory
 review are recorded in `docs/audits/M2_3_SHA2_DEPENDENCY_REVIEW.md`. No
 third-party source is vendored into SeaCad. Required license texts will be
 included with distributable artifacts during the M13 release audit.
+
+## M3.5 CLI dependencies
+
+SeaCad's CLI uses pinned versions of Clap for argument parsing and Serde plus
+serde_json for JSON v1 serialization. Default features are disabled and only
+the reviewed minimal feature sets are enabled. Cargo.lock pins this complete
+additional registry tree:
+
+| Package | Version | License |
+| --- | ---: | --- |
+| anstyle | 1.0.14 | MIT OR Apache-2.0 |
+| clap | 4.6.4 | MIT OR Apache-2.0 |
+| clap_builder | 4.6.2 | MIT OR Apache-2.0 |
+| clap_lex | 1.1.0 | MIT OR Apache-2.0 |
+| itoa | 1.0.18 | MIT OR Apache-2.0 |
+| memchr | 2.8.3 | Unlicense OR MIT |
+| proc-macro2 | 1.0.107 | MIT OR Apache-2.0 |
+| quote | 1.0.47 | MIT OR Apache-2.0 |
+| serde | 1.0.229 | MIT OR Apache-2.0 |
+| serde_core | 1.0.229 | MIT OR Apache-2.0 |
+| serde_derive | 1.0.229 | MIT OR Apache-2.0 |
+| serde_json | 1.0.151 | MIT OR Apache-2.0 |
+| strsim | 0.11.1 | MIT |
+| syn | 3.0.3 | MIT OR Apache-2.0 |
+| unicode-ident | 1.0.24 | (MIT OR Apache-2.0) AND Unicode-3.0 |
+| zmij | 1.0.23 | MIT |
+
+Upstream projects:
+
+- <https://github.com/clap-rs/clap>
+- <https://github.com/serde-rs/serde>
+- <https://github.com/serde-rs/json>
+
+Exact checksums, enabled features, build-script review, and advisory evidence
+are recorded in `docs/audits/M3_5_CLI_DEPENDENCY_REVIEW.md`. No third-party
+source is vendored into SeaCad. Required license texts will be included with
+distributable artifacts during the M13 release audit.

@@ -1,6 +1,6 @@
 # M3 ASCII framing contract
 
-Status: M3.4 verified Verbatim writer complete
+Status: M3.5 inspect/verify CLI and JSON v1 complete
 
 M3.1 establishes the byte-preserving physical layer. M3.2 adds bounded ASCII
 group framing and freezes the first Strict/Compatible recovery rule. M3.3 adds
@@ -8,7 +8,8 @@ the terminal EOF envelope, a source-backed immutable raw document, and a
 one-pass SHA-256 identity. It still does not validate sections or `$ACADVER`
 and therefore does not claim versioned semantic support. M3.4 adds a
 create-new-only Verbatim writer with source preconditions and output
-verification.
+verification. M3.5 exposes these raw-framing decisions through stable
+`inspect` and `verify` commands.
 
 ## Normative basis
 
@@ -222,10 +223,21 @@ excess diagnostic, the final retained entry becomes `DXF-W0001`; subsequent
 diagnostics are suppressed. Document-level diagnostics share the same cap as
 group framing diagnostics.
 
-## Dependency and support boundary
+## M3.5 CLI boundary
 
-M3.4 adds no dependency, imports no legacy code or fixture bytes, and does not
-claim version/section support. It reuses the reviewed `sha2` dependency added
-at M2.3. Deterministic writer vectors, implementation hashes, and failure-mode
-evidence are in `docs/audits/M3_4_VERBATIM_WRITER_RECEIPT.md`. Initial
-`inspect` and `verify` CLI commands remain the next M3 checkpoint.
+`seacad inspect FILE` defaults to Compatible framing and returns success for
+Strict or recovered raw documents. `seacad verify FILE` defaults to Strict
+framing and returns success only for Strict conformance. Even when explicitly
+opened with `verify --mode compatible`, a recovered document returns
+`CLI-E0004` and exit 1; it is never described as verified.
+
+Both commands support Safe/Large profiles, English text, and JSON schema v1.
+Paths are hidden unless `--show-path` is explicit. Machine keys, status values,
+and codes remain English and stable; Vietnamese human-output localization is
+isolated to M3.6. The complete contract is in `docs/CLI_JSON_V1.md`.
+
+M3.5 adds reviewed CLI-only dependencies on Clap, Serde, and serde_json. It
+imports no legacy code or fixture bytes and makes no version/section support
+claim. Dependency evidence and deterministic CLI vectors are in
+`docs/audits/M3_5_CLI_DEPENDENCY_REVIEW.md` and
+`docs/audits/M3_5_CLI_RECEIPT.md`.
