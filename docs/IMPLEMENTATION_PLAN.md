@@ -1,6 +1,6 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M2.2 byte sources complete; awaiting user approval for M2.3
+Status: M2 complete through M2.3; awaiting user approval for M3.1
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

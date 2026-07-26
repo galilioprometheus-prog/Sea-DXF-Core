@@ -2,10 +2,11 @@
 
 ## Runtime
 
-- `seacad-dxf-core` is standard-library-only through the initial source and
-  framing milestones.
+- `seacad-dxf-core` began standard-library-only and keeps runtime exceptions
+  milestone-scoped and pinned.
+- `sha2 = 0.11.0` with default features disabled is approved at M2.3 only for
+  streaming SHA-256 source identity.
 - `encoding_rs` may be proposed only at the encoding milestone.
-- `sha2` may be proposed only at the transaction/hash milestone.
 - `seacad-cli` may add `clap`, `serde`, and `serde_json` when versioned CLI
   output is implemented.
 

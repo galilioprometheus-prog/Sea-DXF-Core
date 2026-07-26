@@ -1,10 +1,11 @@
 # M2 bounded-source contract
 
-Status: M2.2 complete; bounded byte sources
+Status: M2 complete through M2.3; bounded source identity
 
 M2.1 freezes the public safety types used by later source readers and parsers.
-M2.2 implements bounded byte access only. Neither milestone claims DXF framing,
-hashing, or format support.
+M2.2 implements bounded byte access. M2.3 binds the complete observed byte
+stream to SHA-256 and connects bounded scanning to progress and cooperative
+cancellation. M2 does not claim DXF framing, parsing, or format support.
 
 ## Default behavior
 
@@ -79,14 +80,38 @@ callers safe and portable across Windows, macOS, and Linux. It does not mmap or
 allocate a buffer proportional to file size.
 
 File reads are clamped to the accepted length snapshot. Later external growth
-is not exposed; shrinkage is reported as EOF by exact reads. M2.3 will bind the
-observed byte stream to SHA-256 and wire progress/cancellation.
+is not exposed; shrinkage is reported as EOF by exact reads or source scans.
+A scan identifies the bytes actually observed; it does not claim that external
+writers cannot change file content during or after scanning.
+
+## Source identity and bounded scan (M2.3)
+
+`DxfSourceId` stores exactly 32 SHA-256 bytes. Its stable text form is 64
+lowercase hexadecimal characters. `DxfSourceScanReceipt` pairs that identity
+with the exact number of bytes hashed; SHA-256 is used for identity and
+integrity preconditions, not as proof of authenticity.
+
+`scan_dxf_source` rechecks the selected Safe or Large source-byte limit before
+the first read, including for caller-defined sources. It reads through one
+fixed 64 KiB buffer, accepts legitimate partial reads, retains no source-sized
+buffer, and returns a receipt only after the accepted length is fully hashed.
+Premature EOF and a source reporting more bytes than requested fail closed as
+path-redacted read errors.
+
+A successful scan reports initial progress, progress after every read, and a
+final complete event. An empty source reports one `(0, 0)` event. Observer
+cancellation and the thread-safe cancellation token both return `DXF-E0002`
+before another read; a token is also checked immediately on entry and after
+each potentially blocking read.
 
 ## Dependency and support boundary
 
-M2.2 adds no dependency and remains standard-library-only. It also imports no
-legacy source, test, fixture, or corpus bytes. The support matrix remains
-unchanged.
+M2.1-M2.2 are standard-library-only. M2.3 adds exactly `sha2 = 0.11.0`
+with its default features disabled and commits Cargo's registry checksums.
+Its eight locked transitive packages and their enabled feature tree are
+recorded in `docs/audits/M2_3_SHA2_DEPENDENCY_REVIEW.md`; every package is
+dual-licensed MIT OR Apache-2.0 and no reviewed advisory affects the locked
+versions.
 
-M2.3 will add the reviewed streaming SHA-256 and wire progress/cancellation
-into bounded source scanning.
+M2 imports no legacy code or fixture bytes and does not change the DXF support
+matrix. M3.1 is the next review boundary.
