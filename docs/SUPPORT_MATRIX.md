@@ -1,6 +1,7 @@
 # Format Support Matrix
 
-SeaCad M0 makes no file-format support claim.
+SeaCad through M3.1 can classify the physical representation and frame raw
+ASCII lines, but makes no validated file-format support claim.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

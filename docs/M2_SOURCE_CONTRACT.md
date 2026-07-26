@@ -114,4 +114,5 @@ dual-licensed MIT OR Apache-2.0 and no reviewed advisory affects the locked
 versions.
 
 M2 imports no legacy code or fixture bytes and does not change the DXF support
-matrix. M3.1 is the next review boundary.
+matrix. Later framing work is specified separately in the M3 framing
+contract.

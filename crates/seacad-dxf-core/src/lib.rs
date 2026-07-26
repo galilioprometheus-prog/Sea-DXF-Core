@@ -5,8 +5,10 @@
 
 #![forbid(unsafe_code)]
 
+mod ascii_line;
 mod diagnostic;
 mod error;
+mod format_probe;
 mod limits;
 mod progress;
 mod read_options;
@@ -14,8 +16,10 @@ mod source;
 mod source_id;
 mod source_scan;
 
+pub use ascii_line::{DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiPhysicalLine};
 pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
