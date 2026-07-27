@@ -112,6 +112,7 @@ pub struct DxfTextEncodingReport {
     code_page_state: DxfCodePageState,
     occurrence_count: u64,
     primary: Option<DxfCodePageOccurrence>,
+    primary_legacy_code_page: Option<DxfLegacyCodePage>,
     conflicting: Option<DxfCodePageOccurrence>,
     diagnostics: Box<[DxfDiagnostic]>,
 }
@@ -147,6 +148,12 @@ impl DxfTextEncodingReport {
         self.primary
     }
 
+    /// Reviewed decoder identity for the primary declaration, when available.
+    #[must_use]
+    pub const fn primary_legacy_code_page(&self) -> Option<DxfLegacyCodePage> {
+        self.primary_legacy_code_page
+    }
+
     #[must_use]
     pub const fn conflicting_occurrence(&self) -> Option<DxfCodePageOccurrence> {
         self.conflicting
@@ -178,20 +185,35 @@ pub(crate) struct DxfTextEncodingTracker {
 
 impl DxfTextEncodingTracker {
     pub(crate) fn observe(&mut self, group: DxfAsciiGroup<'_>) -> Result<(), DxfError> {
+        self.observe_raw(
+            group.occurrence(),
+            group.group_code(),
+            group.raw_value(),
+            group.value_line().content_span(),
+        )
+    }
+
+    pub(crate) fn observe_raw(
+        &mut self,
+        occurrence: u64,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
+    ) -> Result<(), DxfError> {
         if let Some(variable) = self.pending.take() {
-            self.record_candidate(variable, group)?;
+            self.record_candidate(variable, occurrence, group_code, raw_value, value_span)?;
         }
 
         if self.awaiting_section_name {
             self.awaiting_section_name = false;
-            self.inside_header = group.group_code().value() == 2 && group.raw_value() == b"HEADER";
+            self.inside_header = group_code.value() == 2 && raw_value == b"HEADER";
             if self.inside_header && self.first_header_span.is_none() {
-                self.first_header_span = Some(group.value_line().content_span());
+                self.first_header_span = Some(value_span);
             }
         }
 
-        if group.group_code().value() == 0 {
-            match group.raw_value() {
+        if group_code.value() == 0 {
+            match raw_value {
                 b"SECTION" => {
                     self.inside_header = false;
                     self.awaiting_section_name = true;
@@ -202,13 +224,10 @@ impl DxfTextEncodingTracker {
                 }
                 _ => {}
             }
-        } else if self.inside_header
-            && group.group_code().value() == 9
-            && group.raw_value() == b"$DWGCODEPAGE"
-        {
+        } else if self.inside_header && group_code.value() == 9 && raw_value == b"$DWGCODEPAGE" {
             self.pending = Some(VariableMarker {
-                occurrence: compact_occurrence(group.occurrence())?,
-                span: group.value_line().content_span(),
+                occurrence: compact_occurrence(occurrence)?,
+                span: value_span,
             });
         }
         Ok(())
@@ -330,6 +349,7 @@ impl DxfTextEncodingTracker {
             code_page_state,
             occurrence_count: self.occurrence_count,
             primary: self.primary,
+            primary_legacy_code_page: self.primary_legacy_code_page,
             conflicting: self.conflicting,
             diagnostics: diagnostics.into_boxed_slice(),
         })
@@ -338,27 +358,27 @@ impl DxfTextEncodingTracker {
     fn record_candidate(
         &mut self,
         variable: VariableMarker,
-        candidate: DxfAsciiGroup<'_>,
+        occurrence: u64,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
     ) -> Result<(), DxfError> {
-        let (value, legacy_code_page) = if candidate.group_code().value() != 3 {
-            (
-                DxfCodePageValue::InvalidGroupCode(candidate.group_code()),
-                None,
-            )
-        } else if candidate.raw_value().is_empty() {
+        let (value, legacy_code_page) = if group_code.value() != 3 {
+            (DxfCodePageValue::InvalidGroupCode(group_code), None)
+        } else if raw_value.is_empty() {
             (DxfCodePageValue::Empty, None)
         } else {
             (
                 DxfCodePageValue::Declared,
-                DxfLegacyCodePage::from_dwg_codepage_token(candidate.raw_value()),
+                DxfLegacyCodePage::from_dwg_codepage_token(raw_value),
             )
         };
         self.record_occurrence(
             DxfCodePageOccurrence {
                 variable_occurrence: variable.occurrence,
                 variable_span: variable.span,
-                value_occurrence: Some(compact_occurrence(candidate.occurrence())?),
-                value_span: Some(candidate.value_line().content_span()),
+                value_occurrence: Some(compact_occurrence(occurrence)?),
+                value_span: Some(value_span),
                 value,
             },
             legacy_code_page,

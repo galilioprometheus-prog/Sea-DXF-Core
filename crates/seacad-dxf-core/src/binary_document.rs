@@ -5,10 +5,11 @@ use crate::{
     DxfBinaryGroup, DxfBinaryGroupCodeEncoding, DxfBinaryGroupCursor, DxfBinaryStructureIndex,
     DxfBinaryValueFamily, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
     DxfError, DxfGroupCode, DxfIoOperation, DxfPhysicalFormat, DxfReadMode, DxfReadObserver,
-    DxfReadOptions, DxfSourceId,
+    DxfReadOptions, DxfSourceId, DxfTextEncodingReport,
     ascii_document::{SequentialHashingSource, notify_progress, report_parse_progress},
     ascii_index::DxfAsciiStructureTracker,
     dialect::DxfAcadVersionTracker,
+    encoding::DxfTextEncodingTracker,
     probe_dxf_physical_format,
 };
 
@@ -102,6 +103,7 @@ pub struct DxfBinaryRawDocument<'a> {
     group_code_encoding: DxfBinaryGroupCodeEncoding,
     groups: DxfBinaryRawGroupTable,
     acad_version: DxfAcadVersionReport,
+    text_encoding: DxfTextEncodingReport,
     structure_index: DxfBinaryStructureIndex,
     diagnostics: Box<[DxfDiagnostic]>,
     conformance: DxfBinaryDocumentConformance,
@@ -118,6 +120,7 @@ impl fmt::Debug for DxfBinaryRawDocument<'_> {
             .field("group_code_encoding", &self.group_code_encoding)
             .field("groups", &self.groups.len)
             .field("acad_version", &self.acad_version.state())
+            .field("text_encoding", &self.text_encoding.policy())
             .field("sections", &self.structure_index.sections().len())
             .field("diagnostics", &self.diagnostics.len())
             .field("conformance", &self.conformance)
@@ -145,6 +148,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
 
         let mut groups = DxfBinaryRawGroupTableBuilder::new();
         let mut dialect_tracker = DxfAcadVersionTracker::default();
+        let mut text_encoding_tracker = DxfTextEncodingTracker::default();
         let mut structure_tracker =
             DxfAsciiStructureTracker::new(options.resource_profile().limits().max_diagnostics());
         let mut eof_occurrence = None;
@@ -153,6 +157,12 @@ impl<'a> DxfBinaryRawDocument<'a> {
             let payload = payload_bytes(group)?;
             let is_eof = group.group_code.value() == 0 && payload == b"EOF";
             dialect_tracker.observe_raw(
+                group.occurrence,
+                group.group_code,
+                payload,
+                group.payload_span,
+            )?;
+            text_encoding_tracker.observe_raw(
                 group.occurrence,
                 group.group_code,
                 payload,
@@ -214,6 +224,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
             hashing_source.finalize(cancellation, observer, source_len, &mut last_reported)?;
         let acad_version = dialect_tracker.finish(source_id)?;
         let (declared_version, version_span) = require_supported_version(&acad_version)?;
+        let text_encoding = text_encoding_tracker.finish(source_id, acad_version.state())?;
         if declared_version.binary_group_code_encoding() != group_code_encoding {
             return Err(DxfError::BinaryEncodingDialectMismatch {
                 encoding: group_code_encoding,
@@ -236,6 +247,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
             group_code_encoding,
             groups: groups.finish()?,
             acad_version,
+            text_encoding,
             structure_index,
             diagnostics: diagnostics.into_boxed_slice(),
             conformance,
@@ -276,6 +288,11 @@ impl<'a> DxfBinaryRawDocument<'a> {
     #[must_use]
     pub const fn acad_version_report(&self) -> &DxfAcadVersionReport {
         &self.acad_version
+    }
+
+    #[must_use]
+    pub const fn text_encoding_report(&self) -> &DxfTextEncodingReport {
+        &self.text_encoding
     }
 
     #[must_use]

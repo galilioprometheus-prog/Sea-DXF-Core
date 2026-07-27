@@ -72,7 +72,9 @@ pub use encoding::{
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
-pub use header_view::{DxfAcadVersionIssue, DxfHeaderView};
+pub use header_view::{
+    DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHeaderView,
+};
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,

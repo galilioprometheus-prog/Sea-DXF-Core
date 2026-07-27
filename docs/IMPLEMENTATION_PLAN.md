@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.3a projects typed `$ACADVER` semantics identically for ASCII and Binary
+M6.3b adds shared Binary `$DWGCODEPAGE` tracking and typed HEADER semantics
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -22,8 +22,10 @@ M6.3a projects typed `$ACADVER` semantics identically for ASCII and Binary
    and distinguishes `Explicit`, `Defaulted`, `Absent`, and `Invalid` without
    conflating states. M6.3a connects the generated schema to the already
    evidence-backed `$ACADVER` report through one O(1) typed HEADER view shared by
-   ASCII and Binary. It adds no new semantic support claim. A 1 GiB evidence
-   gate is required before any large-file claim.
+   ASCII and Binary. M6.3b runs the same `$DWGCODEPAGE` state machine over both
+   physical formats and exposes reviewed/unrecognized declarations separately
+   from decoder policy. A 1 GiB evidence gate is required before any large-file
+   claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
