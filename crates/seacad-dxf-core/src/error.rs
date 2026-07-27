@@ -17,8 +17,12 @@ impl DxfErrorCode {
     pub const MISSING_ASCII_GROUP_VALUE: Self = Self("DXF-E0202");
     pub const MISSING_ASCII_EOF: Self = Self("DXF-E0203");
     pub const TRAILING_ASCII_DATA: Self = Self("DXF-E0204");
+    pub const INVALID_BINARY_SENTINEL: Self = Self("DXF-E0210");
     pub const TRUNCATED_BINARY_GROUP_CODE: Self = Self("DXF-E0211");
     pub const INVALID_BINARY_GROUP_CODE: Self = Self("DXF-E0212");
+    pub const UNSUPPORTED_BINARY_GROUP_CODE: Self = Self("DXF-E0213");
+    pub const TRUNCATED_BINARY_VALUE: Self = Self("DXF-E0214");
+    pub const UNTERMINATED_BINARY_STRING: Self = Self("DXF-E0215");
     pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
     pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
@@ -88,11 +92,27 @@ pub enum DxfError {
     TrailingAsciiData {
         span: ByteSpan,
     },
+    InvalidBinarySentinel {
+        span: ByteSpan,
+    },
     TruncatedBinaryGroupCode {
         span: ByteSpan,
         expected_bytes: u8,
     },
     InvalidBinaryGroupCode {
+        span: ByteSpan,
+    },
+    UnsupportedBinaryGroupCode {
+        group_code: i16,
+        span: ByteSpan,
+    },
+    TruncatedBinaryValue {
+        group_code: i16,
+        span: ByteSpan,
+        expected_value_bytes: u64,
+    },
+    UnterminatedBinaryString {
+        group_code: i16,
         span: ByteSpan,
     },
     SourceIdentityMismatch {
@@ -143,8 +163,12 @@ impl DxfError {
             Self::MissingAsciiGroupValue { .. } => DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
             Self::MissingAsciiEof { .. } => DxfErrorCode::MISSING_ASCII_EOF,
             Self::TrailingAsciiData { .. } => DxfErrorCode::TRAILING_ASCII_DATA,
+            Self::InvalidBinarySentinel { .. } => DxfErrorCode::INVALID_BINARY_SENTINEL,
             Self::TruncatedBinaryGroupCode { .. } => DxfErrorCode::TRUNCATED_BINARY_GROUP_CODE,
             Self::InvalidBinaryGroupCode { .. } => DxfErrorCode::INVALID_BINARY_GROUP_CODE,
+            Self::UnsupportedBinaryGroupCode { .. } => DxfErrorCode::UNSUPPORTED_BINARY_GROUP_CODE,
+            Self::TruncatedBinaryValue { .. } => DxfErrorCode::TRUNCATED_BINARY_VALUE,
+            Self::UnterminatedBinaryString { .. } => DxfErrorCode::UNTERMINATED_BINARY_STRING,
             Self::SourceIdentityMismatch { .. } => DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
             Self::VerbatimOutputLengthMismatch { .. } => {
                 DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH
@@ -209,6 +233,13 @@ impl fmt::Display for DxfError {
                 span.start(),
                 span.end()
             ),
+            Self::InvalidBinarySentinel { span } => write!(
+                formatter,
+                "{}: invalid Binary DXF sentinel at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
             Self::TruncatedBinaryGroupCode {
                 span,
                 expected_bytes,
@@ -222,6 +253,31 @@ impl fmt::Display for DxfError {
             Self::InvalidBinaryGroupCode { span } => write!(
                 formatter,
                 "{}: invalid Binary DXF group code at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::UnsupportedBinaryGroupCode { group_code, span } => write!(
+                formatter,
+                "{}: Binary DXF group code {group_code} at byte span [{}, {}) has no documented wire family",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::TruncatedBinaryValue {
+                group_code,
+                span,
+                expected_value_bytes,
+            } => write!(
+                formatter,
+                "{}: Binary DXF group {group_code} value at byte span [{}, {}) requires {expected_value_bytes} wire bytes",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::UnterminatedBinaryString { group_code, span } => write!(
+                formatter,
+                "{}: Binary DXF group {group_code} string at byte span [{}, {}) has no NUL terminator",
                 self.code(),
                 span.start(),
                 span.end()
@@ -315,6 +371,13 @@ mod tests {
                 "DXF-E0204",
             ),
             (
+                DxfError::InvalidBinarySentinel {
+                    span: ByteSpan::new(0, 22).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::INVALID_BINARY_SENTINEL,
+                "DXF-E0210",
+            ),
+            (
                 DxfError::TruncatedBinaryGroupCode {
                     span: ByteSpan::new(20, 21).ok_or(io::Error::other("invalid test span"))?,
                     expected_bytes: 2,
@@ -328,6 +391,31 @@ mod tests {
                 },
                 DxfErrorCode::INVALID_BINARY_GROUP_CODE,
                 "DXF-E0212",
+            ),
+            (
+                DxfError::UnsupportedBinaryGroupCode {
+                    group_code: 80,
+                    span: ByteSpan::new(24, 26).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::UNSUPPORTED_BINARY_GROUP_CODE,
+                "DXF-E0213",
+            ),
+            (
+                DxfError::TruncatedBinaryValue {
+                    group_code: 10,
+                    span: ByteSpan::new(26, 30).ok_or(io::Error::other("invalid test span"))?,
+                    expected_value_bytes: 8,
+                },
+                DxfErrorCode::TRUNCATED_BINARY_VALUE,
+                "DXF-E0214",
+            ),
+            (
+                DxfError::UnterminatedBinaryString {
+                    group_code: 1,
+                    span: ByteSpan::new(30, 35).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::UNTERMINATED_BINARY_STRING,
+                "DXF-E0215",
             ),
             (
                 DxfError::SourceIdentityMismatch {
