@@ -23,6 +23,7 @@ mod johab;
 mod limits;
 mod progress;
 mod read_options;
+mod semantic_value;
 mod source;
 mod source_id;
 mod source_scan;
@@ -75,6 +76,9 @@ pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
 };
 pub use read_options::{DxfReadMode, DxfReadOptions};
+pub use semantic_value::{
+    DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
+};
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
