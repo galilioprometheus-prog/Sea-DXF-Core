@@ -17,6 +17,8 @@ impl DxfErrorCode {
     pub const MISSING_ASCII_GROUP_VALUE: Self = Self("DXF-E0202");
     pub const MISSING_ASCII_EOF: Self = Self("DXF-E0203");
     pub const TRAILING_ASCII_DATA: Self = Self("DXF-E0204");
+    pub const TRUNCATED_BINARY_GROUP_CODE: Self = Self("DXF-E0211");
+    pub const INVALID_BINARY_GROUP_CODE: Self = Self("DXF-E0212");
     pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
     pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
@@ -86,6 +88,13 @@ pub enum DxfError {
     TrailingAsciiData {
         span: ByteSpan,
     },
+    TruncatedBinaryGroupCode {
+        span: ByteSpan,
+        expected_bytes: u8,
+    },
+    InvalidBinaryGroupCode {
+        span: ByteSpan,
+    },
     SourceIdentityMismatch {
         expected: DxfSourceId,
         observed: DxfSourceId,
@@ -134,6 +143,8 @@ impl DxfError {
             Self::MissingAsciiGroupValue { .. } => DxfErrorCode::MISSING_ASCII_GROUP_VALUE,
             Self::MissingAsciiEof { .. } => DxfErrorCode::MISSING_ASCII_EOF,
             Self::TrailingAsciiData { .. } => DxfErrorCode::TRAILING_ASCII_DATA,
+            Self::TruncatedBinaryGroupCode { .. } => DxfErrorCode::TRUNCATED_BINARY_GROUP_CODE,
+            Self::InvalidBinaryGroupCode { .. } => DxfErrorCode::INVALID_BINARY_GROUP_CODE,
             Self::SourceIdentityMismatch { .. } => DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
             Self::VerbatimOutputLengthMismatch { .. } => {
                 DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH
@@ -194,6 +205,23 @@ impl fmt::Display for DxfError {
             Self::TrailingAsciiData { span } => write!(
                 formatter,
                 "{}: strict ASCII document has trailing data at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::TruncatedBinaryGroupCode {
+                span,
+                expected_bytes,
+            } => write!(
+                formatter,
+                "{}: Binary DXF group code at byte span [{}, {}) requires {expected_bytes} bytes",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::InvalidBinaryGroupCode { span } => write!(
+                formatter,
+                "{}: invalid Binary DXF group code at byte span [{}, {})",
                 self.code(),
                 span.start(),
                 span.end()
@@ -285,6 +313,21 @@ mod tests {
                 },
                 DxfErrorCode::TRAILING_ASCII_DATA,
                 "DXF-E0204",
+            ),
+            (
+                DxfError::TruncatedBinaryGroupCode {
+                    span: ByteSpan::new(20, 21).ok_or(io::Error::other("invalid test span"))?,
+                    expected_bytes: 2,
+                },
+                DxfErrorCode::TRUNCATED_BINARY_GROUP_CODE,
+                "DXF-E0211",
+            ),
+            (
+                DxfError::InvalidBinaryGroupCode {
+                    span: ByteSpan::new(22, 24).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::INVALID_BINARY_GROUP_CODE,
+                "DXF-E0212",
             ),
             (
                 DxfError::SourceIdentityMismatch {

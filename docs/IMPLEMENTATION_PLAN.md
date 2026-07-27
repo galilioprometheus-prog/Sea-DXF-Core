@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M4 complete through M4.3c3 documented lossless MTEXT/percent-control
-tokenization; awaiting user approval for M5.1 Binary DXF framing contract
+Status: M5 in progress through M5.1a Binary DXF group-code decoder and
+value-family wire registry; awaiting user approval for M5.1b streaming cursor
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -10,6 +10,8 @@ tokenization; awaiting user approval for M5.1 Binary DXF framing contract
    initial `inspect`/`verify` CLI.
 5. M4: AC1009-AC1032 dialects, encoding, sections, and group-0 indexes.
 6. M5: lossless Binary DXF record stream and malformed-input bounds.
+   M5.1a freezes explicit pre-R13/R13+ group-code decoding and the documented
+   value-family registry. M5.1b adds bounded streaming value framing.
 7. M6: provenance-backed schema/codegen and lazy document semantics.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
