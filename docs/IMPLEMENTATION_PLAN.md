@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5e expands exact HEADER Double2/Double3 semantics through schema only
+M6.5f adds orthographic origins with append-only schema ordinals
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -60,8 +60,12 @@ M6.5e expands exact HEADER Double2/Double3 semantics through schema only
    `$UCSORG`, `$UCSXDIR`, and `$UCSYDIR` through generated schema rows only.
    The existing directory and tuple decoder require no production parser
    branch, demonstrating that reviewed fields now scale by data rather than
-   handwritten resolution logic. A 1 GiB evidence gate is required before any
-   large-file claim.
+   handwritten resolution logic. M6.5f adds the six paper-space and six
+   model-space orthographic origin rows (`BACK`, `BOTTOM`, `FRONT`, `LEFT`,
+   `RIGHT`, and `TOP`). Schema manifest order becomes authoritative and
+   append-only so all prior public ordinals remain unchanged; stable field ids
+   remain the canonical persisted identity. A 1 GiB evidence gate is required
+   before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

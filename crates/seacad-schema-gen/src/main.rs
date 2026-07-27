@@ -367,7 +367,7 @@ fn validate_fields(
     }
     let mut ids = BTreeSet::new();
     let mut names = BTreeSet::new();
-    let mut previous_id: Option<&str> = None;
+    // Manifest order defines append-only schema ordinals; ids need not sort.
     for (index, field) in family.fields.iter().enumerate() {
         let entry = format!("fields[{index}]");
         if !valid_id(&field.id) || !ids.insert(field.id.as_str()) {
@@ -378,15 +378,6 @@ fn validate_fields(
                 "field id must be unique lowercase ASCII",
             ));
         }
-        if previous_id.is_some_and(|previous| previous >= field.id.as_str()) {
-            return Err(SchemaError::new(
-                "SCHEMA_FIELD_ORDER",
-                path,
-                format!("{entry}.id"),
-                "field ids must be strictly increasing",
-            ));
-        }
-        previous_id = Some(&field.id);
         if !valid_dxf_name(&field.dxf_name) || !names.insert(field.dxf_name.as_str()) {
             return Err(SchemaError::new(
                 "SCHEMA_DXF_NAME",
@@ -683,7 +674,38 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 25);
+        assert_eq!(families[0].fields.len(), 37);
+        let previous_ids = [
+            "acadmaintver",
+            "acadver",
+            "angbase",
+            "angdir",
+            "attmode",
+            "aunits",
+            "auprec",
+            "dwgcodepage",
+            "extmax",
+            "extmin",
+            "handseed",
+            "insbase",
+            "limmax",
+            "limmin",
+            "pextmax",
+            "pextmin",
+            "pinsbase",
+            "plimmax",
+            "plimmin",
+            "pucsorg",
+            "pucsxdir",
+            "pucsydir",
+            "ucsorg",
+            "ucsxdir",
+            "ucsydir",
+        ];
+        for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
+            assert_eq!(field.id, expected_id);
+        }
+        assert_eq!(families[0].fields[25].id, "pucsorgback");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);

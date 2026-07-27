@@ -55,6 +55,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_ucs[2].raw_provenance(),
             &(-3_f64).to_le_bytes(),
         )?;
+        let ascii_ortho = ascii_directory
+            .entry("ucsorgtop")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing ASCII UCSORGTOP"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_ortho[2].raw_provenance(),
+            b"-153",
+        )?;
+        let binary_ortho = binary_directory
+            .entry("ucsorgtop")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing Binary UCSORGTOP"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_ortho[2].raw_provenance(),
+            &(-153_f64).to_le_bytes(),
+        )?;
     }
     Ok(())
 }
@@ -260,6 +278,30 @@ fn coordinate_components_keep_independent_failure_evidence() -> Result<(), Box<d
         ucs_value[2].value().copied().map(DxfDouble::to_f64),
         Some(0.0)
     );
+
+    let ortho_bytes = ascii_document(
+        "AC1032",
+        "9\n$PUCSORGLEFT\n10\n1\n20\nnot-a-number\n30\n3\n",
+    );
+    let ortho_source = DxfMemorySource::new(&ortho_bytes, DxfResourceProfile::Safe)?;
+    let ortho = open_ascii(&ortho_source)?;
+    let ortho_directory = ortho.header_numeric_directory(&DxfCancellationToken::default())?;
+    let ortho_value = ortho_directory
+        .entry("pucsorgleft")
+        .and_then(|entry| entry.value().as_double3())
+        .ok_or(io::Error::other("missing malformed PUCSORGLEFT"))?;
+    assert_eq!(
+        ortho_value[0].value().copied().map(DxfDouble::to_f64),
+        Some(1.0)
+    );
+    assert!(matches!(
+        ortho_value[1].invalid_issue(),
+        Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+    ));
+    assert_eq!(
+        ortho_value[2].value().copied().map(DxfDouble::to_f64),
+        Some(3.0)
+    );
     Ok(())
 }
 
@@ -432,6 +474,18 @@ fn assert_standard_directory(
         (22, "ucsorg", "$UCSORG", &[10, 20, 30]),
         (23, "ucsxdir", "$UCSXDIR", &[10, 20, 30]),
         (24, "ucsydir", "$UCSYDIR", &[10, 20, 30]),
+        (25, "pucsorgback", "$PUCSORGBACK", &[10, 20, 30]),
+        (26, "pucsorgbottom", "$PUCSORGBOTTOM", &[10, 20, 30]),
+        (27, "pucsorgfront", "$PUCSORGFRONT", &[10, 20, 30]),
+        (28, "pucsorgleft", "$PUCSORGLEFT", &[10, 20, 30]),
+        (29, "pucsorgright", "$PUCSORGRIGHT", &[10, 20, 30]),
+        (30, "pucsorgtop", "$PUCSORGTOP", &[10, 20, 30]),
+        (31, "ucsorgback", "$UCSORGBACK", &[10, 20, 30]),
+        (32, "ucsorgbottom", "$UCSORGBOTTOM", &[10, 20, 30]),
+        (33, "ucsorgfront", "$UCSORGFRONT", &[10, 20, 30]),
+        (34, "ucsorgleft", "$UCSORGLEFT", &[10, 20, 30]),
+        (35, "ucsorgright", "$UCSORGRIGHT", &[10, 20, 30]),
+        (36, "ucsorgtop", "$UCSORGTOP", &[10, 20, 30]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -499,6 +553,20 @@ fn assert_standard_directory(
             .and_then(|entry| entry.value().as_double3())
             .ok_or(io::Error::other("missing UCSORG tuple"))?,
         &[-1.0, -2.0, -3.0],
+    );
+    assert_double_components(
+        directory
+            .entry("pucsorgback")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing PUCSORGBACK tuple"))?,
+        &[101.0, 102.0, 103.0],
+    );
+    assert_double_components(
+        directory
+            .entry("ucsorgtop")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing UCSORGTOP tuple"))?,
+        &[-151.0, -152.0, -153.0],
     );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
@@ -599,7 +667,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n",
     )
 }
 
@@ -640,6 +708,18 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$UCSORG".as_slice(), &[-1.0, -2.0, -3.0][..]),
         (b"$UCSXDIR".as_slice(), &[1.0, 0.0, 0.0][..]),
         (b"$UCSYDIR".as_slice(), &[0.0, 1.0, 0.0][..]),
+        (b"$PUCSORGBACK".as_slice(), &[101.0, 102.0, 103.0][..]),
+        (b"$PUCSORGBOTTOM".as_slice(), &[111.0, 112.0, 113.0][..]),
+        (b"$PUCSORGFRONT".as_slice(), &[121.0, 122.0, 123.0][..]),
+        (b"$PUCSORGLEFT".as_slice(), &[131.0, 132.0, 133.0][..]),
+        (b"$PUCSORGRIGHT".as_slice(), &[141.0, 142.0, 143.0][..]),
+        (b"$PUCSORGTOP".as_slice(), &[151.0, 152.0, 153.0][..]),
+        (b"$UCSORGBACK".as_slice(), &[-101.0, -102.0, -103.0][..]),
+        (b"$UCSORGBOTTOM".as_slice(), &[-111.0, -112.0, -113.0][..]),
+        (b"$UCSORGFRONT".as_slice(), &[-121.0, -122.0, -123.0][..]),
+        (b"$UCSORGLEFT".as_slice(), &[-131.0, -132.0, -133.0][..]),
+        (b"$UCSORGRIGHT".as_slice(), &[-141.0, -142.0, -143.0][..]),
+        (b"$UCSORGTOP".as_slice(), &[-151.0, -152.0, -153.0][..]),
     ] {
         push_binary_double_tuple(&mut bytes, version, name, values)?;
     }

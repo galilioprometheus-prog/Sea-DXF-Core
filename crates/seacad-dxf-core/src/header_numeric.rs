@@ -221,6 +221,9 @@ pub struct DxfHeaderNumericEntry {
 }
 
 impl DxfHeaderNumericEntry {
+    /// Append-only position in the complete HEADER schema.
+    ///
+    /// Persist `schema_field_id` as the canonical identity.
     #[must_use]
     pub const fn schema_ordinal(self) -> u64 {
         self.schema_ordinal as u64
@@ -357,6 +360,7 @@ impl DxfHeaderNumericDirectory {
             .find(|entry| entry.schema_field_id == schema_field_id)
     }
 
+    /// Finds a numeric field by its append-only complete-schema position.
     #[must_use]
     pub fn entry_at_schema_ordinal(&self, schema_ordinal: u64) -> Option<&DxfHeaderNumericEntry> {
         let schema_ordinal = u32::try_from(schema_ordinal).ok()?;

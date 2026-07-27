@@ -22,6 +22,9 @@ pub struct DxfHeaderSchemaMatch {
 }
 
 impl DxfHeaderSchemaMatch {
+    /// Append-only position in this schema namespace.
+    ///
+    /// Persist `schema_field_id` as the canonical identity.
     #[must_use]
     pub const fn schema_ordinal(self) -> u64 {
         self.schema_ordinal as u64
@@ -115,6 +118,7 @@ impl DxfHeaderSchemaDirectory {
             .find(|entry| entry.schema_field_id == schema_field_id)
     }
 
+    /// Finds one field by its append-only schema position.
     #[must_use]
     pub fn match_at(&self, schema_ordinal: u64) -> Option<&DxfHeaderSchemaMatch> {
         usize::try_from(schema_ordinal)
@@ -276,7 +280,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 25);
+        assert_eq!(directory.matches().len(), 37);
         assert!(directory.entry("unknown").is_none());
         assert_match(
             directory.entry("acadver"),
@@ -312,7 +316,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 25);
+        assert_eq!(directory.matches().len(), 37);
         assert_eq!(source.reads(), reads_after_open + 9);
         Ok(())
     }
@@ -391,7 +395,7 @@ mod tests {
         let directory = view.resolve_header_schema(&DxfCancellationToken::default())?;
         assert_eq!(directory.source_id(), view.source_id());
         assert_eq!(directory.schema_version(), "dxf.v1");
-        assert_eq!(directory.matches().len(), 25);
+        assert_eq!(directory.matches().len(), 37);
         assert_match(
             directory.entry("acadmaintver"),
             DxfHeaderVariableLookupState::Unique,
