@@ -7,6 +7,7 @@
 
 mod ascii_document;
 mod ascii_group;
+mod ascii_index;
 mod ascii_line;
 mod diagnostic;
 mod dialect;
@@ -22,6 +23,10 @@ mod verbatim;
 
 pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
 pub use ascii_group::{DxfAsciiGroup, DxfAsciiGroupCursor, DxfGroupCode};
+pub use ascii_index::{
+    DxfAsciiGroupRange, DxfAsciiSection, DxfAsciiSectionClosure, DxfAsciiSectionKind,
+    DxfAsciiSectionName, DxfAsciiStructureIndex,
+};
 pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };

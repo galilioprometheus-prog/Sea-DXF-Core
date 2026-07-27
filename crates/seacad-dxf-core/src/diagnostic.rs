@@ -110,6 +110,30 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Warning,
     };
 
+    /// A SECTION marker has no immediate group-code 2 name.
+    pub const SECTION_NAME_INVALID: Self = Self {
+        value: "DXF-E0410",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// A new SECTION marker interrupted an open section.
+    pub const SECTION_INTERRUPTED: Self = Self {
+        value: "DXF-E0411",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// An ENDSEC marker appeared without an open section.
+    pub const SECTION_END_ORPHAN: Self = Self {
+        value: "DXF-E0412",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// An open section reached framed EOF or input end without ENDSEC.
+    pub const SECTION_UNCLOSED: Self = Self {
+        value: "DXF-E0413",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -229,6 +253,19 @@ mod tests {
             let diagnostic = DxfDiagnostic::new(code, span);
             assert_eq!(diagnostic.code().as_str(), expected);
             assert_eq!(diagnostic.severity(), severity);
+            assert_eq!(diagnostic.span(), span);
+        }
+
+        let structure_codes = [
+            (DxfDiagnosticCode::SECTION_NAME_INVALID, "DXF-E0410"),
+            (DxfDiagnosticCode::SECTION_INTERRUPTED, "DXF-E0411"),
+            (DxfDiagnosticCode::SECTION_END_ORPHAN, "DXF-E0412"),
+            (DxfDiagnosticCode::SECTION_UNCLOSED, "DXF-E0413"),
+        ];
+        for (code, expected) in structure_codes {
+            let diagnostic = DxfDiagnostic::new(code, span);
+            assert_eq!(diagnostic.code().as_str(), expected);
+            assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Error);
             assert_eq!(diagnostic.span(), span);
         }
     }

@@ -4,9 +4,10 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     ByteSpan, DxfAcadVersionReport, DxfAsciiGroup, DxfAsciiGroupCursor, DxfAsciiLineEnding,
-    DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode, DxfError, DxfGroupCode,
-    DxfIoOperation, DxfReadControl, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfReadProgress,
-    DxfSourceId, ascii_group::trim_horizontal_ascii, dialect::DxfAcadVersionTracker,
+    DxfAsciiStructureIndex, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
+    DxfError, DxfGroupCode, DxfIoOperation, DxfReadControl, DxfReadMode, DxfReadObserver,
+    DxfReadOptions, DxfReadProgress, DxfSourceId, ascii_group::trim_horizontal_ascii,
+    ascii_index::DxfAsciiStructureTracker, dialect::DxfAcadVersionTracker,
 };
 
 const HASH_CHUNK_BYTES: usize = 64 * 1024;
@@ -92,6 +93,7 @@ pub struct DxfAsciiRawDocument<'a> {
     diagnostics_truncated: bool,
     conformance: DxfAsciiDocumentConformance,
     acad_version: DxfAcadVersionReport,
+    structure_index: DxfAsciiStructureIndex,
     eof_occurrence: Option<u64>,
     trailing_span: Option<ByteSpan>,
 }
@@ -107,6 +109,7 @@ impl fmt::Debug for DxfAsciiRawDocument<'_> {
             .field("diagnostics_truncated", &self.diagnostics_truncated)
             .field("conformance", &self.conformance)
             .field("acad_version", &self.acad_version.state())
+            .field("sections", &self.structure_index.sections().len())
             .field("eof_occurrence", &self.eof_occurrence)
             .field("trailing_span", &self.trailing_span)
             .finish()
@@ -129,14 +132,16 @@ impl<'a> DxfAsciiRawDocument<'a> {
         let limits = options.resource_profile().limits();
         let mut groups = Vec::new();
         let mut acad_version_tracker = DxfAcadVersionTracker::default();
+        let mut structure_tracker = DxfAsciiStructureTracker::new(limits.max_diagnostics());
         let mut eof_occurrence = None;
         let mut eof_recovered = false;
         let mut last_reported = 0_u64;
 
         while let Some(group) = cursor.next_group(cancellation)? {
-            acad_version_tracker.observe(group)?;
-            let compact = DxfAsciiRawGroup::from_borrowed(group)?;
             let eof_match = classify_eof(group, options.mode());
+            acad_version_tracker.observe(group)?;
+            structure_tracker.observe(group, eof_match.is_some())?;
+            let compact = DxfAsciiRawGroup::from_borrowed(group)?;
             groups.try_reserve(1).map_err(|_| out_of_memory())?;
             groups.push(compact);
 
@@ -213,6 +218,8 @@ impl<'a> DxfAsciiRawDocument<'a> {
         let source_id =
             hashing_source.finalize(cancellation, observer, source_len, &mut last_reported)?;
         let acad_version = acad_version_tracker.finish(source_id)?;
+        let group_count = u64::try_from(groups.len()).map_err(|_| invalid_source_data())?;
+        let structure_index = structure_tracker.finish(source_id, group_count)?;
         let conformance = if diagnostics.is_empty() {
             DxfAsciiDocumentConformance::Strict
         } else {
@@ -228,6 +235,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             diagnostics_truncated,
             conformance,
             acad_version,
+            structure_index,
             eof_occurrence,
             trailing_span,
         })
@@ -266,6 +274,11 @@ impl<'a> DxfAsciiRawDocument<'a> {
     #[must_use]
     pub const fn acad_version_report(&self) -> &DxfAcadVersionReport {
         &self.acad_version
+    }
+
+    #[must_use]
+    pub const fn structure_index(&self) -> &DxfAsciiStructureIndex {
+        &self.structure_index
     }
 
     #[must_use]
@@ -512,6 +525,10 @@ mod tests {
         assert!(document.diagnostics().is_empty());
         assert_eq!(source.bytes_read(), BASE.len() as u64);
         assert_eq!(progress, [0, BASE.len() as u64]);
+        assert_eq!(document.structure_index().total_group_count(), 4);
+        assert_eq!(document.structure_index().inside_section_group_count(), 3);
+        assert_eq!(document.structure_index().outside_section_group_count(), 1);
+        assert_eq!(document.structure_index().zero_group_count(), 3);
 
         let expected = Sha256::digest(BASE);
         assert_eq!(
