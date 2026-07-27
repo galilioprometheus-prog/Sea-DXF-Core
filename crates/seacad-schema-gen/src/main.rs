@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     env,
     ffi::OsStr,
     fmt::{self, Write as _},
@@ -23,16 +23,15 @@ const OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_schema.rs
 #[serde(deny_unknown_fields)]
 struct SchemaManifest {
     schema_version: String,
+    sources: String,
     families: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct SchemaFamily {
+struct SourceRegistry {
     schema_version: String,
-    namespace: String,
-    source: SchemaSource,
-    fields: Vec<SchemaField>,
+    sources: Vec<SchemaSource>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -41,6 +40,15 @@ struct SchemaSource {
     id: String,
     topic_id: String,
     normalized_facts_sha256: String,
+    evidence_kind: EvidenceKind,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct SchemaFamily {
+    schema_version: String,
+    namespace: String,
+    fields: Vec<SchemaField>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -87,6 +95,12 @@ enum DefaultPolicy {
 #[serde(rename_all = "snake_case")]
 enum ReviewState {
     ShapeOnly,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EvidenceKind {
+    Row,
 }
 
 #[derive(Clone, Copy)]
@@ -165,10 +179,10 @@ fn usage_error() -> SchemaError {
 
 fn run(mode: Mode) -> Result<(), SchemaError> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let (manifest, families) = load_schema(&root)?;
-    validate_schema(&manifest, &families)?;
-    let receipt = normalized_receipt(&manifest, &families)?;
-    let output = render_registry(&manifest, &families, &receipt)?;
+    let (manifest, sources, families) = load_schema(&root)?;
+    validate_schema(&manifest, &sources, &families)?;
+    let receipt = normalized_receipt(&manifest, &sources, &families)?;
+    let output = render_registry(&manifest, &sources, &families, &receipt)?;
     let target = root.join(OUTPUT_PATH);
     match mode {
         Mode::Check => check_output(&target, &output),
@@ -176,8 +190,20 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
     }
 }
 
-fn load_schema(root: &Path) -> Result<(SchemaManifest, Vec<SchemaFamily>), SchemaError> {
+fn load_schema(
+    root: &Path,
+) -> Result<(SchemaManifest, SourceRegistry, Vec<SchemaFamily>), SchemaError> {
     let manifest: SchemaManifest = read_json(root, MANIFEST_PATH, "root")?;
+    if !valid_family_filename(&manifest.sources) {
+        return Err(SchemaError::new(
+            "SCHEMA_SOURCE_PATH",
+            MANIFEST_PATH,
+            "sources",
+            "source registry path must be one lowercase .json filename",
+        ));
+    }
+    let sources_path = format!("schema/dxf/v1/{}", manifest.sources);
+    let sources = read_json(root, &sources_path, "root")?;
     let mut families = Vec::new();
     families
         .try_reserve(manifest.families.len())
@@ -201,7 +227,7 @@ fn load_schema(root: &Path) -> Result<(SchemaManifest, Vec<SchemaFamily>), Schem
         let path = format!("schema/dxf/v1/{relative}");
         families.push(read_json(root, &path, "root")?);
     }
-    Ok((manifest, families))
+    Ok((manifest, sources, families))
 }
 
 fn read_json<T: for<'de> Deserialize<'de>>(
@@ -217,6 +243,7 @@ fn read_json<T: for<'de> Deserialize<'de>>(
 
 fn validate_schema(
     manifest: &SchemaManifest,
+    registry: &SourceRegistry,
     families: &[SchemaFamily],
 ) -> Result<(), SchemaError> {
     if manifest.schema_version != "dxf.v1" {
@@ -227,6 +254,16 @@ fn validate_schema(
             "expected dxf.v1",
         ));
     }
+    let sources_path = format!("schema/dxf/v1/{}", manifest.sources);
+    if registry.schema_version != manifest.schema_version {
+        return Err(SchemaError::new(
+            "SCHEMA_VERSION",
+            &sources_path,
+            "schema_version",
+            "source registry version does not match manifest",
+        ));
+    }
+    let sources = validate_sources(registry, &sources_path)?;
     if families.is_empty() || families.len() != manifest.families.len() {
         return Err(SchemaError::new(
             "SCHEMA_FAMILY_COUNT",
@@ -254,32 +291,68 @@ fn validate_schema(
                 "namespace must be unique lowercase ASCII",
             ));
         }
-        validate_source(&family.source, &path)?;
-        validate_fields(family, &path)?;
+        validate_fields(family, &path, &sources)?;
     }
     Ok(())
 }
 
-fn validate_source(source: &SchemaSource, path: &str) -> Result<(), SchemaError> {
-    if !valid_id(&source.id)
-        || !source.topic_id.starts_with("GUID-")
-        || !source
-            .topic_id
-            .bytes()
-            .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit() || byte == b'-')
-        || !valid_sha256(&source.normalized_facts_sha256)
-    {
+fn validate_sources<'a>(
+    registry: &'a SourceRegistry,
+    path: &str,
+) -> Result<BTreeMap<&'a str, &'a SchemaSource>, SchemaError> {
+    if registry.sources.is_empty() {
         return Err(SchemaError::new(
-            "SCHEMA_SOURCE",
+            "SCHEMA_SOURCE_COUNT",
             path,
-            "source",
-            "source id, topic id, or normalized SHA-256 is invalid",
+            "sources",
+            "source registry must contain at least one source",
         ));
     }
-    Ok(())
+    let mut sources = BTreeMap::new();
+    let mut source_receipts = BTreeSet::new();
+    let mut previous_id: Option<&str> = None;
+    for (index, source) in registry.sources.iter().enumerate() {
+        let entry = format!("sources[{index}]");
+        if !valid_id(&source.id)
+            || previous_id.is_some_and(|previous| previous >= source.id.as_str())
+            || sources.insert(source.id.as_str(), source).is_some()
+        {
+            return Err(SchemaError::new(
+                "SCHEMA_SOURCE_ID",
+                path,
+                format!("{entry}.id"),
+                "source ids must be unique lowercase ASCII in increasing order",
+            ));
+        }
+        previous_id = Some(&source.id);
+        if !valid_topic_id(&source.topic_id) || !valid_sha256(&source.normalized_facts_sha256) {
+            return Err(SchemaError::new(
+                "SCHEMA_SOURCE",
+                path,
+                entry,
+                "source topic or normalized SHA-256 is invalid",
+            ));
+        }
+        if !source_receipts.insert((
+            source.topic_id.as_str(),
+            source.normalized_facts_sha256.as_str(),
+        )) {
+            return Err(SchemaError::new(
+                "SCHEMA_SOURCE_RECEIPT",
+                path,
+                entry,
+                "source topic and normalized SHA-256 pair must be unique",
+            ));
+        }
+    }
+    Ok(sources)
 }
 
-fn validate_fields(family: &SchemaFamily, path: &str) -> Result<(), SchemaError> {
+fn validate_fields(
+    family: &SchemaFamily,
+    path: &str,
+    sources: &BTreeMap<&str, &SchemaSource>,
+) -> Result<(), SchemaError> {
     if family.fields.is_empty() {
         return Err(SchemaError::new(
             "SCHEMA_FIELD_COUNT",
@@ -318,14 +391,20 @@ fn validate_fields(family: &SchemaFamily, path: &str) -> Result<(), SchemaError>
                 "DXF name must be unique canonical uppercase ASCII",
             ));
         }
-        if field.source_id != family.source.id
-            || field.evidence != format!("row:{}", field.dxf_name)
-        {
+        let source = sources.get(field.source_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                path,
+                format!("{entry}.source_id"),
+                "field references an unknown source id",
+            )
+        })?;
+        if !evidence_matches(source.evidence_kind, field) {
             return Err(SchemaError::new(
                 "SCHEMA_EVIDENCE",
                 path,
-                format!("{entry}.source_id"),
-                "field must cite its family's source and exact normalized row",
+                format!("{entry}.evidence"),
+                "field evidence does not match its source evidence kind",
             ));
         }
         validate_wire_shape(field, path, &entry)?;
@@ -351,10 +430,12 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
 
 fn normalized_receipt(
     manifest: &SchemaManifest,
+    sources: &SourceRegistry,
     families: &[SchemaFamily],
 ) -> Result<String, SchemaError> {
     let mut hasher = Sha256::new();
     update_normalized_hash(&mut hasher, manifest, "manifest")?;
+    update_normalized_hash(&mut hasher, sources, "sources")?;
     for (index, family) in families.iter().enumerate() {
         update_normalized_hash(&mut hasher, family, &format!("families[{index}]"))?;
     }
@@ -382,9 +463,15 @@ fn update_normalized_hash<T: Serialize>(
 
 fn render_registry(
     manifest: &SchemaManifest,
+    registry: &SourceRegistry,
     families: &[SchemaFamily],
     receipt: &str,
 ) -> Result<String, SchemaError> {
+    let sources: BTreeMap<_, _> = registry
+        .sources
+        .iter()
+        .map(|source| (source.id.as_str(), source))
+        .collect();
     let mut output = String::new();
     writeln!(
         output,
@@ -406,6 +493,7 @@ fn render_registry(
     output.push_str("    pub group_codes: &'static [i16],\n");
     output.push_str("    pub storage: DxfSchemaStorageKind,\n");
     output.push_str("    pub source_id: &'static str,\n    pub source_topic_id: &'static str,\n");
+    output.push_str("    pub source_facts_sha256: &'static str,\n");
     output.push_str("    pub evidence: &'static str,\n    pub shape_only: bool,\n}\n\n");
     writeln!(
         output,
@@ -417,6 +505,14 @@ fn render_registry(
     output.push_str("pub(crate) const HEADER_FIELDS: &[DxfHeaderSchemaField] = &[\n");
     for family in families {
         for field in &family.fields {
+            let source = sources.get(field.source_id.as_str()).ok_or_else(|| {
+                SchemaError::new(
+                    "SCHEMA_SOURCE_REF",
+                    OUTPUT_PATH,
+                    &field.id,
+                    "validated field source disappeared before rendering",
+                )
+            })?;
             output.push_str("    DxfHeaderSchemaField {\n");
             writeln!(output, "        id: {:?},", field.id)?;
             writeln!(output, "        dxf_name: {:?},", field.dxf_name)?;
@@ -427,10 +523,11 @@ fn render_registry(
                 storage_variant(field.storage)
             )?;
             writeln!(output, "        source_id: {:?},", field.source_id)?;
+            writeln!(output, "        source_topic_id: {:?},", source.topic_id)?;
             writeln!(
                 output,
-                "        source_topic_id: {:?},",
-                family.source.topic_id
+                "        source_facts_sha256: {:?},",
+                source.normalized_facts_sha256
             )?;
             writeln!(output, "        evidence: {:?},", field.evidence)?;
             output.push_str("        shape_only: true,\n    },\n");
@@ -444,6 +541,12 @@ fn storage_variant(storage: StorageKind) -> &'static str {
     match storage {
         StorageKind::ExactText => "ExactText",
         StorageKind::Handle => "Handle",
+    }
+}
+
+fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
+    match kind {
+        EvidenceKind::Row => field.evidence == format!("row:{}", field.dxf_name),
     }
 }
 
@@ -498,16 +601,34 @@ fn write_output(target: &Path, output: &str) -> Result<(), SchemaError> {
 }
 
 fn valid_family_filename(value: &str) -> bool {
-    value.ends_with(".json")
+    value.len() > ".json".len()
+        && value.ends_with(".json")
+        && value.as_bytes()[0].is_ascii_lowercase()
         && value.bytes().all(|byte| {
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'_' | b'.')
         })
 }
 
 fn valid_id(value: &str) -> bool {
-    !value.is_empty()
+    value.as_bytes().first().is_some_and(u8::is_ascii_lowercase)
+        && !value.ends_with('.')
+        && !value.contains("..")
         && value.bytes().all(|byte| {
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'_' | b'.')
+        })
+}
+
+fn valid_topic_id(value: &str) -> bool {
+    let Some(guid) = value.strip_prefix("GUID-") else {
+        return false;
+    };
+    guid.len() == 36
+        && guid.bytes().enumerate().all(|(index, byte)| {
+            if matches!(index, 8 | 13 | 18 | 23) {
+                byte == b'-'
+            } else {
+                byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte)
+            }
         })
 }
 
@@ -544,22 +665,23 @@ mod tests {
     #[test]
     fn approved_bootstrap_is_valid_and_deterministic() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let (manifest, families) = load_schema(&root)?;
-        validate_schema(&manifest, &families)?;
-        let first = normalized_receipt(&manifest, &families)?;
-        let second = normalized_receipt(&manifest, &families)?;
+        let (manifest, sources, families) = load_schema(&root)?;
+        validate_schema(&manifest, &sources, &families)?;
+        let first = normalized_receipt(&manifest, &sources, &families)?;
+        let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
         assert_eq!(first.len(), 64);
         assert_eq!(
-            render_registry(&manifest, &families, &first)?,
-            render_registry(&manifest, &families, &second)?
+            render_registry(&manifest, &sources, &families, &first)?,
+            render_registry(&manifest, &sources, &families, &second)?
         );
         Ok(())
     }
 
     #[test]
     fn unknown_manifest_key_is_rejected() {
-        let json = r#"{"schema_version":"dxf.v1","families":[],"typo":true}"#;
+        let json =
+            r#"{"schema_version":"dxf.v1","sources":"sources.json","families":[],"typo":true}"#;
         let result = serde_json::from_str::<SchemaManifest>(json);
         assert!(result.is_err());
     }
@@ -567,10 +689,10 @@ mod tests {
     #[test]
     fn duplicate_field_id_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let (manifest, mut families) = load_schema(&root)?;
+        let (manifest, sources, mut families) = load_schema(&root)?;
         let duplicate = families[0].fields[0].clone();
         families[0].fields.insert(1, duplicate);
-        let error = validate_schema(&manifest, &families)
+        let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("duplicate schema field unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_FIELD_ID");
@@ -581,9 +703,9 @@ mod tests {
     #[test]
     fn invalid_wire_shape_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let (manifest, mut families) = load_schema(&root)?;
+        let (manifest, sources, mut families) = load_schema(&root)?;
         families[0].fields[0].group_codes = vec![70];
-        let error = validate_schema(&manifest, &families)
+        let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("invalid wire shape unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
@@ -594,11 +716,62 @@ mod tests {
     #[test]
     fn mismatched_source_reference_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let (manifest, mut families) = load_schema(&root)?;
+        let (manifest, sources, mut families) = load_schema(&root)?;
         families[0].fields[0].source_id = "autodesk.other".to_string();
-        let error = validate_schema(&manifest, &families)
+        let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("mismatched source reference unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_SOURCE_REF");
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_source_id_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, mut sources, families) = load_schema(&root)?;
+        sources.sources.push(sources.sources[0].clone());
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("duplicate source id unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_SOURCE_ID");
+        assert_eq!(error.path, "schema/dxf/v1/sources.json");
+        Ok(())
+    }
+
+    #[test]
+    fn invalid_source_receipt_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, mut sources, families) = load_schema(&root)?;
+        sources.sources[0].normalized_facts_sha256 = "invalid".to_string();
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid source receipt unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_SOURCE");
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_topic_receipt_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, mut sources, families) = load_schema(&root)?;
+        let mut duplicate = sources.sources[0].clone();
+        duplicate.id = "autodesk.header.copy".to_string();
+        sources.sources.push(duplicate);
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("duplicate source receipt unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_SOURCE_RECEIPT");
+        Ok(())
+    }
+
+    #[test]
+    fn wrong_evidence_anchor_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        families[0].fields[0].evidence = "row:$OTHER".to_string();
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("wrong evidence anchor unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_EVIDENCE");
         Ok(())
     }

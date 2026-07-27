@@ -1,0 +1,11 @@
+{
+  "schema_version": "dxf.v1",
+  "sources": [
+    {
+      "id": "autodesk.header.2026",
+      "topic_id": "GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A",
+      "normalized_facts_sha256": "d1034c4246758f368ac79982fa1c21d59328851d9fdca8ccebe944f20f71cfaf",
+      "evidence_kind": "row"
+    }
+  ]
+}

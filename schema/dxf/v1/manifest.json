@@ -1,5 +1,6 @@
 {
   "schema_version": "dxf.v1",
+  "sources": "sources.json",
   "families": [
     "header.bootstrap.json"
   ]
