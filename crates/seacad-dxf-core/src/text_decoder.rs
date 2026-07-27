@@ -136,19 +136,44 @@ impl DxfTextDecoder {
         destination: &mut [u8],
     ) -> DxfTextDecodeResult {
         if source.is_empty() {
-            return DxfTextDecodeResult::new(DxfTextDecodeStatus::Complete, 0, 0);
+            return DxfTextDecodeResult::from_parts(DxfTextDecodeStatus::Complete, 0, 0);
         }
         if destination.len() < 4 {
-            return DxfTextDecodeResult::new(DxfTextDecodeStatus::OutputFull, 0, 0);
+            return DxfTextDecodeResult::from_parts(DxfTextDecodeStatus::OutputFull, 0, 0);
         }
 
-        let encoding = match self {
+        let mut session = DxfTextDecoderSession::new(self);
+        session.decode(source, destination, true)
+    }
+
+    fn encoding(self) -> &'static Encoding {
+        match self {
             Self::Utf8 => UTF_8,
             Self::Legacy(code_page) => code_page.encoding(),
-        };
-        let mut decoder = encoding.new_decoder_without_bom_handling();
+        }
+    }
+}
+
+pub(crate) struct DxfTextDecoderSession {
+    decoder: encoding_rs::Decoder,
+}
+
+impl DxfTextDecoderSession {
+    pub(crate) fn new(decoder: DxfTextDecoder) -> Self {
+        Self {
+            decoder: decoder.encoding().new_decoder_without_bom_handling(),
+        }
+    }
+
+    pub(crate) fn decode(
+        &mut self,
+        source: &[u8],
+        destination: &mut [u8],
+        last: bool,
+    ) -> DxfTextDecodeResult {
         let (status, read, written) =
-            decoder.decode_to_utf8_without_replacement(source, destination, true);
+            self.decoder
+                .decode_to_utf8_without_replacement(source, destination, last);
         let status = match status {
             DecoderResult::InputEmpty => DxfTextDecodeStatus::Complete,
             DecoderResult::OutputFull => DxfTextDecodeStatus::OutputFull,
@@ -159,7 +184,7 @@ impl DxfTextDecoder {
                 }
             }
         };
-        DxfTextDecodeResult::new(status, read, written)
+        DxfTextDecodeResult::from_parts(status, read, written)
     }
 }
 
@@ -184,7 +209,11 @@ pub struct DxfTextDecodeResult {
 }
 
 impl DxfTextDecodeResult {
-    const fn new(status: DxfTextDecodeStatus, read: usize, written: usize) -> Self {
+    pub(crate) const fn from_parts(
+        status: DxfTextDecodeStatus,
+        read: usize,
+        written: usize,
+    ) -> Self {
         Self {
             status,
             read,
@@ -361,7 +390,7 @@ mod tests {
             .decode_complete_to_utf8_without_replacement(b"\x82\xA0", &mut tiny);
         assert_eq!(
             blocked,
-            DxfTextDecodeResult::new(DxfTextDecodeStatus::OutputFull, 0, 0)
+            DxfTextDecodeResult::from_parts(DxfTextDecodeStatus::OutputFull, 0, 0)
         );
         assert_eq!(tiny, [0; 3]);
 

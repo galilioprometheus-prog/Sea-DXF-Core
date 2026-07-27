@@ -21,6 +21,7 @@ mod source;
 mod source_id;
 mod source_scan;
 mod text_decoder;
+mod text_view;
 mod verbatim;
 
 pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
@@ -39,7 +40,7 @@ pub use dialect::{
 };
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
-    DxfTextEncodingReport,
+    DxfTextEncodingReport, DxfTextEncodingResolution,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
@@ -54,6 +55,7 @@ pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
 pub use text_decoder::{
     DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
 };
+pub use text_view::DxfTextValueDecodeReceipt;
 pub use verbatim::DxfVerbatimWriteReceipt;
 
 /// Returns the SeaCad DXF core package version.

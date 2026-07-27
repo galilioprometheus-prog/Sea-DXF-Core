@@ -4,7 +4,7 @@ use std::io;
 
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiGroup, DxfDiagnostic, DxfDiagnosticCode,
-    DxfError, DxfGroupCode, DxfIoOperation, DxfSourceId,
+    DxfError, DxfGroupCode, DxfIoOperation, DxfLegacyCodePage, DxfSourceId, DxfTextDecoder,
 };
 
 /// Classification of the group immediately following one `$DWGCODEPAGE`.
@@ -76,11 +76,39 @@ pub enum DxfTextEncodingPolicy {
     Indeterminate,
 }
 
+/// Exact document-level selection of a byte-to-Unicode decoder.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfTextEncodingResolution {
+    Utf8(DxfAcadVersion),
+    Legacy {
+        version: DxfAcadVersion,
+        code_page: DxfLegacyCodePage,
+    },
+    UnsupportedLegacy {
+        version: DxfAcadVersion,
+        declaration_span: ByteSpan,
+    },
+    Indeterminate,
+}
+
+impl DxfTextEncodingResolution {
+    #[must_use]
+    pub const fn decoder(self) -> Option<DxfTextDecoder> {
+        match self {
+            Self::Utf8(_) => Some(DxfTextDecoder::Utf8),
+            Self::Legacy { code_page, .. } => Some(DxfTextDecoder::Legacy(code_page)),
+            Self::UnsupportedLegacy { .. } | Self::Indeterminate => None,
+        }
+    }
+}
+
 /// Immutable encoding decision tied to raw source identity and byte spans.
 #[derive(Debug)]
 pub struct DxfTextEncodingReport {
     source_id: DxfSourceId,
     policy: DxfTextEncodingPolicy,
+    resolution: DxfTextEncodingResolution,
     code_page_state: DxfCodePageState,
     occurrence_count: u64,
     primary: Option<DxfCodePageOccurrence>,
@@ -97,6 +125,11 @@ impl DxfTextEncodingReport {
     #[must_use]
     pub const fn policy(&self) -> DxfTextEncodingPolicy {
         self.policy
+    }
+
+    #[must_use]
+    pub const fn resolution(&self) -> DxfTextEncodingResolution {
+        self.resolution
     }
 
     #[must_use]
@@ -139,6 +172,7 @@ pub(crate) struct DxfTextEncodingTracker {
     pending: Option<VariableMarker>,
     occurrence_count: u64,
     primary: Option<DxfCodePageOccurrence>,
+    primary_legacy_code_page: Option<DxfLegacyCodePage>,
     conflicting: Option<DxfCodePageOccurrence>,
 }
 
@@ -186,13 +220,16 @@ impl DxfTextEncodingTracker {
         acad_version_state: DxfAcadVersionState,
     ) -> Result<DxfTextEncodingReport, DxfError> {
         if let Some(variable) = self.pending.take() {
-            self.record_occurrence(DxfCodePageOccurrence {
-                variable_occurrence: variable.occurrence,
-                variable_span: variable.span,
-                value_occurrence: None,
-                value_span: None,
-                value: DxfCodePageValue::MissingValue,
-            })?;
+            self.record_occurrence(
+                DxfCodePageOccurrence {
+                    variable_occurrence: variable.occurrence,
+                    variable_span: variable.span,
+                    value_occurrence: None,
+                    value_span: None,
+                    value: DxfCodePageValue::MissingValue,
+                },
+                None,
+            )?;
         }
 
         let code_page_state = if self.occurrence_count == 0 {
@@ -221,6 +258,25 @@ impl DxfTextEncodingTracker {
                 DxfTextEncodingPolicy::LegacyDeclared(version)
             }
             _ => DxfTextEncodingPolicy::Indeterminate,
+        };
+        let resolution = match policy {
+            DxfTextEncodingPolicy::Utf8(version) => DxfTextEncodingResolution::Utf8(version),
+            DxfTextEncodingPolicy::LegacyDeclared(version) => {
+                match (self.primary_legacy_code_page, self.primary) {
+                    (Some(code_page), _) => {
+                        DxfTextEncodingResolution::Legacy { version, code_page }
+                    }
+                    (None, Some(occurrence)) => match occurrence.value_span() {
+                        Some(declaration_span) => DxfTextEncodingResolution::UnsupportedLegacy {
+                            version,
+                            declaration_span,
+                        },
+                        None => DxfTextEncodingResolution::Indeterminate,
+                    },
+                    (None, None) => DxfTextEncodingResolution::Indeterminate,
+                }
+            }
+            DxfTextEncodingPolicy::Indeterminate => DxfTextEncodingResolution::Indeterminate,
         };
 
         let mut diagnostics = Vec::new();
@@ -254,10 +310,23 @@ impl DxfTextEncodingTracker {
                 ),
             )?;
         }
+        if let DxfTextEncodingResolution::UnsupportedLegacy {
+            declaration_span, ..
+        } = resolution
+        {
+            push_diagnostic(
+                &mut diagnostics,
+                DxfDiagnostic::new(
+                    DxfDiagnosticCode::CODEPAGE_UNSUPPORTED,
+                    Some(declaration_span),
+                ),
+            )?;
+        }
 
         Ok(DxfTextEncodingReport {
             source_id,
             policy,
+            resolution,
             code_page_state,
             occurrence_count: self.occurrence_count,
             primary: self.primary,
@@ -271,29 +340,43 @@ impl DxfTextEncodingTracker {
         variable: VariableMarker,
         candidate: DxfAsciiGroup<'_>,
     ) -> Result<(), DxfError> {
-        let value = if candidate.group_code().value() != 3 {
-            DxfCodePageValue::InvalidGroupCode(candidate.group_code())
+        let (value, legacy_code_page) = if candidate.group_code().value() != 3 {
+            (
+                DxfCodePageValue::InvalidGroupCode(candidate.group_code()),
+                None,
+            )
         } else if candidate.raw_value().is_empty() {
-            DxfCodePageValue::Empty
+            (DxfCodePageValue::Empty, None)
         } else {
-            DxfCodePageValue::Declared
+            (
+                DxfCodePageValue::Declared,
+                DxfLegacyCodePage::from_dwg_codepage_token(candidate.raw_value()),
+            )
         };
-        self.record_occurrence(DxfCodePageOccurrence {
-            variable_occurrence: variable.occurrence,
-            variable_span: variable.span,
-            value_occurrence: Some(compact_occurrence(candidate.occurrence())?),
-            value_span: Some(candidate.value_line().content_span()),
-            value,
-        })
+        self.record_occurrence(
+            DxfCodePageOccurrence {
+                variable_occurrence: variable.occurrence,
+                variable_span: variable.span,
+                value_occurrence: Some(compact_occurrence(candidate.occurrence())?),
+                value_span: Some(candidate.value_line().content_span()),
+                value,
+            },
+            legacy_code_page,
+        )
     }
 
-    fn record_occurrence(&mut self, occurrence: DxfCodePageOccurrence) -> Result<(), DxfError> {
+    fn record_occurrence(
+        &mut self,
+        occurrence: DxfCodePageOccurrence,
+        legacy_code_page: Option<DxfLegacyCodePage>,
+    ) -> Result<(), DxfError> {
         self.occurrence_count = self
             .occurrence_count
             .checked_add(1)
             .ok_or_else(invalid_source_data)?;
         if self.primary.is_none() {
             self.primary = Some(occurrence);
+            self.primary_legacy_code_page = legacy_code_page;
         } else if self.conflicting.is_none() {
             self.conflicting = Some(occurrence);
         }
@@ -332,11 +415,12 @@ mod tests {
 
     use super::{
         DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
-        DxfTextEncodingReport,
+        DxfTextEncodingReport, DxfTextEncodingResolution,
     };
     use crate::{
         DxfAcadVersion, DxfAsciiRawDocument, DxfCancellationToken, DxfDiagnosticCode, DxfGroupCode,
-        DxfMemorySource, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+        DxfLegacyCodePage, DxfMemorySource, DxfReadOptions, DxfResourceProfile,
+        NoopDxfReadObserver,
     };
 
     #[test]
@@ -353,8 +437,18 @@ mod tests {
             } else {
                 DxfTextEncodingPolicy::LegacyDeclared(version)
             };
+            let expected_resolution = if version.uses_utf8_string_storage() {
+                DxfTextEncodingResolution::Utf8(version)
+            } else {
+                DxfTextEncodingResolution::Legacy {
+                    version,
+                    code_page: DxfLegacyCodePage::Windows1252,
+                }
+            };
             assert_eq!(report.source_id(), document.source_id());
             assert_eq!(report.policy(), expected);
+            assert_eq!(report.resolution(), expected_resolution);
+            assert!(report.resolution().decoder().is_some());
             assert_eq!(report.code_page_state(), DxfCodePageState::Declared);
             assert_eq!(report.occurrence_count(), 1);
             assert!(report.diagnostics().is_empty());
@@ -388,6 +482,10 @@ mod tests {
             DxfTextEncodingPolicy::Utf8(DxfAcadVersion::Ac1021)
         );
         assert_eq!(
+            modern.text_encoding_report().resolution(),
+            DxfTextEncodingResolution::Utf8(DxfAcadVersion::Ac1021)
+        );
+        assert_eq!(
             modern.text_encoding_report().code_page_state(),
             DxfCodePageState::Absent
         );
@@ -399,6 +497,10 @@ mod tests {
         assert_eq!(
             legacy.text_encoding_report().policy(),
             DxfTextEncodingPolicy::Indeterminate
+        );
+        assert_eq!(
+            legacy.text_encoding_report().resolution(),
+            DxfTextEncodingResolution::Indeterminate
         );
         assert_eq!(
             legacy.text_encoding_report().diagnostics()[0].code(),
@@ -422,6 +524,10 @@ mod tests {
         assert_eq!(
             report.policy(),
             DxfTextEncodingPolicy::Utf8(DxfAcadVersion::Ac1021)
+        );
+        assert_eq!(
+            report.resolution(),
+            DxfTextEncodingResolution::Utf8(DxfAcadVersion::Ac1021)
         );
         assert_eq!(report.code_page_state(), DxfCodePageState::Invalid);
         assert_eq!(
@@ -452,6 +558,10 @@ mod tests {
             let document = open(&source, DxfReadOptions::strict())?;
             let report = document.text_encoding_report();
             assert_eq!(report.policy(), DxfTextEncodingPolicy::Indeterminate);
+            assert_eq!(
+                report.resolution(),
+                DxfTextEncodingResolution::Indeterminate
+            );
             assert_eq!(report.code_page_state(), DxfCodePageState::Invalid);
             assert_eq!(required_primary(report)?.value(), expected);
             assert_eq!(
@@ -465,6 +575,10 @@ mod tests {
         let missing = open(&missing_source, DxfReadOptions::compatible())?;
         let missing_report = missing.text_encoding_report();
         assert_eq!(missing_report.code_page_state(), DxfCodePageState::Invalid);
+        assert_eq!(
+            missing_report.resolution(),
+            DxfTextEncodingResolution::Indeterminate
+        );
         assert_eq!(
             required_primary(missing_report)?.value(),
             DxfCodePageValue::MissingValue
@@ -480,6 +594,10 @@ mod tests {
         let document = open(&source, DxfReadOptions::strict())?;
         let report = document.text_encoding_report();
         assert_eq!(report.policy(), DxfTextEncodingPolicy::Indeterminate);
+        assert_eq!(
+            report.resolution(),
+            DxfTextEncodingResolution::Indeterminate
+        );
         assert_eq!(report.code_page_state(), DxfCodePageState::Ambiguous);
         assert_eq!(report.occurrence_count(), 3);
         assert_eq!(
@@ -512,6 +630,10 @@ mod tests {
         assert_eq!(report.occurrence_count(), 0);
         assert_eq!(report.policy(), DxfTextEncodingPolicy::Indeterminate);
         assert_eq!(
+            report.resolution(),
+            DxfTextEncodingResolution::Indeterminate
+        );
+        assert_eq!(
             report.diagnostics()[0].code(),
             DxfDiagnosticCode::CODEPAGE_REQUIRED
         );
@@ -531,7 +653,55 @@ mod tests {
             document.text_encoding_report().policy(),
             DxfTextEncodingPolicy::Indeterminate
         );
+        assert_eq!(
+            document.text_encoding_report().resolution(),
+            DxfTextEncodingResolution::Indeterminate
+        );
         assert!(document.text_encoding_report().diagnostics().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn unsupported_legacy_token_is_source_anchored_without_fallback() -> Result<(), Box<dyn Error>>
+    {
+        let bytes = fixture("AC1018", Some((3, "ANSI_1361")));
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open(&source, DxfReadOptions::strict())?;
+        let report = document.text_encoding_report();
+        let occurrence = required_primary(report)?;
+        let declaration_span = occurrence
+            .value_span()
+            .ok_or(io::Error::other("missing declaration span"))?;
+        assert_eq!(
+            report.policy(),
+            DxfTextEncodingPolicy::LegacyDeclared(DxfAcadVersion::Ac1018)
+        );
+        assert_eq!(
+            report.resolution(),
+            DxfTextEncodingResolution::UnsupportedLegacy {
+                version: DxfAcadVersion::Ac1018,
+                declaration_span,
+            }
+        );
+        assert_eq!(report.resolution().decoder(), None);
+        assert_eq!(report.diagnostics().len(), 1);
+        assert_eq!(
+            report.diagnostics()[0].code(),
+            DxfDiagnosticCode::CODEPAGE_UNSUPPORTED
+        );
+        assert_eq!(report.diagnostics()[0].span(), Some(declaration_span));
+        let mut token = [0_u8; 9];
+        document.read_span(declaration_span, &mut token)?;
+        assert_eq!(&token, b"ANSI_1361");
+
+        let modern_bytes = fixture("AC1021", Some((3, "ANSI_1361")));
+        let modern_source = DxfMemorySource::new(&modern_bytes, DxfResourceProfile::Safe)?;
+        let modern = open(&modern_source, DxfReadOptions::strict())?;
+        assert_eq!(
+            modern.text_encoding_report().resolution(),
+            DxfTextEncodingResolution::Utf8(DxfAcadVersion::Ac1021)
+        );
+        assert!(modern.text_encoding_report().diagnostics().is_empty());
         Ok(())
     }
 

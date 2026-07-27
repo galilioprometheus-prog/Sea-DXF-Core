@@ -7,7 +7,11 @@ use std::{
 
 use crate::{DxfError, DxfIoOperation, DxfResource, DxfResourceLimits, DxfResourceProfile};
 
-/// Immutable-length, thread-safe random access to source bytes.
+/// Stable-content, stable-length, thread-safe random access to source bytes.
+///
+/// Implementors and callers must prevent byte changes for the lifetime of any
+/// document borrowing the source. External mutation of an opened file violates
+/// this snapshot precondition.
 pub trait DxfByteSource: Send + Sync {
     /// Source length captured when this source was created.
     fn len(&self) -> u64;

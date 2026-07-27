@@ -152,6 +152,12 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Error,
     };
 
+    /// A legacy `$DWGCODEPAGE` token has no reviewed SeaCad decoder.
+    pub const CODEPAGE_UNSUPPORTED: Self = Self {
+        value: "DXF-E0423",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -291,6 +297,7 @@ mod tests {
             (DxfDiagnosticCode::CODEPAGE_REQUIRED, "DXF-E0420"),
             (DxfDiagnosticCode::CODEPAGE_VALUE_INVALID, "DXF-E0421"),
             (DxfDiagnosticCode::CODEPAGE_DUPLICATE, "DXF-E0422"),
+            (DxfDiagnosticCode::CODEPAGE_UNSUPPORTED, "DXF-E0423"),
         ];
         for (code, expected) in encoding_codes {
             let diagnostic = DxfDiagnostic::new(code, span);
