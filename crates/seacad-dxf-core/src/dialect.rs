@@ -37,6 +37,7 @@ impl DxfAcadVersion {
 
     pub const MIN_SUPPORTED: Self = Self::Ac1009;
     pub const MAX_SUPPORTED: Self = Self::Ac1032;
+    pub const MIN_UTF8_STRING_VERSION: Self = Self::Ac1021;
 
     #[must_use]
     pub const fn code(self) -> &'static str {
@@ -66,6 +67,15 @@ impl DxfAcadVersion {
             Self::Ac1027 => "AutoCAD 2013",
             Self::Ac1032 => "AutoCAD 2018",
         }
+    }
+
+    /// Autodesk writes AutoCAD 2007 DXF and later string values as UTF-8.
+    #[must_use]
+    pub const fn uses_utf8_string_storage(self) -> bool {
+        matches!(
+            self,
+            Self::Ac1021 | Self::Ac1024 | Self::Ac1027 | Self::Ac1032
+        )
     }
 
     #[must_use]
@@ -415,6 +425,10 @@ mod tests {
         assert_eq!(DxfAcadVersion::SUPPORTED.len(), expected.len());
         assert_eq!(DxfAcadVersion::MIN_SUPPORTED, DxfAcadVersion::Ac1009);
         assert_eq!(DxfAcadVersion::MAX_SUPPORTED, DxfAcadVersion::Ac1032);
+        assert_eq!(
+            DxfAcadVersion::MIN_UTF8_STRING_VERSION,
+            DxfAcadVersion::Ac1021
+        );
         for (index, (version, code, release)) in expected.iter().enumerate() {
             assert_eq!(DxfAcadVersion::SUPPORTED.get(index), Some(version));
             assert_eq!(version.code(), *code);
@@ -422,6 +436,10 @@ mod tests {
             assert_eq!(
                 DxfAcadVersion::from_code_bytes(code.as_bytes()),
                 Some(*version)
+            );
+            assert_eq!(
+                version.uses_utf8_string_storage(),
+                *version >= DxfAcadVersion::Ac1021
             );
         }
         assert_eq!(DxfAcadVersion::from_code_bytes(b"AC1006"), None);

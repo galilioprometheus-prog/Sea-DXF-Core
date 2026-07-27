@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M4.2 one-pass section accounting and compact group-0 index complete;
-awaiting user approval for M4.3 encoding/codepage views
+Status: M4.3a `$DWGCODEPAGE` discovery and version-backed text-storage policy
+complete; awaiting user approval for M4.3b replacement-free decoding
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

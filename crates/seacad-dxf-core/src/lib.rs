@@ -11,6 +11,7 @@ mod ascii_index;
 mod ascii_line;
 mod diagnostic;
 mod dialect;
+mod encoding;
 mod error;
 mod format_probe;
 mod limits;
@@ -34,6 +35,10 @@ pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSe
 pub use dialect::{
     DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
     DxfAcadVersionValue,
+};
+pub use encoding::{
+    DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
+    DxfTextEncodingReport,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

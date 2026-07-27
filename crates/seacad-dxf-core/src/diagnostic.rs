@@ -134,6 +134,24 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Error,
     };
 
+    /// A pre-2007 supported dialect has no exact `$DWGCODEPAGE`.
+    pub const CODEPAGE_REQUIRED: Self = Self {
+        value: "DXF-E0420",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// `$DWGCODEPAGE` has a missing, empty, or non-group-code 3 value.
+    pub const CODEPAGE_VALUE_INVALID: Self = Self {
+        value: "DXF-E0421",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// More than one exact `$DWGCODEPAGE` makes the declaration ambiguous.
+    pub const CODEPAGE_DUPLICATE: Self = Self {
+        value: "DXF-E0422",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -263,6 +281,18 @@ mod tests {
             (DxfDiagnosticCode::SECTION_UNCLOSED, "DXF-E0413"),
         ];
         for (code, expected) in structure_codes {
+            let diagnostic = DxfDiagnostic::new(code, span);
+            assert_eq!(diagnostic.code().as_str(), expected);
+            assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Error);
+            assert_eq!(diagnostic.span(), span);
+        }
+
+        let encoding_codes = [
+            (DxfDiagnosticCode::CODEPAGE_REQUIRED, "DXF-E0420"),
+            (DxfDiagnosticCode::CODEPAGE_VALUE_INVALID, "DXF-E0421"),
+            (DxfDiagnosticCode::CODEPAGE_DUPLICATE, "DXF-E0422"),
+        ];
+        for (code, expected) in encoding_codes {
             let diagnostic = DxfDiagnostic::new(code, span);
             assert_eq!(diagnostic.code().as_str(), expected);
             assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Error);
