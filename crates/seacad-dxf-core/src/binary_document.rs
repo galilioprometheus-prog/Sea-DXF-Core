@@ -4,13 +4,15 @@ use crate::{
     ByteSpan, DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAcadVersionReport, DxfAcadVersionState,
     DxfBinaryGroup, DxfBinaryGroupCodeEncoding, DxfBinaryGroupCursor, DxfBinaryStructureIndex,
     DxfBinaryValueFamily, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
-    DxfError, DxfGroupCode, DxfHandseedReport, DxfIoOperation, DxfPhysicalFormat, DxfReadMode,
-    DxfReadObserver, DxfReadOptions, DxfSourceId, DxfTextEncodingReport,
+    DxfError, DxfGroupCode, DxfHandseedReport, DxfHeaderVariableIndex, DxfIoOperation,
+    DxfPhysicalFormat, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfSourceId,
+    DxfTextEncodingReport,
     ascii_document::{SequentialHashingSource, notify_progress, report_parse_progress},
     ascii_index::DxfAsciiStructureTracker,
     dialect::DxfAcadVersionTracker,
     encoding::DxfTextEncodingTracker,
     handseed::DxfHandseedTracker,
+    header_index::DxfHeaderVariableTracker,
     probe_dxf_physical_format,
 };
 
@@ -106,6 +108,7 @@ pub struct DxfBinaryRawDocument<'a> {
     acad_version: DxfAcadVersionReport,
     text_encoding: DxfTextEncodingReport,
     handseed: DxfHandseedReport,
+    header_variables: DxfHeaderVariableIndex,
     structure_index: DxfBinaryStructureIndex,
     diagnostics: Box<[DxfDiagnostic]>,
     conformance: DxfBinaryDocumentConformance,
@@ -124,6 +127,7 @@ impl fmt::Debug for DxfBinaryRawDocument<'_> {
             .field("acad_version", &self.acad_version.state())
             .field("text_encoding", &self.text_encoding.policy())
             .field("handseed", &self.handseed.state())
+            .field("header_variables", &self.header_variables.variables().len())
             .field("sections", &self.structure_index.sections().len())
             .field("diagnostics", &self.diagnostics.len())
             .field("conformance", &self.conformance)
@@ -153,6 +157,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
         let mut dialect_tracker = DxfAcadVersionTracker::default();
         let mut text_encoding_tracker = DxfTextEncodingTracker::default();
         let mut handseed_tracker = DxfHandseedTracker::default();
+        let mut header_variable_tracker = DxfHeaderVariableTracker::default();
         let mut structure_tracker =
             DxfAsciiStructureTracker::new(options.resource_profile().limits().max_diagnostics());
         let mut eof_occurrence = None;
@@ -177,6 +182,13 @@ impl<'a> DxfBinaryRawDocument<'a> {
                 group.group_code,
                 payload,
                 group.payload_span,
+            )?;
+            header_variable_tracker.observe_raw(
+                group.occurrence,
+                group.group_code,
+                payload,
+                group.payload_span,
+                is_eof,
             )?;
             structure_tracker.observe_raw(
                 group.occurrence,
@@ -244,6 +256,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
             });
         }
         let group_count = u64::from(groups.len);
+        let header_variables = header_variable_tracker.finish(source_id, group_count)?;
         let structure_index = structure_tracker.finish(source_id, group_count)?;
         let conformance = if diagnostics.is_empty() {
             DxfBinaryDocumentConformance::Strict
@@ -260,6 +273,7 @@ impl<'a> DxfBinaryRawDocument<'a> {
             acad_version,
             text_encoding,
             handseed,
+            header_variables,
             structure_index,
             diagnostics: diagnostics.into_boxed_slice(),
             conformance,
@@ -310,6 +324,11 @@ impl<'a> DxfBinaryRawDocument<'a> {
     #[must_use]
     pub const fn handseed_report(&self) -> &DxfHandseedReport {
         &self.handseed
+    }
+
+    #[must_use]
+    pub const fn header_variable_index(&self) -> &DxfHeaderVariableIndex {
+        &self.header_variables
     }
 
     #[must_use]

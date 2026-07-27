@@ -5,10 +5,12 @@ use sha2::{Digest, Sha256};
 use crate::{
     ByteSpan, DxfAcadVersionReport, DxfAsciiGroup, DxfAsciiGroupCursor, DxfAsciiLineEnding,
     DxfAsciiStructureIndex, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
-    DxfError, DxfGroupCode, DxfHandseedReport, DxfIoOperation, DxfReadControl, DxfReadMode,
-    DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfSourceId, DxfTextEncodingReport,
-    ascii_group::trim_horizontal_ascii, ascii_index::DxfAsciiStructureTracker,
-    dialect::DxfAcadVersionTracker, encoding::DxfTextEncodingTracker, handseed::DxfHandseedTracker,
+    DxfError, DxfGroupCode, DxfHandseedReport, DxfHeaderVariableIndex, DxfIoOperation,
+    DxfReadControl, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfSourceId,
+    DxfTextEncodingReport, ascii_group::trim_horizontal_ascii,
+    ascii_index::DxfAsciiStructureTracker, dialect::DxfAcadVersionTracker,
+    encoding::DxfTextEncodingTracker, handseed::DxfHandseedTracker,
+    header_index::DxfHeaderVariableTracker,
 };
 
 const HASH_CHUNK_BYTES: usize = 64 * 1024;
@@ -96,6 +98,7 @@ pub struct DxfAsciiRawDocument<'a> {
     acad_version: DxfAcadVersionReport,
     text_encoding: DxfTextEncodingReport,
     handseed: DxfHandseedReport,
+    header_variables: DxfHeaderVariableIndex,
     structure_index: DxfAsciiStructureIndex,
     eof_occurrence: Option<u64>,
     trailing_span: Option<ByteSpan>,
@@ -114,6 +117,7 @@ impl fmt::Debug for DxfAsciiRawDocument<'_> {
             .field("acad_version", &self.acad_version.state())
             .field("text_encoding", &self.text_encoding.policy())
             .field("handseed", &self.handseed.state())
+            .field("header_variables", &self.header_variables.variables().len())
             .field("sections", &self.structure_index.sections().len())
             .field("eof_occurrence", &self.eof_occurrence)
             .field("trailing_span", &self.trailing_span)
@@ -139,6 +143,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
         let mut acad_version_tracker = DxfAcadVersionTracker::default();
         let mut text_encoding_tracker = DxfTextEncodingTracker::default();
         let mut handseed_tracker = DxfHandseedTracker::default();
+        let mut header_variable_tracker = DxfHeaderVariableTracker::default();
         let mut structure_tracker = DxfAsciiStructureTracker::new(limits.max_diagnostics());
         let mut eof_occurrence = None;
         let mut eof_recovered = false;
@@ -149,6 +154,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             acad_version_tracker.observe(group)?;
             text_encoding_tracker.observe(group)?;
             handseed_tracker.observe(group)?;
+            header_variable_tracker.observe(group, eof_match.is_some())?;
             structure_tracker.observe(group, eof_match.is_some())?;
             let compact = DxfAsciiRawGroup::from_borrowed(group)?;
             groups.try_reserve(1).map_err(|_| out_of_memory())?;
@@ -230,6 +236,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
         let text_encoding = text_encoding_tracker.finish(source_id, acad_version.state())?;
         let handseed = handseed_tracker.finish(source_id)?;
         let group_count = u64::try_from(groups.len()).map_err(|_| invalid_source_data())?;
+        let header_variables = header_variable_tracker.finish(source_id, group_count)?;
         let structure_index = structure_tracker.finish(source_id, group_count)?;
         let conformance = if diagnostics.is_empty() {
             DxfAsciiDocumentConformance::Strict
@@ -248,6 +255,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             acad_version,
             text_encoding,
             handseed,
+            header_variables,
             structure_index,
             eof_occurrence,
             trailing_span,
@@ -297,6 +305,11 @@ impl<'a> DxfAsciiRawDocument<'a> {
     #[must_use]
     pub const fn handseed_report(&self) -> &DxfHandseedReport {
         &self.handseed
+    }
+
+    #[must_use]
+    pub const fn header_variable_index(&self) -> &DxfHeaderVariableIndex {
+        &self.header_variables
     }
 
     #[must_use]

@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.3c adds exact `$HANDSEED` syntax and typed HEADER semantics
+M6.4a adds a shared exact HEADER variable directory
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -26,8 +26,11 @@ M6.3c adds exact `$HANDSEED` syntax and typed HEADER semantics
    physical formats and exposes reviewed/unrecognized declarations separately
    from decoder policy. M6.3c runs one exact `$HANDSEED` state machine in both
    parse loops, preserves source spelling/provenance, and exposes the parsed
-   64-bit handle without claiming allocation or topology policy. A 1 GiB
-   evidence gate is required before any large-file claim.
+   64-bit handle without claiming allocation or topology policy. M6.4a indexes
+   every exact group-code 9 marker and its complete value-group range in exact
+   HEADER sections, including unknown and multi-value variables, without a
+   second source scan or semantic guesses. A 1 GiB evidence gate is required
+   before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
