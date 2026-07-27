@@ -7,8 +7,8 @@ use std::{
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfCancellationToken, DxfError, DxfIoOperation, DxfReadControl,
-    DxfReadObserver, DxfReadProgress, DxfSourceId,
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError,
+    DxfIoOperation, DxfReadControl, DxfReadObserver, DxfReadProgress, DxfSourceId,
 };
 
 const VERBATIM_CHUNK_BYTES: usize = 64 * 1024;
@@ -51,105 +51,157 @@ impl DxfAsciiRawDocument<'_> {
         cancellation: &DxfCancellationToken,
         observer: &mut dyn DxfReadObserver,
     ) -> Result<DxfVerbatimWriteReceipt, DxfError> {
-        let destination = destination.as_ref();
-        let source_len = self.source_len();
-        let total_work = source_len.checked_mul(2).ok_or(DxfError::OffsetOverflow {
-            offset: source_len,
-            requested: source_len,
-        })?;
-        notify_progress(observer, cancellation, 0, total_work)?;
-
-        let mut output = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(destination)
-            .map_err(|error| DxfError::from_io(DxfIoOperation::Create, &error))?;
-
-        let copy_result = self
-            .copy_source(&mut output, cancellation, observer, total_work)
-            .and_then(|source_id| {
-                output
-                    .flush()
-                    .map_err(|error| DxfError::from_io(DxfIoOperation::Flush, &error))?;
-                output
-                    .sync_all()
-                    .map_err(|error| DxfError::from_io(DxfIoOperation::Sync, &error))?;
-                Ok(source_id)
-            });
-        drop(output);
-
-        let observed_source_id = match copy_result {
-            Ok(source_id) => source_id,
-            Err(error) => return Err(remove_incomplete(destination, error)),
-        };
-        if observed_source_id != self.source_id() {
-            let error = DxfError::SourceIdentityMismatch {
-                expected: self.source_id(),
-                observed: observed_source_id,
-            };
-            return Err(remove_incomplete(destination, error));
-        }
-
-        let output_id =
-            match verify_output(destination, source_len, cancellation, observer, total_work) {
-                Ok(output_id) => output_id,
-                Err(error) => return Err(remove_incomplete(destination, error)),
-            };
-        if output_id != self.source_id() {
-            let error = DxfError::VerbatimOutputIdentityMismatch {
-                expected: self.source_id(),
-                observed: output_id,
-            };
-            return Err(remove_incomplete(destination, error));
-        }
-
-        Ok(DxfVerbatimWriteReceipt {
-            source_id: self.source_id(),
-            output_id,
-            bytes_written: source_len,
-        })
+        write_verbatim(self, destination.as_ref(), cancellation, observer)
     }
+}
 
-    fn copy_source(
+impl DxfBinaryRawDocument<'_> {
+    /// Copies the complete exact Binary source to a path that must not exist.
+    pub fn write_verbatim_to_new_file(
         &self,
-        output: &mut File,
+        destination: impl AsRef<Path>,
         cancellation: &DxfCancellationToken,
         observer: &mut dyn DxfReadObserver,
-        total_work: u64,
-    ) -> Result<DxfSourceId, DxfError> {
-        let mut hasher = Sha256::new();
-        let mut buffer = [0_u8; VERBATIM_CHUNK_BYTES];
-        let mut copied = 0_u64;
-
-        while copied < self.source_len() {
-            ensure_not_cancelled(cancellation)?;
-            let remaining = self.source_len() - copied;
-            let chunk_u64 = remaining.min(VERBATIM_CHUNK_BYTES_U64);
-            let chunk = usize::try_from(chunk_u64).map_err(|_| invalid_source_data())?;
-            let span = ByteSpan::from_start_and_len(copied, chunk_u64).ok_or(
-                DxfError::OffsetOverflow {
-                    offset: copied,
-                    requested: chunk_u64,
-                },
-            )?;
-            let destination = buffer.get_mut(..chunk).ok_or_else(invalid_source_data)?;
-            self.read_span(span, destination)?;
-            ensure_not_cancelled(cancellation)?;
-            output
-                .write_all(destination)
-                .map_err(|error| DxfError::from_io(DxfIoOperation::Write, &error))?;
-            hasher.update(destination);
-            copied = copied
-                .checked_add(chunk_u64)
-                .ok_or(DxfError::OffsetOverflow {
-                    offset: copied,
-                    requested: chunk_u64,
-                })?;
-            notify_progress(observer, cancellation, copied, total_work)?;
-        }
-
-        Ok(finalize_source_id(hasher))
+    ) -> Result<DxfVerbatimWriteReceipt, DxfError> {
+        write_verbatim(self, destination.as_ref(), cancellation, observer)
     }
+}
+
+trait VerbatimDocument {
+    fn source_len(&self) -> u64;
+    fn source_id(&self) -> DxfSourceId;
+    fn read_span(&self, span: ByteSpan, destination: &mut [u8]) -> Result<(), DxfError>;
+}
+
+impl VerbatimDocument for DxfAsciiRawDocument<'_> {
+    fn source_len(&self) -> u64 {
+        DxfAsciiRawDocument::source_len(self)
+    }
+
+    fn source_id(&self) -> DxfSourceId {
+        DxfAsciiRawDocument::source_id(self)
+    }
+
+    fn read_span(&self, span: ByteSpan, destination: &mut [u8]) -> Result<(), DxfError> {
+        DxfAsciiRawDocument::read_span(self, span, destination)
+    }
+}
+
+impl VerbatimDocument for DxfBinaryRawDocument<'_> {
+    fn source_len(&self) -> u64 {
+        DxfBinaryRawDocument::source_len(self)
+    }
+
+    fn source_id(&self) -> DxfSourceId {
+        DxfBinaryRawDocument::source_id(self)
+    }
+
+    fn read_span(&self, span: ByteSpan, destination: &mut [u8]) -> Result<(), DxfError> {
+        DxfBinaryRawDocument::read_span(self, span, destination)
+    }
+}
+
+fn write_verbatim(
+    document: &impl VerbatimDocument,
+    destination: &Path,
+    cancellation: &DxfCancellationToken,
+    observer: &mut dyn DxfReadObserver,
+) -> Result<DxfVerbatimWriteReceipt, DxfError> {
+    let source_len = document.source_len();
+    let total_work = source_len.checked_mul(2).ok_or(DxfError::OffsetOverflow {
+        offset: source_len,
+        requested: source_len,
+    })?;
+    notify_progress(observer, cancellation, 0, total_work)?;
+
+    let mut output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(destination)
+        .map_err(|error| DxfError::from_io(DxfIoOperation::Create, &error))?;
+
+    let copy_result = copy_source(document, &mut output, cancellation, observer, total_work)
+        .and_then(|source_id| {
+            output
+                .flush()
+                .map_err(|error| DxfError::from_io(DxfIoOperation::Flush, &error))?;
+            output
+                .sync_all()
+                .map_err(|error| DxfError::from_io(DxfIoOperation::Sync, &error))?;
+            Ok(source_id)
+        });
+    drop(output);
+
+    let observed_source_id = match copy_result {
+        Ok(source_id) => source_id,
+        Err(error) => return Err(remove_incomplete(destination, error)),
+    };
+    if observed_source_id != document.source_id() {
+        let error = DxfError::SourceIdentityMismatch {
+            expected: document.source_id(),
+            observed: observed_source_id,
+        };
+        return Err(remove_incomplete(destination, error));
+    }
+
+    let output_id = match verify_output(destination, source_len, cancellation, observer, total_work)
+    {
+        Ok(output_id) => output_id,
+        Err(error) => return Err(remove_incomplete(destination, error)),
+    };
+    if output_id != document.source_id() {
+        let error = DxfError::VerbatimOutputIdentityMismatch {
+            expected: document.source_id(),
+            observed: output_id,
+        };
+        return Err(remove_incomplete(destination, error));
+    }
+
+    Ok(DxfVerbatimWriteReceipt {
+        source_id: document.source_id(),
+        output_id,
+        bytes_written: source_len,
+    })
+}
+
+fn copy_source(
+    document: &impl VerbatimDocument,
+    output: &mut File,
+    cancellation: &DxfCancellationToken,
+    observer: &mut dyn DxfReadObserver,
+    total_work: u64,
+) -> Result<DxfSourceId, DxfError> {
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; VERBATIM_CHUNK_BYTES];
+    let mut copied = 0_u64;
+
+    while copied < document.source_len() {
+        ensure_not_cancelled(cancellation)?;
+        let remaining = document.source_len() - copied;
+        let chunk_u64 = remaining.min(VERBATIM_CHUNK_BYTES_U64);
+        let chunk = usize::try_from(chunk_u64).map_err(|_| invalid_source_data())?;
+        let span =
+            ByteSpan::from_start_and_len(copied, chunk_u64).ok_or(DxfError::OffsetOverflow {
+                offset: copied,
+                requested: chunk_u64,
+            })?;
+        let destination = buffer.get_mut(..chunk).ok_or_else(invalid_source_data)?;
+        document.read_span(span, destination)?;
+        ensure_not_cancelled(cancellation)?;
+        output
+            .write_all(destination)
+            .map_err(|error| DxfError::from_io(DxfIoOperation::Write, &error))?;
+        hasher.update(destination);
+        copied = copied
+            .checked_add(chunk_u64)
+            .ok_or(DxfError::OffsetOverflow {
+                offset: copied,
+                requested: chunk_u64,
+            })?;
+        notify_progress(observer, cancellation, copied, total_work)?;
+    }
+
+    Ok(finalize_source_id(hasher))
 }
 
 fn verify_output(
@@ -289,9 +341,9 @@ mod tests {
 
     use super::{DxfVerbatimWriteReceipt, finalize_source_id, verify_output};
     use crate::{
-        DxfAsciiRawDocument, DxfByteSource, DxfCancellationToken, DxfError, DxfErrorCode,
-        DxfFileSource, DxfIoOperation, DxfMemorySource, DxfReadControl, DxfReadOptions,
-        DxfResourceProfile, NoopDxfReadObserver,
+        DXF_BINARY_SENTINEL, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
+        DxfCancellationToken, DxfError, DxfErrorCode, DxfFileSource, DxfIoOperation,
+        DxfMemorySource, DxfReadControl, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
     };
 
     static NEXT_TEMP_DIRECTORY_ID: AtomicU64 = AtomicU64::new(0);
@@ -365,6 +417,45 @@ mod tests {
                 &mut noop,
             )?;
             assert_eq!(document.source_id().to_string(), expected_hash);
+            let output = directory.path().join(name);
+            let receipt = document.write_verbatim_to_new_file(&output, &token, &mut noop)?;
+            assert_receipt(receipt, document.source_id(), bytes.len() as u64);
+            assert_eq!(fs::read(output)?, bytes);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn binary_strict_and_compatible_sources_replay_byte_identically() -> Result<(), Box<dyn Error>>
+    {
+        let directory = TestDirectory::new()?;
+        let strict = binary_fixture(true);
+        let mut trailing = strict.clone();
+        trailing.extend_from_slice(b"opaque-tail");
+        let missing = binary_fixture(false);
+        let cases = [
+            (
+                "binary-strict.dxf",
+                strict.as_slice(),
+                DxfReadOptions::strict(),
+            ),
+            (
+                "binary-trailing.dxf",
+                trailing.as_slice(),
+                DxfReadOptions::compatible(),
+            ),
+            (
+                "binary-missing-eof.dxf",
+                missing.as_slice(),
+                DxfReadOptions::compatible(),
+            ),
+        ];
+        let token = DxfCancellationToken::default();
+        let mut noop = NoopDxfReadObserver;
+
+        for (name, bytes, options) in cases {
+            let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+            let document = DxfBinaryRawDocument::open(&source, options, &token, &mut noop)?;
             let output = directory.path().join(name);
             let receipt = document.write_verbatim_to_new_file(&output, &token, &mut noop)?;
             assert_receipt(receipt, document.source_id(), bytes.len() as u64);
@@ -531,6 +622,24 @@ mod tests {
         let expected = finalize_source_id(expected_hasher);
         assert_ne!(observed, expected);
         Ok(())
+    }
+
+    fn binary_fixture(include_eof: bool) -> Vec<u8> {
+        let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+        binary_pair(&mut bytes, 0, b"SECTION\0");
+        binary_pair(&mut bytes, 2, b"HEADER\0");
+        binary_pair(&mut bytes, 9, b"$ACADVER\0");
+        binary_pair(&mut bytes, 1, b"AC1032\0");
+        binary_pair(&mut bytes, 0, b"ENDSEC\0");
+        if include_eof {
+            binary_pair(&mut bytes, 0, b"EOF\0");
+        }
+        bytes
+    }
+
+    fn binary_pair(bytes: &mut Vec<u8>, code: i16, value: &[u8]) {
+        bytes.extend_from_slice(&code.to_le_bytes());
+        bytes.extend_from_slice(value);
     }
 
     fn assert_receipt(receipt: DxfVerbatimWriteReceipt, expected: crate::DxfSourceId, bytes: u64) {

@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M5 in progress through M5.2b Binary envelope/structure index; awaiting
-user approval for M5.2c verified Binary replay and CLI integration
+Status: M5 completed through M5.2c verified Binary replay and CLI integration;
+awaiting user approval for M6 schema/codegen planning
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

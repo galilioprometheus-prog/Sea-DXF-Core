@@ -1,10 +1,11 @@
 # SeaCad CLI and JSON schema v1
 
-Status: M3.6 contract
+Status: M5.2c contract
 
-M3 exposes the first operational SeaCad commands. They inspect lossless raw
-ASCII DXF framing only; version, section, entity, and geometry semantics begin
-in later milestones.
+SeaCad exposes operational commands for lossless raw ASCII and Binary DXF
+framing. They report physical format, framing conformance, group/EOF/tail
+accounting, and diagnostics; version, section, entity, and geometry semantics
+are not exposed in JSON v1.
 
 ## Commands
 
@@ -114,8 +115,10 @@ language.
 
 ## Current boundary
 
-Binary DXF is positively identified and returns `unsupported` with
-`CLI-E0002`; Binary parsing arrives at M5. Unknown/empty input returns
-`invalid` with `CLI-E0003`. A Compatible malformed document may be inspected,
-but it is never promoted to verified, semantic-editable, or canonical-writable
-state.
+Physical Binary opens through `DxfBinaryRawDocument`. A Strict document returns
+`ok` for inspect or `verified` for verify. A Compatible Binary recovery returns
+`recovered` for inspect, while verify returns `not_verified` with `CLI-E0004`.
+Fatal Binary framing/envelope failures return `invalid` with their exact stable
+`DXF-E...` code. Unknown/empty input remains `CLI-E0003`. Compatible malformed
+documents are inspect/verbatim-only and never semantic-editable or
+canonical-writable.

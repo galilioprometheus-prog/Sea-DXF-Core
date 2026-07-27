@@ -14,7 +14,8 @@ use std::{
 
 use clap::{Arg, ArgAction, ArgMatches, Command, error::ErrorKind, value_parser};
 use seacad_dxf_core::{
-    DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfByteSource, DxfCancellationToken,
+    DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfBinaryDocumentConformance,
+    DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDiagnostic,
     DxfDiagnosticSeverity, DxfError, DxfFileSource, DxfPhysicalFormat, DxfReadMode, DxfReadOptions,
     DxfResourceProfile, NoopDxfReadObserver, probe_dxf_physical_format, scan_dxf_source,
 };
@@ -230,8 +231,8 @@ fn cli_command(language: CliLanguage) -> Command {
             language,
             "inspect",
             language.pick(
-                "Inspect raw ASCII DXF framing; Compatible mode is the default",
-                "Kiểm tra framing DXF ASCII thô; mặc định là Compatible",
+                "Inspect raw ASCII/Binary DXF framing; Compatible mode is the default",
+                "Kiểm tra framing DXF ASCII/Binary thô; mặc định là Compatible",
             ),
             "compatible",
         ))
@@ -239,8 +240,8 @@ fn cli_command(language: CliLanguage) -> Command {
             language,
             "verify",
             language.pick(
-                "Verify strict raw ASCII DXF framing; Strict mode is the default",
-                "Xác minh framing DXF ASCII nghiêm ngặt; mặc định là Strict",
+                "Verify strict raw ASCII/Binary DXF framing; Strict mode is the default",
+                "Xác minh framing DXF ASCII/Binary nghiêm ngặt; mặc định là Strict",
             ),
             "strict",
         ))
@@ -385,14 +386,7 @@ fn execute(options: &CliOptions) -> CliOutcome {
     report.format.physical = physical_name(physical);
     match physical {
         DxfPhysicalFormat::AsciiCandidate => open_ascii(report, &source, options),
-        DxfPhysicalFormat::Binary => identified_cli_failure(
-            report,
-            &source,
-            options.profile,
-            "unsupported",
-            CLI_UNSUPPORTED_FORMAT,
-            "Binary DXF is not implemented in this milestone",
-        ),
+        DxfPhysicalFormat::Binary => open_binary(report, &source, options),
         DxfPhysicalFormat::Unknown => identified_cli_failure(
             report,
             &source,
@@ -412,7 +406,7 @@ fn execute(options: &CliOptions) -> CliOutcome {
     }
 }
 
-fn open_ascii(mut report: CliReport, source: &DxfFileSource, options: &CliOptions) -> CliOutcome {
+fn open_ascii(report: CliReport, source: &DxfFileSource, options: &CliOptions) -> CliOutcome {
     let cancellation = DxfCancellationToken::default();
     let mut observer = NoopDxfReadObserver;
     let read_options = DxfReadOptions::new(options.read_mode, options.profile);
@@ -422,7 +416,6 @@ fn open_ascii(mut report: CliReport, source: &DxfFileSource, options: &CliOption
             Err(error) => return identified_core_failure(report, source, options.profile, error),
         };
 
-    report.source.id = Some(document.source_id().to_string());
     let groups = match u64::try_from(document.groups().len()) {
         Ok(groups) => groups,
         Err(_) => {
@@ -434,16 +427,74 @@ fn open_ascii(mut report: CliReport, source: &DxfFileSource, options: &CliOption
             );
         }
     };
-    let conformance = conformance_name(document.conformance());
+    finish_opened_document(
+        report,
+        options,
+        OpenedDocumentSummary {
+            source_id: document.source_id().to_string(),
+            groups,
+            conformance: ascii_conformance_name(document.conformance()),
+            recovered: document.conformance() == DxfAsciiDocumentConformance::Recovered,
+            eof_occurrence: document.eof_occurrence(),
+            trailing_bytes: document.trailing_span().map_or(0, |span| span.len()),
+            diagnostics: document.diagnostics(),
+            diagnostics_truncated: document.diagnostics_were_truncated(),
+        },
+    )
+}
+
+fn open_binary(report: CliReport, source: &DxfFileSource, options: &CliOptions) -> CliOutcome {
+    let cancellation = DxfCancellationToken::default();
+    let mut observer = NoopDxfReadObserver;
+    let read_options = DxfReadOptions::new(options.read_mode, options.profile);
+    let document =
+        match DxfBinaryRawDocument::open(source, read_options, &cancellation, &mut observer) {
+            Ok(document) => document,
+            Err(error) => return identified_core_failure(report, source, options.profile, error),
+        };
+
+    finish_opened_document(
+        report,
+        options,
+        OpenedDocumentSummary {
+            source_id: document.source_id().to_string(),
+            groups: document.group_count(),
+            conformance: binary_conformance_name(document.conformance()),
+            recovered: document.conformance() == DxfBinaryDocumentConformance::Recovered,
+            eof_occurrence: document.eof_occurrence(),
+            trailing_bytes: document.trailing_span().map_or(0, |span| span.len()),
+            diagnostics: document.diagnostics(),
+            diagnostics_truncated: false,
+        },
+    )
+}
+
+struct OpenedDocumentSummary<'a> {
+    source_id: String,
+    groups: u64,
+    conformance: &'static str,
+    recovered: bool,
+    eof_occurrence: Option<u64>,
+    trailing_bytes: u64,
+    diagnostics: &'a [DxfDiagnostic],
+    diagnostics_truncated: bool,
+}
+
+fn finish_opened_document(
+    mut report: CliReport,
+    options: &CliOptions,
+    summary: OpenedDocumentSummary<'_>,
+) -> CliOutcome {
+    report.source.id = Some(summary.source_id);
     report.document = Some(DocumentReport {
-        conformance,
-        groups,
-        eof_occurrence: document.eof_occurrence(),
-        trailing_bytes: document.trailing_span().map_or(0, |span| span.len()),
-        diagnostics_truncated: document.diagnostics_were_truncated(),
+        conformance: summary.conformance,
+        groups: summary.groups,
+        eof_occurrence: summary.eof_occurrence,
+        trailing_bytes: summary.trailing_bytes,
+        diagnostics_truncated: summary.diagnostics_truncated,
     });
-    report.diagnostics = document
-        .diagnostics()
+    report.diagnostics = summary
+        .diagnostics
         .iter()
         .map(|diagnostic| DiagnosticReport {
             code: diagnostic.code().as_str(),
@@ -455,8 +506,7 @@ fn open_ascii(mut report: CliReport, source: &DxfFileSource, options: &CliOption
         })
         .collect();
 
-    let recovered = document.conformance() == DxfAsciiDocumentConformance::Recovered;
-    match (options.action, recovered) {
+    match (options.action, summary.recovered) {
         (CliAction::Inspect, true) => {
             report.status = "recovered";
             CliOutcome {
@@ -780,6 +830,17 @@ fn error_text<'a>(language: CliLanguage, code: &str, english: &'a str) -> &'a st
         "DXF-E0202" => "group ASCII không có dòng giá trị",
         "DXF-E0203" => "tài liệu ASCII không có marker 0/EOF kết thúc",
         "DXF-E0204" => "tài liệu ASCII nghiêm ngặt có dữ liệu sau EOF",
+        "DXF-E0210" => "sentinel Binary DXF không hợp lệ",
+        "DXF-E0211" => "group code Binary DXF bị cắt ngắn",
+        "DXF-E0212" => "group code Binary DXF không hợp lệ",
+        "DXF-E0213" => "group code Binary DXF chưa có wire family được công bố",
+        "DXF-E0214" => "giá trị Binary DXF bị cắt ngắn",
+        "DXF-E0215" => "chuỗi Binary DXF không có byte NUL kết thúc",
+        "DXF-E0216" => "Binary DXF không có record mở đầu 0/SECTION chuẩn",
+        "DXF-E0217" => "Binary DXF không có đúng một HEADER $ACADVER được hỗ trợ",
+        "DXF-E0218" => "encoding Binary DXF không khớp dialect đã khai báo",
+        "DXF-E0219" => "tài liệu Binary DXF không có marker 0/EOF kết thúc",
+        "DXF-E0220" => "tài liệu Binary DXF nghiêm ngặt có dữ liệu sau EOF",
         "DXF-E0301" => "định danh nguồn đã thay đổi",
         "DXF-E0302" => "độ dài đầu ra Verbatim không khớp",
         "DXF-E0303" => "định danh đầu ra Verbatim không khớp",
@@ -812,10 +873,18 @@ const fn physical_name(format: DxfPhysicalFormat) -> &'static str {
     }
 }
 
-const fn conformance_name(conformance: DxfAsciiDocumentConformance) -> &'static str {
+const fn ascii_conformance_name(conformance: DxfAsciiDocumentConformance) -> &'static str {
     match conformance {
         DxfAsciiDocumentConformance::Strict => "strict",
         DxfAsciiDocumentConformance::Recovered => "recovered",
+        _ => "unknown",
+    }
+}
+
+const fn binary_conformance_name(conformance: DxfBinaryDocumentConformance) -> &'static str {
+    match conformance {
+        DxfBinaryDocumentConformance::Strict => "strict",
+        DxfBinaryDocumentConformance::Recovered => "recovered",
         _ => "unknown",
     }
 }
@@ -1059,22 +1128,77 @@ mod tests {
     }
 
     #[test]
-    fn binary_and_unknown_inputs_are_identified_without_path_leakage() -> Result<(), Box<dyn Error>>
-    {
+    fn binary_inspect_and_verify_use_unchanged_json_v1_shape() -> Result<(), Box<dyn Error>> {
         let directory = TestDirectory::new()?;
-        let mut binary = seacad_dxf_core::DXF_BINARY_SENTINEL.to_vec();
-        binary.extend_from_slice(b"payload");
+        let binary = binary_fixture(true);
         let binary_path = directory.write("binary-secret.dxf", &binary)?;
         let binary_result = invoke_file("inspect", &binary_path, &["--json"])?;
-        assert_eq!(binary_result.0, 1);
+        assert_eq!(binary_result.0, 0);
         let binary_report: Value = serde_json::from_str(&binary_result.1)?;
-        assert_eq!(binary_report["status"], "unsupported");
+        assert_eq!(binary_report["schema_version"], "v1");
+        assert_eq!(binary_report["status"], "ok");
         assert_eq!(binary_report["format"]["physical"], "binary");
-        assert_eq!(
-            binary_report["error"]["code"],
-            super::CLI_UNSUPPORTED_FORMAT
-        );
+        assert_eq!(binary_report["document"]["conformance"], "strict");
+        assert_eq!(binary_report["document"]["groups"], 6);
+        assert_eq!(binary_report["document"]["eof_occurrence"], 5);
+        assert_eq!(binary_report["document"]["trailing_bytes"], 0);
+        assert_eq!(binary_report["source"]["path"], Value::Null);
         assert!(binary_report["source"]["id"].is_string());
+        assert_eq!(binary_report["error"], Value::Null);
+
+        let verified = invoke_file("verify", &binary_path, &["--json"])?;
+        assert_eq!(verified.0, 0);
+        let report: Value = serde_json::from_str(&verified.1)?;
+        assert_eq!(report["status"], "verified");
+        assert_eq!(report["options"]["read_mode"], "strict");
+        assert_eq!(report["format"]["physical"], "binary");
+        Ok(())
+    }
+
+    #[test]
+    fn binary_recovery_errors_and_unknown_input_keep_stable_codes() -> Result<(), Box<dyn Error>> {
+        let directory = TestDirectory::new()?;
+        let missing = directory.write("binary-missing.dxf", &binary_fixture(false))?;
+        let inspected = invoke_file("inspect", &missing, &["--json"])?;
+        assert_eq!(inspected.0, 0);
+        let report: Value = serde_json::from_str(&inspected.1)?;
+        assert_eq!(report["status"], "recovered");
+        assert_eq!(report["diagnostics"][0]["code"], "DXF-W0210");
+
+        let verified = invoke_file("verify", &missing, &["--mode", "compatible", "--json"])?;
+        assert_eq!(verified.0, 1);
+        let report: Value = serde_json::from_str(&verified.1)?;
+        assert_eq!(report["status"], "not_verified");
+        assert_eq!(report["error"]["code"], super::CLI_RECOVERED_NOT_VERIFIED);
+
+        let mut trailing = binary_fixture(true);
+        trailing.extend_from_slice(b"tail");
+        let trailing_path = directory.write("binary-tail.dxf", &trailing)?;
+        let inspected = invoke_file("inspect", &trailing_path, &["--json"])?;
+        assert_eq!(inspected.0, 0);
+        let report: Value = serde_json::from_str(&inspected.1)?;
+        assert_eq!(report["status"], "recovered");
+        assert_eq!(report["document"]["trailing_bytes"], 4);
+        assert_eq!(report["diagnostics"][0]["code"], "DXF-W0211");
+
+        let mut malformed = seacad_dxf_core::DXF_BINARY_SENTINEL.to_vec();
+        malformed.extend_from_slice(b"payload");
+        let malformed_path = directory.write("binary-invalid-secret.dxf", &malformed)?;
+        let malformed_text = path_text(&malformed_path)?;
+        let failed = invoke_file("inspect", &malformed_path, &["--json"])?;
+        assert_eq!(failed.0, 1);
+        assert!(!failed.1.contains(malformed_text));
+        let report: Value = serde_json::from_str(&failed.1)?;
+        assert_eq!(report["status"], "invalid");
+        assert_eq!(report["format"]["physical"], "binary");
+        assert_eq!(report["error"]["code"], "DXF-E0216");
+        assert!(report["source"]["id"].is_string());
+
+        let human = invoke_file("inspect", &malformed_path, &["--lang", "vi"])?;
+        assert_eq!(human.0, 1);
+        assert!(human.2.contains("DXF-E0216"));
+        assert!(human.2.contains("record mở đầu 0/SECTION chuẩn"));
+        assert!(!human.2.contains("canonical opening"));
 
         let unknown_path = directory.write("unknown-secret.dxf", b"")?;
         let unknown_result = invoke_file("inspect", &unknown_path, &["--json"])?;
@@ -1083,6 +1207,24 @@ mod tests {
         assert_eq!(unknown_report["status"], "invalid");
         assert_eq!(unknown_report["error"]["code"], super::CLI_UNKNOWN_FORMAT);
         Ok(())
+    }
+
+    fn binary_fixture(include_eof: bool) -> Vec<u8> {
+        let mut bytes = seacad_dxf_core::DXF_BINARY_SENTINEL.to_vec();
+        binary_pair(&mut bytes, 0, b"SECTION\0");
+        binary_pair(&mut bytes, 2, b"HEADER\0");
+        binary_pair(&mut bytes, 9, b"$ACADVER\0");
+        binary_pair(&mut bytes, 1, b"AC1032\0");
+        binary_pair(&mut bytes, 0, b"ENDSEC\0");
+        if include_eof {
+            binary_pair(&mut bytes, 0, b"EOF\0");
+        }
+        bytes
+    }
+
+    fn binary_pair(bytes: &mut Vec<u8>, code: i16, value: &[u8]) {
+        bytes.extend_from_slice(&code.to_le_bytes());
+        bytes.extend_from_slice(value);
     }
 
     fn invoke<const N: usize>(args: [&str; N]) -> Result<(u8, String, String), Box<dyn Error>> {

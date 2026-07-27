@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M5.2b can open an immutable raw ASCII framing document, enforce
+SeaCad through M5.2c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -18,7 +18,8 @@ the canonical opening selects pre-R13 or R13-and-later group-code encoding,
 the exact HEADER `$ACADVER` must agree, and an 8 KiB bounded cursor losslessly
 accounts every accepted group/value span under a one-pass SHA-256 identity.
 Binary Strict/Compatible EOF conformance, section ranges, unknown sections, and
-every numeric group-zero occurrence are indexed by the shared state machine. Each
+every numeric group-zero occurrence are indexed by the shared state machine.
+Binary also has verified byte-identical new-file replay and CLI inspection. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -28,17 +29,18 @@ JSON v1 yet.
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
 | DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored caller-buffer UTF-8 view + bounded CIF/all five MIF selectors + exact MTEXT/percent token spans; formatting values and record semantics not implemented | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Not implemented | Exact supported `$ACADVER` discovery only | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Exact supported `$ACADVER` discovery only | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
 A cell changes only after its milestone closes with deterministic evidence.
-The Binary row claims physical raw-document and envelope/index opening only.
+The Binary row claims physical raw-document, envelope/index opening, verified
+unchanged replay, and CLI `inspect`/`verify` only.
 M5.2a requires the canonical opening and verifies `$ACADVER` against the
 selected group-code encoding. M5.2b requires or explicitly recovers terminal
 EOF, retains compatible trailing bytes as one opaque span, and accounts every
-accepted group through the shared section/group-zero index. It does not expose
-CLI support or replay unchanged bytes; those are M5.2c.
+accepted group through the shared section/group-zero index. M5.2c reuses the
+verified create-new Verbatim path and the stable JSON v1 CLI contract.
 "Envelope structure" recognizes exact section boundaries and record starts
 without interpreting section payloads. Unknown section names remain exact
 source-backed bytes. "Text-storage policy" means UTF-8 by documented modern
