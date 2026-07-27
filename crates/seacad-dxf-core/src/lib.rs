@@ -19,6 +19,7 @@ mod error;
 mod format_probe;
 #[allow(dead_code)]
 mod generated;
+mod header_view;
 mod johab;
 mod limits;
 mod progress;
@@ -71,6 +72,7 @@ pub use encoding::{
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
+pub use header_view::{DxfAcadVersionIssue, DxfHeaderView};
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
