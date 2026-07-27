@@ -323,9 +323,44 @@ mod tests {
     }
 
     #[test]
+    fn johab_crosses_the_internal_source_chunk_with_exact_provenance() -> Result<(), Box<dyn Error>>
+    {
+        let mut value = vec![b'a'; super::SOURCE_CHUNK_BYTES - 1];
+        value.extend_from_slice(b"\x88\x61");
+        let bytes = fixture("AC1018", Some("ANSI_1361"), &value);
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open(&source)?;
+        let occurrence = last_group_one(&document)?;
+        let mut destination = vec![0_u8; value.len() + 1];
+        let receipt = document
+            .decode_group_value_to_utf8_without_replacement(occurrence, &mut destination)?;
+        let result = decoded(receipt)?;
+        assert_eq!(
+            receipt.encoding(),
+            DxfTextEncodingResolution::Legacy {
+                version: DxfAcadVersion::Ac1018,
+                code_page: DxfLegacyCodePage::Windows1361,
+            }
+        );
+        assert_eq!(result.status(), DxfTextDecodeStatus::Complete);
+        assert_eq!(result.read(), value.len());
+        assert_eq!(result.written(), destination.len());
+        assert!(
+            destination[..super::SOURCE_CHUNK_BYTES - 1]
+                .iter()
+                .all(|byte| *byte == b'a')
+        );
+        assert_eq!(
+            &destination[super::SOURCE_CHUNK_BYTES - 1..],
+            "가".as_bytes()
+        );
+        Ok(())
+    }
+
+    #[test]
     fn unavailable_encoding_is_explicit_and_never_touches_output() -> Result<(), Box<dyn Error>> {
         let cases = [
-            (fixture("AC1018", Some("ANSI_1361"), b"text"), true),
+            (fixture("AC1018", Some("ANSI_1362"), b"text"), true),
             (fixture("AC1018", None, b"text"), false),
         ];
         for (bytes, unsupported) in cases {

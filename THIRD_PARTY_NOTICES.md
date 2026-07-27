@@ -119,3 +119,48 @@ BSD-3-Clause conditions, safety boundary, and advisory evidence are recorded
 in `docs/audits/M4_3B1_ENCODING_RS_ADOPTION_RECEIPT.md`. No source is vendored.
 Required standalone Apache-2.0, MIT, and BSD-3-Clause license files will be
 packaged with distributable artifacts at the M13 release audit.
+
+## M4.3c2b Unicode CP1361 data
+
+SeaCad's fixed CP1361/Johab decode table derives from Microsoft's
+`bestfit1361.txt` distributed by the Unicode Consortium:
+
+<https://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WindowsBestFit/bestfit1361.txt>
+
+The source file is not vendored. The derived 131,072-byte table is governed by
+Unicode License v3. Its exact source, generated-artifact, canonical-record, and
+Windows NLS hashes are recorded in
+`docs/audits/M4_3C2B_UNICODE_DATA_LICENSE_REVIEW.md` and
+`docs/audits/M4_3C2B_JOHAB_MAPPING_ORACLE.md`.
+
+### Unicode License v3
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright © 1991-2026 Unicode, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of data files and any associated documentation (the "Data Files") or software
+and any associated documentation (the "Software") to deal in the Data Files
+or Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, and/or sell copies of the Data
+Files or Software, and to permit persons to whom the Data Files or Software
+are furnished to do so, provided that either (a) this copyright and permission
+notice appear with all copies of the Data Files or Software, or (b) this
+copyright and permission notice appear in associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD
+PARTY RIGHTS.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE
+LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY
+DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA FILES OR SOFTWARE.
+
+Except as contained in this notice, the name of a copyright holder shall not
+be used in advertising or otherwise to promote the sale, use or other dealings
+in these Data Files or Software without prior written authorization of the
+copyright holder.

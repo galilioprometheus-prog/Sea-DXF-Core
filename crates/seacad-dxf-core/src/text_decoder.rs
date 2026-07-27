@@ -15,6 +15,7 @@ pub enum DxfLegacyCodePage {
     Windows936,
     Windows949,
     Windows950,
+    Windows1361,
     Windows1250,
     Windows1251,
     Windows1252,
@@ -38,6 +39,7 @@ impl DxfLegacyCodePage {
             b"ANSI_936" => Some(Self::Windows936),
             b"ANSI_949" => Some(Self::Windows949),
             b"ANSI_950" => Some(Self::Windows950),
+            b"ANSI_1361" => Some(Self::Windows1361),
             b"ANSI_1250" => Some(Self::Windows1250),
             b"ANSI_1251" => Some(Self::Windows1251),
             b"ANSI_1252" => Some(Self::Windows1252),
@@ -60,6 +62,7 @@ impl DxfLegacyCodePage {
             Self::Windows936 => b"ANSI_936",
             Self::Windows949 => b"ANSI_949",
             Self::Windows950 => b"ANSI_950",
+            Self::Windows1361 => b"ANSI_1361",
             Self::Windows1250 => b"ANSI_1250",
             Self::Windows1251 => b"ANSI_1251",
             Self::Windows1252 => b"ANSI_1252",
@@ -81,6 +84,7 @@ impl DxfLegacyCodePage {
             Self::Windows936 => 936,
             Self::Windows949 => 949,
             Self::Windows950 => 950,
+            Self::Windows1361 => 1361,
             Self::Windows1250 => 1250,
             Self::Windows1251 => 1251,
             Self::Windows1252 => 1252,
@@ -93,22 +97,23 @@ impl DxfLegacyCodePage {
         }
     }
 
-    fn encoding(self) -> &'static Encoding {
+    fn encoding(self) -> Option<&'static Encoding> {
         match self {
-            Self::Windows874 => WINDOWS_874,
-            Self::Windows932 => SHIFT_JIS,
-            Self::Windows936 => GBK,
-            Self::Windows949 => EUC_KR,
-            Self::Windows950 => BIG5,
-            Self::Windows1250 => WINDOWS_1250,
-            Self::Windows1251 => WINDOWS_1251,
-            Self::Windows1252 => WINDOWS_1252,
-            Self::Windows1253 => WINDOWS_1253,
-            Self::Windows1254 => WINDOWS_1254,
-            Self::Windows1255 => WINDOWS_1255,
-            Self::Windows1256 => WINDOWS_1256,
-            Self::Windows1257 => WINDOWS_1257,
-            Self::Windows1258 => WINDOWS_1258,
+            Self::Windows874 => Some(WINDOWS_874),
+            Self::Windows932 => Some(SHIFT_JIS),
+            Self::Windows936 => Some(GBK),
+            Self::Windows949 => Some(EUC_KR),
+            Self::Windows950 => Some(BIG5),
+            Self::Windows1361 => None,
+            Self::Windows1250 => Some(WINDOWS_1250),
+            Self::Windows1251 => Some(WINDOWS_1251),
+            Self::Windows1252 => Some(WINDOWS_1252),
+            Self::Windows1253 => Some(WINDOWS_1253),
+            Self::Windows1254 => Some(WINDOWS_1254),
+            Self::Windows1255 => Some(WINDOWS_1255),
+            Self::Windows1256 => Some(WINDOWS_1256),
+            Self::Windows1257 => Some(WINDOWS_1257),
+            Self::Windows1258 => Some(WINDOWS_1258),
         }
     }
 }
@@ -146,22 +151,24 @@ impl DxfTextDecoder {
         session.decode(source, destination, true)
     }
 
-    fn encoding(self) -> &'static Encoding {
+    fn encoding(self) -> Option<&'static Encoding> {
         match self {
-            Self::Utf8 => UTF_8,
+            Self::Utf8 => Some(UTF_8),
             Self::Legacy(code_page) => code_page.encoding(),
         }
     }
 }
 
-pub(crate) struct DxfTextDecoderSession {
-    decoder: encoding_rs::Decoder,
+pub(crate) enum DxfTextDecoderSession {
+    EncodingRs(encoding_rs::Decoder),
+    Johab(crate::johab::DxfJohabDecoderSession),
 }
 
 impl DxfTextDecoderSession {
     pub(crate) fn new(decoder: DxfTextDecoder) -> Self {
-        Self {
-            decoder: decoder.encoding().new_decoder_without_bom_handling(),
+        match decoder.encoding() {
+            Some(encoding) => Self::EncodingRs(encoding.new_decoder_without_bom_handling()),
+            None => Self::Johab(crate::johab::DxfJohabDecoderSession::default()),
         }
     }
 
@@ -171,9 +178,12 @@ impl DxfTextDecoderSession {
         destination: &mut [u8],
         last: bool,
     ) -> DxfTextDecodeResult {
+        let decoder = match self {
+            Self::EncodingRs(decoder) => decoder,
+            Self::Johab(decoder) => return decoder.decode(source, destination, last),
+        };
         let (status, read, written) =
-            self.decoder
-                .decode_to_utf8_without_replacement(source, destination, last);
+            decoder.decode_to_utf8_without_replacement(source, destination, last);
         let status = match status {
             DecoderResult::InputEmpty => DxfTextDecodeStatus::Complete,
             DecoderResult::OutputFull => DxfTextDecodeStatus::OutputFull,
@@ -251,6 +261,11 @@ mod tests {
             (b"ANSI_949".as_slice(), DxfLegacyCodePage::Windows949, 949),
             (b"ANSI_950".as_slice(), DxfLegacyCodePage::Windows950, 950),
             (
+                b"ANSI_1361".as_slice(),
+                DxfLegacyCodePage::Windows1361,
+                1361,
+            ),
+            (
                 b"ANSI_1250".as_slice(),
                 DxfLegacyCodePage::Windows1250,
                 1250,
@@ -305,14 +320,14 @@ mod tests {
     }
 
     #[test]
-    fn registry_refuses_aliases_oem_pages_and_unimplemented_johab() {
+    fn registry_refuses_aliases_oem_pages_and_unknown_tokens() {
         for token in [
             b"ansi_1252".as_slice(),
             b" ANSI_1252".as_slice(),
             b"ANSI_1252 ".as_slice(),
             b"windows-1252".as_slice(),
             b"DOS437".as_slice(),
-            b"ANSI_1361".as_slice(),
+            b"ansi_1361".as_slice(),
             b"UTF-8".as_slice(),
             b"".as_slice(),
         ] {
@@ -328,6 +343,7 @@ mod tests {
             (DxfLegacyCodePage::Windows936, b"\xC4\xE3".as_slice(), "你"),
             (DxfLegacyCodePage::Windows949, b"\xB0\xA1".as_slice(), "가"),
             (DxfLegacyCodePage::Windows950, b"\xA4\x40".as_slice(), "一"),
+            (DxfLegacyCodePage::Windows1361, b"\x88\x61".as_slice(), "가"),
             (DxfLegacyCodePage::Windows1250, b"\x8C".as_slice(), "Ś"),
             (DxfLegacyCodePage::Windows1251, b"\xC0".as_slice(), "А"),
             (DxfLegacyCodePage::Windows1252, b"\xE9".as_slice(), "é"),
@@ -381,6 +397,30 @@ mod tests {
                 .windows(3)
                 .any(|bytes| bytes == b"\xEF\xBF\xBD")
         );
+
+        destination.fill(0);
+        let johab_malformed = DxfTextDecoder::Legacy(DxfLegacyCodePage::Windows1361)
+            .decode_complete_to_utf8_without_replacement(b"\xD4", &mut destination);
+        assert_eq!(
+            johab_malformed.status(),
+            DxfTextDecodeStatus::Malformed {
+                malformed_len: 1,
+                bytes_after_malformed: 0,
+            }
+        );
+        assert_eq!(johab_malformed.read(), 1);
+        assert_eq!(johab_malformed.written(), 0);
+    }
+
+    #[test]
+    fn johab_matches_the_autocad_storage_oracle() {
+        let source = b"A\x88\x61|\xD0\x65|\xDE\x32|\xE0\x31Z";
+        let mut destination = [0_u8; 32];
+        let result = DxfTextDecoder::Legacy(DxfLegacyCodePage::Windows1361)
+            .decode_complete_to_utf8_without_replacement(source, &mut destination);
+        assert_eq!(result.status(), DxfTextDecodeStatus::Complete);
+        assert_eq!(result.read(), source.len());
+        assert_eq!(&destination[..result.written()], "A가|한|ア|伽Z".as_bytes());
     }
 
     #[test]

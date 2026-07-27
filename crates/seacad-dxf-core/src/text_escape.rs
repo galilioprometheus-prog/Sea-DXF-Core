@@ -54,13 +54,13 @@ impl DxfMifCodePage {
         }
     }
 
-    const fn legacy_decoder_page(self) -> Option<DxfLegacyCodePage> {
+    const fn legacy_decoder_page(self) -> DxfLegacyCodePage {
         match self {
-            Self::Windows932 => Some(DxfLegacyCodePage::Windows932),
-            Self::Windows950 => Some(DxfLegacyCodePage::Windows950),
-            Self::Windows949 => Some(DxfLegacyCodePage::Windows949),
-            Self::Windows1361 => None,
-            Self::Windows936 => Some(DxfLegacyCodePage::Windows936),
+            Self::Windows932 => DxfLegacyCodePage::Windows932,
+            Self::Windows950 => DxfLegacyCodePage::Windows950,
+            Self::Windows949 => DxfLegacyCodePage::Windows949,
+            Self::Windows1361 => DxfLegacyCodePage::Windows1361,
+            Self::Windows936 => DxfLegacyCodePage::Windows936,
         }
     }
 }
@@ -88,11 +88,6 @@ pub enum DxfTextEscapeDecodeStatus {
     Malformed {
         source_offset: usize,
         issue: DxfTextEscapeIssue,
-    },
-    UnsupportedMifCodePage {
-        source_offset: usize,
-        code_page: DxfMifCodePage,
-        code: u16,
     },
 }
 
@@ -127,8 +122,7 @@ impl DxfTextEscapeDecodeResult {
 /// Exact `\U+hhhh` controls are converted without allocation or replacement.
 /// Adjacent high/low surrogate controls form one Unicode scalar. Exact
 /// Evidence-backed `\M+nxxxx` controls decode through their selected Windows
-/// codepage. CP1361/Johab remains typed and fail-closed until its full mapping
-/// is independently verified. Only
+/// codepage. Only
 /// `destination[..result.written()]` is defined output. Retry the complete
 /// source after `OutputFull`.
 #[must_use]
@@ -163,17 +157,7 @@ pub fn decode_dxf_text_escapes_to_utf8_without_replacement(
                 Ok(value) => value,
                 Err(issue) => return malformed(read, written, read, issue),
             };
-            let Some(legacy_page) = code_page.legacy_decoder_page() else {
-                return result(
-                    DxfTextEscapeDecodeStatus::UnsupportedMifCodePage {
-                        source_offset: read,
-                        code_page,
-                        code,
-                    },
-                    read,
-                    written,
-                );
-            };
+            let legacy_page = code_page.legacy_decoder_page();
             let code_bytes = code.to_be_bytes();
             let encoded = if code_bytes[0] == 0 {
                 &code_bytes[1..]
@@ -457,12 +441,12 @@ mod tests {
 
     #[test]
     fn decodes_evidence_backed_mif_pages_and_single_byte_form() {
-        let source = r"A\M+182A0\M+2A440\M+3B0A1\M+5C4E3\M+10041Z";
+        let source = r"A\M+182A0\M+2A440\M+3B0A1\M+48861\M+5C4E3\M+10041Z";
         let mut destination = [0_u8; 32];
         let result = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
         assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
         assert_eq!(result.read(), source.len());
-        assert_eq!(&destination[..result.written()], "Aあ一가你AZ".as_bytes());
+        assert_eq!(&destination[..result.written()], "Aあ一가가你AZ".as_bytes());
     }
 
     #[test]
@@ -475,23 +459,64 @@ mod tests {
     }
 
     #[test]
-    fn johab_selector_is_mapped_but_remains_fail_closed() {
-        let mut destination = [0xCC_u8; 8];
-        let result =
-            decode_dxf_text_escapes_to_utf8_without_replacement(r"\M+48861", &mut destination);
+    fn johab_selector_decodes_representative_families() {
+        let source = r"A\M+40041|\M+48442|\M+48861|\M+4D065|\M+4D831|\M+4DE32|\M+4E031|\M+4F931Z";
+        let mut destination = [0_u8; 64];
+        let result = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
+        assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
+        assert_eq!(result.read(), source.len());
         assert_eq!(
-            result,
-            DxfTextEscapeDecodeResult {
-                status: DxfTextEscapeDecodeStatus::UnsupportedMifCodePage {
-                    source_offset: 0,
-                    code_page: DxfMifCodePage::Windows1361,
-                    code: 0x8861,
-                },
-                read: 0,
-                written: 0,
-            }
+            &destination[..result.written()],
+            "AA|ᆨ|가|한|\u{E000}|ア|伽|禍Z".as_bytes()
         );
-        assert_eq!(destination, [0xCC; 8]);
+    }
+
+    #[test]
+    fn every_johab_mif_code_matches_the_frozen_strict_table() -> Result<(), Box<dyn Error>> {
+        for code in 0_u16..=u16::MAX {
+            let mut token = *b"\\M+40000";
+            let digits = [
+                ((code >> 12) & 0xF) as u8,
+                ((code >> 8) & 0xF) as u8,
+                ((code >> 4) & 0xF) as u8,
+                (code & 0xF) as u8,
+            ];
+            for (target, digit) in token[4..].iter_mut().zip(digits) {
+                *target = if digit < 10 {
+                    b'0' + digit
+                } else {
+                    b'A' + digit - 10
+                };
+            }
+            let source = std::str::from_utf8(&token)?;
+            let mut destination = [0xCC_u8; 4];
+            let result =
+                decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
+            if let Some(expected) = crate::johab::decode_johab_code(code) {
+                let mut expected_storage = [0_u8; 4];
+                let expected_bytes = expected.encode_utf8(&mut expected_storage).as_bytes();
+                assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
+                assert_eq!(result.read(), token.len());
+                assert_eq!(
+                    &destination[..result.written()],
+                    expected_bytes,
+                    "MIF code 0x{code:04X}"
+                );
+            } else {
+                assert_eq!(
+                    result.status(),
+                    DxfTextEscapeDecodeStatus::Malformed {
+                        source_offset: 0,
+                        issue: DxfTextEscapeIssue::MifInvalidCode,
+                    },
+                    "MIF code 0x{code:04X}"
+                );
+                assert_eq!(result.read(), 0);
+                assert_eq!(result.written(), 0);
+                assert_eq!(destination, [0xCC; 4]);
+            }
+        }
+        Ok(())
     }
 
     #[test]
@@ -510,6 +535,8 @@ mod tests {
             (r"x\M+182G0", DxfTextEscapeIssue::MifInvalidHex),
             (r"x\M+18130", DxfTextEscapeIssue::MifInvalidCode),
             (r"x\M+14142", DxfTextEscapeIssue::MifInvalidCode),
+            (r"x\M+400D4", DxfTextEscapeIssue::MifInvalidCode),
+            (r"x\M+48441", DxfTextEscapeIssue::MifInvalidCode),
         ];
         for (source, issue) in cases {
             let mut destination = [0_u8; 16];

@@ -14,6 +14,7 @@ mod dialect;
 mod encoding;
 mod error;
 mod format_probe;
+mod johab;
 mod limits;
 mod progress;
 mod read_options;

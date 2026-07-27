@@ -664,7 +664,7 @@ mod tests {
     #[test]
     fn unsupported_legacy_token_is_source_anchored_without_fallback() -> Result<(), Box<dyn Error>>
     {
-        let bytes = fixture("AC1018", Some((3, "ANSI_1361")));
+        let bytes = fixture("AC1018", Some((3, "ANSI_1362")));
         let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
         let document = open(&source, DxfReadOptions::strict())?;
         let report = document.text_encoding_report();
@@ -692,9 +692,9 @@ mod tests {
         assert_eq!(report.diagnostics()[0].span(), Some(declaration_span));
         let mut token = [0_u8; 9];
         document.read_span(declaration_span, &mut token)?;
-        assert_eq!(&token, b"ANSI_1361");
+        assert_eq!(&token, b"ANSI_1362");
 
-        let modern_bytes = fixture("AC1021", Some((3, "ANSI_1361")));
+        let modern_bytes = fixture("AC1021", Some((3, "ANSI_1362")));
         let modern_source = DxfMemorySource::new(&modern_bytes, DxfResourceProfile::Safe)?;
         let modern = open(&modern_source, DxfReadOptions::strict())?;
         assert_eq!(
@@ -702,6 +702,24 @@ mod tests {
             DxfTextEncodingResolution::Utf8(DxfAcadVersion::Ac1021)
         );
         assert!(modern.text_encoding_report().diagnostics().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn johab_declaration_resolves_without_host_fallback() -> Result<(), Box<dyn Error>> {
+        let bytes = fixture("AC1018", Some((3, "ANSI_1361")));
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open(&source, DxfReadOptions::strict())?;
+        let report = document.text_encoding_report();
+        assert_eq!(
+            report.resolution(),
+            DxfTextEncodingResolution::Legacy {
+                version: DxfAcadVersion::Ac1018,
+                code_page: DxfLegacyCodePage::Windows1361,
+            }
+        );
+        assert!(report.resolution().decoder().is_some());
+        assert!(report.diagnostics().is_empty());
         Ok(())
     }
 

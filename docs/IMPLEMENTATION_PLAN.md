@@ -1,8 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M4.3c2a evidence-backed MIF selector mapping and replacement-free
-CP932/950/949/936 decode complete; awaiting user approval for M4.3c2b audited
-CP1361/Johab decode
+Status: M4.3c2b exact CP1361/Johab storage and MIF decode complete; awaiting
+user approval for M4.3c3 documented MTEXT/control tokenization
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
