@@ -26,6 +26,7 @@ mod header_view;
 mod johab;
 mod limits;
 mod progress;
+mod raw_document;
 mod read_options;
 mod semantic_value;
 mod source;
@@ -84,6 +85,9 @@ pub use header_view::{
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
+};
+pub use raw_document::{
+    DxfRawDocumentConformance, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
 };
 pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use semantic_value::{
