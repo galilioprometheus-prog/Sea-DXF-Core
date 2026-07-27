@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5m adds the remaining non-DIMENSION numeric and Boolean HEADER values
+M6.5n adds the first DIMENSION HEADER double-scalar batch
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -100,7 +100,12 @@ M6.5m adds the remaining non-DIMENSION numeric and Boolean HEADER values
    parity fixture because the one-byte pre-R13 group-code header cannot encode
    them. AC1012-AC1032 exercise all sixteen through the same generic generated
    directory. Enum, color, lineweight, units, display, xref, timer, default,
-   range, and applicability meanings remain unclaimed.
+   range, and applicability meanings remain unclaimed. M6.5n appends nineteen
+   group-40 `$DIM*` double scalars through the same generic directory. All are
+   physically representable in AC1009-AC1032 ASCII and Binary and retain exact
+   IEEE-754 payloads and raw provenance. Dimension units, scale, tolerance,
+   layout, sign, zero, default, range, applicability, and cross-variable
+   meanings remain unclaimed.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
