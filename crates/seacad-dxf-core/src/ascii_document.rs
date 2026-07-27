@@ -5,10 +5,10 @@ use sha2::{Digest, Sha256};
 use crate::{
     ByteSpan, DxfAcadVersionReport, DxfAsciiGroup, DxfAsciiGroupCursor, DxfAsciiLineEnding,
     DxfAsciiStructureIndex, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
-    DxfError, DxfGroupCode, DxfIoOperation, DxfReadControl, DxfReadMode, DxfReadObserver,
-    DxfReadOptions, DxfReadProgress, DxfSourceId, DxfTextEncodingReport,
+    DxfError, DxfGroupCode, DxfHandseedReport, DxfIoOperation, DxfReadControl, DxfReadMode,
+    DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfSourceId, DxfTextEncodingReport,
     ascii_group::trim_horizontal_ascii, ascii_index::DxfAsciiStructureTracker,
-    dialect::DxfAcadVersionTracker, encoding::DxfTextEncodingTracker,
+    dialect::DxfAcadVersionTracker, encoding::DxfTextEncodingTracker, handseed::DxfHandseedTracker,
 };
 
 const HASH_CHUNK_BYTES: usize = 64 * 1024;
@@ -95,6 +95,7 @@ pub struct DxfAsciiRawDocument<'a> {
     conformance: DxfAsciiDocumentConformance,
     acad_version: DxfAcadVersionReport,
     text_encoding: DxfTextEncodingReport,
+    handseed: DxfHandseedReport,
     structure_index: DxfAsciiStructureIndex,
     eof_occurrence: Option<u64>,
     trailing_span: Option<ByteSpan>,
@@ -112,6 +113,7 @@ impl fmt::Debug for DxfAsciiRawDocument<'_> {
             .field("conformance", &self.conformance)
             .field("acad_version", &self.acad_version.state())
             .field("text_encoding", &self.text_encoding.policy())
+            .field("handseed", &self.handseed.state())
             .field("sections", &self.structure_index.sections().len())
             .field("eof_occurrence", &self.eof_occurrence)
             .field("trailing_span", &self.trailing_span)
@@ -136,6 +138,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
         let mut groups = Vec::new();
         let mut acad_version_tracker = DxfAcadVersionTracker::default();
         let mut text_encoding_tracker = DxfTextEncodingTracker::default();
+        let mut handseed_tracker = DxfHandseedTracker::default();
         let mut structure_tracker = DxfAsciiStructureTracker::new(limits.max_diagnostics());
         let mut eof_occurrence = None;
         let mut eof_recovered = false;
@@ -145,6 +148,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             let eof_match = classify_eof(group, options.mode());
             acad_version_tracker.observe(group)?;
             text_encoding_tracker.observe(group)?;
+            handseed_tracker.observe(group)?;
             structure_tracker.observe(group, eof_match.is_some())?;
             let compact = DxfAsciiRawGroup::from_borrowed(group)?;
             groups.try_reserve(1).map_err(|_| out_of_memory())?;
@@ -224,6 +228,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             hashing_source.finalize(cancellation, observer, source_len, &mut last_reported)?;
         let acad_version = acad_version_tracker.finish(source_id)?;
         let text_encoding = text_encoding_tracker.finish(source_id, acad_version.state())?;
+        let handseed = handseed_tracker.finish(source_id)?;
         let group_count = u64::try_from(groups.len()).map_err(|_| invalid_source_data())?;
         let structure_index = structure_tracker.finish(source_id, group_count)?;
         let conformance = if diagnostics.is_empty() {
@@ -242,6 +247,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             conformance,
             acad_version,
             text_encoding,
+            handseed,
             structure_index,
             eof_occurrence,
             trailing_span,
@@ -286,6 +292,11 @@ impl<'a> DxfAsciiRawDocument<'a> {
     #[must_use]
     pub const fn text_encoding_report(&self) -> &DxfTextEncodingReport {
         &self.text_encoding
+    }
+
+    #[must_use]
+    pub const fn handseed_report(&self) -> &DxfHandseedReport {
+        &self.handseed
     }
 
     #[must_use]

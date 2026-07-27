@@ -3,9 +3,10 @@ use std::{io, num::NonZeroU64};
 use crate::{
     DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
     DxfAcadVersionValue, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCodePageOccurrence,
-    DxfCodePageState, DxfCodePageValue, DxfError, DxfGroupCode, DxfIoOperation, DxfLegacyCodePage,
-    DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
-    DxfTextEncodingReport,
+    DxfCodePageState, DxfCodePageValue, DxfError, DxfGroupCode, DxfHandle, DxfHandleParseIssue,
+    DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue, DxfIoOperation,
+    DxfLegacyCodePage, DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue,
+    DxfSourceId, DxfTextEncodingReport,
     generated::header_schema::{DxfSchemaStorageKind, HEADER_FIELDS},
 };
 
@@ -39,22 +40,40 @@ pub enum DxfCodePageIssue {
     MultipleValues { occurrence_count: NonZeroU64 },
 }
 
+/// Exact structural or syntactic reason why `$HANDSEED` has no usable handle.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfHandseedIssue {
+    InvalidGroupCode(DxfGroupCode),
+    InvalidHandle(DxfHandleParseIssue),
+    MissingValue,
+    MultipleValues { occurrence_count: NonZeroU64 },
+}
+
 /// Fixed-size read-only projection of reviewed HEADER semantics.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfHeaderView {
     acad_version: DxfSemanticValue<DxfAcadVersion, DxfAcadVersionIssue>,
     dwg_code_page: DxfSemanticValue<DxfCodePageDeclaration, DxfCodePageIssue>,
+    handseed: DxfSemanticValue<DxfHandle, DxfHandseedIssue>,
 }
 
 impl DxfHeaderView {
     fn from_reports(
         acad_version_report: &DxfAcadVersionReport,
         text_encoding_report: &DxfTextEncodingReport,
+        handseed_report: &DxfHandseedReport,
     ) -> Result<Self, DxfError> {
         if acad_version_report.source_id() != text_encoding_report.source_id() {
             return Err(DxfError::SourceIdentityMismatch {
                 expected: acad_version_report.source_id(),
                 observed: text_encoding_report.source_id(),
+            });
+        }
+        if acad_version_report.source_id() != handseed_report.source_id() {
+            return Err(DxfError::SourceIdentityMismatch {
+                expected: acad_version_report.source_id(),
+                observed: handseed_report.source_id(),
             });
         }
         let field = acad_version_field_provenance(acad_version_report.source_id())?;
@@ -93,9 +112,11 @@ impl DxfHeaderView {
             }
         };
         let dwg_code_page = code_page_semantic(text_encoding_report)?;
+        let handseed = handseed_semantic(handseed_report)?;
         Ok(Self {
             acad_version,
             dwg_code_page,
+            handseed,
         })
     }
 
@@ -115,32 +136,69 @@ impl DxfHeaderView {
     ) -> &DxfSemanticValue<DxfCodePageDeclaration, DxfCodePageIssue> {
         &self.dwg_code_page
     }
+
+    #[must_use]
+    pub const fn handseed(&self) -> &DxfSemanticValue<DxfHandle, DxfHandseedIssue> {
+        &self.handseed
+    }
 }
 
 impl DxfAsciiRawDocument<'_> {
     /// Projects indexed HEADER evidence without reading the source again.
     pub fn header_view(&self) -> Result<DxfHeaderView, DxfError> {
-        DxfHeaderView::from_reports(self.acad_version_report(), self.text_encoding_report())
+        DxfHeaderView::from_reports(
+            self.acad_version_report(),
+            self.text_encoding_report(),
+            self.handseed_report(),
+        )
     }
 }
 
 impl DxfBinaryRawDocument<'_> {
     /// Projects indexed HEADER evidence without reading the source again.
     pub fn header_view(&self) -> Result<DxfHeaderView, DxfError> {
-        DxfHeaderView::from_reports(self.acad_version_report(), self.text_encoding_report())
+        DxfHeaderView::from_reports(
+            self.acad_version_report(),
+            self.text_encoding_report(),
+            self.handseed_report(),
+        )
     }
 }
 
 fn acad_version_field_provenance(
     source_id: DxfSourceId,
 ) -> Result<DxfSemanticFieldProvenance, DxfError> {
-    field_provenance(source_id, "acadver", "$ACADVER", 1)
+    field_provenance(
+        source_id,
+        "acadver",
+        "$ACADVER",
+        1,
+        DxfSchemaStorageKind::ExactText,
+    )
 }
 
 fn code_page_field_provenance(
     source_id: DxfSourceId,
 ) -> Result<DxfSemanticFieldProvenance, DxfError> {
-    field_provenance(source_id, "dwgcodepage", "$DWGCODEPAGE", 3)
+    field_provenance(
+        source_id,
+        "dwgcodepage",
+        "$DWGCODEPAGE",
+        3,
+        DxfSchemaStorageKind::ExactText,
+    )
+}
+
+fn handseed_field_provenance(
+    source_id: DxfSourceId,
+) -> Result<DxfSemanticFieldProvenance, DxfError> {
+    field_provenance(
+        source_id,
+        "handseed",
+        "$HANDSEED",
+        5,
+        DxfSchemaStorageKind::Handle,
+    )
 }
 
 fn field_provenance(
@@ -148,6 +206,7 @@ fn field_provenance(
     id: &str,
     dxf_name: &str,
     group_code: i16,
+    storage: DxfSchemaStorageKind,
 ) -> Result<DxfSemanticFieldProvenance, DxfError> {
     let field = HEADER_FIELDS
         .iter()
@@ -155,7 +214,7 @@ fn field_provenance(
             field.id == id
                 && field.dxf_name == dxf_name
                 && field.group_codes == [group_code]
-                && field.storage == DxfSchemaStorageKind::ExactText
+                && field.storage == storage
         })
         .ok_or_else(invalid_internal_data)?;
     Ok(DxfSemanticFieldProvenance::new(
@@ -163,6 +222,93 @@ fn field_provenance(
         HEADER_NAMESPACE,
         field.id,
     ))
+}
+
+fn handseed_semantic(
+    report: &DxfHandseedReport,
+) -> Result<DxfSemanticValue<DxfHandle, DxfHandseedIssue>, DxfError> {
+    let field = handseed_field_provenance(report.source_id())?;
+    match report.state() {
+        DxfHandseedState::Parsed => {
+            let occurrence = report
+                .primary_occurrence()
+                .ok_or_else(invalid_internal_data)?;
+            let DxfHandseedValue::Parsed(handle) = occurrence.value() else {
+                return Err(invalid_internal_data());
+            };
+            Ok(DxfSemanticValue::explicit(
+                handle,
+                field,
+                required_handseed_value_provenance(occurrence)?,
+            ))
+        }
+        DxfHandseedState::Absent => Ok(DxfSemanticValue::absent(field)),
+        DxfHandseedState::Invalid => {
+            let occurrence = report.primary_occurrence();
+            Ok(DxfSemanticValue::invalid(
+                handseed_invalid_issue(occurrence)?,
+                field,
+                optional_handseed_evidence(occurrence)?,
+            ))
+        }
+        DxfHandseedState::Ambiguous => {
+            let occurrence_count =
+                NonZeroU64::new(report.occurrence_count()).ok_or_else(invalid_internal_data)?;
+            let evidence = report
+                .conflicting_occurrence()
+                .or_else(|| report.primary_occurrence());
+            Ok(DxfSemanticValue::invalid(
+                DxfHandseedIssue::MultipleValues { occurrence_count },
+                field,
+                optional_handseed_evidence(evidence)?,
+            ))
+        }
+    }
+}
+
+fn handseed_invalid_issue(
+    occurrence: Option<DxfHandseedOccurrence>,
+) -> Result<DxfHandseedIssue, DxfError> {
+    match occurrence.map(DxfHandseedOccurrence::value) {
+        Some(DxfHandseedValue::InvalidGroupCode(group_code)) => {
+            Ok(DxfHandseedIssue::InvalidGroupCode(group_code))
+        }
+        Some(DxfHandseedValue::InvalidHandle(issue)) => Ok(DxfHandseedIssue::InvalidHandle(issue)),
+        Some(DxfHandseedValue::MissingValue) | None => Ok(DxfHandseedIssue::MissingValue),
+        Some(DxfHandseedValue::Parsed(_)) => Err(invalid_internal_data()),
+    }
+}
+
+fn optional_handseed_evidence(
+    occurrence: Option<DxfHandseedOccurrence>,
+) -> Result<Option<DxfRawValueProvenance>, DxfError> {
+    occurrence.map(handseed_raw_evidence).transpose()
+}
+
+fn required_handseed_value_provenance(
+    occurrence: DxfHandseedOccurrence,
+) -> Result<DxfRawValueProvenance, DxfError> {
+    let group_occurrence = occurrence
+        .value_occurrence()
+        .ok_or_else(invalid_internal_data)?;
+    let value_span = occurrence.value_span().ok_or_else(invalid_internal_data)?;
+    DxfRawValueProvenance::new(group_occurrence, value_span).ok_or_else(invalid_internal_data)
+}
+
+fn handseed_raw_evidence(
+    occurrence: DxfHandseedOccurrence,
+) -> Result<DxfRawValueProvenance, DxfError> {
+    match (occurrence.value_occurrence(), occurrence.value_span()) {
+        (Some(group_occurrence), Some(value_span)) => {
+            DxfRawValueProvenance::new(group_occurrence, value_span)
+                .ok_or_else(invalid_internal_data)
+        }
+        (None, None) => {
+            DxfRawValueProvenance::new(occurrence.variable_occurrence(), occurrence.variable_span())
+                .ok_or_else(invalid_internal_data)
+        }
+        _ => Err(invalid_internal_data()),
+    }
 }
 
 fn code_page_semantic(
@@ -311,12 +457,13 @@ fn invalid_internal_data() -> DxfError {
 mod tests {
     use std::{error::Error, io};
 
-    use super::{DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue};
+    use super::{DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue};
     use crate::{
         DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument,
-        DxfCancellationToken, DxfDiagnosticCode, DxfGroupCode, DxfLegacyCodePage, DxfMemorySource,
-        DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTextEncodingPolicy,
-        DxfTextEncodingResolution, NoopDxfReadObserver,
+        DxfCancellationToken, DxfDiagnosticCode, DxfGroupCode, DxfHandle, DxfHandleParseIssue,
+        DxfHandseedState, DxfLegacyCodePage, DxfMemorySource, DxfReadOptions, DxfResourceProfile,
+        DxfSemanticValueState, DxfTextEncodingPolicy, DxfTextEncodingResolution,
+        NoopDxfReadObserver,
     };
 
     #[test]
@@ -346,6 +493,12 @@ mod tests {
                 assert_eq!(
                     view.dwg_code_page().field_provenance().schema_field_id(),
                     "dwgcodepage"
+                );
+                assert_eq!(view.handseed().state(), DxfSemanticValueState::Absent);
+                assert_eq!(view.handseed().value(), None);
+                assert_eq!(
+                    view.handseed().field_provenance().schema_field_id(),
+                    "handseed"
                 );
             }
 
@@ -409,6 +562,119 @@ mod tests {
             assert_code_page_raw_value(&ascii, &ascii_view, b"ANSI_1252")?;
             assert_code_page_raw_value(&binary, &binary_view, b"ANSI_1252")?;
         }
+        Ok(())
+    }
+
+    #[test]
+    fn every_supported_version_has_handseed_ascii_binary_parity() -> Result<(), Box<dyn Error>> {
+        for version in DxfAcadVersion::SUPPORTED {
+            let declarations = [(5_i16, "ABCDEF")];
+            let ascii_bytes = ascii_handseed_fixture(version.code(), &declarations);
+            let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+            let ascii = open_ascii(&ascii_source, DxfReadOptions::strict())?;
+            let ascii_view = ascii.header_view()?;
+
+            let binary_bytes = binary_handseed_fixture(version, &declarations)?;
+            let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+            let binary = open_binary(&binary_source, DxfReadOptions::strict())?;
+            let binary_view = binary.header_view()?;
+
+            for (view, report) in [
+                (&ascii_view, ascii.handseed_report()),
+                (&binary_view, binary.handseed_report()),
+            ] {
+                assert_eq!(report.state(), DxfHandseedState::Parsed);
+                assert_eq!(view.handseed().state(), DxfSemanticValueState::Explicit);
+                assert_eq!(
+                    view.handseed().value(),
+                    Some(&DxfHandle::from_u64(0xabcdef))
+                );
+                assert_eq!(
+                    view.handseed().field_provenance().schema_namespace(),
+                    "header"
+                );
+                assert_eq!(
+                    view.handseed().field_provenance().schema_field_id(),
+                    "handseed"
+                );
+                assert!(report.diagnostics().is_empty());
+            }
+            assert_handseed_raw_value(&ascii, &ascii_view, b"ABCDEF")?;
+            assert_handseed_raw_value(&binary, &binary_view, b"ABCDEF")?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn handseed_exact_boundaries_preserve_raw_spelling() -> Result<(), Box<dyn Error>> {
+        for (raw, expected) in [("0", 0_u64), ("00000a", 10), ("FFFFFFFFFFFFFFFF", u64::MAX)] {
+            let bytes = ascii_handseed_fixture("AC1032", &[(5, raw)]);
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_ascii(&source, DxfReadOptions::strict())?;
+            let view = document.header_view()?;
+            let handle = view
+                .handseed()
+                .value()
+                .ok_or(io::Error::other("missing handseed"))?;
+            assert_eq!(handle.value(), expected);
+            assert_eq!(handle.is_null(), expected == 0);
+            assert_handseed_raw_value(&document, &view, raw.as_bytes())?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn malformed_duplicate_and_missing_handseed_are_typed() -> Result<(), Box<dyn Error>> {
+        let malformed = [
+            (
+                5_i16,
+                "",
+                DxfHandseedIssue::InvalidHandle(DxfHandleParseIssue::Empty),
+            ),
+            (
+                5,
+                "00000000000000000",
+                DxfHandseedIssue::InvalidHandle(DxfHandleParseIssue::TooLong),
+            ),
+            (
+                5,
+                "12G4",
+                DxfHandseedIssue::InvalidHandle(DxfHandleParseIssue::InvalidDigit { offset: 2 }),
+            ),
+        ];
+        for (group_code, raw, expected_issue) in malformed {
+            let bytes = binary_handseed_fixture(DxfAcadVersion::Ac1032, &[(group_code, raw)])?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_binary(&source, DxfReadOptions::strict())?;
+            let view = document.header_view()?;
+            assert_eq!(view.handseed().invalid_issue(), Some(&expected_issue));
+            assert_eq!(document.handseed_report().diagnostics().len(), 1);
+            assert_eq!(
+                document.handseed_report().diagnostics()[0].code(),
+                DxfDiagnosticCode::HANDSEED_VALUE_INVALID
+            );
+            assert_eq!(
+                document.handseed_report().diagnostics()[0].span(),
+                view.handseed().raw_provenance().map(|raw| raw.value_span())
+            );
+            assert_handseed_raw_value(&document, &view, raw.as_bytes())?;
+        }
+
+        let code_1 = DxfGroupCode::new(1).ok_or(io::Error::other("group code"))?;
+        let wrong_bytes = ascii_handseed_fixture("AC1032", &[(1, "ABCDEF")]);
+        let wrong_source = DxfMemorySource::new(&wrong_bytes, DxfResourceProfile::Safe)?;
+        let wrong = open_ascii(&wrong_source, DxfReadOptions::strict())?;
+        let wrong_view = wrong.header_view()?;
+        assert_eq!(
+            wrong_view.handseed().invalid_issue(),
+            Some(&DxfHandseedIssue::InvalidGroupCode(code_1))
+        );
+        assert_handseed_raw_value(&wrong, &wrong_view, b"ABCDEF")?;
+
+        assert_handseed_duplicate_ascii()?;
+        assert_handseed_duplicate_binary()?;
+        assert_handseed_missing_ascii()?;
+        assert_handseed_missing_binary()?;
         Ok(())
     }
 
@@ -603,14 +869,97 @@ mod tests {
         Ok(())
     }
 
+    fn assert_handseed_duplicate_ascii() -> Result<(), Box<dyn Error>> {
+        let bytes = ascii_handseed_fixture("AC1032", &[(5, "A"), (5, "B")]);
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source, DxfReadOptions::strict())?;
+        assert_handseed_duplicate(&document, &document.header_view()?)
+    }
+
+    fn assert_handseed_duplicate_binary() -> Result<(), Box<dyn Error>> {
+        let bytes = binary_handseed_fixture(DxfAcadVersion::Ac1032, &[(5, "A"), (5, "B")])?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_binary(&source, DxfReadOptions::strict())?;
+        assert_handseed_duplicate(&document, &document.header_view()?)
+    }
+
+    fn assert_handseed_duplicate(
+        document: &impl HandseedDocument,
+        view: &super::DxfHeaderView,
+    ) -> Result<(), Box<dyn Error>> {
+        assert!(matches!(
+            view.handseed().invalid_issue(),
+            Some(DxfHandseedIssue::MultipleValues { occurrence_count })
+                if occurrence_count.get() == 2
+        ));
+        let report = document.handseed_report();
+        assert_eq!(report.source_id(), document.source_id());
+        assert_eq!(report.state(), DxfHandseedState::Ambiguous);
+        assert!(
+            report
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| { diagnostic.code() == DxfDiagnosticCode::HANDSEED_DUPLICATE })
+        );
+        assert_handseed_raw_value(document, view, b"B")
+    }
+
+    fn assert_handseed_missing_ascii() -> Result<(), Box<dyn Error>> {
+        let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n9\n$HANDSEED\n";
+        let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source, DxfReadOptions::compatible())?;
+        assert_handseed_missing(&document, &document.header_view()?)
+    }
+
+    fn assert_handseed_missing_binary() -> Result<(), Box<dyn Error>> {
+        let mut bytes = binary_header_prefix(DxfAcadVersion::Ac1032)?;
+        push_binary_group(&mut bytes, DxfAcadVersion::Ac1032, 9, b"$HANDSEED")?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_binary(&source, DxfReadOptions::compatible())?;
+        assert_handseed_missing(&document, &document.header_view()?)
+    }
+
+    fn assert_handseed_missing(
+        document: &impl HandseedDocument,
+        view: &super::DxfHeaderView,
+    ) -> Result<(), Box<dyn Error>> {
+        assert_eq!(
+            view.handseed().invalid_issue(),
+            Some(&DxfHandseedIssue::MissingValue)
+        );
+        let report = document.handseed_report();
+        assert_eq!(report.source_id(), document.source_id());
+        assert!(
+            report.diagnostics().iter().any(|diagnostic| {
+                diagnostic.code() == DxfDiagnosticCode::HANDSEED_VALUE_INVALID
+            })
+        );
+        assert_handseed_raw_value(document, view, b"$HANDSEED")
+    }
+
     fn ascii_fixture(version: &str) -> Vec<u8> {
         ascii_code_page_fixture(version, &[])
     }
 
     fn ascii_code_page_fixture(version: &str, declarations: &[(i16, &str)]) -> Vec<u8> {
+        ascii_header_fixture(version, declarations, &[])
+    }
+
+    fn ascii_handseed_fixture(version: &str, declarations: &[(i16, &str)]) -> Vec<u8> {
+        ascii_header_fixture(version, &[], declarations)
+    }
+
+    fn ascii_header_fixture(
+        version: &str,
+        code_pages: &[(i16, &str)],
+        handseeds: &[(i16, &str)],
+    ) -> Vec<u8> {
         let mut text = format!("0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n");
-        for (group_code, value) in declarations {
+        for (group_code, value) in code_pages {
             text.push_str(&format!("9\n$DWGCODEPAGE\n{group_code}\n{value}\n"));
+        }
+        for (group_code, value) in handseeds {
+            text.push_str(&format!("9\n$HANDSEED\n{group_code}\n{value}\n"));
         }
         text.push_str("0\nENDSEC\n0\nEOF\n");
         text.into_bytes()
@@ -624,9 +973,28 @@ mod tests {
         version: DxfAcadVersion,
         declarations: &[(i16, &str)],
     ) -> Result<Vec<u8>, io::Error> {
+        binary_header_fixture(version, declarations, &[])
+    }
+
+    fn binary_handseed_fixture(
+        version: DxfAcadVersion,
+        declarations: &[(i16, &str)],
+    ) -> Result<Vec<u8>, io::Error> {
+        binary_header_fixture(version, &[], declarations)
+    }
+
+    fn binary_header_fixture(
+        version: DxfAcadVersion,
+        code_pages: &[(i16, &str)],
+        handseeds: &[(i16, &str)],
+    ) -> Result<Vec<u8>, io::Error> {
         let mut bytes = binary_header_prefix(version)?;
-        for (group_code, value) in declarations {
+        for (group_code, value) in code_pages {
             push_binary_group(&mut bytes, version, 9, b"$DWGCODEPAGE")?;
+            push_binary_group(&mut bytes, version, *group_code, value.as_bytes())?;
+        }
+        for (group_code, value) in handseeds {
+            push_binary_group(&mut bytes, version, 9, b"$HANDSEED")?;
             push_binary_group(&mut bytes, version, *group_code, value.as_bytes())?;
         }
         for (group_code, value) in [(0_i16, "ENDSEC"), (0, "EOF")] {
@@ -704,6 +1072,14 @@ mod tests {
         assert_semantic_raw_value(document, view.dwg_code_page().raw_provenance(), expected)
     }
 
+    fn assert_handseed_raw_value(
+        document: &impl RawSpanReader,
+        view: &super::DxfHeaderView,
+        expected: &[u8],
+    ) -> Result<(), Box<dyn Error>> {
+        assert_semantic_raw_value(document, view.handseed().raw_provenance(), expected)
+    }
+
     fn assert_semantic_raw_value(
         document: &impl RawSpanReader,
         raw: Option<crate::DxfRawValueProvenance>,
@@ -724,6 +1100,11 @@ mod tests {
         ) -> Result<(), crate::DxfError>;
     }
 
+    trait HandseedDocument: RawSpanReader {
+        fn source_id(&self) -> crate::DxfSourceId;
+        fn handseed_report(&self) -> &crate::DxfHandseedReport;
+    }
+
     impl RawSpanReader for DxfAsciiRawDocument<'_> {
         fn read(
             &self,
@@ -734,6 +1115,16 @@ mod tests {
         }
     }
 
+    impl HandseedDocument for DxfAsciiRawDocument<'_> {
+        fn source_id(&self) -> crate::DxfSourceId {
+            self.source_id()
+        }
+
+        fn handseed_report(&self) -> &crate::DxfHandseedReport {
+            self.handseed_report()
+        }
+    }
+
     impl RawSpanReader for DxfBinaryRawDocument<'_> {
         fn read(
             &self,
@@ -741,6 +1132,16 @@ mod tests {
             destination: &mut [u8],
         ) -> Result<(), crate::DxfError> {
             self.read_span(span, destination)
+        }
+    }
+
+    impl HandseedDocument for DxfBinaryRawDocument<'_> {
+        fn source_id(&self) -> crate::DxfSourceId {
+            self.source_id()
+        }
+
+        fn handseed_report(&self) -> &crate::DxfHandseedReport {
+            self.handseed_report()
         }
     }
 }

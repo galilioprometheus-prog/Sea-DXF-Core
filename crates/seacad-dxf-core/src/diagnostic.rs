@@ -175,6 +175,18 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Error,
     };
 
+    /// `$HANDSEED` has a missing, malformed, or non-group-code 5 value.
+    pub const HANDSEED_VALUE_INVALID: Self = Self {
+        value: "DXF-E0430",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// More than one exact `$HANDSEED` makes the declaration ambiguous.
+    pub const HANDSEED_DUPLICATE: Self = Self {
+        value: "DXF-E0431",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -319,6 +331,17 @@ mod tests {
             (DxfDiagnosticCode::CODEPAGE_UNSUPPORTED, "DXF-E0423"),
         ];
         for (code, expected) in encoding_codes {
+            let diagnostic = DxfDiagnostic::new(code, span);
+            assert_eq!(diagnostic.code().as_str(), expected);
+            assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Error);
+            assert_eq!(diagnostic.span(), span);
+        }
+
+        let handseed_codes = [
+            (DxfDiagnosticCode::HANDSEED_VALUE_INVALID, "DXF-E0430"),
+            (DxfDiagnosticCode::HANDSEED_DUPLICATE, "DXF-E0431"),
+        ];
+        for (code, expected) in handseed_codes {
             let diagnostic = DxfDiagnostic::new(code, span);
             assert_eq!(diagnostic.code().as_str(), expected);
             assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Error);
