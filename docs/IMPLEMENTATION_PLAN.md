@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5f adds orthographic origins with append-only schema ordinals
+M6.5g adds the first general scalar HEADER batch through generated schema
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -64,8 +64,13 @@ M6.5f adds orthographic origins with append-only schema ordinals
    model-space orthographic origin rows (`BACK`, `BOTTOM`, `FRONT`, `LEFT`,
    `RIGHT`, and `TOP`). Schema manifest order becomes authoritative and
    append-only so all prior public ordinals remain unchanged; stable field ids
-   remain the canonical persisted identity. A 1 GiB evidence gate is required
-   before any large-file claim.
+   remain the canonical persisted identity. M6.5g appends `$CECOLOR`,
+   `$CELTSCALE`, `$CHAMFERA`, `$CHAMFERB`, `$CHAMFERC`, `$CHAMFERD`,
+   `$CMLJUST`, `$CMLSCALE`, `$ELEVATION`, `$FILLETRAD`, `$FILLMODE`, and
+   `$LTSCALE` as reviewed `Int16` or `Double` wire shapes. The generic numeric
+   directory resolves them without field-specific parser branches; meanings,
+   ranges, defaults, applicability, and cross-variable rules remain unclaimed.
+   A 1 GiB evidence gate is required before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
