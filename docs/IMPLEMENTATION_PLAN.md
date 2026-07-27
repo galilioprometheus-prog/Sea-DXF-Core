@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5a adds the first reviewed numeric HEADER wire shapes
+M6.5b exposes the first source-anchored numeric HEADER semantic view
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -41,7 +41,11 @@ M6.5a adds the first reviewed numeric HEADER wire shapes
    reviewed `Double` and `Int16` wire families and adds shape-only entries for
    `$ACADMAINTVER`, `$ANGBASE`, `$ANGDIR`, `$ATTMODE`, `$AUNITS`, and
    `$AUPREC`; it does not yet claim defaults, applicability, enum meaning, or
-   typed numeric values. A 1 GiB evidence gate is required before any
+   typed numeric values. M6.5b reads those six fields through the shared raw
+   document and schema directory, preserving exact provenance and separating
+   absence, structural conflicts, ASCII syntax/range failures, and explicit
+   values. `DxfDouble` retains IEEE-754 bits; no default, enum, range, or unit
+   conversion is applied. A 1 GiB evidence gate is required before any
    large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
