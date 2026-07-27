@@ -9,6 +9,7 @@ license-file.workspace = true
 description = "SeaCad lossless DXF core"
 
 [dependencies]
+encoding_rs = { version = "=0.8.35", default-features = false, features = ["alloc"] }
 sha2 = { version = "=0.11.0", default-features = false }
 
 [lints]

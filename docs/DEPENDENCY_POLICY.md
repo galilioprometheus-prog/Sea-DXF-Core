@@ -6,11 +6,12 @@
   milestone-scoped and pinned.
 - `sha2 = 0.11.0` with default features disabled is approved at M2.3 only for
   streaming SHA-256 source identity.
-- `encoding_rs = 0.8.35` was reviewed as a candidate at M4.3a but is not yet a
-  dependency. M4.3b may add it only with default features disabled, explicit
-  `alloc`, no SIMD/serde/fast-encode features, and replacement-free decode
-  APIs. It cannot alone satisfy DOS/OEM codepages; unsupported mappings must
-  remain explicit rather than fall back.
+- `encoding_rs = 0.8.35` is approved at M4.3b1 with default features disabled
+  and only explicit `alloc`. SeaCad calls replacement-free decode APIs through
+  its bounded caller-buffer wrapper. SIMD, serde, and fast-encode features are
+  not approved. The dependency covers only the frozen 15-entry Windows ANSI
+  registry; DOS/OEM pages, Johab, aliases, and unknown tokens remain explicit
+  unsupported results with no fallback.
 - `seacad-cli` uses pinned `clap = 4.6.4`, `serde = 1.0.229`, and
   `serde_json = 1.0.151` with default features disabled for argument parsing
   and stable JSON v1 output. Their M3.5 review is recorded in
