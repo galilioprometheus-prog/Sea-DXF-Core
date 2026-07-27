@@ -99,6 +99,30 @@
       "review_state": "shape_only"
     },
     {
+      "id": "extmax",
+      "dxf_name": "$EXTMAX",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$EXTMAX",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "extmin",
+      "dxf_name": "$EXTMIN",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$EXTMIN",
+      "review_state": "shape_only"
+    },
+    {
       "id": "handseed",
       "dxf_name": "$HANDSEED",
       "group_codes": [5],
@@ -108,6 +132,78 @@
       "default_policy": "not_yet_reviewed",
       "source_id": "autodesk.header.2026",
       "evidence": "row:$HANDSEED",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "insbase",
+      "dxf_name": "$INSBASE",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$INSBASE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "limmax",
+      "dxf_name": "$LIMMAX",
+      "group_codes": [10, 20],
+      "storage": "double2",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$LIMMAX",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "limmin",
+      "dxf_name": "$LIMMIN",
+      "group_codes": [10, 20],
+      "storage": "double2",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$LIMMIN",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pextmax",
+      "dxf_name": "$PEXTMAX",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PEXTMAX",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pextmin",
+      "dxf_name": "$PEXTMIN",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PEXTMIN",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pinsbase",
+      "dxf_name": "$PINSBASE",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PINSBASE",
       "review_state": "shape_only"
     }
   ]

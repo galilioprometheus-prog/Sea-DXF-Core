@@ -276,7 +276,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 9);
+        assert_eq!(directory.matches().len(), 17);
         assert!(directory.entry("unknown").is_none());
         assert_match(
             directory.entry("acadver"),
@@ -312,7 +312,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 9);
+        assert_eq!(directory.matches().len(), 17);
         assert_eq!(source.reads(), reads_after_open + 9);
         Ok(())
     }
@@ -391,7 +391,7 @@ mod tests {
         let directory = view.resolve_header_schema(&DxfCancellationToken::default())?;
         assert_eq!(directory.source_id(), view.source_id());
         assert_eq!(directory.schema_version(), "dxf.v1");
-        assert_eq!(directory.matches().len(), 9);
+        assert_eq!(directory.matches().len(), 17);
         assert_match(
             directory.entry("acadmaintver"),
             DxfHeaderVariableLookupState::Unique,
@@ -458,7 +458,7 @@ mod tests {
         assert_eq!(directory.matches()[0].schema_ordinal(), 0);
         assert_eq!(directory.matches()[0].dxf_name(), "$ACADMAINTVER");
         assert_eq!(
-            directory.match_at(8).map(|entry| entry.schema_field_id()),
+            directory.match_at(10).map(|entry| entry.schema_field_id()),
             Some("handseed")
         );
         let debug = format!("{directory:?}");

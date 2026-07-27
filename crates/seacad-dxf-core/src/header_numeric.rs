@@ -64,8 +64,16 @@ pub enum DxfHeaderNumericIssue {
     InvalidGroupCode(DxfGroupCode),
     InvalidAsciiNumber(DxfAsciiNumericIssue),
     MissingValue,
-    MultipleValueGroups { group_count: NonZeroU64 },
-    MultipleVariables { occurrence_count: NonZeroU64 },
+    MultipleValueGroups {
+        group_count: NonZeroU64,
+    },
+    UnexpectedComponentCount {
+        expected_count: NonZeroU64,
+        observed_count: u64,
+    },
+    MultipleVariables {
+        occurrence_count: NonZeroU64,
+    },
 }
 
 /// One schema-selected numeric representation and its four-state provenance.
@@ -73,6 +81,8 @@ pub enum DxfHeaderNumericIssue {
 #[non_exhaustive]
 pub enum DxfHeaderNumericValue {
     Double(DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>),
+    Double2([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]),
+    Double3([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]),
     Int16(DxfSemanticValue<i16, DxfHeaderNumericIssue>),
 }
 
@@ -81,6 +91,8 @@ impl DxfHeaderNumericValue {
     pub const fn state(&self) -> DxfSemanticValueState {
         match self {
             Self::Double(value) => value.state(),
+            Self::Double2(values) => double2_state(values),
+            Self::Double3(values) => double3_state(values),
             Self::Int16(value) => value.state(),
         }
     }
@@ -89,14 +101,21 @@ impl DxfHeaderNumericValue {
     pub const fn field_provenance(&self) -> DxfSemanticFieldProvenance {
         match self {
             Self::Double(value) => value.field_provenance(),
+            Self::Double2(values) => values[0].field_provenance(),
+            Self::Double3(values) => values[0].field_provenance(),
             Self::Int16(value) => value.field_provenance(),
         }
     }
 
+    /// Returns scalar evidence or the first source-ordered tuple component.
+    ///
+    /// Use `as_double2` or `as_double3` to inspect every component span.
     #[must_use]
     pub const fn raw_provenance(&self) -> Option<DxfRawValueProvenance> {
         match self {
             Self::Double(value) => value.raw_provenance(),
+            Self::Double2(values) => first_raw_provenance(values),
+            Self::Double3(values) => first_raw_provenance(values),
             Self::Int16(value) => value.raw_provenance(),
         }
     }
@@ -105,7 +124,27 @@ impl DxfHeaderNumericValue {
     pub const fn as_double(&self) -> Option<&DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>> {
         match self {
             Self::Double(value) => Some(value),
-            Self::Int16(_) => None,
+            Self::Double2(_) | Self::Double3(_) | Self::Int16(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_double2(
+        &self,
+    ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]> {
+        match self {
+            Self::Double2(values) => Some(values),
+            Self::Double(_) | Self::Double3(_) | Self::Int16(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_double3(
+        &self,
+    ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]> {
+        match self {
+            Self::Double3(values) => Some(values),
+            Self::Double(_) | Self::Double2(_) | Self::Int16(_) => None,
         }
     }
 
@@ -113,9 +152,62 @@ impl DxfHeaderNumericValue {
     pub const fn as_int16(&self) -> Option<&DxfSemanticValue<i16, DxfHeaderNumericIssue>> {
         match self {
             Self::Int16(value) => Some(value),
-            Self::Double(_) => None,
+            Self::Double(_) | Self::Double2(_) | Self::Double3(_) => None,
         }
     }
+}
+
+const fn double2_state(
+    values: &[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2],
+) -> DxfSemanticValueState {
+    match (values[0].state(), values[1].state()) {
+        (DxfSemanticValueState::Explicit, DxfSemanticValueState::Explicit) => {
+            DxfSemanticValueState::Explicit
+        }
+        (DxfSemanticValueState::Defaulted, DxfSemanticValueState::Defaulted) => {
+            DxfSemanticValueState::Defaulted
+        }
+        (DxfSemanticValueState::Absent, DxfSemanticValueState::Absent) => {
+            DxfSemanticValueState::Absent
+        }
+        _ => DxfSemanticValueState::Invalid,
+    }
+}
+
+const fn double3_state(
+    values: &[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3],
+) -> DxfSemanticValueState {
+    match (values[0].state(), values[1].state(), values[2].state()) {
+        (
+            DxfSemanticValueState::Explicit,
+            DxfSemanticValueState::Explicit,
+            DxfSemanticValueState::Explicit,
+        ) => DxfSemanticValueState::Explicit,
+        (
+            DxfSemanticValueState::Defaulted,
+            DxfSemanticValueState::Defaulted,
+            DxfSemanticValueState::Defaulted,
+        ) => DxfSemanticValueState::Defaulted,
+        (
+            DxfSemanticValueState::Absent,
+            DxfSemanticValueState::Absent,
+            DxfSemanticValueState::Absent,
+        ) => DxfSemanticValueState::Absent,
+        _ => DxfSemanticValueState::Invalid,
+    }
+}
+
+const fn first_raw_provenance<const N: usize>(
+    values: &[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; N],
+) -> Option<DxfRawValueProvenance> {
+    let mut index = 0;
+    while index < N {
+        if let Some(raw) = values[index].raw_provenance() {
+            return Some(raw);
+        }
+        index += 1;
+    }
+    None
 }
 
 /// Numeric HEADER field resolved from one generated schema ordinal.
@@ -124,6 +216,7 @@ pub struct DxfHeaderNumericEntry {
     schema_ordinal: u32,
     schema_field_id: &'static str,
     dxf_name: &'static str,
+    group_codes: &'static [i16],
     value: DxfHeaderNumericValue,
 }
 
@@ -141,6 +234,11 @@ impl DxfHeaderNumericEntry {
     #[must_use]
     pub const fn dxf_name(self) -> &'static str {
         self.dxf_name
+    }
+
+    #[must_use]
+    pub const fn group_codes(self) -> &'static [i16] {
+        self.group_codes
     }
 
     #[must_use]
@@ -180,8 +278,28 @@ impl DxfHeaderNumericDirectory {
             let value = match field.storage {
                 DxfSchemaStorageKind::Double => {
                     let matched = schema_match(&raw_directory, ordinal, field)?;
-                    let spec = FieldSpec::from_schema(field)?;
+                    let spec = FieldSpec::from_schema(field);
                     Some(DxfHeaderNumericValue::Double(double_field(
+                        document,
+                        matched,
+                        spec,
+                        cancellation,
+                    )?))
+                }
+                DxfSchemaStorageKind::Double2 => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field);
+                    Some(DxfHeaderNumericValue::Double2(double_tuple_field(
+                        document,
+                        matched,
+                        spec,
+                        cancellation,
+                    )?))
+                }
+                DxfSchemaStorageKind::Double3 => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field);
+                    Some(DxfHeaderNumericValue::Double3(double_tuple_field(
                         document,
                         matched,
                         spec,
@@ -190,7 +308,7 @@ impl DxfHeaderNumericDirectory {
                 }
                 DxfSchemaStorageKind::Int16 => {
                     let matched = schema_match(&raw_directory, ordinal, field)?;
-                    let spec = FieldSpec::from_schema(field)?;
+                    let spec = FieldSpec::from_schema(field);
                     Some(DxfHeaderNumericValue::Int16(int16_field(
                         document,
                         matched,
@@ -205,6 +323,7 @@ impl DxfHeaderNumericDirectory {
                     schema_ordinal: u32::try_from(ordinal).map_err(|_| invalid_internal_data())?,
                     schema_field_id: field.id,
                     dxf_name: field.dxf_name,
+                    group_codes: field.group_codes,
                     value,
                 });
             }
@@ -381,26 +500,32 @@ impl DxfBinaryRawDocument<'_> {
 #[derive(Clone, Copy)]
 struct FieldSpec {
     id: &'static str,
-    group_code: i16,
+    group_codes: &'static [i16],
 }
 
 impl FieldSpec {
-    fn from_schema(field: &DxfHeaderSchemaField) -> Result<Self, DxfError> {
-        let group_code = match field.group_codes {
-            [group_code] => *group_code,
-            _ => return Err(invalid_internal_data()),
-        };
-        Ok(Self {
+    const fn from_schema(field: &DxfHeaderSchemaField) -> Self {
+        Self {
             id: field.id,
-            group_code,
-        })
+            group_codes: field.group_codes,
+        }
+    }
+
+    fn single_group_code(self) -> Result<i16, DxfError> {
+        match self.group_codes {
+            [group_code] => Ok(*group_code),
+            _ => Err(invalid_internal_data()),
+        }
     }
 }
 
 fn is_numeric_storage(storage: DxfSchemaStorageKind) -> bool {
     matches!(
         storage,
-        DxfSchemaStorageKind::Double | DxfSchemaStorageKind::Int16
+        DxfSchemaStorageKind::Double
+            | DxfSchemaStorageKind::Double2
+            | DxfSchemaStorageKind::Double3
+            | DxfSchemaStorageKind::Int16
     )
 }
 
@@ -431,7 +556,7 @@ fn required_int16(
         .map(DxfHeaderNumericEntry::value)
     {
         Some(DxfHeaderNumericValue::Int16(value)) => Ok(*value),
-        Some(DxfHeaderNumericValue::Double(_)) | None => Err(invalid_internal_data()),
+        Some(_) | None => Err(invalid_internal_data()),
     }
 }
 
@@ -444,8 +569,107 @@ fn required_double(
         .map(DxfHeaderNumericEntry::value)
     {
         Some(DxfHeaderNumericValue::Double(value)) => Ok(*value),
-        Some(DxfHeaderNumericValue::Int16(_)) | None => Err(invalid_internal_data()),
+        Some(_) | None => Err(invalid_internal_data()),
     }
+}
+
+fn double_tuple_field<const N: usize>(
+    document: DxfRawDocumentView<'_>,
+    matched: &DxfHeaderSchemaMatch,
+    spec: FieldSpec,
+    cancellation: &DxfCancellationToken,
+) -> Result<[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; N], DxfError> {
+    if N == 0 || spec.group_codes.len() != N {
+        return Err(invalid_internal_data());
+    }
+    ensure_not_cancelled(cancellation)?;
+    let field = field_provenance(document.source_id(), spec);
+    let mut values = [DxfSemanticValue::absent(field); N];
+    match matched.state() {
+        DxfHeaderVariableLookupState::Absent => return Ok(values),
+        DxfHeaderVariableLookupState::Ambiguous => {
+            let occurrence_count =
+                NonZeroU64::new(matched.occurrence_count()).ok_or_else(invalid_internal_data)?;
+            let raw = matched
+                .conflicting()
+                .or_else(|| matched.primary())
+                .map(|variable| variable_provenance(document, variable))
+                .transpose()?;
+            values.fill(DxfSemanticValue::invalid(
+                DxfHeaderNumericIssue::MultipleVariables { occurrence_count },
+                field,
+                raw,
+            ));
+            return Ok(values);
+        }
+        DxfHeaderVariableLookupState::Unique => {}
+    }
+
+    let variable = matched.primary().ok_or_else(invalid_internal_data)?;
+    let range = variable.value_groups();
+    let observed_count = range.len();
+    let expected_count = u64::try_from(N).map_err(|_| invalid_internal_data())?;
+    let expected_count = NonZeroU64::new(expected_count).ok_or_else(invalid_internal_data)?;
+    if observed_count > expected_count.get() {
+        let extra_occurrence = range
+            .start()
+            .checked_add(expected_count.get())
+            .ok_or_else(invalid_internal_data)?;
+        let extra = document
+            .group(extra_occurrence)
+            .ok_or_else(invalid_internal_data)?;
+        values.fill(DxfSemanticValue::invalid(
+            DxfHeaderNumericIssue::UnexpectedComponentCount {
+                expected_count,
+                observed_count,
+            },
+            field,
+            Some(group_provenance(extra)?),
+        ));
+        return Ok(values);
+    }
+
+    let marker_raw = marker_provenance(variable)?;
+    for index in 0..N {
+        ensure_not_cancelled(cancellation)?;
+        let slot = values.get_mut(index).ok_or_else(invalid_internal_data)?;
+        let index_u64 = u64::try_from(index).map_err(|_| invalid_internal_data())?;
+        if index_u64 >= observed_count {
+            *slot = DxfSemanticValue::invalid(
+                DxfHeaderNumericIssue::MissingValue,
+                field,
+                Some(marker_raw),
+            );
+            continue;
+        }
+        let occurrence = range
+            .start()
+            .checked_add(index_u64)
+            .ok_or_else(invalid_internal_data)?;
+        let group = document
+            .group(occurrence)
+            .ok_or_else(invalid_internal_data)?;
+        let expected_group_code = spec
+            .group_codes
+            .get(index)
+            .copied()
+            .ok_or_else(invalid_internal_data)?;
+        let raw = group_provenance(group)?;
+        if group.group_code().value() != expected_group_code {
+            *slot = DxfSemanticValue::invalid(
+                DxfHeaderNumericIssue::InvalidGroupCode(group.group_code()),
+                field,
+                Some(raw),
+            );
+            continue;
+        }
+        *slot = match decode_double(document, group, cancellation)? {
+            Ok(value) => DxfSemanticValue::explicit(value, field, raw),
+            Err(issue) => DxfSemanticValue::invalid(issue, field, Some(raw)),
+        };
+    }
+    ensure_not_cancelled(cancellation)?;
+    Ok(values)
 }
 
 enum ResolvedGroup {
@@ -521,7 +745,7 @@ fn resolve_group(
         }
         DxfHeaderVariableLookupState::Unique => {
             let variable = matched.primary().ok_or_else(invalid_internal_data)?;
-            resolve_unique_variable(document, variable, spec.group_code)
+            resolve_unique_variable(document, variable, spec.single_group_code()?)
         }
     }
 }

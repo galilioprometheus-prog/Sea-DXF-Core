@@ -52,6 +52,13 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
         DxfSemanticValueState::Absent
     );
     assert_eq!(absent_view.angle_direction().raw_provenance(), None);
+    let absent_directory = absent.header_numeric_directory(&DxfCancellationToken::default())?;
+    assert_eq!(
+        absent_directory
+            .entry("extmax")
+            .map(|entry| entry.value().state()),
+        Some(DxfSemanticValueState::Absent)
+    );
 
     let wrong_bytes = ascii_document("AC1032", "9\n$ANGDIR\n71\n1\n");
     let wrong_source = DxfMemorySource::new(&wrong_bytes, DxfResourceProfile::Safe)?;
@@ -114,6 +121,106 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
         duplicate_view.angle_direction().raw_provenance(),
         b"2",
     )?;
+    Ok(())
+}
+
+#[test]
+fn coordinate_components_keep_independent_failure_evidence() -> Result<(), Box<dyn Error>> {
+    let partial_bytes = ascii_document("AC1032", "9\n$EXTMAX\n10\n1\n21\n2\n");
+    let partial_source = DxfMemorySource::new(&partial_bytes, DxfResourceProfile::Safe)?;
+    let partial = open_ascii(&partial_source)?;
+    let partial_directory = partial.header_numeric_directory(&DxfCancellationToken::default())?;
+    let partial_value = partial_directory
+        .entry("extmax")
+        .and_then(|entry| entry.value().as_double3())
+        .ok_or(io::Error::other("missing partial EXTMAX"))?;
+    assert_eq!(
+        partial_directory
+            .entry("extmax")
+            .map(|entry| entry.value().state()),
+        Some(DxfSemanticValueState::Invalid)
+    );
+    assert_eq!(
+        partial_value[0].value().copied().map(DxfDouble::to_bits),
+        Some(1_f64.to_bits())
+    );
+    assert_eq!(
+        partial_value[1].invalid_issue(),
+        Some(&DxfHeaderNumericIssue::InvalidGroupCode(code(21)?))
+    );
+    assert_eq!(
+        partial_value[2].invalid_issue(),
+        Some(&DxfHeaderNumericIssue::MissingValue)
+    );
+    assert_raw_value(
+        DxfRawDocumentView::from(&partial),
+        partial_value[1].raw_provenance(),
+        b"2",
+    )?;
+    assert_raw_value(
+        DxfRawDocumentView::from(&partial),
+        partial_value[2].raw_provenance(),
+        b"$EXTMAX",
+    )?;
+
+    let extra_bytes = ascii_document("AC1032", "9\n$LIMMAX\n10\n1\n20\n2\n30\n3\n");
+    let extra_source = DxfMemorySource::new(&extra_bytes, DxfResourceProfile::Safe)?;
+    let extra = open_ascii(&extra_source)?;
+    let extra_directory = extra.header_numeric_directory(&DxfCancellationToken::default())?;
+    let extra_value = extra_directory
+        .entry("limmax")
+        .and_then(|entry| entry.value().as_double2())
+        .ok_or(io::Error::other("missing extra LIMMAX"))?;
+    let expected_issue = DxfHeaderNumericIssue::UnexpectedComponentCount {
+        expected_count: NonZeroU64::new(2).ok_or(io::Error::other("zero expected count"))?,
+        observed_count: 3,
+    };
+    assert_eq!(extra_value[0].invalid_issue(), Some(&expected_issue));
+    assert_eq!(extra_value[1].invalid_issue(), Some(&expected_issue));
+    assert_raw_value(
+        DxfRawDocumentView::from(&extra),
+        extra_value[0].raw_provenance(),
+        b"3",
+    )?;
+
+    let duplicate_bytes = ascii_document(
+        "AC1032",
+        "9\n$EXTMIN\n10\n1\n20\n2\n30\n3\n9\n$EXTMIN\n10\n4\n20\n5\n30\n6\n",
+    );
+    let duplicate_source = DxfMemorySource::new(&duplicate_bytes, DxfResourceProfile::Safe)?;
+    let duplicate = open_ascii(&duplicate_source)?;
+    let duplicate_directory =
+        duplicate.header_numeric_directory(&DxfCancellationToken::default())?;
+    let duplicate_value = duplicate_directory
+        .entry("extmin")
+        .and_then(|entry| entry.value().as_double3())
+        .ok_or(io::Error::other("missing duplicate EXTMIN"))?;
+    let duplicate_issue = DxfHeaderNumericIssue::MultipleVariables {
+        occurrence_count: NonZeroU64::new(2).ok_or(io::Error::other("zero duplicate count"))?,
+    };
+    for component in duplicate_value {
+        assert_eq!(component.invalid_issue(), Some(&duplicate_issue));
+    }
+    assert_raw_value(
+        DxfRawDocumentView::from(&duplicate),
+        duplicate_value[0].raw_provenance(),
+        b"4",
+    )?;
+
+    let empty_bytes = ascii_document("AC1032", "9\n$PINSBASE\n");
+    let empty_source = DxfMemorySource::new(&empty_bytes, DxfResourceProfile::Safe)?;
+    let empty = open_ascii(&empty_source)?;
+    let empty_directory = empty.header_numeric_directory(&DxfCancellationToken::default())?;
+    let empty_value = empty_directory
+        .entry("pinsbase")
+        .and_then(|entry| entry.value().as_double3())
+        .ok_or(io::Error::other("missing empty PINSBASE"))?;
+    for component in empty_value {
+        assert_eq!(
+            component.invalid_issue(),
+            Some(&DxfHeaderNumericIssue::MissingValue)
+        );
+    }
     Ok(())
 }
 
@@ -263,19 +370,28 @@ fn assert_standard_directory(
 ) -> Result<(), Box<dyn Error>> {
     assert_eq!(directory.schema_version(), "dxf.v1");
     assert_eq!(directory.source_id(), source_id);
-    let expected = [
-        (0_u64, "acadmaintver", "$ACADMAINTVER"),
-        (2, "angbase", "$ANGBASE"),
-        (3, "angdir", "$ANGDIR"),
-        (4, "attmode", "$ATTMODE"),
-        (5, "aunits", "$AUNITS"),
-        (6, "auprec", "$AUPREC"),
+    let expected: &[(u64, &str, &str, &[i16])] = &[
+        (0, "acadmaintver", "$ACADMAINTVER", &[70]),
+        (2, "angbase", "$ANGBASE", &[50]),
+        (3, "angdir", "$ANGDIR", &[70]),
+        (4, "attmode", "$ATTMODE", &[70]),
+        (5, "aunits", "$AUNITS", &[70]),
+        (6, "auprec", "$AUPREC", &[70]),
+        (8, "extmax", "$EXTMAX", &[10, 20, 30]),
+        (9, "extmin", "$EXTMIN", &[10, 20, 30]),
+        (11, "insbase", "$INSBASE", &[10, 20, 30]),
+        (12, "limmax", "$LIMMAX", &[10, 20]),
+        (13, "limmin", "$LIMMIN", &[10, 20]),
+        (14, "pextmax", "$PEXTMAX", &[10, 20, 30]),
+        (15, "pextmin", "$PEXTMIN", &[10, 20, 30]),
+        (16, "pinsbase", "$PINSBASE", &[10, 20, 30]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
-    for (entry, (ordinal, id, name)) in directory.entries().iter().zip(expected) {
+    for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
         assert_eq!(entry.schema_ordinal(), ordinal);
         assert_eq!(entry.schema_field_id(), id);
         assert_eq!(entry.dxf_name(), name);
+        assert_eq!(entry.group_codes(), group_codes);
         assert_eq!(entry.value().state(), DxfSemanticValueState::Explicit);
         assert_eq!(
             entry.value().field_provenance().document_source_id(),
@@ -285,6 +401,7 @@ fn assert_standard_directory(
     }
     assert!(directory.entry("acadver").is_none());
     assert!(directory.entry_at_schema_ordinal(1).is_none());
+    assert!(directory.entry_at_schema_ordinal(10).is_none());
     assert_eq!(
         directory
             .entry("angbase")
@@ -301,10 +418,36 @@ fn assert_standard_directory(
             .and_then(|value| value.value()),
         Some(&1)
     );
+    assert_double_components(
+        directory
+            .entry("extmax")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing EXTMAX tuple"))?,
+        &[1.25, -2.5, 3.75],
+    );
+    assert_double_components(
+        directory
+            .entry("limmin")
+            .and_then(|entry| entry.value().as_double2())
+            .ok_or(io::Error::other("missing LIMMIN tuple"))?,
+        &[-10.0, -20.0],
+    );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
     assert!(!debug.contains("$ANGBASE"));
     Ok(())
+}
+
+fn assert_double_components<const N: usize>(
+    components: &[seacad_dxf_core::DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; N],
+    expected: &[f64; N],
+) {
+    for (component, expected) in components.iter().zip(expected) {
+        assert_eq!(
+            component.value().copied().map(DxfDouble::to_bits),
+            Some(expected.to_bits())
+        );
+    }
 }
 
 fn assert_standard_view(
@@ -388,7 +531,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n",
     )
 }
 
@@ -411,6 +554,18 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_i16(&mut bytes, version, 70, value)?;
+    }
+    for (name, values) in [
+        (b"$EXTMAX".as_slice(), &[1.25, -2.5, 3.75][..]),
+        (b"$EXTMIN".as_slice(), &[-4.5, 5.25, -6.75][..]),
+        (b"$INSBASE".as_slice(), &[7.0, 8.0, 9.0][..]),
+        (b"$LIMMAX".as_slice(), &[10.0, 20.0][..]),
+        (b"$LIMMIN".as_slice(), &[-10.0, -20.0][..]),
+        (b"$PEXTMAX".as_slice(), &[11.0, 22.0, 33.0][..]),
+        (b"$PEXTMIN".as_slice(), &[-11.0, -22.0, -33.0][..]),
+        (b"$PINSBASE".as_slice(), &[0.125, 0.25, 0.5][..]),
+    ] {
+        push_binary_double_tuple(&mut bytes, version, name, values)?;
     }
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
@@ -479,6 +634,19 @@ fn push_binary_double_bits(
 ) -> Result<(), io::Error> {
     push_binary_group_code(bytes, version, group_code)?;
     bytes.extend_from_slice(&bits.to_le_bytes());
+    Ok(())
+}
+
+fn push_binary_double_tuple(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    name: &[u8],
+    values: &[f64],
+) -> Result<(), io::Error> {
+    push_binary_string(bytes, version, 9, name)?;
+    for (group_code, value) in [10_i16, 20, 30].into_iter().zip(values.iter().copied()) {
+        push_binary_double_bits(bytes, version, group_code, value.to_bits())?;
+    }
     Ok(())
 }
 

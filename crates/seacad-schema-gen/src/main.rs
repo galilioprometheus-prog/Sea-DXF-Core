@@ -70,6 +70,8 @@ struct SchemaField {
 #[serde(rename_all = "snake_case")]
 enum StorageKind {
     Double,
+    Double2,
+    Double3,
     ExactText,
     Handle,
     Int16,
@@ -417,6 +419,10 @@ fn validate_fields(
 fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(), SchemaError> {
     let valid = match (field.storage, field.group_codes.as_slice()) {
         (StorageKind::Double, [group_code]) => (10..=59).contains(group_code),
+        (StorageKind::Double2, [x, y]) => (10..=18).contains(x) && *y == *x + 10,
+        (StorageKind::Double3, [x, y, z]) => {
+            (10..=18).contains(x) && *y == *x + 10 && *z == *x + 20
+        }
         (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
         (StorageKind::Int16, [group_code]) => (60..=79).contains(group_code),
         _ => false,
@@ -490,7 +496,9 @@ fn render_registry(
     output.push_str("#![allow(dead_code)]\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) enum DxfSchemaStorageKind {\n");
-    output.push_str("    Double,\n    ExactText,\n    Handle,\n    Int16,\n}\n\n");
+    output.push_str(
+        "    Double,\n    Double2,\n    Double3,\n    ExactText,\n    Handle,\n    Int16,\n}\n\n",
+    );
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) struct DxfHeaderSchemaField {\n");
     output.push_str("    pub id: &'static str,\n    pub dxf_name: &'static str,\n");
@@ -544,6 +552,8 @@ fn render_registry(
 fn storage_variant(storage: StorageKind) -> &'static str {
     match storage {
         StorageKind::Double => "Double",
+        StorageKind::Double2 => "Double2",
+        StorageKind::Double3 => "Double3",
         StorageKind::ExactText => "ExactText",
         StorageKind::Handle => "Handle",
         StorageKind::Int16 => "Int16",
@@ -673,7 +683,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 9);
+        assert_eq!(families[0].fields.len(), 17);
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -745,6 +755,30 @@ mod tests {
         let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("invalid int16 wire family unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let double3 = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "extmax")
+            .ok_or("missing double3 field")?;
+        families[0].fields[double3].group_codes = vec![10, 20, 31];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid double3 wire shape unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let double2 = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "limmax")
+            .ok_or("missing double2 field")?;
+        families[0].fields[double2].group_codes = vec![10, 21];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid double2 wire shape unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         Ok(())
     }
