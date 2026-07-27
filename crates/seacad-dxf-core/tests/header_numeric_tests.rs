@@ -12,11 +12,11 @@ use seacad_dxf_core::{
 #[test]
 fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<dyn Error>> {
     for version in DxfAcadVersion::SUPPORTED {
-        let ascii_bytes = ascii_standard_fixture(version.code());
+        let ascii_bytes = ascii_standard_fixture(version.code())?;
         let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
         let ascii = open_ascii(&ascii_source)?;
         let ascii_directory = ascii.header_numeric_directory(&DxfCancellationToken::default())?;
-        assert_standard_directory(&ascii_directory, ascii.source_id())?;
+        assert_standard_directory(&ascii_directory, ascii.source_id(), version)?;
         let ascii_view = ascii.header_numeric_view(&DxfCancellationToken::default())?;
         assert_standard_view(&ascii_view, ascii.source_id())?;
 
@@ -24,7 +24,7 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
         let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
         let binary = open_binary(&binary_source)?;
         let binary_directory = binary.header_numeric_directory(&DxfCancellationToken::default())?;
-        assert_standard_directory(&binary_directory, binary.source_id())?;
+        assert_standard_directory(&binary_directory, binary.source_id(), version)?;
         let binary_view = binary.header_numeric_view(&DxfCancellationToken::default())?;
         assert_standard_view(&binary_view, binary.source_id())?;
 
@@ -164,6 +164,26 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_timer.raw_provenance(),
             &0.5_f64.to_le_bytes(),
         )?;
+        if version != DxfAcadVersion::Ac1009 {
+            let ascii_endcaps = ascii_directory
+                .entry("endcaps")
+                .and_then(|entry| entry.value().as_int16())
+                .ok_or(io::Error::other("missing ASCII ENDCAPS"))?;
+            assert_raw_value(
+                DxfRawDocumentView::from(&ascii),
+                ascii_endcaps.raw_provenance(),
+                b"2",
+            )?;
+            let binary_extnames = binary_directory
+                .entry("extnames")
+                .and_then(|entry| entry.value().as_boolean())
+                .ok_or(io::Error::other("missing Binary EXTNAMES"))?;
+            assert_raw_value(
+                DxfRawDocumentView::from(&binary),
+                binary_extnames.raw_provenance(),
+                &[1],
+            )?;
+        }
     }
     Ok(())
 }
@@ -358,6 +378,27 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
             Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
         ));
     }
+
+    let malformed_flag_bytes =
+        ascii_document("AC1032", "9\n$ENDCAPS\n280\n32768\n9\n$EXTNAMES\n290\n2\n");
+    let malformed_flag_source =
+        DxfMemorySource::new(&malformed_flag_bytes, DxfResourceProfile::Safe)?;
+    let malformed_flags = open_ascii(&malformed_flag_source)?
+        .header_numeric_directory(&DxfCancellationToken::default())?;
+    assert!(matches!(
+        malformed_flags
+            .entry("endcaps")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.invalid_issue()),
+        Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+    ));
+    assert_eq!(
+        malformed_flags
+            .entry("extnames")
+            .and_then(|entry| entry.value().as_boolean())
+            .and_then(|value| value.invalid_issue()),
+        Some(&DxfHeaderNumericIssue::BooleanOutOfDomain { value: 2 })
+    );
     Ok(())
 }
 
@@ -623,6 +664,19 @@ fn binary_preserves_ieee_bits_and_signed_boundaries() -> Result<(), Box<dyn Erro
         .ok_or(io::Error::other("missing binary date"))?;
     assert_eq!(created.raw().to_bits(), nan_bits);
     assert!(created.day_parts().is_none());
+    let invalid_boolean = directory
+        .entry("extnames")
+        .and_then(|entry| entry.value().as_boolean())
+        .ok_or(io::Error::other("missing binary EXTNAMES"))?;
+    assert_eq!(
+        invalid_boolean.invalid_issue(),
+        Some(&DxfHeaderNumericIssue::BooleanOutOfDomain { value: 255 })
+    );
+    assert_raw_value(
+        DxfRawDocumentView::from(&document),
+        invalid_boolean.raw_provenance(),
+        &[255],
+    )?;
     Ok(())
 }
 
@@ -667,7 +721,7 @@ fn date_and_elapsed_day_parts_are_exact_and_timezone_free() -> Result<(), Box<dy
 
 #[test]
 fn cancellation_and_public_metadata_remain_bounded() -> Result<(), Box<dyn Error>> {
-    let bytes = ascii_standard_fixture("AC1032");
+    let bytes = ascii_standard_fixture("AC1032")?;
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
     let cancellation = DxfCancellationToken::default();
@@ -700,6 +754,7 @@ fn cancellation_and_public_metadata_remain_bounded() -> Result<(), Box<dyn Error
 fn assert_standard_directory(
     directory: &DxfHeaderNumericDirectory,
     source_id: seacad_dxf_core::DxfSourceId,
+    version: DxfAcadVersion,
 ) -> Result<(), Box<dyn Error>> {
     assert_eq!(directory.schema_version(), "dxf.v1");
     assert_eq!(directory.source_id(), source_id);
@@ -792,6 +847,16 @@ fn assert_standard_directory(
         (88, "tduupdate", "$TDUUPDATE", &[40]),
         (89, "tdindwg", "$TDINDWG", &[40]),
         (90, "tdusrtimer", "$TDUSRTIMER", &[40]),
+        (91, "endcaps", "$ENDCAPS", &[280]),
+        (92, "extnames", "$EXTNAMES", &[290]),
+        (93, "halogap", "$HALOGAP", &[280]),
+        (94, "hidetext", "$HIDETEXT", &[290]),
+        (95, "indexctl", "$INDEXCTL", &[280]),
+        (96, "intersectiondisplay", "$INTERSECTIONDISPLAY", &[290]),
+        (97, "joinstyle", "$JOINSTYLE", &[280]),
+        (98, "lwdisplay", "$LWDISPLAY", &[290]),
+        (99, "obsltype", "$OBSLTYPE", &[280]),
+        (100, "pstylemode", "$PSTYLEMODE", &[290]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -799,7 +864,12 @@ fn assert_standard_directory(
         assert_eq!(entry.schema_field_id(), id);
         assert_eq!(entry.dxf_name(), name);
         assert_eq!(entry.group_codes(), group_codes);
-        assert_eq!(entry.value().state(), DxfSemanticValueState::Explicit);
+        let expected_state = if version == DxfAcadVersion::Ac1009 && ordinal >= 91 {
+            DxfSemanticValueState::Absent
+        } else {
+            DxfSemanticValueState::Explicit
+        };
+        assert_eq!(entry.value().state(), expected_state);
         assert_eq!(
             entry.value().field_provenance().document_source_id(),
             source_id
@@ -1028,6 +1098,35 @@ fn assert_standard_directory(
             .and_then(|entry| entry.value().as_double())
             .is_none()
     );
+    if version != DxfAcadVersion::Ac1009 {
+        assert_eq!(
+            directory
+                .entry("endcaps")
+                .and_then(|entry| entry.value().as_int16())
+                .and_then(|value| value.value()),
+            Some(&2)
+        );
+        assert_eq!(
+            directory
+                .entry("extnames")
+                .and_then(|entry| entry.value().as_boolean())
+                .and_then(|value| value.value()),
+            Some(&true)
+        );
+        assert_eq!(
+            directory
+                .entry("pstylemode")
+                .and_then(|entry| entry.value().as_boolean())
+                .and_then(|value| value.value()),
+            Some(&false)
+        );
+    }
+    assert!(
+        directory
+            .entry("extnames")
+            .and_then(|entry| entry.value().as_int16())
+            .is_none()
+    );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
     assert!(!debug.contains("$ANGBASE"));
@@ -1124,11 +1223,21 @@ fn assert_raw_value(
     Ok(())
 }
 
-fn ascii_standard_fixture(version: &str) -> Vec<u8> {
-    ascii_document(
+fn ascii_standard_fixture(version: &str) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n9\n$SPLINESEGS\n70\n8\n9\n$SPLINETYPE\n70\n6\n9\n$SURFTAB1\n70\n6\n9\n$SURFTAB2\n70\n8\n9\n$SURFTYPE\n70\n6\n9\n$SURFU\n70\n12\n9\n$SURFV\n70\n14\n9\n$TEXTSIZE\n40\n2.5\n9\n$THICKNESS\n40\n-1.25\n9\n$TILEMODE\n70\n1\n9\n$TRACEWID\n40\n0.375\n9\n$TREEDEPTH\n70\n10\n9\n$TDCREATE\n40\n2451544.91568287\n9\n$TDUCREATE\n40\n2451544.5\n9\n$TDUPDATE\n40\n2451545.25\n9\n$TDUUPDATE\n40\n2451545.75\n9\n$TDINDWG\n40\n3.25\n9\n$TDUSRTIMER\n40\n0.5\n",
-    )
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n9\n$SPLINESEGS\n70\n8\n9\n$SPLINETYPE\n70\n6\n9\n$SURFTAB1\n70\n6\n9\n$SURFTAB2\n70\n8\n9\n$SURFTYPE\n70\n6\n9\n$SURFU\n70\n12\n9\n$SURFV\n70\n14\n9\n$TEXTSIZE\n40\n2.5\n9\n$THICKNESS\n40\n-1.25\n9\n$TILEMODE\n70\n1\n9\n$TRACEWID\n40\n0.375\n9\n$TREEDEPTH\n70\n10\n9\n$TDCREATE\n40\n2451544.91568287\n9\n$TDUCREATE\n40\n2451544.5\n9\n$TDUPDATE\n40\n2451545.25\n9\n$TDUUPDATE\n40\n2451545.75\n9\n$TDINDWG\n40\n3.25\n9\n$TDUSRTIMER\n40\n0.5\n9\n$ENDCAPS\n280\n2\n9\n$EXTNAMES\n290\n1\n9\n$HALOGAP\n280\n25\n9\n$HIDETEXT\n290\n0\n9\n$INDEXCTL\n280\n3\n9\n$INTERSECTIONDISPLAY\n290\n1\n9\n$JOINSTYLE\n280\n2\n9\n$LWDISPLAY\n290\n1\n9\n$OBSLTYPE\n280\n4\n9\n$PSTYLEMODE\n290\n0\n",
+    );
+    if version == "AC1009" {
+        let extension = b"9\n$ENDCAPS\n";
+        let extension_start = bytes
+            .windows(extension.len())
+            .position(|window| window == extension)
+            .ok_or(io::Error::other("missing extended fixture fields"))?;
+        bytes.truncate(extension_start);
+        bytes.extend_from_slice(b"0\nENDSEC\n0\nEOF\n");
+    }
+    Ok(bytes)
 }
 
 fn ascii_document(version: &str, body: &str) -> Vec<u8> {
@@ -1252,6 +1361,28 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_double_bits(&mut bytes, version, 40, value.to_bits())?;
     }
+    if version != DxfAcadVersion::Ac1009 {
+        for (name, value) in [
+            (b"$ENDCAPS".as_slice(), 2_i16),
+            (b"$HALOGAP".as_slice(), 25),
+            (b"$INDEXCTL".as_slice(), 3),
+            (b"$JOINSTYLE".as_slice(), 2),
+            (b"$OBSLTYPE".as_slice(), 4),
+        ] {
+            push_binary_string(&mut bytes, version, 9, name)?;
+            push_binary_i16(&mut bytes, version, 280, value)?;
+        }
+        for (name, value) in [
+            (b"$EXTNAMES".as_slice(), true),
+            (b"$HIDETEXT".as_slice(), false),
+            (b"$INTERSECTIONDISPLAY".as_slice(), true),
+            (b"$LWDISPLAY".as_slice(), true),
+            (b"$PSTYLEMODE".as_slice(), false),
+        ] {
+            push_binary_string(&mut bytes, version, 9, name)?;
+            push_binary_boolean(&mut bytes, version, 290, value)?;
+        }
+    }
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
 }
@@ -1266,6 +1397,8 @@ fn binary_boundary_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
     push_binary_i16(&mut bytes, version, 70, i16::MAX)?;
     push_binary_string(&mut bytes, version, 9, b"$TDCREATE")?;
     push_binary_double_bits(&mut bytes, version, 40, angle_bits)?;
+    push_binary_string(&mut bytes, version, 9, b"$EXTNAMES")?;
+    push_binary_boolean_raw(&mut bytes, version, 290, u8::MAX)?;
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
 }
@@ -1310,6 +1443,26 @@ fn push_binary_i16(
 ) -> Result<(), io::Error> {
     push_binary_group_code(bytes, version, group_code)?;
     bytes.extend_from_slice(&value.to_le_bytes());
+    Ok(())
+}
+
+fn push_binary_boolean(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    group_code: i16,
+    value: bool,
+) -> Result<(), io::Error> {
+    push_binary_boolean_raw(bytes, version, group_code, u8::from(value))
+}
+
+fn push_binary_boolean_raw(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    group_code: i16,
+    value: u8,
+) -> Result<(), io::Error> {
+    push_binary_group_code(bytes, version, group_code)?;
+    bytes.push(value);
     Ok(())
 }
 

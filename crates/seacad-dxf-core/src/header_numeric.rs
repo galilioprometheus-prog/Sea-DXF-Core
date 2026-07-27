@@ -138,6 +138,9 @@ pub enum DxfAsciiNumericIssue {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfHeaderNumericIssue {
+    BooleanOutOfDomain {
+        value: i16,
+    },
     InvalidGroupCode(DxfGroupCode),
     InvalidAsciiNumber(DxfAsciiNumericIssue),
     MissingValue,
@@ -157,6 +160,7 @@ pub enum DxfHeaderNumericIssue {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfHeaderNumericValue {
+    Boolean(DxfSemanticValue<bool, DxfHeaderNumericIssue>),
     Double(DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>),
     Double2([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]),
     Double3([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]),
@@ -169,6 +173,7 @@ impl DxfHeaderNumericValue {
     #[must_use]
     pub const fn state(&self) -> DxfSemanticValueState {
         match self {
+            Self::Boolean(value) => value.state(),
             Self::Double(value) => value.state(),
             Self::Double2(values) => double2_state(values),
             Self::Double3(values) => double3_state(values),
@@ -181,6 +186,7 @@ impl DxfHeaderNumericValue {
     #[must_use]
     pub const fn field_provenance(&self) -> DxfSemanticFieldProvenance {
         match self {
+            Self::Boolean(value) => value.field_provenance(),
             Self::Double(value) => value.field_provenance(),
             Self::Double2(values) => values[0].field_provenance(),
             Self::Double3(values) => values[0].field_provenance(),
@@ -196,6 +202,7 @@ impl DxfHeaderNumericValue {
     #[must_use]
     pub const fn raw_provenance(&self) -> Option<DxfRawValueProvenance> {
         match self {
+            Self::Boolean(value) => value.raw_provenance(),
             Self::Double(value) => value.raw_provenance(),
             Self::Double2(values) => first_raw_provenance(values),
             Self::Double3(values) => first_raw_provenance(values),
@@ -209,7 +216,8 @@ impl DxfHeaderNumericValue {
     pub const fn as_double(&self) -> Option<&DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>> {
         match self {
             Self::Double(value) => Some(value),
-            Self::Double2(_)
+            Self::Boolean(_)
+            | Self::Double2(_)
             | Self::Double3(_)
             | Self::ElapsedDays(_)
             | Self::Int16(_)
@@ -223,7 +231,8 @@ impl DxfHeaderNumericValue {
     ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]> {
         match self {
             Self::Double2(values) => Some(values),
-            Self::Double(_)
+            Self::Boolean(_)
+            | Self::Double(_)
             | Self::Double3(_)
             | Self::ElapsedDays(_)
             | Self::Int16(_)
@@ -237,7 +246,8 @@ impl DxfHeaderNumericValue {
     ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]> {
         match self {
             Self::Double3(values) => Some(values),
-            Self::Double(_)
+            Self::Boolean(_)
+            | Self::Double(_)
             | Self::Double2(_)
             | Self::ElapsedDays(_)
             | Self::Int16(_)
@@ -251,7 +261,8 @@ impl DxfHeaderNumericValue {
     ) -> Option<&DxfSemanticValue<DxfElapsedDays, DxfHeaderNumericIssue>> {
         match self {
             Self::ElapsedDays(value) => Some(value),
-            Self::Double(_)
+            Self::Boolean(_)
+            | Self::Double(_)
             | Self::Double2(_)
             | Self::Double3(_)
             | Self::Int16(_)
@@ -263,7 +274,8 @@ impl DxfHeaderNumericValue {
     pub const fn as_int16(&self) -> Option<&DxfSemanticValue<i16, DxfHeaderNumericIssue>> {
         match self {
             Self::Int16(value) => Some(value),
-            Self::Double(_)
+            Self::Boolean(_)
+            | Self::Double(_)
             | Self::Double2(_)
             | Self::Double3(_)
             | Self::ElapsedDays(_)
@@ -277,11 +289,25 @@ impl DxfHeaderNumericValue {
     ) -> Option<&DxfSemanticValue<DxfJulianDate, DxfHeaderNumericIssue>> {
         match self {
             Self::JulianDate(value) => Some(value),
-            Self::Double(_)
+            Self::Boolean(_)
+            | Self::Double(_)
             | Self::Double2(_)
             | Self::Double3(_)
             | Self::ElapsedDays(_)
             | Self::Int16(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_boolean(&self) -> Option<&DxfSemanticValue<bool, DxfHeaderNumericIssue>> {
+        match self {
+            Self::Boolean(value) => Some(value),
+            Self::Double(_)
+            | Self::Double2(_)
+            | Self::Double3(_)
+            | Self::ElapsedDays(_)
+            | Self::Int16(_)
+            | Self::JulianDate(_) => None,
         }
     }
 }
@@ -408,6 +434,16 @@ impl DxfHeaderNumericDirectory {
         for (ordinal, field) in HEADER_FIELDS.iter().enumerate() {
             ensure_not_cancelled(cancellation)?;
             let value = match field.storage {
+                DxfSchemaStorageKind::Boolean => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field);
+                    Some(DxfHeaderNumericValue::Boolean(boolean_field(
+                        document,
+                        matched,
+                        spec,
+                        cancellation,
+                    )?))
+                }
                 DxfSchemaStorageKind::Double => {
                     let matched = schema_match(&raw_directory, ordinal, field)?;
                     let spec = FieldSpec::from_schema(field);
@@ -671,7 +707,8 @@ impl FieldSpec {
 fn is_numeric_storage(storage: DxfSchemaStorageKind) -> bool {
     matches!(
         storage,
-        DxfSchemaStorageKind::Double
+        DxfSchemaStorageKind::Boolean
+            | DxfSchemaStorageKind::Double
             | DxfSchemaStorageKind::Double2
             | DxfSchemaStorageKind::Double3
             | DxfSchemaStorageKind::ElapsedDays
@@ -832,6 +869,26 @@ enum ResolvedGroup {
     Explicit(DxfRawGroup),
 }
 
+fn boolean_field(
+    document: DxfRawDocumentView<'_>,
+    matched: &DxfHeaderSchemaMatch,
+    spec: FieldSpec,
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfSemanticValue<bool, DxfHeaderNumericIssue>, DxfError> {
+    let field = field_provenance(document.source_id(), spec);
+    match resolve_group(document, matched, spec, cancellation)? {
+        ResolvedGroup::Absent => Ok(DxfSemanticValue::absent(field)),
+        ResolvedGroup::Invalid { issue, raw } => Ok(DxfSemanticValue::invalid(issue, field, raw)),
+        ResolvedGroup::Explicit(group) => {
+            let raw = group_provenance(group)?;
+            match decode_boolean(document, group, cancellation)? {
+                Ok(value) => Ok(DxfSemanticValue::explicit(value, field, raw)),
+                Err(issue) => Ok(DxfSemanticValue::invalid(issue, field, Some(raw))),
+            }
+        }
+    }
+}
+
 fn int16_field(
     document: DxfRawDocumentView<'_>,
     matched: &DxfHeaderSchemaMatch,
@@ -940,6 +997,35 @@ fn resolve_unique_variable(
             })
         }
     }
+}
+
+fn decode_boolean(
+    document: DxfRawDocumentView<'_>,
+    group: DxfRawGroup,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<bool, DxfHeaderNumericIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let value = match document.format() {
+        DxfRawDocumentFormat::Ascii => match read_ascii_numeric(
+            document,
+            group.value_payload_span(),
+            parse_ascii_i16,
+            cancellation,
+        )? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        },
+        DxfRawDocumentFormat::Binary => {
+            let mut bytes = [0_u8; 1];
+            read_fixed_payload(document, group, &mut bytes, cancellation)?;
+            i16::from(bytes[0])
+        }
+    };
+    Ok(match value {
+        0 => Ok(false),
+        1 => Ok(true),
+        value => Err(DxfHeaderNumericIssue::BooleanOutOfDomain { value }),
+    })
 }
 
 fn decode_i16(

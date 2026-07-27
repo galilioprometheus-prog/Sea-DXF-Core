@@ -1093,6 +1093,126 @@
       "source_id": "autodesk.header.2026",
       "evidence": "row:$TDUSRTIMER",
       "review_state": "semantic"
+    },
+    {
+      "id": "endcaps",
+      "dxf_name": "$ENDCAPS",
+      "group_codes": [280],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ENDCAPS",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "extnames",
+      "dxf_name": "$EXTNAMES",
+      "group_codes": [290],
+      "storage": "boolean",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$EXTNAMES",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "halogap",
+      "dxf_name": "$HALOGAP",
+      "group_codes": [280],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$HALOGAP",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "hidetext",
+      "dxf_name": "$HIDETEXT",
+      "group_codes": [290],
+      "storage": "boolean",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$HIDETEXT",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "indexctl",
+      "dxf_name": "$INDEXCTL",
+      "group_codes": [280],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$INDEXCTL",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "intersectiondisplay",
+      "dxf_name": "$INTERSECTIONDISPLAY",
+      "group_codes": [290],
+      "storage": "boolean",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$INTERSECTIONDISPLAY",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "joinstyle",
+      "dxf_name": "$JOINSTYLE",
+      "group_codes": [280],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$JOINSTYLE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "lwdisplay",
+      "dxf_name": "$LWDISPLAY",
+      "group_codes": [290],
+      "storage": "boolean",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$LWDISPLAY",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "obsltype",
+      "dxf_name": "$OBSLTYPE",
+      "group_codes": [280],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$OBSLTYPE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pstylemode",
+      "dxf_name": "$PSTYLEMODE",
+      "group_codes": [290],
+      "storage": "boolean",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PSTYLEMODE",
+      "review_state": "shape_only"
     }
   ]
 }

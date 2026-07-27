@@ -69,6 +69,7 @@ struct SchemaField {
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum StorageKind {
+    Boolean,
     Double,
     Double2,
     Double3,
@@ -412,6 +413,7 @@ fn validate_fields(
 
 fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(), SchemaError> {
     let valid = match (field.storage, field.group_codes.as_slice()) {
+        (StorageKind::Boolean, [group_code]) => (290..=299).contains(group_code),
         (StorageKind::Double, [group_code]) => (10..=59).contains(group_code),
         (StorageKind::Double2, [x, y]) => (10..=18).contains(x) && *y == *x + 10,
         (StorageKind::Double3, [x, y, z]) => {
@@ -419,7 +421,9 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
         }
         (StorageKind::ElapsedDays | StorageKind::JulianDate, [40]) => true,
         (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
-        (StorageKind::Int16, [group_code]) => (60..=79).contains(group_code),
+        (StorageKind::Int16, [group_code]) => {
+            (60..=79).contains(group_code) || (270..=289).contains(group_code)
+        }
         _ => false,
     };
     if !valid {
@@ -492,7 +496,7 @@ fn render_registry(
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) enum DxfSchemaStorageKind {\n");
     output.push_str(
-        "    Double,\n    Double2,\n    Double3,\n    ElapsedDays,\n    ExactText,\n    Handle,\n    Int16,\n    JulianDate,\n}\n\n",
+        "    Boolean,\n    Double,\n    Double2,\n    Double3,\n    ElapsedDays,\n    ExactText,\n    Handle,\n    Int16,\n    JulianDate,\n}\n\n",
     );
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) struct DxfHeaderSchemaField {\n");
@@ -551,6 +555,7 @@ fn render_registry(
 
 fn storage_variant(storage: StorageKind) -> &'static str {
     match storage {
+        StorageKind::Boolean => "Boolean",
         StorageKind::Double => "Double",
         StorageKind::Double2 => "Double2",
         StorageKind::Double3 => "Double3",
@@ -685,7 +690,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 91);
+        assert_eq!(families[0].fields.len(), 101);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -772,11 +777,17 @@ mod tests {
             "tilemode",
             "tracewid",
             "treedepth",
+            "tdcreate",
+            "tducreate",
+            "tdupdate",
+            "tduupdate",
+            "tdindwg",
+            "tdusrtimer",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[85].id, "tdcreate");
+        assert_eq!(families[0].fields[91].id, "endcaps");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -872,6 +883,30 @@ mod tests {
         let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("invalid double2 wire shape unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let boolean = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "extnames")
+            .ok_or("missing boolean field")?;
+        families[0].fields[boolean].group_codes = vec![289];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid boolean wire family unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let extended_int16 = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "endcaps")
+            .ok_or("missing extended int16 field")?;
+        families[0].fields[extended_int16].group_codes = vec![290];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid extended int16 wire family unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         Ok(())
     }
