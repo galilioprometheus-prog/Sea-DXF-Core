@@ -86,6 +86,30 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Warning,
     };
 
+    /// No exact `$ACADVER` variable was found in an exact HEADER section.
+    pub const ACADVER_MISSING: Self = Self {
+        value: "DXF-E0401",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// `$ACADVER` was not followed by its required group-code 1 value.
+    pub const ACADVER_VALUE_INVALID: Self = Self {
+        value: "DXF-E0402",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// More than one exact `$ACADVER` variable makes the dialect ambiguous.
+    pub const ACADVER_DUPLICATE: Self = Self {
+        value: "DXF-E0403",
+        severity: DxfDiagnosticSeverity::Error,
+    };
+
+    /// The exact group-code 1 value is outside SeaCad's supported registry.
+    pub const ACADVER_UNSUPPORTED: Self = Self {
+        value: "DXF-W0401",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         self.value
@@ -176,6 +200,35 @@ mod tests {
             let diagnostic = DxfDiagnostic::new(code, span);
             assert_eq!(diagnostic.code().as_str(), expected);
             assert_eq!(diagnostic.severity(), DxfDiagnosticSeverity::Warning);
+            assert_eq!(diagnostic.span(), span);
+        }
+
+        let dialect_codes = [
+            (
+                DxfDiagnosticCode::ACADVER_MISSING,
+                "DXF-E0401",
+                DxfDiagnosticSeverity::Error,
+            ),
+            (
+                DxfDiagnosticCode::ACADVER_VALUE_INVALID,
+                "DXF-E0402",
+                DxfDiagnosticSeverity::Error,
+            ),
+            (
+                DxfDiagnosticCode::ACADVER_DUPLICATE,
+                "DXF-E0403",
+                DxfDiagnosticSeverity::Error,
+            ),
+            (
+                DxfDiagnosticCode::ACADVER_UNSUPPORTED,
+                "DXF-W0401",
+                DxfDiagnosticSeverity::Warning,
+            ),
+        ];
+        for (code, expected, severity) in dialect_codes {
+            let diagnostic = DxfDiagnostic::new(code, span);
+            assert_eq!(diagnostic.code().as_str(), expected);
+            assert_eq!(diagnostic.severity(), severity);
             assert_eq!(diagnostic.span(), span);
         }
     }

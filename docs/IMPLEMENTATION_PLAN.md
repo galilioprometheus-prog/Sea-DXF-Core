@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M3 lossless ASCII framing and bilingual inspect/verify CLI complete;
-awaiting user approval for M4.1 dialect registry and `$ACADVER` discovery
+Status: M4.1 typed AC1009-AC1032 registry and provenance-backed `$ACADVER`
+discovery complete; awaiting user approval for M4.2 section accounting/index
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

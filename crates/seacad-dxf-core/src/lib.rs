@@ -9,6 +9,7 @@ mod ascii_document;
 mod ascii_group;
 mod ascii_line;
 mod diagnostic;
+mod dialect;
 mod error;
 mod format_probe;
 mod limits;
@@ -25,6 +26,10 @@ pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };
 pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
+pub use dialect::{
+    DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
+    DxfAcadVersionValue,
+};
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
 pub use limits::{DxfResourceLimits, DxfResourceProfile};

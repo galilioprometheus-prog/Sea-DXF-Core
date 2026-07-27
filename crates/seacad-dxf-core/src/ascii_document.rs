@@ -3,10 +3,10 @@ use std::{fmt, io, sync::Mutex};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ByteSpan, DxfAsciiGroup, DxfAsciiGroupCursor, DxfAsciiLineEnding, DxfByteSource,
-    DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode, DxfError, DxfGroupCode, DxfIoOperation,
-    DxfReadControl, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfSourceId,
-    ascii_group::trim_horizontal_ascii,
+    ByteSpan, DxfAcadVersionReport, DxfAsciiGroup, DxfAsciiGroupCursor, DxfAsciiLineEnding,
+    DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode, DxfError, DxfGroupCode,
+    DxfIoOperation, DxfReadControl, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfReadProgress,
+    DxfSourceId, ascii_group::trim_horizontal_ascii, dialect::DxfAcadVersionTracker,
 };
 
 const HASH_CHUNK_BYTES: usize = 64 * 1024;
@@ -91,6 +91,7 @@ pub struct DxfAsciiRawDocument<'a> {
     diagnostics: Box<[DxfDiagnostic]>,
     diagnostics_truncated: bool,
     conformance: DxfAsciiDocumentConformance,
+    acad_version: DxfAcadVersionReport,
     eof_occurrence: Option<u64>,
     trailing_span: Option<ByteSpan>,
 }
@@ -105,6 +106,7 @@ impl fmt::Debug for DxfAsciiRawDocument<'_> {
             .field("diagnostics", &self.diagnostics.len())
             .field("diagnostics_truncated", &self.diagnostics_truncated)
             .field("conformance", &self.conformance)
+            .field("acad_version", &self.acad_version.state())
             .field("eof_occurrence", &self.eof_occurrence)
             .field("trailing_span", &self.trailing_span)
             .finish()
@@ -126,11 +128,13 @@ impl<'a> DxfAsciiRawDocument<'a> {
 
         let limits = options.resource_profile().limits();
         let mut groups = Vec::new();
+        let mut acad_version_tracker = DxfAcadVersionTracker::default();
         let mut eof_occurrence = None;
         let mut eof_recovered = false;
         let mut last_reported = 0_u64;
 
         while let Some(group) = cursor.next_group(cancellation)? {
+            acad_version_tracker.observe(group)?;
             let compact = DxfAsciiRawGroup::from_borrowed(group)?;
             let eof_match = classify_eof(group, options.mode());
             groups.try_reserve(1).map_err(|_| out_of_memory())?;
@@ -208,6 +212,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
 
         let source_id =
             hashing_source.finalize(cancellation, observer, source_len, &mut last_reported)?;
+        let acad_version = acad_version_tracker.finish(source_id)?;
         let conformance = if diagnostics.is_empty() {
             DxfAsciiDocumentConformance::Strict
         } else {
@@ -222,6 +227,7 @@ impl<'a> DxfAsciiRawDocument<'a> {
             diagnostics: diagnostics.into_boxed_slice(),
             diagnostics_truncated,
             conformance,
+            acad_version,
             eof_occurrence,
             trailing_span,
         })
@@ -255,6 +261,11 @@ impl<'a> DxfAsciiRawDocument<'a> {
     #[must_use]
     pub const fn conformance(&self) -> DxfAsciiDocumentConformance {
         self.conformance
+    }
+
+    #[must_use]
+    pub const fn acad_version_report(&self) -> &DxfAcadVersionReport {
+        &self.acad_version
     }
 
     #[must_use]

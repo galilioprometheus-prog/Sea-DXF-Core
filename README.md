@@ -6,16 +6,18 @@ through AC1032.
 
 ## Current status
 
-Milestone M3 is complete. SeaCad can frame raw ASCII DXF losslessly with
+Checkpoint M4.1 is complete. SeaCad can frame raw ASCII DXF losslessly with
 bounded Strict/Compatible reading, preserve exact source bytes, compute a
-SHA-256 source identity, and write a separately verified byte-identical
-Verbatim copy. It does not yet claim version, section, entity, or geometry
-semantics; those begin at M4.
+SHA-256 source identity, discover the documented `$ACADVER` dialect from
+AC1009 through AC1032 with byte-span provenance, and write a separately
+verified byte-identical Verbatim copy. Section accounting, encoding, entity
+semantics, and geometry are not implemented yet.
 
 ## Workspace
 
-- `seacad-dxf-core`: bounded source, raw ASCII framing, source identity, and
-  Verbatim writer today; semantics, topology, and transactions arrive later.
+- `seacad-dxf-core`: bounded source, raw ASCII framing, source identity, typed
+  dialect discovery, and Verbatim writer today; broader semantics, topology,
+  and transactions arrive later.
 - `seacad-cli`: operational `inspect` and `verify` commands with English or
   Vietnamese human output and stable JSON v1. `corpus` arrives later.
 - `seacad-schema-gen`: reserved for provenance-backed schema generation at M6.
