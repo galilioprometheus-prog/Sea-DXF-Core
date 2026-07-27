@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5g adds the first general scalar HEADER batch through generated schema
+M6.5h adds drawing modes and scalar defaults through generated HEADER schema
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -70,7 +70,12 @@ M6.5g adds the first general scalar HEADER batch through generated schema
    `$LTSCALE` as reviewed `Int16` or `Double` wire shapes. The generic numeric
    directory resolves them without field-specific parser branches; meanings,
    ranges, defaults, applicability, and cross-variable rules remain unclaimed.
-   A 1 GiB evidence gate is required before any large-file claim.
+   M6.5h appends `$LIMCHECK`, `$LUNITS`, `$LUPREC`, `$MAXACTVP`,
+   `$MEASUREMENT`, `$MIRRTEXT`, `$ORTHOMODE`, `$PDMODE`, `$PDSIZE`,
+   `$PELEVATION`, `$PLIMCHECK`, and `$PLINEWID` through the same generic
+   `Int16` and `Double` directory. The checkpoint preserves source values and
+   provenance without assigning enum, boolean, unit, range, or default
+   semantics. A 1 GiB evidence gate is required before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

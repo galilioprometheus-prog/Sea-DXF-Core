@@ -91,6 +91,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_color.raw_provenance(),
             &256_i16.to_le_bytes(),
         )?;
+        let ascii_pelevation = ascii_directory
+            .entry("pelevation")
+            .and_then(|entry| entry.value().as_double())
+            .ok_or(io::Error::other("missing ASCII PELEVATION"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_pelevation.raw_provenance(),
+            b"-7.25",
+        )?;
+        let binary_pdmode = binary_directory
+            .entry("pdmode")
+            .and_then(|entry| entry.value().as_int16())
+            .ok_or(io::Error::other("missing Binary PDMODE"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_pdmode.raw_provenance(),
+            &34_i16.to_le_bytes(),
+        )?;
     }
     Ok(())
 }
@@ -186,6 +204,28 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
         .header_numeric_directory(&DxfCancellationToken::default())?;
     for field_id in ["chamferc", "fillmode"] {
         let issue = malformed_scalars
+            .entry(field_id)
+            .and_then(|entry| match entry.value() {
+                DxfHeaderNumericValue::Double(value) => value.invalid_issue(),
+                DxfHeaderNumericValue::Int16(value) => value.invalid_issue(),
+                _ => None,
+            });
+        assert!(matches!(
+            issue,
+            Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+        ));
+    }
+
+    let malformed_mode_bytes = ascii_document(
+        "AC1032",
+        "9\n$PDSIZE\n40\nnot-a-number\n9\n$PLIMCHECK\n70\n32768\n",
+    );
+    let malformed_mode_source =
+        DxfMemorySource::new(&malformed_mode_bytes, DxfResourceProfile::Safe)?;
+    let malformed_modes = open_ascii(&malformed_mode_source)?
+        .header_numeric_directory(&DxfCancellationToken::default())?;
+    for field_id in ["pdsize", "plimcheck"] {
+        let issue = malformed_modes
             .entry(field_id)
             .and_then(|entry| match entry.value() {
                 DxfHeaderNumericValue::Double(value) => value.invalid_issue(),
@@ -538,6 +578,18 @@ fn assert_standard_directory(
         (46, "filletrad", "$FILLETRAD", &[40]),
         (47, "fillmode", "$FILLMODE", &[70]),
         (48, "ltscale", "$LTSCALE", &[40]),
+        (49, "limcheck", "$LIMCHECK", &[70]),
+        (50, "lunits", "$LUNITS", &[70]),
+        (51, "luprec", "$LUPREC", &[70]),
+        (52, "maxactvp", "$MAXACTVP", &[70]),
+        (53, "measurement", "$MEASUREMENT", &[70]),
+        (54, "mirrtext", "$MIRRTEXT", &[70]),
+        (55, "orthomode", "$ORTHOMODE", &[70]),
+        (56, "pdmode", "$PDMODE", &[70]),
+        (57, "pdsize", "$PDSIZE", &[40]),
+        (58, "pelevation", "$PELEVATION", &[40]),
+        (59, "plimcheck", "$PLIMCHECK", &[70]),
+        (60, "plinewid", "$PLINEWID", &[40]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -652,6 +704,38 @@ fn assert_standard_directory(
             .map(DxfDouble::to_bits),
         Some(2.5_f64.to_bits())
     );
+    assert_eq!(
+        directory
+            .entry("measurement")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.value()),
+        Some(&1)
+    );
+    assert_eq!(
+        directory
+            .entry("pdsize")
+            .and_then(|entry| entry.value().as_double())
+            .and_then(|value| value.value())
+            .copied()
+            .map(DxfDouble::to_bits),
+        Some((-3.5_f64).to_bits())
+    );
+    assert_eq!(
+        directory
+            .entry("plimcheck")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.value()),
+        Some(&0)
+    );
+    assert_eq!(
+        directory
+            .entry("plinewid")
+            .and_then(|entry| entry.value().as_double())
+            .and_then(|value| value.value())
+            .copied()
+            .map(DxfDouble::to_bits),
+        Some(0.75_f64.to_bits())
+    );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
     assert!(!debug.contains("$ANGBASE"));
@@ -751,7 +835,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n",
     )
 }
 
@@ -811,6 +895,15 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$CECOLOR".as_slice(), 62_i16, 256_i16),
         (b"$CMLJUST".as_slice(), 70, 2),
         (b"$FILLMODE".as_slice(), 70, 1),
+        (b"$LIMCHECK".as_slice(), 70, 1),
+        (b"$LUNITS".as_slice(), 70, 2),
+        (b"$LUPREC".as_slice(), 70, 4),
+        (b"$MAXACTVP".as_slice(), 70, 64),
+        (b"$MEASUREMENT".as_slice(), 70, 1),
+        (b"$MIRRTEXT".as_slice(), 70, 0),
+        (b"$ORTHOMODE".as_slice(), 70, 1),
+        (b"$PDMODE".as_slice(), 70, 34),
+        (b"$PLIMCHECK".as_slice(), 70, 0),
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_i16(&mut bytes, version, group_code, value)?;
@@ -825,6 +918,9 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$ELEVATION".as_slice(), -12.5),
         (b"$FILLETRAD".as_slice(), 4.25),
         (b"$LTSCALE".as_slice(), 2.5),
+        (b"$PDSIZE".as_slice(), -3.5),
+        (b"$PELEVATION".as_slice(), -7.25),
+        (b"$PLINEWID".as_slice(), 0.75),
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_double_bits(&mut bytes, version, 40, value.to_bits())?;
