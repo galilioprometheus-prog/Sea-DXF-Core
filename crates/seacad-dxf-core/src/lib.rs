@@ -87,7 +87,8 @@ pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
 };
 pub use raw_document::{
-    DxfRawDocumentConformance, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
+    DxfHeaderVariableLookup, DxfHeaderVariableLookupState, DxfRawDocumentConformance,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
 };
 pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use semantic_value::{

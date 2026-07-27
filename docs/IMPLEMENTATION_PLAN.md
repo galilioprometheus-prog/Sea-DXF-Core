@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.4b adds one borrowed raw-document adapter for ASCII and Binary
+M6.4c adds collision-safe exact HEADER name lookup
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -32,7 +32,10 @@ M6.4b adds one borrowed raw-document adapter for ASCII and Binary
    second source scan or semantic guesses. M6.4b exposes both validated physical
    representations through one allocation-free borrowed document/group API,
    including shared reports and indexes, so later semantic code has one input
-   path. A 1 GiB evidence gate is required before any large-file claim.
+   path. M6.4c adds exact raw-byte HEADER name lookup with duplicate evidence,
+   keyed per-document fingerprints only as a candidate filter, and bounded
+   source comparison that remains authoritative even on a fingerprint
+   collision. A 1 GiB evidence gate is required before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

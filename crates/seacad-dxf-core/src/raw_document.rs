@@ -4,9 +4,11 @@ use std::fmt;
 
 use crate::{
     ByteSpan, DxfAcadVersionReport, DxfAsciiRawDocument, DxfAsciiStructureIndex,
-    DxfBinaryRawDocument, DxfError, DxfGroupCode, DxfHandseedReport, DxfHeaderVariableIndex,
-    DxfSourceId, DxfTextEncodingReport,
+    DxfBinaryRawDocument, DxfError, DxfGroupCode, DxfHandseedReport, DxfHeaderVariable,
+    DxfHeaderVariableIndex, DxfSourceId, DxfTextEncodingReport,
 };
+
+const EXACT_NAME_COMPARE_CHUNK: usize = 256;
 
 /// Validated physical representation of an already opened raw document.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -22,6 +24,52 @@ pub enum DxfRawDocumentFormat {
 pub enum DxfRawDocumentConformance {
     Strict,
     Recovered,
+}
+
+/// Exact lookup outcome for a raw HEADER variable name.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfHeaderVariableLookupState {
+    Absent,
+    Unique,
+    Ambiguous,
+}
+
+/// Ordered evidence retained for an exact raw HEADER variable name lookup.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfHeaderVariableLookup {
+    source_id: DxfSourceId,
+    state: DxfHeaderVariableLookupState,
+    occurrence_count: u64,
+    primary: Option<DxfHeaderVariable>,
+    conflicting: Option<DxfHeaderVariable>,
+}
+
+impl DxfHeaderVariableLookup {
+    #[must_use]
+    pub const fn source_id(self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn state(self) -> DxfHeaderVariableLookupState {
+        self.state
+    }
+
+    #[must_use]
+    pub const fn occurrence_count(self) -> u64 {
+        self.occurrence_count
+    }
+
+    #[must_use]
+    pub const fn primary(self) -> Option<DxfHeaderVariable> {
+        self.primary
+    }
+
+    #[must_use]
+    pub const fn conflicting(self) -> Option<DxfHeaderVariable> {
+        self.conflicting
+    }
 }
 
 /// Format-neutral location metadata for one raw DXF group.
@@ -146,6 +194,99 @@ impl<'a> DxfRawDocumentView<'a> {
     pub fn header_variable_index(self) -> &'a DxfHeaderVariableIndex {
         self.document.header_variable_index()
     }
+
+    /// Looks up a HEADER variable by exact raw bytes without decoding or case folding.
+    pub fn lookup_header_variable(
+        self,
+        exact_name: &[u8],
+    ) -> Result<DxfHeaderVariableLookup, DxfError> {
+        lookup_header_variable_in_index(self, self.header_variable_index(), exact_name)
+    }
+}
+
+fn lookup_header_variable_in_index(
+    view: DxfRawDocumentView<'_>,
+    index: &DxfHeaderVariableIndex,
+    exact_name: &[u8],
+) -> Result<DxfHeaderVariableLookup, DxfError> {
+    if index.source_id() != view.source_id() {
+        return Err(DxfError::SourceIdentityMismatch {
+            expected: view.source_id(),
+            observed: index.source_id(),
+        });
+    }
+
+    let expected_hash = index.hash_name(exact_name);
+    let mut occurrence_count = 0_u64;
+    let mut primary = None;
+    let mut conflicting = None;
+    for (ordinal, variable) in index.variables().iter().copied().enumerate() {
+        if index.variable_name_hash(ordinal) != Some(expected_hash)
+            || !span_equals(view, variable.name_span(), exact_name)?
+        {
+            continue;
+        }
+        occurrence_count += 1;
+        if primary.is_none() {
+            primary = Some(variable);
+        } else if conflicting.is_none() {
+            conflicting = Some(variable);
+        }
+    }
+
+    let state = match occurrence_count {
+        0 => DxfHeaderVariableLookupState::Absent,
+        1 => DxfHeaderVariableLookupState::Unique,
+        _ => DxfHeaderVariableLookupState::Ambiguous,
+    };
+    Ok(DxfHeaderVariableLookup {
+        source_id: view.source_id(),
+        state,
+        occurrence_count,
+        primary,
+        conflicting,
+    })
+}
+
+fn span_equals(
+    view: DxfRawDocumentView<'_>,
+    span: ByteSpan,
+    expected: &[u8],
+) -> Result<bool, DxfError> {
+    if span.len() != expected.len() as u64 {
+        return Ok(false);
+    }
+
+    let mut buffer = [0_u8; EXACT_NAME_COMPARE_CHUNK];
+    let mut consumed = 0_usize;
+    while consumed < expected.len() {
+        let chunk_len = (expected.len() - consumed).min(buffer.len());
+        let source_start =
+            span.start()
+                .checked_add(consumed as u64)
+                .ok_or(DxfError::OffsetOverflow {
+                    offset: span.start(),
+                    requested: consumed as u64,
+                })?;
+        let chunk_span = ByteSpan::from_start_and_len(source_start, chunk_len as u64).ok_or(
+            DxfError::OffsetOverflow {
+                offset: source_start,
+                requested: chunk_len as u64,
+            },
+        )?;
+        let expected_end = consumed
+            .checked_add(chunk_len)
+            .ok_or(DxfError::OffsetOverflow {
+                offset: consumed as u64,
+                requested: chunk_len as u64,
+            })?;
+        view.read_span(chunk_span, &mut buffer[..chunk_len])?;
+        if buffer[..chunk_len] != expected[consumed..expected_end] {
+            return Ok(false);
+        }
+        consumed = expected_end;
+    }
+    Ok(true)
 }
 
 impl fmt::Debug for DxfRawDocumentView<'_> {
@@ -301,7 +442,10 @@ mod tests {
         sync::atomic::{AtomicU64, Ordering},
     };
 
-    use super::{DxfRawDocumentConformance, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup};
+    use super::{
+        DxfHeaderVariableLookup, DxfHeaderVariableLookupState, DxfRawDocumentConformance,
+        DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, lookup_header_variable_in_index,
+    };
     use crate::{
         DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument,
         DxfByteSource, DxfCancellationToken, DxfError, DxfMemorySource, DxfReadOptions,
@@ -399,11 +543,20 @@ mod tests {
         );
         assert_eq!(source.reads(), reads_after_open);
 
+        let missing = view.lookup_header_variable(b"$A_NAME_THAT_HAS_A_DIFFERENT_LENGTH")?;
+        assert_eq!(missing.state(), DxfHeaderVariableLookupState::Absent);
+        assert_eq!(source.reads(), reads_after_open);
+
+        let custom = view.lookup_header_variable(b"$CUSTOM")?;
+        assert_eq!(custom.state(), DxfHeaderVariableLookupState::Unique);
+        assert!(source.reads() > reads_after_open);
+        let reads_after_lookup = source.reads();
+
         let group = view.group(3).ok_or(io::Error::other("missing group"))?;
         let mut value = vec![0_u8; usize::try_from(group.value_payload_span().len())?];
         view.read_span(group.value_payload_span(), &mut value)?;
         assert_eq!(value, b"AC1032");
-        assert!(source.reads() > reads_after_open);
+        assert!(source.reads() > reads_after_lookup);
 
         let debug = format!("{view:?}");
         assert!(debug.contains("DxfRawDocumentView"));
@@ -413,15 +566,113 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_case_and_empty_names_are_exact_for_ascii_and_binary() -> Result<(), Box<dyn Error>>
+    {
+        let ascii_bytes = exact_lookup_ascii_fixture();
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source, DxfReadOptions::strict())?;
+
+        let binary_bytes = exact_lookup_binary_fixture(DxfAcadVersion::Ac1032)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source, DxfReadOptions::strict())?;
+
+        for view in [
+            DxfRawDocumentView::from(&ascii),
+            DxfRawDocumentView::from(&binary),
+        ] {
+            let target = view.lookup_header_variable(b"$TARGET")?;
+            assert_lookup(
+                target,
+                DxfHeaderVariableLookupState::Ambiguous,
+                2,
+                4,
+                Some(8),
+            );
+            assert_lookup(
+                view.lookup_header_variable(b"$target")?,
+                DxfHeaderVariableLookupState::Unique,
+                1,
+                6,
+                None,
+            );
+            assert_lookup(
+                view.lookup_header_variable(b"")?,
+                DxfHeaderVariableLookupState::Unique,
+                1,
+                10,
+                None,
+            );
+            assert_lookup(
+                view.lookup_header_variable(b"$MISSING")?,
+                DxfHeaderVariableLookupState::Absent,
+                0,
+                0,
+                None,
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn long_names_are_compared_in_bounded_chunks() -> Result<(), Box<dyn Error>> {
+        let mut exact_name = vec![b'$'];
+        exact_name.extend(std::iter::repeat_n(b'A', 1_024));
+        let mut bytes = b"0\nSECTION\n2\nHEADER\n9\n".to_vec();
+        bytes.extend_from_slice(&exact_name);
+        bytes.extend_from_slice(b"\n1\nVALUE\n0\nENDSEC\n0\nEOF\n");
+        let source = CountingSource::new(&bytes);
+        let document = open_ascii(&source, DxfReadOptions::strict())?;
+        let view = DxfRawDocumentView::from(&document);
+        let reads_after_open = source.reads();
+
+        let found = view.lookup_header_variable(&exact_name)?;
+        assert_eq!(found.state(), DxfHeaderVariableLookupState::Unique);
+        assert!(source.reads() >= reads_after_open + 5);
+
+        let mut near_name = exact_name;
+        let Some(last) = near_name.last_mut() else {
+            return Err(io::Error::other("missing name byte").into());
+        };
+        *last = b'B';
+        assert_eq!(
+            view.lookup_header_variable(&near_name)?.state(),
+            DxfHeaderVariableLookupState::Absent
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn fingerprint_collision_still_requires_exact_source_bytes() -> Result<(), Box<dyn Error>> {
+        let bytes = ascii_fixture("AC1032", true);
+        let source = CountingSource::new(&bytes);
+        let document = open_ascii(&source, DxfReadOptions::strict())?;
+        let view = DxfRawDocumentView::from(&document);
+        let index = view.header_variable_index();
+        let forced = index
+            .with_name_hash_for_test(1, index.hash_name(b"$CUSTOX"))
+            .ok_or(io::Error::other("missing fingerprint"))?;
+        let reads_after_open = source.reads();
+
+        let lookup = lookup_header_variable_in_index(view, &forced, b"$CUSTOX")?;
+        assert_eq!(lookup.state(), DxfHeaderVariableLookupState::Absent);
+        assert!(source.reads() > reads_after_open);
+        Ok(())
+    }
+
+    #[test]
     fn public_adapter_metadata_is_compact_copy_send_and_sync() {
         assert_copy::<DxfRawDocumentView<'static>>();
         assert_copy::<DxfRawGroup>();
         assert_copy::<DxfRawDocumentFormat>();
         assert_copy::<DxfRawDocumentConformance>();
+        assert_copy::<DxfHeaderVariableLookup>();
+        assert_copy::<DxfHeaderVariableLookupState>();
         assert_send_sync::<DxfRawDocumentView<'static>>();
         assert_send_sync::<DxfRawGroup>();
+        assert_send_sync::<DxfHeaderVariableLookup>();
         assert!(size_of::<DxfRawDocumentView<'static>>() <= 2 * size_of::<usize>());
         assert!(size_of::<DxfRawGroup>() <= 48);
+        assert!(size_of::<DxfHeaderVariableLookup>() <= 128);
     }
 
     fn assert_view(
@@ -438,6 +689,13 @@ mod tests {
         assert_eq!(view.structure_index().source_id(), view.source_id());
         assert_eq!(view.header_variable_index().source_id(), view.source_id());
         assert_eq!(view.header_variable_index().variables().len(), 2);
+        assert_lookup(
+            view.lookup_header_variable(b"$CUSTOM")?,
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            4,
+            None,
+        );
 
         let mut previous_end = 0_u64;
         for (occurrence, (expected_code, expected_value)) in
@@ -465,6 +723,29 @@ mod tests {
         Ok(())
     }
 
+    fn assert_lookup(
+        lookup: DxfHeaderVariableLookup,
+        state: DxfHeaderVariableLookupState,
+        count: u64,
+        primary_occurrence: u64,
+        conflicting_occurrence: Option<u64>,
+    ) {
+        assert_eq!(lookup.state(), state);
+        assert_eq!(lookup.occurrence_count(), count);
+        assert_eq!(
+            lookup
+                .primary()
+                .map(|variable| variable.marker_occurrence()),
+            (count != 0).then_some(primary_occurrence)
+        );
+        assert_eq!(
+            lookup
+                .conflicting()
+                .map(|variable| variable.marker_occurrence()),
+            conflicting_occurrence
+        );
+    }
+
     fn ascii_fixture(version: &str, include_eof: bool) -> Vec<u8> {
         let eof = if include_eof { "0\nEOF\n" } else { "" };
         format!(
@@ -488,6 +769,34 @@ mod tests {
         }
         if include_eof {
             push_binary_string(&mut bytes, version, 0, b"EOF")?;
+        }
+        Ok(bytes)
+    }
+
+    fn exact_lookup_ascii_fixture() -> Vec<u8> {
+        b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n9\n$TARGET\n1\nA\n9\n$target\n1\nB\n9\n$TARGET\n1\nC\n9\n\n1\nD\n0\nENDSEC\n0\nEOF\n"
+            .to_vec()
+    }
+
+    fn exact_lookup_binary_fixture(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
+        let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+        for (code, value) in [
+            (0_i16, b"SECTION".as_slice()),
+            (2, b"HEADER"),
+            (9, b"$ACADVER"),
+            (1, version.code().as_bytes()),
+            (9, b"$TARGET"),
+            (1, b"A"),
+            (9, b"$target"),
+            (1, b"B"),
+            (9, b"$TARGET"),
+            (1, b"C"),
+            (9, b""),
+            (1, b"D"),
+            (0, b"ENDSEC"),
+            (0, b"EOF"),
+        ] {
+            push_binary_string(&mut bytes, version, code, value)?;
         }
         Ok(bytes)
     }

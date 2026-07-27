@@ -1,6 +1,11 @@
 //! Compact one-pass index over every exact variable in exact HEADER sections.
 
-use std::io;
+use std::{
+    collections::hash_map::RandomState,
+    fmt,
+    hash::{BuildHasher, Hasher},
+    io,
+};
 
 use crate::{ByteSpan, DxfAsciiGroup, DxfError, DxfGroupCode, DxfIoOperation, DxfSourceId};
 
@@ -81,11 +86,12 @@ impl DxfHeaderVariable {
 }
 
 /// Immutable ordered directory of every exact HEADER variable marker.
-#[derive(Debug)]
 pub struct DxfHeaderVariableIndex {
     source_id: DxfSourceId,
     header_section_count: u32,
     variables: Box<[DxfHeaderVariable]>,
+    name_hasher: RandomState,
+    name_hashes: Box<[u64]>,
 }
 
 impl DxfHeaderVariableIndex {
@@ -111,6 +117,38 @@ impl DxfHeaderVariableIndex {
             .and_then(|index| self.variables.get(index))
             .copied()
     }
+
+    pub(crate) fn hash_name(&self, name: &[u8]) -> u64 {
+        hash_name(&self.name_hasher, name)
+    }
+
+    pub(crate) fn variable_name_hash(&self, ordinal: usize) -> Option<u64> {
+        self.name_hashes.get(ordinal).copied()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn with_name_hash_for_test(&self, ordinal: usize, hash: u64) -> Option<Self> {
+        let mut name_hashes = self.name_hashes.to_vec();
+        *name_hashes.get_mut(ordinal)? = hash;
+        Some(Self {
+            source_id: self.source_id,
+            header_section_count: self.header_section_count,
+            variables: self.variables.clone(),
+            name_hasher: self.name_hasher.clone(),
+            name_hashes: name_hashes.into_boxed_slice(),
+        })
+    }
+}
+
+impl fmt::Debug for DxfHeaderVariableIndex {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("DxfHeaderVariableIndex")
+            .field("source_id", &self.source_id)
+            .field("header_section_count", &self.header_section_count)
+            .field("variables", &self.variables.len())
+            .finish()
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -118,6 +156,7 @@ struct OpenVariable {
     header_section_occurrence: u32,
     marker_occurrence: u32,
     name_span: ByteSpan,
+    name_hash: u64,
 }
 
 #[derive(Default)]
@@ -127,6 +166,8 @@ pub(crate) struct DxfHeaderVariableTracker {
     open_variable: Option<OpenVariable>,
     header_section_count: u32,
     variables: Vec<DxfHeaderVariable>,
+    name_hasher: RandomState,
+    name_hashes: Vec<u64>,
 }
 
 impl DxfHeaderVariableTracker {
@@ -193,6 +234,7 @@ impl DxfHeaderVariableTracker {
                 header_section_occurrence,
                 marker_occurrence: occurrence,
                 name_span: value_span,
+                name_hash: hash_name(&self.name_hasher, raw_value),
             });
         }
         Ok(())
@@ -204,10 +246,15 @@ impl DxfHeaderVariableTracker {
         total_group_count: u64,
     ) -> Result<DxfHeaderVariableIndex, DxfError> {
         self.close_variable(compact_occurrence(total_group_count)?)?;
+        if self.variables.len() != self.name_hashes.len() {
+            return Err(invalid_source_data());
+        }
         Ok(DxfHeaderVariableIndex {
             source_id,
             header_section_count: self.header_section_count,
             variables: self.variables.into_boxed_slice(),
+            name_hasher: self.name_hasher,
+            name_hashes: self.name_hashes.into_boxed_slice(),
         })
     }
 
@@ -226,9 +273,19 @@ impl DxfHeaderVariableTracker {
             value_groups: DxfHeaderGroupRange::new(value_start, end)?,
         };
         self.variables.try_reserve(1).map_err(|_| out_of_memory())?;
+        self.name_hashes
+            .try_reserve(1)
+            .map_err(|_| out_of_memory())?;
         self.variables.push(variable);
+        self.name_hashes.push(open.name_hash);
         Ok(())
     }
+}
+
+fn hash_name(hash_builder: &RandomState, name: &[u8]) -> u64 {
+    let mut hasher = hash_builder.build_hasher();
+    hasher.write(name);
+    hasher.finish()
 }
 
 fn compact_occurrence(value: u64) -> Result<u32, DxfError> {
