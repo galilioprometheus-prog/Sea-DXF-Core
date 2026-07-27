@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-awaiting user approval for M6 schema/codegen planning
+M6.1a begins the approved provenance-backed schema/codegen bootstrap
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -14,7 +14,10 @@ awaiting user approval for M6 schema/codegen planning
    value-family registry. M5.1b adds bounded streaming value framing. M5.2a
    adds encoding/dialect agreement and the immutable raw document; M5.2b adds
    envelope/index; M5.2c adds verified unchanged replay and CLI integration.
-7. M6: provenance-backed schema/codegen and lazy document semantics.
+7. M6: provenance-backed schema/codegen and lazy document semantics. M6.1a
+   adds a deterministic internal Rust generator and shape-only HEADER bootstrap
+   for `$ACADVER`, `$DWGCODEPAGE`, and `$HANDSEED`; it makes no semantic support
+   claim. A 1 GiB evidence gate is required before any large-file support claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

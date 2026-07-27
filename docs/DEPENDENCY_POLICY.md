@@ -30,6 +30,14 @@
 - `cargo-audit`, `cargo-deny`, `cargo-llvm-cov`, `cargo-cyclonedx`, and
   `cargo-semver-checks` are installed only at their named quality milestones.
 
+## Internal tools
+
+- `seacad-schema-gen` reuses the already pinned and audited `serde = 1.0.229`,
+  `serde_json = 1.0.151`, and `sha2 = 0.11.0` packages at M6.1a. They run only
+  while validating and generating committed schema metadata; this adds no
+  dependency to `seacad-dxf-core` and no new third-party package to
+  `Cargo.lock`.
+
 Every addition requires a recorded purpose, exact version, license, enabled
 features, transitive dependency review, advisory review, and
 `THIRD_PARTY_NOTICES.md` update when applicable.

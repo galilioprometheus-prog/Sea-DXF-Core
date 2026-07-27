@@ -2,6 +2,7 @@
 members = [
     "crates/seacad-dxf-core",
     "crates/seacad-cli",
+    "crates/seacad-schema-gen",
 ]
 resolver = "3"
 

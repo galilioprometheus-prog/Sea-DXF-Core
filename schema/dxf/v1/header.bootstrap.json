@@ -1,0 +1,47 @@
+{
+  "schema_version": "dxf.v1",
+  "namespace": "header",
+  "source": {
+    "id": "autodesk.header.2026",
+    "topic_id": "GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A",
+    "normalized_facts_sha256": "d1034c4246758f368ac79982fa1c21d59328851d9fdca8ccebe944f20f71cfaf"
+  },
+  "fields": [
+    {
+      "id": "acadver",
+      "dxf_name": "$ACADVER",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ACADVER",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dwgcodepage",
+      "dxf_name": "$DWGCODEPAGE",
+      "group_codes": [3],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DWGCODEPAGE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "handseed",
+      "dxf_name": "$HANDSEED",
+      "group_codes": [5],
+      "storage": "handle",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$HANDSEED",
+      "review_state": "shape_only"
+    }
+  ]
+}

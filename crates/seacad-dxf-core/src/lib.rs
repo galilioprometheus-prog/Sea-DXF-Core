@@ -17,6 +17,8 @@ mod dialect;
 mod encoding;
 mod error;
 mod format_probe;
+#[allow(dead_code)]
+mod generated;
 mod johab;
 mod limits;
 mod progress;

@@ -150,6 +150,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "seacad-schema-gen"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"

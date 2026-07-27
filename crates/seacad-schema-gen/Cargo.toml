@@ -1,0 +1,22 @@
+[package]
+name = "seacad-schema-gen"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license-file.workspace = true
+description = "Deterministic internal generator for reviewed SeaCad DXF schemas"
+publish = false
+
+[[bin]]
+name = "seacad-schema-gen"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "=1.0.229", default-features = false, features = ["derive", "std"] }
+serde_json = { version = "=1.0.151", default-features = false, features = ["std"] }
+sha2 = { version = "=0.11.0", default-features = false }
+
+[lints]
+workspace = true
