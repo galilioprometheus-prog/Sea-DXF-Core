@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5h adds drawing modes and scalar defaults through generated HEADER schema
+M6.5i adds display and regeneration controls through generated HEADER schema
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -75,7 +75,13 @@ M6.5h adds drawing modes and scalar defaults through generated HEADER schema
    `$PELEVATION`, `$PLIMCHECK`, and `$PLINEWID` through the same generic
    `Int16` and `Double` directory. The checkpoint preserves source values and
    provenance without assigning enum, boolean, unit, range, or default
-   semantics. A 1 GiB evidence gate is required before any large-file claim.
+   semantics. M6.5i appends `$PLINEGEN`, `$PROXYGRAPHICS`, `$PSLTSCALE`,
+   `$PSVPSCALE`, `$PUCSORTHOVIEW`, `$QTEXTMODE`, `$REGENMODE`, `$SHADEDGE`,
+   `$SHADEDIF`, `$SHADOWPLANELOCATION`, `$SKETCHINC`, and `$SKPOLY` through
+   the same generated numeric path. Display, regeneration, percentage,
+   orthographic-view, and sketch meanings remain unclaimed until their
+   semantic rules are separately reviewed. A 1 GiB evidence gate is required
+   before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
