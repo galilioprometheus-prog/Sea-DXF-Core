@@ -1021,6 +1021,78 @@
       "source_id": "autodesk.header.2026",
       "evidence": "row:$TREEDEPTH",
       "review_state": "shape_only"
+    },
+    {
+      "id": "tdcreate",
+      "dxf_name": "$TDCREATE",
+      "group_codes": [40],
+      "storage": "julian_date",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDCREATE",
+      "review_state": "semantic"
+    },
+    {
+      "id": "tducreate",
+      "dxf_name": "$TDUCREATE",
+      "group_codes": [40],
+      "storage": "julian_date",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDUCREATE",
+      "review_state": "semantic"
+    },
+    {
+      "id": "tdupdate",
+      "dxf_name": "$TDUPDATE",
+      "group_codes": [40],
+      "storage": "julian_date",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDUPDATE",
+      "review_state": "semantic"
+    },
+    {
+      "id": "tduupdate",
+      "dxf_name": "$TDUUPDATE",
+      "group_codes": [40],
+      "storage": "julian_date",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDUUPDATE",
+      "review_state": "semantic"
+    },
+    {
+      "id": "tdindwg",
+      "dxf_name": "$TDINDWG",
+      "group_codes": [40],
+      "storage": "elapsed_days",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDINDWG",
+      "review_state": "semantic"
+    },
+    {
+      "id": "tdusrtimer",
+      "dxf_name": "$TDUSRTIMER",
+      "group_codes": [40],
+      "storage": "elapsed_days",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$TDUSRTIMER",
+      "review_state": "semantic"
     }
   ]
 }

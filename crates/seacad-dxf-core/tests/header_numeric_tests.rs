@@ -2,10 +2,11 @@ use std::{error::Error, io, num::NonZeroU64};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
-    DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfErrorCode, DxfGroupCode,
-    DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue,
-    DxfHeaderNumericView, DxfMemorySource, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValueState, NoopDxfReadObserver,
+    DxfBinaryRawDocument, DxfCancellationToken, DxfDayParts, DxfDouble, DxfElapsedDays,
+    DxfErrorCode, DxfGroupCode, DxfHeaderNumericDirectory, DxfHeaderNumericEntry,
+    DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView, DxfJulianDate,
+    DxfMemorySource, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
+    NoopDxfReadObserver,
 };
 
 #[test]
@@ -144,6 +145,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             DxfRawDocumentView::from(&binary),
             binary_tree_depth.raw_provenance(),
             &10_i16.to_le_bytes(),
+        )?;
+        let ascii_created = ascii_directory
+            .entry("tdcreate")
+            .and_then(|entry| entry.value().as_julian_date())
+            .ok_or(io::Error::other("missing ASCII TDCREATE"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_created.raw_provenance(),
+            b"2451544.91568287",
+        )?;
+        let binary_timer = binary_directory
+            .entry("tdusrtimer")
+            .and_then(|entry| entry.value().as_elapsed_days())
+            .ok_or(io::Error::other("missing Binary TDUSRTIMER"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_timer.raw_provenance(),
+            &0.5_f64.to_le_bytes(),
         )?;
     }
     Ok(())
@@ -310,6 +329,28 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
             .and_then(|entry| match entry.value() {
                 DxfHeaderNumericValue::Double(value) => value.invalid_issue(),
                 DxfHeaderNumericValue::Int16(value) => value.invalid_issue(),
+                _ => None,
+            });
+        assert!(matches!(
+            issue,
+            Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+        ));
+    }
+
+    let malformed_time_bytes = ascii_document(
+        "AC1032",
+        "9\n$TDCREATE\n40\nnot-a-number\n9\n$TDINDWG\n40\n1e9999\n",
+    );
+    let malformed_time_source =
+        DxfMemorySource::new(&malformed_time_bytes, DxfResourceProfile::Safe)?;
+    let malformed_time = open_ascii(&malformed_time_source)?
+        .header_numeric_directory(&DxfCancellationToken::default())?;
+    for field_id in ["tdcreate", "tdindwg"] {
+        let issue = malformed_time
+            .entry(field_id)
+            .and_then(|entry| match entry.value() {
+                DxfHeaderNumericValue::JulianDate(value) => value.invalid_issue(),
+                DxfHeaderNumericValue::ElapsedDays(value) => value.invalid_issue(),
                 _ => None,
             });
         assert!(matches!(
@@ -573,6 +614,54 @@ fn binary_preserves_ieee_bits_and_signed_boundaries() -> Result<(), Box<dyn Erro
     assert!(!angle.is_finite());
     assert_eq!(view.acad_maintenance_version().value(), Some(&i16::MIN));
     assert_eq!(view.angle_direction().value(), Some(&i16::MAX));
+    let directory = document.header_numeric_directory(&DxfCancellationToken::default())?;
+    let created = directory
+        .entry("tdcreate")
+        .and_then(|entry| entry.value().as_julian_date())
+        .and_then(|value| value.value())
+        .copied()
+        .ok_or(io::Error::other("missing binary date"))?;
+    assert_eq!(created.raw().to_bits(), nan_bits);
+    assert!(created.day_parts().is_none());
+    Ok(())
+}
+
+#[test]
+fn date_and_elapsed_day_parts_are_exact_and_timezone_free() -> Result<(), Box<dyn Error>> {
+    let date_raw = DxfDouble::from_f64(2_451_544.915_682_87);
+    let date = DxfJulianDate::from_raw(date_raw);
+    assert_eq!(date.raw(), date_raw);
+    let date_parts = date.day_parts().ok_or(io::Error::other("date parts"))?;
+    assert_eq!(date_parts.whole_days(), 2_451_544);
+    assert_eq!(
+        date_parts.fractional_day().to_bits(),
+        (date_raw.to_f64() - 2_451_544.0).to_bits()
+    );
+
+    let elapsed_raw = DxfDouble::from_f64(3.25);
+    let elapsed = DxfElapsedDays::from_raw(elapsed_raw);
+    assert_eq!(elapsed.raw(), elapsed_raw);
+    let elapsed_parts = elapsed
+        .day_parts()
+        .ok_or(io::Error::other("elapsed parts"))?;
+    assert_eq!(elapsed_parts.whole_days(), 3);
+    assert_eq!(elapsed_parts.fractional_day().to_bits(), 0.25_f64.to_bits());
+
+    assert!(
+        DxfJulianDate::from_raw(DxfDouble::from_f64(f64::INFINITY))
+            .day_parts()
+            .is_none()
+    );
+    assert!(
+        DxfElapsedDays::from_raw(DxfDouble::from_f64(9_223_372_036_854_775_808.0))
+            .day_parts()
+            .is_none()
+    );
+    let negative = DxfElapsedDays::from_raw(DxfDouble::from_f64(-3.25))
+        .day_parts()
+        .ok_or(io::Error::other("negative elapsed parts"))?;
+    assert_eq!(negative.whole_days(), -3);
+    assert_eq!(negative.fractional_day().to_bits(), (-0.25_f64).to_bits());
     Ok(())
 }
 
@@ -595,6 +684,9 @@ fn cancellation_and_public_metadata_remain_bounded() -> Result<(), Box<dyn Error
     assert_eq!(directory_error.code(), DxfErrorCode::CANCELLED);
 
     assert_copy::<DxfDouble>();
+    assert_copy::<DxfDayParts>();
+    assert_copy::<DxfElapsedDays>();
+    assert_copy::<DxfJulianDate>();
     assert_copy::<DxfAsciiNumericIssue>();
     assert_copy::<DxfHeaderNumericIssue>();
     assert_copy::<DxfHeaderNumericValue>();
@@ -694,6 +786,12 @@ fn assert_standard_directory(
         (82, "tilemode", "$TILEMODE", &[70]),
         (83, "tracewid", "$TRACEWID", &[40]),
         (84, "treedepth", "$TREEDEPTH", &[70]),
+        (85, "tdcreate", "$TDCREATE", &[40]),
+        (86, "tducreate", "$TDUCREATE", &[40]),
+        (87, "tdupdate", "$TDUPDATE", &[40]),
+        (88, "tduupdate", "$TDUUPDATE", &[40]),
+        (89, "tdindwg", "$TDINDWG", &[40]),
+        (90, "tdusrtimer", "$TDUSRTIMER", &[40]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -904,6 +1002,32 @@ fn assert_standard_directory(
             .and_then(|value| value.value()),
         Some(&10)
     );
+    let created = directory
+        .entry("tdcreate")
+        .and_then(|entry| entry.value().as_julian_date())
+        .and_then(|value| value.value())
+        .copied()
+        .ok_or(io::Error::other("missing TDCREATE"))?;
+    assert_eq!(created.raw().to_bits(), 2_451_544.915_682_87_f64.to_bits());
+    assert!(
+        directory
+            .entry("tdcreate")
+            .and_then(|entry| entry.value().as_double())
+            .is_none()
+    );
+    let timer = directory
+        .entry("tdusrtimer")
+        .and_then(|entry| entry.value().as_elapsed_days())
+        .and_then(|value| value.value())
+        .copied()
+        .ok_or(io::Error::other("missing TDUSRTIMER"))?;
+    assert_eq!(timer.raw().to_bits(), 0.5_f64.to_bits());
+    assert!(
+        directory
+            .entry("tdusrtimer")
+            .and_then(|entry| entry.value().as_double())
+            .is_none()
+    );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
     assert!(!debug.contains("$ANGBASE"));
@@ -1003,7 +1127,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n9\n$SPLINESEGS\n70\n8\n9\n$SPLINETYPE\n70\n6\n9\n$SURFTAB1\n70\n6\n9\n$SURFTAB2\n70\n8\n9\n$SURFTYPE\n70\n6\n9\n$SURFU\n70\n12\n9\n$SURFV\n70\n14\n9\n$TEXTSIZE\n40\n2.5\n9\n$THICKNESS\n40\n-1.25\n9\n$TILEMODE\n70\n1\n9\n$TRACEWID\n40\n0.375\n9\n$TREEDEPTH\n70\n10\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n9\n$SPLINESEGS\n70\n8\n9\n$SPLINETYPE\n70\n6\n9\n$SURFTAB1\n70\n6\n9\n$SURFTAB2\n70\n8\n9\n$SURFTYPE\n70\n6\n9\n$SURFU\n70\n12\n9\n$SURFV\n70\n14\n9\n$TEXTSIZE\n40\n2.5\n9\n$THICKNESS\n40\n-1.25\n9\n$TILEMODE\n70\n1\n9\n$TRACEWID\n40\n0.375\n9\n$TREEDEPTH\n70\n10\n9\n$TDCREATE\n40\n2451544.91568287\n9\n$TDUCREATE\n40\n2451544.5\n9\n$TDUPDATE\n40\n2451545.25\n9\n$TDUUPDATE\n40\n2451545.75\n9\n$TDINDWG\n40\n3.25\n9\n$TDUSRTIMER\n40\n0.5\n",
     )
 }
 
@@ -1117,6 +1241,17 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_double_bits(&mut bytes, version, 40, value.to_bits())?;
     }
+    for (name, value) in [
+        (b"$TDCREATE".as_slice(), 2_451_544.915_682_87_f64),
+        (b"$TDUCREATE".as_slice(), 2_451_544.5),
+        (b"$TDUPDATE".as_slice(), 2_451_545.25),
+        (b"$TDUUPDATE".as_slice(), 2_451_545.75),
+        (b"$TDINDWG".as_slice(), 3.25),
+        (b"$TDUSRTIMER".as_slice(), 0.5),
+    ] {
+        push_binary_string(&mut bytes, version, 9, name)?;
+        push_binary_double_bits(&mut bytes, version, 40, value.to_bits())?;
+    }
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
 }
@@ -1129,6 +1264,8 @@ fn binary_boundary_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
     push_binary_double_bits(&mut bytes, version, 50, angle_bits)?;
     push_binary_string(&mut bytes, version, 9, b"$ANGDIR")?;
     push_binary_i16(&mut bytes, version, 70, i16::MAX)?;
+    push_binary_string(&mut bytes, version, 9, b"$TDCREATE")?;
+    push_binary_double_bits(&mut bytes, version, 40, angle_bits)?;
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
 }

@@ -82,8 +82,9 @@ pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
 pub use header_numeric::{
-    DxfAsciiNumericIssue, DxfDouble, DxfHeaderNumericDirectory, DxfHeaderNumericEntry,
-    DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView,
+    DxfAsciiNumericIssue, DxfDayParts, DxfDouble, DxfElapsedDays, DxfHeaderNumericDirectory,
+    DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView,
+    DxfJulianDate,
 };
 pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
 pub use header_view::{

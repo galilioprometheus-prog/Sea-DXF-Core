@@ -48,6 +48,83 @@ impl DxfDouble {
     }
 }
 
+/// Finite day value split at the integer boundary without calendar conversion.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfDayParts {
+    whole_days: i64,
+    fractional_day: DxfDouble,
+}
+
+impl DxfDayParts {
+    fn from_raw(raw: DxfDouble) -> Option<Self> {
+        let value = raw.to_f64();
+        let whole = value.trunc();
+        const I64_MAX_EXCLUSIVE: f64 = 9_223_372_036_854_775_808.0;
+        if !value.is_finite() || whole < i64::MIN as f64 || whole >= I64_MAX_EXCLUSIVE {
+            return None;
+        }
+        Some(Self {
+            whole_days: whole as i64,
+            fractional_day: DxfDouble::from_f64(value - whole),
+        })
+    }
+
+    #[must_use]
+    pub const fn whole_days(self) -> i64 {
+        self.whole_days
+    }
+
+    /// Fraction following Autodesk's truncation-at-zero representation.
+    #[must_use]
+    pub const fn fractional_day(self) -> DxfDouble {
+        self.fractional_day
+    }
+}
+
+/// Exact DXF Julian-date scalar; no timezone or calendar interpretation is inferred.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfJulianDate(DxfDouble);
+
+impl DxfJulianDate {
+    #[must_use]
+    pub const fn from_raw(raw: DxfDouble) -> Self {
+        Self(raw)
+    }
+
+    #[must_use]
+    pub const fn raw(self) -> DxfDouble {
+        self.0
+    }
+
+    /// Splits a finite, `i64`-bounded scalar into whole and fractional days.
+    #[must_use]
+    pub fn day_parts(self) -> Option<DxfDayParts> {
+        DxfDayParts::from_raw(self.0)
+    }
+}
+
+/// Exact DXF elapsed-days scalar; it is not an absolute date or timezone value.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfElapsedDays(DxfDouble);
+
+impl DxfElapsedDays {
+    #[must_use]
+    pub const fn from_raw(raw: DxfDouble) -> Self {
+        Self(raw)
+    }
+
+    #[must_use]
+    pub const fn raw(self) -> DxfDouble {
+        self.0
+    }
+
+    /// Splits a finite, `i64`-bounded scalar into whole and fractional days.
+    #[must_use]
+    pub fn day_parts(self) -> Option<DxfDayParts> {
+        DxfDayParts::from_raw(self.0)
+    }
+}
+
 /// Exact failure while interpreting one ASCII numeric value.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
@@ -83,7 +160,9 @@ pub enum DxfHeaderNumericValue {
     Double(DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>),
     Double2([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]),
     Double3([DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]),
+    ElapsedDays(DxfSemanticValue<DxfElapsedDays, DxfHeaderNumericIssue>),
     Int16(DxfSemanticValue<i16, DxfHeaderNumericIssue>),
+    JulianDate(DxfSemanticValue<DxfJulianDate, DxfHeaderNumericIssue>),
 }
 
 impl DxfHeaderNumericValue {
@@ -93,7 +172,9 @@ impl DxfHeaderNumericValue {
             Self::Double(value) => value.state(),
             Self::Double2(values) => double2_state(values),
             Self::Double3(values) => double3_state(values),
+            Self::ElapsedDays(value) => value.state(),
             Self::Int16(value) => value.state(),
+            Self::JulianDate(value) => value.state(),
         }
     }
 
@@ -103,7 +184,9 @@ impl DxfHeaderNumericValue {
             Self::Double(value) => value.field_provenance(),
             Self::Double2(values) => values[0].field_provenance(),
             Self::Double3(values) => values[0].field_provenance(),
+            Self::ElapsedDays(value) => value.field_provenance(),
             Self::Int16(value) => value.field_provenance(),
+            Self::JulianDate(value) => value.field_provenance(),
         }
     }
 
@@ -116,7 +199,9 @@ impl DxfHeaderNumericValue {
             Self::Double(value) => value.raw_provenance(),
             Self::Double2(values) => first_raw_provenance(values),
             Self::Double3(values) => first_raw_provenance(values),
+            Self::ElapsedDays(value) => value.raw_provenance(),
             Self::Int16(value) => value.raw_provenance(),
+            Self::JulianDate(value) => value.raw_provenance(),
         }
     }
 
@@ -124,7 +209,11 @@ impl DxfHeaderNumericValue {
     pub const fn as_double(&self) -> Option<&DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>> {
         match self {
             Self::Double(value) => Some(value),
-            Self::Double2(_) | Self::Double3(_) | Self::Int16(_) => None,
+            Self::Double2(_)
+            | Self::Double3(_)
+            | Self::ElapsedDays(_)
+            | Self::Int16(_)
+            | Self::JulianDate(_) => None,
         }
     }
 
@@ -134,7 +223,11 @@ impl DxfHeaderNumericValue {
     ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 2]> {
         match self {
             Self::Double2(values) => Some(values),
-            Self::Double(_) | Self::Double3(_) | Self::Int16(_) => None,
+            Self::Double(_)
+            | Self::Double3(_)
+            | Self::ElapsedDays(_)
+            | Self::Int16(_)
+            | Self::JulianDate(_) => None,
         }
     }
 
@@ -144,7 +237,25 @@ impl DxfHeaderNumericValue {
     ) -> Option<&[DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>; 3]> {
         match self {
             Self::Double3(values) => Some(values),
-            Self::Double(_) | Self::Double2(_) | Self::Int16(_) => None,
+            Self::Double(_)
+            | Self::Double2(_)
+            | Self::ElapsedDays(_)
+            | Self::Int16(_)
+            | Self::JulianDate(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_elapsed_days(
+        &self,
+    ) -> Option<&DxfSemanticValue<DxfElapsedDays, DxfHeaderNumericIssue>> {
+        match self {
+            Self::ElapsedDays(value) => Some(value),
+            Self::Double(_)
+            | Self::Double2(_)
+            | Self::Double3(_)
+            | Self::Int16(_)
+            | Self::JulianDate(_) => None,
         }
     }
 
@@ -152,7 +263,25 @@ impl DxfHeaderNumericValue {
     pub const fn as_int16(&self) -> Option<&DxfSemanticValue<i16, DxfHeaderNumericIssue>> {
         match self {
             Self::Int16(value) => Some(value),
-            Self::Double(_) | Self::Double2(_) | Self::Double3(_) => None,
+            Self::Double(_)
+            | Self::Double2(_)
+            | Self::Double3(_)
+            | Self::ElapsedDays(_)
+            | Self::JulianDate(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_julian_date(
+        &self,
+    ) -> Option<&DxfSemanticValue<DxfJulianDate, DxfHeaderNumericIssue>> {
+        match self {
+            Self::JulianDate(value) => Some(value),
+            Self::Double(_)
+            | Self::Double2(_)
+            | Self::Double3(_)
+            | Self::ElapsedDays(_)
+            | Self::Int16(_) => None,
         }
     }
 }
@@ -309,6 +438,14 @@ impl DxfHeaderNumericDirectory {
                         cancellation,
                     )?))
                 }
+                DxfSchemaStorageKind::ElapsedDays => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field);
+                    Some(DxfHeaderNumericValue::ElapsedDays(
+                        double_field(document, matched, spec, cancellation)?
+                            .map_value(DxfElapsedDays::from_raw),
+                    ))
+                }
                 DxfSchemaStorageKind::Int16 => {
                     let matched = schema_match(&raw_directory, ordinal, field)?;
                     let spec = FieldSpec::from_schema(field);
@@ -318,6 +455,14 @@ impl DxfHeaderNumericDirectory {
                         spec,
                         cancellation,
                     )?))
+                }
+                DxfSchemaStorageKind::JulianDate => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field);
+                    Some(DxfHeaderNumericValue::JulianDate(
+                        double_field(document, matched, spec, cancellation)?
+                            .map_value(DxfJulianDate::from_raw),
+                    ))
                 }
                 DxfSchemaStorageKind::ExactText | DxfSchemaStorageKind::Handle => None,
             };
@@ -529,7 +674,9 @@ fn is_numeric_storage(storage: DxfSchemaStorageKind) -> bool {
         DxfSchemaStorageKind::Double
             | DxfSchemaStorageKind::Double2
             | DxfSchemaStorageKind::Double3
+            | DxfSchemaStorageKind::ElapsedDays
             | DxfSchemaStorageKind::Int16
+            | DxfSchemaStorageKind::JulianDate
     )
 }
 

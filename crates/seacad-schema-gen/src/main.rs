@@ -72,9 +72,11 @@ enum StorageKind {
     Double,
     Double2,
     Double3,
+    ElapsedDays,
     ExactText,
     Handle,
     Int16,
+    JulianDate,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -98,6 +100,7 @@ enum DefaultPolicy {
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum ReviewState {
+    Semantic,
     ShapeOnly,
 }
 
@@ -414,6 +417,7 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
         (StorageKind::Double3, [x, y, z]) => {
             (10..=18).contains(x) && *y == *x + 10 && *z == *x + 20
         }
+        (StorageKind::ElapsedDays | StorageKind::JulianDate, [40]) => true,
         (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
         (StorageKind::Int16, [group_code]) => (60..=79).contains(group_code),
         _ => false,
@@ -482,13 +486,13 @@ fn render_registry(
     writeln!(output, "// Normalized input SHA-256: {receipt}")?;
     writeln!(
         output,
-        "// Shape metadata only; this file makes no semantic support claim.\n"
+        "// Reviewed metadata; shape_only=false marks separately audited semantics.\n"
     )?;
     output.push_str("#![allow(dead_code)]\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) enum DxfSchemaStorageKind {\n");
     output.push_str(
-        "    Double,\n    Double2,\n    Double3,\n    ExactText,\n    Handle,\n    Int16,\n}\n\n",
+        "    Double,\n    Double2,\n    Double3,\n    ElapsedDays,\n    ExactText,\n    Handle,\n    Int16,\n    JulianDate,\n}\n\n",
     );
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) struct DxfHeaderSchemaField {\n");
@@ -533,7 +537,12 @@ fn render_registry(
                 source.normalized_facts_sha256
             )?;
             writeln!(output, "        evidence: {:?},", field.evidence)?;
-            output.push_str("        shape_only: true,\n    },\n");
+            writeln!(
+                output,
+                "        shape_only: {},",
+                matches!(field.review_state, ReviewState::ShapeOnly)
+            )?;
+            output.push_str("    },\n");
         }
     }
     output.push_str("];\n");
@@ -545,9 +554,11 @@ fn storage_variant(storage: StorageKind) -> &'static str {
         StorageKind::Double => "Double",
         StorageKind::Double2 => "Double2",
         StorageKind::Double3 => "Double3",
+        StorageKind::ElapsedDays => "ElapsedDays",
         StorageKind::ExactText => "ExactText",
         StorageKind::Handle => "Handle",
         StorageKind::Int16 => "Int16",
+        StorageKind::JulianDate => "JulianDate",
     }
 }
 
@@ -674,7 +685,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 85);
+        assert_eq!(families[0].fields.len(), 91);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -749,11 +760,23 @@ mod tests {
             "shadowplanelocation",
             "sketchinc",
             "skpoly",
+            "splinesegs",
+            "splinetype",
+            "surftab1",
+            "surftab2",
+            "surftype",
+            "surfu",
+            "surfv",
+            "textsize",
+            "thickness",
+            "tilemode",
+            "tracewid",
+            "treedepth",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[73].id, "splinesegs");
+        assert_eq!(families[0].fields[85].id, "tdcreate");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
