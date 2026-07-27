@@ -345,7 +345,7 @@ fn retain_diagnostic(
     Ok(())
 }
 
-struct SequentialHashingSource<'a> {
+pub(crate) struct SequentialHashingSource<'a> {
     source: &'a dyn DxfByteSource,
     state: Mutex<HashState>,
 }
@@ -356,7 +356,7 @@ struct HashState {
 }
 
 impl<'a> SequentialHashingSource<'a> {
-    fn new(source: &'a dyn DxfByteSource) -> Self {
+    pub(crate) fn new(source: &'a dyn DxfByteSource) -> Self {
         Self {
             source,
             state: Mutex::new(HashState {
@@ -366,7 +366,7 @@ impl<'a> SequentialHashingSource<'a> {
         }
     }
 
-    fn finalize(
+    pub(crate) fn finalize(
         self,
         cancellation: &DxfCancellationToken,
         observer: &mut dyn DxfReadObserver,
@@ -450,7 +450,7 @@ fn update_hash_state(
     Ok(())
 }
 
-fn report_parse_progress(
+pub(crate) fn report_parse_progress(
     observer: &mut dyn DxfReadObserver,
     cancellation: &DxfCancellationToken,
     processed: u64,
@@ -464,7 +464,7 @@ fn report_parse_progress(
     Ok(())
 }
 
-fn notify_progress(
+pub(crate) fn notify_progress(
     observer: &mut dyn DxfReadObserver,
     cancellation: &DxfCancellationToken,
     processed: u64,

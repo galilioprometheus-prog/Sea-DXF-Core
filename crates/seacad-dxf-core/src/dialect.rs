@@ -3,8 +3,8 @@
 use std::io;
 
 use crate::{
-    ByteSpan, DxfAsciiGroup, DxfDiagnostic, DxfDiagnosticCode, DxfError, DxfGroupCode,
-    DxfIoOperation, DxfSourceId,
+    ByteSpan, DxfAsciiGroup, DxfBinaryGroupCodeEncoding, DxfDiagnostic, DxfDiagnosticCode,
+    DxfError, DxfGroupCode, DxfIoOperation, DxfSourceId,
 };
 
 /// Supported AutoCAD drawing database versions from the public DXF reference.
@@ -76,6 +76,22 @@ impl DxfAcadVersion {
             self,
             Self::Ac1021 | Self::Ac1024 | Self::Ac1027 | Self::Ac1032
         )
+    }
+
+    /// Physical group-code encoding required by this Binary DXF dialect.
+    #[must_use]
+    pub const fn binary_group_code_encoding(self) -> DxfBinaryGroupCodeEncoding {
+        match self {
+            Self::Ac1009 => DxfBinaryGroupCodeEncoding::OneByteWithExtendedDataEscape,
+            Self::Ac1012
+            | Self::Ac1014
+            | Self::Ac1015
+            | Self::Ac1018
+            | Self::Ac1021
+            | Self::Ac1024
+            | Self::Ac1027
+            | Self::Ac1032 => DxfBinaryGroupCodeEncoding::TwoByteLittleEndian,
+        }
     }
 
     #[must_use]
@@ -218,20 +234,35 @@ pub(crate) struct DxfAcadVersionTracker {
 
 impl DxfAcadVersionTracker {
     pub(crate) fn observe(&mut self, group: DxfAsciiGroup<'_>) -> Result<(), DxfError> {
+        self.observe_raw(
+            group.occurrence(),
+            group.group_code(),
+            group.raw_value(),
+            group.value_line().content_span(),
+        )
+    }
+
+    pub(crate) fn observe_raw(
+        &mut self,
+        occurrence: u64,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
+    ) -> Result<(), DxfError> {
         if let Some(variable) = self.pending.take() {
-            self.record_candidate(variable, group)?;
+            self.record_candidate(variable, occurrence, group_code, raw_value, value_span)?;
         }
 
         if self.awaiting_section_name {
             self.awaiting_section_name = false;
-            self.inside_header = group.group_code().value() == 2 && group.raw_value() == b"HEADER";
+            self.inside_header = group_code.value() == 2 && raw_value == b"HEADER";
             if self.inside_header && self.first_header_span.is_none() {
-                self.first_header_span = Some(group.value_line().content_span());
+                self.first_header_span = Some(value_span);
             }
         }
 
-        if group.group_code().value() == 0 {
-            match group.raw_value() {
+        if group_code.value() == 0 {
+            match raw_value {
                 b"SECTION" => {
                     self.inside_header = false;
                     self.awaiting_section_name = true;
@@ -242,13 +273,10 @@ impl DxfAcadVersionTracker {
                 }
                 _ => {}
             }
-        } else if self.inside_header
-            && group.group_code().value() == 9
-            && group.raw_value() == b"$ACADVER"
-        {
+        } else if self.inside_header && group_code.value() == 9 && raw_value == b"$ACADVER" {
             self.pending = Some(VariableMarker {
-                occurrence: compact_occurrence(group.occurrence())?,
-                span: group.value_line().content_span(),
+                occurrence: compact_occurrence(occurrence)?,
+                span: value_span,
             });
         }
         Ok(())
@@ -336,21 +364,24 @@ impl DxfAcadVersionTracker {
     fn record_candidate(
         &mut self,
         variable: VariableMarker,
-        candidate: DxfAsciiGroup<'_>,
+        occurrence: u64,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
     ) -> Result<(), DxfError> {
-        let value = if candidate.group_code().value() == 1 {
-            match DxfAcadVersion::from_code_bytes(candidate.raw_value()) {
+        let value = if group_code.value() == 1 {
+            match DxfAcadVersion::from_code_bytes(raw_value) {
                 Some(version) => DxfAcadVersionValue::Supported(version),
                 None => DxfAcadVersionValue::Unsupported,
             }
         } else {
-            DxfAcadVersionValue::InvalidGroupCode(candidate.group_code())
+            DxfAcadVersionValue::InvalidGroupCode(group_code)
         };
         self.record_occurrence(DxfAcadVersionOccurrence {
             variable_occurrence: variable.occurrence,
             variable_span: variable.span,
-            value_occurrence: Some(compact_occurrence(candidate.occurrence())?),
-            value_span: Some(candidate.value_line().content_span()),
+            value_occurrence: Some(compact_occurrence(occurrence)?),
+            value_span: Some(value_span),
             value,
         })
     }
@@ -405,8 +436,9 @@ mod tests {
         DxfAcadVersionValue,
     };
     use crate::{
-        DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfCancellationToken, DxfDiagnosticCode,
-        DxfGroupCode, DxfMemorySource, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+        DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfBinaryGroupCodeEncoding,
+        DxfCancellationToken, DxfDiagnosticCode, DxfGroupCode, DxfMemorySource, DxfReadOptions,
+        DxfResourceProfile, NoopDxfReadObserver,
     };
 
     #[test]
@@ -440,6 +472,15 @@ mod tests {
             assert_eq!(
                 version.uses_utf8_string_storage(),
                 *version >= DxfAcadVersion::Ac1021
+            );
+            let expected_binary_encoding = if *version == DxfAcadVersion::Ac1009 {
+                DxfBinaryGroupCodeEncoding::OneByteWithExtendedDataEscape
+            } else {
+                DxfBinaryGroupCodeEncoding::TwoByteLittleEndian
+            };
+            assert_eq!(
+                version.binary_group_code_encoding(),
+                expected_binary_encoding
             );
         }
         assert_eq!(DxfAcadVersion::from_code_bytes(b"AC1006"), None);

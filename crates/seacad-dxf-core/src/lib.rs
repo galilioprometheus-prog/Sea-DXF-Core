@@ -9,6 +9,7 @@ mod ascii_document;
 mod ascii_group;
 mod ascii_index;
 mod ascii_line;
+mod binary_document;
 mod binary_group;
 mod binary_wire;
 mod diagnostic;
@@ -38,6 +39,7 @@ pub use ascii_index::{
 pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };
+pub use binary_document::{DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,

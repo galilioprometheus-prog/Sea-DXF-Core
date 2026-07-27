@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M5.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M5.2a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -13,9 +13,10 @@ selectors, strictly decode CP932, CP950, CP949, CP1361, and CP936 MIF
 payloads, decode exact `ANSI_1361` document storage across source chunks,
 tokenize documented MTEXT and context-specific percent controls into exact
 UTF-8 byte spans with typed structural failures, and write a separately
-verified byte-identical copy. It also exposes an allocation-free Binary DXF
-wire registry and an 8 KiB bounded cursor that losslessly streams every
-group/value pair under an explicit pre-R13 or R13-and-later encoding. Each
+verified byte-identical copy. It also opens an immutable Binary raw snapshot:
+the canonical opening selects pre-R13 or R13-and-later group-code encoding,
+the exact HEADER `$ACADVER` must agree, and an 8 KiB bounded cursor losslessly
+accounts every physical group/value span under a one-pass SHA-256 identity. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -25,14 +26,16 @@ JSON v1 yet.
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
 | DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored caller-buffer UTF-8 view + bounded CIF/all five MIF selectors + exact MTEXT/percent token spans; formatting values and record semantics not implemented | Not implemented |
-| DXF Binary | AC1009-AC1032 | Lossless buffered group/value framing with caller-selected encoding; no document/envelope open | Not implemented | Not implemented | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + exact group spans; no envelope/index yet | Not implemented | Exact supported `$ACADVER` discovery only | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
 A cell changes only after its milestone closes with deterministic evidence.
-The Binary row claims physical source streaming only. M5.1b does not infer or
-verify `$ACADVER`, enforce SECTION/EOF semantics, construct a Binary raw
-document, expose CLI support, or replay unchanged bytes; those begin in M5.2.
+The Binary row claims physical raw-document opening only. M5.2a requires the
+canonical opening and verifies `$ACADVER` against the selected group-code
+encoding. It does not yet enforce SECTION/EOF semantics, build the Binary
+structure index, expose CLI support, or replay unchanged bytes; those are
+M5.2b/M5.2c.
 "Envelope structure" recognizes exact section boundaries and record starts
 without interpreting section payloads. Unknown section names remain exact
 source-backed bytes. "Text-storage policy" means UTF-8 by documented modern

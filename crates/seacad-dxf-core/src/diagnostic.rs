@@ -8,6 +8,11 @@ pub struct ByteSpan {
 }
 
 impl ByteSpan {
+    /// Internal constructor for bounds already proven ordered by a framing invariant.
+    pub(crate) const fn from_validated_bounds(start: u64, end: u64) -> Self {
+        Self { start, end }
+    }
+
     /// Creates [start, end), rejecting reversed bounds.
     #[must_use]
     pub const fn new(start: u64, end: u64) -> Option<Self> {

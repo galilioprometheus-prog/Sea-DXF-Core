@@ -1,6 +1,11 @@
 use std::{fmt, io};
 
-use crate::{diagnostic::ByteSpan, source_id::DxfSourceId};
+use crate::{
+    binary_wire::DxfBinaryGroupCodeEncoding,
+    diagnostic::ByteSpan,
+    dialect::{DxfAcadVersion, DxfAcadVersionState},
+    source_id::DxfSourceId,
+};
 
 /// Stable machine-readable code for a fatal DXF operation error.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -23,6 +28,9 @@ impl DxfErrorCode {
     pub const UNSUPPORTED_BINARY_GROUP_CODE: Self = Self("DXF-E0213");
     pub const TRUNCATED_BINARY_VALUE: Self = Self("DXF-E0214");
     pub const UNTERMINATED_BINARY_STRING: Self = Self("DXF-E0215");
+    pub const INVALID_BINARY_OPENING: Self = Self("DXF-E0216");
+    pub const BINARY_ACADVER_UNAVAILABLE: Self = Self("DXF-E0217");
+    pub const BINARY_ENCODING_DIALECT_MISMATCH: Self = Self("DXF-E0218");
     pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
     pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
@@ -115,6 +123,18 @@ pub enum DxfError {
         group_code: i16,
         span: ByteSpan,
     },
+    InvalidBinaryOpening {
+        span: ByteSpan,
+    },
+    BinaryAcadVersionUnavailable {
+        state: DxfAcadVersionState,
+        span: Option<ByteSpan>,
+    },
+    BinaryEncodingDialectMismatch {
+        encoding: DxfBinaryGroupCodeEncoding,
+        declared_version: DxfAcadVersion,
+        span: ByteSpan,
+    },
     SourceIdentityMismatch {
         expected: DxfSourceId,
         observed: DxfSourceId,
@@ -169,6 +189,11 @@ impl DxfError {
             Self::UnsupportedBinaryGroupCode { .. } => DxfErrorCode::UNSUPPORTED_BINARY_GROUP_CODE,
             Self::TruncatedBinaryValue { .. } => DxfErrorCode::TRUNCATED_BINARY_VALUE,
             Self::UnterminatedBinaryString { .. } => DxfErrorCode::UNTERMINATED_BINARY_STRING,
+            Self::InvalidBinaryOpening { .. } => DxfErrorCode::INVALID_BINARY_OPENING,
+            Self::BinaryAcadVersionUnavailable { .. } => DxfErrorCode::BINARY_ACADVER_UNAVAILABLE,
+            Self::BinaryEncodingDialectMismatch { .. } => {
+                DxfErrorCode::BINARY_ENCODING_DIALECT_MISMATCH
+            }
             Self::SourceIdentityMismatch { .. } => DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
             Self::VerbatimOutputLengthMismatch { .. } => {
                 DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH
@@ -282,6 +307,30 @@ impl fmt::Display for DxfError {
                 span.start(),
                 span.end()
             ),
+            Self::InvalidBinaryOpening { span } => write!(
+                formatter,
+                "{}: Binary DXF has no canonical opening 0/SECTION record at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::BinaryAcadVersionUnavailable { state, span } => write!(
+                formatter,
+                "{}: Binary DXF requires one exact supported HEADER $ACADVER (state {state:?}, span {span:?})",
+                self.code()
+            ),
+            Self::BinaryEncodingDialectMismatch {
+                encoding,
+                declared_version,
+                span,
+            } => write!(
+                formatter,
+                "{}: Binary DXF encoding {encoding:?} disagrees with declared {} at byte span [{}, {})",
+                self.code(),
+                declared_version.code(),
+                span.start(),
+                span.end()
+            ),
             Self::SourceIdentityMismatch { expected, observed } => write!(
                 formatter,
                 "{}: source identity changed from {expected} to {observed}",
@@ -308,6 +357,7 @@ mod tests {
     use std::io;
 
     use super::{ByteSpan, DxfError, DxfErrorCode, DxfIoOperation, DxfResource, DxfSourceId};
+    use crate::{DxfAcadVersion, DxfAcadVersionState, DxfBinaryGroupCodeEncoding};
 
     #[test]
     fn every_fatal_variant_has_the_stable_code() -> Result<(), io::Error> {
@@ -416,6 +466,30 @@ mod tests {
                 },
                 DxfErrorCode::UNTERMINATED_BINARY_STRING,
                 "DXF-E0215",
+            ),
+            (
+                DxfError::InvalidBinaryOpening {
+                    span: ByteSpan::new(22, 31).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::INVALID_BINARY_OPENING,
+                "DXF-E0216",
+            ),
+            (
+                DxfError::BinaryAcadVersionUnavailable {
+                    state: DxfAcadVersionState::Absent,
+                    span: None,
+                },
+                DxfErrorCode::BINARY_ACADVER_UNAVAILABLE,
+                "DXF-E0217",
+            ),
+            (
+                DxfError::BinaryEncodingDialectMismatch {
+                    encoding: DxfBinaryGroupCodeEncoding::OneByteWithExtendedDataEscape,
+                    declared_version: DxfAcadVersion::Ac1015,
+                    span: ByteSpan::new(40, 46).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::BINARY_ENCODING_DIALECT_MISMATCH,
+                "DXF-E0218",
             ),
             (
                 DxfError::SourceIdentityMismatch {
