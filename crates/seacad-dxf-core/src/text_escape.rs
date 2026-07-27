@@ -1,9 +1,69 @@
 //! Bounded interpretation of documented DXF text control sequences.
 
+use crate::{DxfLegacyCodePage, DxfTextDecodeStatus, DxfTextDecoder};
+
 const CIF_PREFIX: &[u8] = b"\\U+";
-const MIF_PREFIX: &[u8] = b"\\M+";
+const MIF_UPPER_PREFIX: &[u8] = b"\\M+";
+const MIF_LOWER_PREFIX: &[u8] = b"\\m+";
 const CIF_TOKEN_BYTES: usize = 7;
 const MIF_TOKEN_BYTES: usize = 8;
+
+/// Windows codepage selected by the MIF digit in `\M+nxxxx`.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfMifCodePage {
+    Windows932,
+    Windows950,
+    Windows949,
+    Windows1361,
+    Windows936,
+}
+
+impl DxfMifCodePage {
+    #[must_use]
+    pub const fn from_selector(selector: u8) -> Option<Self> {
+        match selector {
+            1 => Some(Self::Windows932),
+            2 => Some(Self::Windows950),
+            3 => Some(Self::Windows949),
+            4 => Some(Self::Windows1361),
+            5 => Some(Self::Windows936),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn selector(self) -> u8 {
+        match self {
+            Self::Windows932 => 1,
+            Self::Windows950 => 2,
+            Self::Windows949 => 3,
+            Self::Windows1361 => 4,
+            Self::Windows936 => 5,
+        }
+    }
+
+    #[must_use]
+    pub const fn windows_code_page(self) -> u16 {
+        match self {
+            Self::Windows932 => 932,
+            Self::Windows950 => 950,
+            Self::Windows949 => 949,
+            Self::Windows1361 => 1361,
+            Self::Windows936 => 936,
+        }
+    }
+
+    const fn legacy_decoder_page(self) -> Option<DxfLegacyCodePage> {
+        match self {
+            Self::Windows932 => Some(DxfLegacyCodePage::Windows932),
+            Self::Windows950 => Some(DxfLegacyCodePage::Windows950),
+            Self::Windows949 => Some(DxfLegacyCodePage::Windows949),
+            Self::Windows1361 => None,
+            Self::Windows936 => Some(DxfLegacyCodePage::Windows936),
+        }
+    }
+}
 
 /// Why a recognized DXF text control sequence is malformed.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -16,6 +76,7 @@ pub enum DxfTextEscapeIssue {
     MifTruncated,
     MifInvalidSelector,
     MifInvalidHex,
+    MifInvalidCode,
 }
 
 /// Terminal state of one bounded DXF text escape decode.
@@ -28,9 +89,9 @@ pub enum DxfTextEscapeDecodeStatus {
         source_offset: usize,
         issue: DxfTextEscapeIssue,
     },
-    UnsupportedMif {
+    UnsupportedMifCodePage {
         source_offset: usize,
-        selector: u8,
+        code_page: DxfMifCodePage,
         code: u16,
     },
 }
@@ -65,8 +126,9 @@ impl DxfTextEscapeDecodeResult {
 ///
 /// Exact `\U+hhhh` controls are converted without allocation or replacement.
 /// Adjacent high/low surrogate controls form one Unicode scalar. Exact
-/// `\M+nxxxx` controls are validated and reported as `UnsupportedMif` until
-/// their selector mapping has independent evidence. Only
+/// Evidence-backed `\M+nxxxx` controls decode through their selected Windows
+/// codepage. CP1361/Johab remains typed and fail-closed until its full mapping
+/// is independently verified. Only
 /// `destination[..result.written()]` is defined output. Retry the complete
 /// source after `OutputFull`.
 #[must_use]
@@ -96,19 +158,42 @@ pub fn decode_dxf_text_escapes_to_utf8_without_replacement(
                 return result(DxfTextEscapeDecodeStatus::OutputFull, read, written);
             }
             read += consumed;
-        } else if remaining.starts_with(MIF_PREFIX) {
-            return match parse_mif(bytes, read) {
-                Ok((selector, code)) => result(
-                    DxfTextEscapeDecodeStatus::UnsupportedMif {
+        } else if starts_supported_mif_shape(remaining) {
+            let (code_page, code) = match parse_mif(bytes, read) {
+                Ok(value) => value,
+                Err(issue) => return malformed(read, written, read, issue),
+            };
+            let Some(legacy_page) = code_page.legacy_decoder_page() else {
+                return result(
+                    DxfTextEscapeDecodeStatus::UnsupportedMifCodePage {
                         source_offset: read,
-                        selector,
+                        code_page,
                         code,
                     },
                     read,
                     written,
-                ),
-                Err(issue) => malformed(read, written, read, issue),
+                );
             };
+            let code_bytes = code.to_be_bytes();
+            let encoded = if code_bytes[0] == 0 {
+                &code_bytes[1..]
+            } else {
+                &code_bytes[..]
+            };
+            let mut scalar_storage = [0_u8; 4];
+            let decoded = DxfTextDecoder::Legacy(legacy_page)
+                .decode_complete_to_utf8_without_replacement(encoded, &mut scalar_storage);
+            let decoded_output = &scalar_storage[..decoded.written()];
+            if decoded.status() != DxfTextDecodeStatus::Complete
+                || decoded.read() != encoded.len()
+                || !contains_exactly_one_scalar(decoded_output)
+            {
+                return malformed(read, written, read, DxfTextEscapeIssue::MifInvalidCode);
+            }
+            if !copy_complete(decoded_output, destination, &mut written) {
+                return result(DxfTextEscapeDecodeStatus::OutputFull, read, written);
+            }
+            read += MIF_TOKEN_BYTES;
         } else {
             let plain = match source.get(read..).and_then(|value| value.chars().next()) {
                 Some(value) => value,
@@ -169,7 +254,13 @@ fn parse_cif_unit(source: &[u8], offset: usize) -> Result<u16, (usize, DxfTextEs
     parse_hex_u16(digits).ok_or((offset, DxfTextEscapeIssue::CifInvalidHex))
 }
 
-fn parse_mif(source: &[u8], offset: usize) -> Result<(u8, u16), DxfTextEscapeIssue> {
+fn starts_supported_mif_shape(source: &[u8]) -> bool {
+    let recognized_prefix =
+        source.starts_with(MIF_UPPER_PREFIX) || source.starts_with(MIF_LOWER_PREFIX);
+    recognized_prefix && matches!(source.get(MIF_UPPER_PREFIX.len()), Some(b'1'..=b'5'))
+}
+
+fn parse_mif(source: &[u8], offset: usize) -> Result<(DxfMifCodePage, u16), DxfTextEscapeIssue> {
     let end = offset
         .checked_add(MIF_TOKEN_BYTES)
         .ok_or(DxfTextEscapeIssue::MifTruncated)?;
@@ -177,16 +268,17 @@ fn parse_mif(source: &[u8], offset: usize) -> Result<(u8, u16), DxfTextEscapeIss
         .get(offset..end)
         .ok_or(DxfTextEscapeIssue::MifTruncated)?;
     let selector_byte = *token
-        .get(MIF_PREFIX.len())
+        .get(MIF_UPPER_PREFIX.len())
         .ok_or(DxfTextEscapeIssue::MifTruncated)?;
-    if !selector_byte.is_ascii_digit() {
-        return Err(DxfTextEscapeIssue::MifInvalidSelector);
-    }
+    let selector = selector_byte
+        .checked_sub(b'0')
+        .and_then(DxfMifCodePage::from_selector)
+        .ok_or(DxfTextEscapeIssue::MifInvalidSelector)?;
     let digits = token
-        .get(MIF_PREFIX.len() + 1..)
+        .get(MIF_UPPER_PREFIX.len() + 1..)
         .ok_or(DxfTextEscapeIssue::MifTruncated)?;
     let code = parse_hex_u16(digits).ok_or(DxfTextEscapeIssue::MifInvalidHex)?;
-    Ok((selector_byte - b'0', code))
+    Ok((selector, code))
 }
 
 fn parse_hex_u16(digits: &[u8]) -> Option<u16> {
@@ -209,6 +301,14 @@ fn hex(byte: u8) -> Option<u8> {
         b'a'..=b'f' => Some(byte - b'a' + 10),
         _ => None,
     }
+}
+
+fn contains_exactly_one_scalar(source: &[u8]) -> bool {
+    let Ok(text) = std::str::from_utf8(source) else {
+        return false;
+    };
+    let mut characters = text.chars();
+    characters.next().is_some() && characters.next().is_none()
 }
 
 fn copy_complete(source: &[u8], destination: &mut [u8], written: &mut usize) -> bool {
@@ -257,7 +357,7 @@ mod tests {
     use std::{error::Error, io};
 
     use super::{
-        DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
+        DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
         decode_dxf_text_escapes_to_utf8_without_replacement,
     };
     use crate::{
@@ -338,40 +438,78 @@ mod tests {
     }
 
     #[test]
-    fn recognizes_mif_without_guessing_a_selector_mapping() {
+    fn selector_registry_is_exact_and_stable() {
         let cases = [
-            (r"\M+182A0", 1, 0x82A0),
-            (r"\M+2A440", 2, 0xA440),
-            (r"\M+3B0A1", 3, 0xB0A1),
-            (r"\M+4c4e3", 4, 0xC4E3),
-            (r"\M+00000", 0, 0),
+            (1, DxfMifCodePage::Windows932, 932),
+            (2, DxfMifCodePage::Windows950, 950),
+            (3, DxfMifCodePage::Windows949, 949),
+            (4, DxfMifCodePage::Windows1361, 1361),
+            (5, DxfMifCodePage::Windows936, 936),
         ];
-        for (source, selector, code) in cases {
-            let mut destination = [0xCC_u8; 8];
-            let result =
-                decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
-            assert_eq!(
-                result,
-                DxfTextEscapeDecodeResult {
-                    status: DxfTextEscapeDecodeStatus::UnsupportedMif {
-                        source_offset: 0,
-                        selector,
-                        code,
-                    },
-                    read: 0,
-                    written: 0,
-                }
-            );
-            assert_eq!(destination, [0xCC; 8]);
+        for (selector, code_page, identifier) in cases {
+            assert_eq!(DxfMifCodePage::from_selector(selector), Some(code_page));
+            assert_eq!(code_page.selector(), selector);
+            assert_eq!(code_page.windows_code_page(), identifier);
         }
+        assert_eq!(DxfMifCodePage::from_selector(0), None);
+        assert_eq!(DxfMifCodePage::from_selector(6), None);
     }
 
     #[test]
-    fn malformed_mif_is_typed_and_stops_at_the_token() {
+    fn decodes_evidence_backed_mif_pages_and_single_byte_form() {
+        let source = r"A\M+182A0\M+2A440\M+3B0A1\M+5C4E3\M+10041Z";
+        let mut destination = [0_u8; 32];
+        let result = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
+        assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
+        assert_eq!(result.read(), source.len());
+        assert_eq!(&destination[..result.written()], "Aあ一가你AZ".as_bytes());
+    }
+
+    #[test]
+    fn lowercase_m_prefix_matches_autocad_oracle() {
+        let mut destination = [0_u8; 8];
+        let result =
+            decode_dxf_text_escapes_to_utf8_without_replacement(r"A\m+182A0B", &mut destination);
+        assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
+        assert_eq!(&destination[..result.written()], "AあB".as_bytes());
+    }
+
+    #[test]
+    fn johab_selector_is_mapped_but_remains_fail_closed() {
+        let mut destination = [0xCC_u8; 8];
+        let result =
+            decode_dxf_text_escapes_to_utf8_without_replacement(r"\M+48861", &mut destination);
+        assert_eq!(
+            result,
+            DxfTextEscapeDecodeResult {
+                status: DxfTextEscapeDecodeStatus::UnsupportedMifCodePage {
+                    source_offset: 0,
+                    code_page: DxfMifCodePage::Windows1361,
+                    code: 0x8861,
+                },
+                read: 0,
+                written: 0,
+            }
+        );
+        assert_eq!(destination, [0xCC; 8]);
+    }
+
+    #[test]
+    fn selectors_outside_one_through_five_remain_literal() {
+        let source = r"\M+00041|\M+60041|\M+A0041";
+        let mut destination = [0_u8; 32];
+        let result = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut destination);
+        assert_eq!(result.status(), DxfTextEscapeDecodeStatus::Complete);
+        assert_eq!(&destination[..result.written()], source.as_bytes());
+    }
+
+    #[test]
+    fn malformed_supported_mif_is_typed_and_stops_at_the_token() {
         let cases = [
             (r"x\M+182A", DxfTextEscapeIssue::MifTruncated),
-            (r"x\M+A82A0", DxfTextEscapeIssue::MifInvalidSelector),
             (r"x\M+182G0", DxfTextEscapeIssue::MifInvalidHex),
+            (r"x\M+18130", DxfTextEscapeIssue::MifInvalidCode),
+            (r"x\M+14142", DxfTextEscapeIssue::MifInvalidCode),
         ];
         for (source, issue) in cases {
             let mut destination = [0_u8; 16];
@@ -415,6 +553,23 @@ mod tests {
         assert_eq!(complete.read(), source.len());
         assert_eq!(complete.written(), exact.len());
         assert_eq!(&exact, "x你".as_bytes());
+    }
+
+    #[test]
+    fn output_full_stops_before_a_complete_mif_scalar() {
+        let source = r"x\M+182A0";
+        let mut small = [0xCC_u8; 3];
+        let blocked = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut small);
+        assert_eq!(blocked.status(), DxfTextEscapeDecodeStatus::OutputFull);
+        assert_eq!(blocked.read(), 1);
+        assert_eq!(blocked.written(), 1);
+        assert_eq!(small, [b'x', 0xCC, 0xCC]);
+
+        let mut exact = [0_u8; 4];
+        let complete = decode_dxf_text_escapes_to_utf8_without_replacement(source, &mut exact);
+        assert_eq!(complete.status(), DxfTextEscapeDecodeStatus::Complete);
+        assert_eq!(complete.read(), source.len());
+        assert_eq!(&exact, "xあ".as_bytes());
     }
 
     #[test]
@@ -508,6 +663,7 @@ EOF
         assert_traits::<DxfTextEscapeIssue>();
         assert_traits::<DxfTextEscapeDecodeStatus>();
         assert_traits::<DxfTextEscapeDecodeResult>();
+        assert_traits::<DxfMifCodePage>();
     }
 
     fn assert_traits<T: Send + Sync + Copy>() {}

@@ -57,7 +57,7 @@ pub use text_decoder::{
     DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
 };
 pub use text_escape::{
-    DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
+    DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
     decode_dxf_text_escapes_to_utf8_without_replacement,
 };
 pub use text_view::DxfTextValueDecodeReceipt;
