@@ -243,8 +243,25 @@ impl DxfAsciiStructureTracker {
         group: DxfAsciiGroup<'_>,
         is_framed_eof: bool,
     ) -> Result<(), DxfError> {
-        let occurrence = compact_occurrence(group.occurrence())?;
-        let is_zero = group.group_code().value() == 0;
+        self.observe_raw(
+            group.occurrence(),
+            group.group_code(),
+            group.raw_value(),
+            group.value_line().content_span(),
+            is_framed_eof,
+        )
+    }
+
+    pub(crate) fn observe_raw(
+        &mut self,
+        occurrence: u64,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
+        is_framed_eof: bool,
+    ) -> Result<(), DxfError> {
+        let occurrence = compact_occurrence(occurrence)?;
+        let is_zero = group_code.value() == 0;
         if is_zero {
             self.zero_group_occurrences
                 .try_reserve(1)
@@ -252,23 +269,23 @@ impl DxfAsciiStructureTracker {
             self.zero_group_occurrences.push(occurrence);
         }
 
-        let is_section = is_zero && group.raw_value() == b"SECTION";
-        let is_endsec = is_zero && group.raw_value() == b"ENDSEC";
+        let is_section = is_zero && raw_value == b"SECTION";
+        let is_endsec = is_zero && raw_value == b"ENDSEC";
         if is_section {
-            self.begin_section(occurrence, group.value_line().content_span())?;
+            self.begin_section(occurrence, value_span)?;
         } else if is_framed_eof {
-            self.finish_before_eof(occurrence, group.value_line().content_span())?;
+            self.finish_before_eof(occurrence, value_span)?;
         } else {
             if self.open.is_some() {
                 if is_endsec {
                     self.mark_name_missing()?;
                 } else {
-                    self.resolve_name(group, occurrence)?;
+                    self.resolve_name(group_code, raw_value, value_span, occurrence)?;
                 }
                 self.increment_inside_count()?;
             }
             if is_endsec {
-                self.close_or_report_orphan(occurrence, group.value_line().content_span())?;
+                self.close_or_report_orphan(occurrence, value_span)?;
             }
         }
         Ok(())
@@ -340,25 +357,28 @@ impl DxfAsciiStructureTracker {
         }
     }
 
-    fn resolve_name(&mut self, group: DxfAsciiGroup<'_>, occurrence: u32) -> Result<(), DxfError> {
-        let invalid = group.group_code().value() != 2;
+    fn resolve_name(
+        &mut self,
+        group_code: DxfGroupCode,
+        raw_value: &[u8],
+        value_span: ByteSpan,
+        occurrence: u32,
+    ) -> Result<(), DxfError> {
+        let invalid = group_code.value() != 2;
         if let Some(open) = self.open.as_mut()
             && open.awaiting_name
         {
-            open.name_span = Some(group.value_line().content_span());
+            open.name_span = Some(value_span);
             open.name = if invalid {
-                DxfAsciiSectionName::InvalidGroupCode(group.group_code())
+                DxfAsciiSectionName::InvalidGroupCode(group_code)
             } else {
-                DxfAsciiSectionKind::from_bytes(group.raw_value())
+                DxfAsciiSectionKind::from_bytes(raw_value)
                     .map_or(DxfAsciiSectionName::Unknown, DxfAsciiSectionName::Known)
             };
             open.awaiting_name = false;
             open.content_start = occurrence.saturating_add(1);
             if invalid {
-                self.record_diagnostic(
-                    DxfDiagnosticCode::SECTION_NAME_INVALID,
-                    Some(group.value_line().content_span()),
-                )?;
+                self.record_diagnostic(DxfDiagnosticCode::SECTION_NAME_INVALID, Some(value_span))?;
             }
         }
         Ok(())

@@ -36,10 +36,22 @@ pub use ascii_index::{
     DxfAsciiGroupRange, DxfAsciiSection, DxfAsciiSectionClosure, DxfAsciiSectionKind,
     DxfAsciiSectionName, DxfAsciiStructureIndex,
 };
+/// Binary view of the shared raw group-occurrence range.
+pub type DxfBinaryGroupRange = DxfAsciiGroupRange;
+/// Binary view of the shared section metadata.
+pub type DxfBinarySection = DxfAsciiSection;
+/// Binary view of the shared section-closure classification.
+pub type DxfBinarySectionClosure = DxfAsciiSectionClosure;
+/// Binary view of the shared documented section-kind registry.
+pub type DxfBinarySectionKind = DxfAsciiSectionKind;
+/// Binary view of the shared exact section-name classification.
+pub type DxfBinarySectionName = DxfAsciiSectionName;
+/// Binary view of the shared section and group-zero index.
+pub type DxfBinaryStructureIndex = DxfAsciiStructureIndex;
 pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };
-pub use binary_document::{DxfBinaryRawDocument, DxfBinaryRawGroup};
+pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,

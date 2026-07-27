@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M5 in progress through M5.2a encoding-verified immutable Binary raw
-document; awaiting user approval for M5.2b Binary envelope/index
+Status: M5 in progress through M5.2b Binary envelope/structure index; awaiting
+user approval for M5.2c verified Binary replay and CLI integration
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

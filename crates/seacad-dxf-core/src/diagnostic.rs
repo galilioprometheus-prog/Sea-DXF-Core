@@ -91,6 +91,18 @@ impl DxfDiagnosticCode {
         severity: DxfDiagnosticSeverity::Warning,
     };
 
+    /// Compatible mode opened a completely framed Binary stream without EOF.
+    pub const BINARY_EOF_MISSING_RECOVERED: Self = Self {
+        value: "DXF-W0210",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
+    /// Compatible mode preserved but did not parse Binary source bytes after EOF.
+    pub const BINARY_TRAILING_DATA_IGNORED: Self = Self {
+        value: "DXF-W0211",
+        severity: DxfDiagnosticSeverity::Warning,
+    };
+
     /// No exact `$ACADVER` variable was found in an exact HEADER section.
     pub const ACADVER_MISSING: Self = Self {
         value: "DXF-E0401",
@@ -248,6 +260,8 @@ mod tests {
             (DxfDiagnosticCode::ASCII_EOF_WHITESPACE_IGNORED, "DXF-W0202"),
             (DxfDiagnosticCode::ASCII_EOF_MISSING_RECOVERED, "DXF-W0203"),
             (DxfDiagnosticCode::ASCII_TRAILING_DATA_IGNORED, "DXF-W0204"),
+            (DxfDiagnosticCode::BINARY_EOF_MISSING_RECOVERED, "DXF-W0210"),
+            (DxfDiagnosticCode::BINARY_TRAILING_DATA_IGNORED, "DXF-W0211"),
         ];
         for (code, expected) in envelope_codes {
             let diagnostic = DxfDiagnostic::new(code, span);

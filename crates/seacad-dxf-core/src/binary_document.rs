@@ -2,10 +2,12 @@ use std::{fmt, io};
 
 use crate::{
     ByteSpan, DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAcadVersionReport, DxfAcadVersionState,
-    DxfBinaryGroup, DxfBinaryGroupCodeEncoding, DxfBinaryGroupCursor, DxfBinaryValueFamily,
-    DxfByteSource, DxfCancellationToken, DxfError, DxfGroupCode, DxfIoOperation, DxfPhysicalFormat,
-    DxfReadObserver, DxfReadOptions, DxfSourceId,
+    DxfBinaryGroup, DxfBinaryGroupCodeEncoding, DxfBinaryGroupCursor, DxfBinaryStructureIndex,
+    DxfBinaryValueFamily, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfDiagnosticCode,
+    DxfError, DxfGroupCode, DxfIoOperation, DxfPhysicalFormat, DxfReadMode, DxfReadObserver,
+    DxfReadOptions, DxfSourceId,
     ascii_document::{SequentialHashingSource, notify_progress, report_parse_progress},
+    ascii_index::DxfAsciiStructureTracker,
     dialect::DxfAcadVersionTracker,
     probe_dxf_physical_format,
 };
@@ -13,6 +15,14 @@ use crate::{
 const ONE_BYTE_OPENING: [u8; 9] = *b"\0SECTION\0";
 const TWO_BYTE_OPENING: [u8; 10] = *b"\0\0SECTION\0";
 const GROUP_CHUNK_RECORDS: usize = 4 * 1024;
+
+/// Whether the Binary raw document required a documented envelope recovery.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfBinaryDocumentConformance {
+    Strict,
+    Recovered,
+}
 
 /// Compact, owned location metadata for one source-backed Binary DXF group.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -92,6 +102,11 @@ pub struct DxfBinaryRawDocument<'a> {
     group_code_encoding: DxfBinaryGroupCodeEncoding,
     groups: DxfBinaryRawGroupTable,
     acad_version: DxfAcadVersionReport,
+    structure_index: DxfBinaryStructureIndex,
+    diagnostics: Box<[DxfDiagnostic]>,
+    conformance: DxfBinaryDocumentConformance,
+    eof_occurrence: Option<u64>,
+    trailing_span: Option<ByteSpan>,
 }
 
 impl fmt::Debug for DxfBinaryRawDocument<'_> {
@@ -103,6 +118,11 @@ impl fmt::Debug for DxfBinaryRawDocument<'_> {
             .field("group_code_encoding", &self.group_code_encoding)
             .field("groups", &self.groups.len)
             .field("acad_version", &self.acad_version.state())
+            .field("sections", &self.structure_index.sections().len())
+            .field("diagnostics", &self.diagnostics.len())
+            .field("conformance", &self.conformance)
+            .field("eof_occurrence", &self.eof_occurrence)
+            .field("trailing_span", &self.trailing_span)
             .finish()
     }
 }
@@ -124,14 +144,26 @@ impl<'a> DxfBinaryRawDocument<'a> {
         notify_progress(observer, cancellation, 0, source_len)?;
 
         let mut groups = DxfBinaryRawGroupTableBuilder::new();
-        let mut tracker = DxfAcadVersionTracker::default();
+        let mut dialect_tracker = DxfAcadVersionTracker::default();
+        let mut structure_tracker =
+            DxfAsciiStructureTracker::new(options.resource_profile().limits().max_diagnostics());
+        let mut eof_occurrence = None;
         let mut last_reported = 0_u64;
         while let Some(group) = cursor.next_group(cancellation)? {
-            tracker.observe_raw(
+            let payload = payload_bytes(group)?;
+            let is_eof = group.group_code.value() == 0 && payload == b"EOF";
+            dialect_tracker.observe_raw(
                 group.occurrence,
                 group.group_code,
-                payload_bytes(group)?,
+                payload,
                 group.payload_span,
+            )?;
+            structure_tracker.observe_raw(
+                group.occurrence,
+                group.group_code,
+                payload,
+                group.payload_span,
+                is_eof,
             )?;
             let compact = DxfBinaryRawGroup::from_borrowed(group)?;
             groups.push(compact)?;
@@ -142,12 +174,45 @@ impl<'a> DxfBinaryRawDocument<'a> {
                 source_len,
                 &mut last_reported,
             )?;
+            if is_eof {
+                eof_occurrence = Some(compact.occurrence());
+                break;
+            }
         }
+        let consumed_bytes = cursor.consumed_bytes();
         drop(cursor);
+
+        let mut diagnostics = Vec::new();
+        let mut trailing_span = None;
+        if eof_occurrence.is_some() && consumed_bytes < source_len {
+            let span = span(consumed_bytes, source_len)?;
+            if options.mode() == DxfReadMode::Strict {
+                return Err(DxfError::TrailingBinaryData { span });
+            }
+            trailing_span = Some(span);
+            diagnostics.try_reserve(1).map_err(|_| out_of_memory())?;
+            diagnostics.push(DxfDiagnostic::new(
+                DxfDiagnosticCode::BINARY_TRAILING_DATA_IGNORED,
+                Some(span),
+            ));
+        }
+        if eof_occurrence.is_none() {
+            if options.mode() == DxfReadMode::Strict {
+                return Err(DxfError::MissingBinaryEof {
+                    at_offset: source_len,
+                });
+            }
+            let span = span(source_len, source_len)?;
+            diagnostics.try_reserve(1).map_err(|_| out_of_memory())?;
+            diagnostics.push(DxfDiagnostic::new(
+                DxfDiagnosticCode::BINARY_EOF_MISSING_RECOVERED,
+                Some(span),
+            ));
+        }
 
         let source_id =
             hashing_source.finalize(cancellation, observer, source_len, &mut last_reported)?;
-        let acad_version = tracker.finish(source_id)?;
+        let acad_version = dialect_tracker.finish(source_id)?;
         let (declared_version, version_span) = require_supported_version(&acad_version)?;
         if declared_version.binary_group_code_encoding() != group_code_encoding {
             return Err(DxfError::BinaryEncodingDialectMismatch {
@@ -156,6 +221,13 @@ impl<'a> DxfBinaryRawDocument<'a> {
                 span: version_span,
             });
         }
+        let group_count = u64::from(groups.len);
+        let structure_index = structure_tracker.finish(source_id, group_count)?;
+        let conformance = if diagnostics.is_empty() {
+            DxfBinaryDocumentConformance::Strict
+        } else {
+            DxfBinaryDocumentConformance::Recovered
+        };
 
         Ok(Self {
             source,
@@ -164,6 +236,11 @@ impl<'a> DxfBinaryRawDocument<'a> {
             group_code_encoding,
             groups: groups.finish()?,
             acad_version,
+            structure_index,
+            diagnostics: diagnostics.into_boxed_slice(),
+            conformance,
+            eof_occurrence,
+            trailing_span,
         })
     }
 
@@ -199,6 +276,31 @@ impl<'a> DxfBinaryRawDocument<'a> {
     #[must_use]
     pub const fn acad_version_report(&self) -> &DxfAcadVersionReport {
         &self.acad_version
+    }
+
+    #[must_use]
+    pub const fn structure_index(&self) -> &DxfBinaryStructureIndex {
+        &self.structure_index
+    }
+
+    #[must_use]
+    pub fn diagnostics(&self) -> &[DxfDiagnostic] {
+        &self.diagnostics
+    }
+
+    #[must_use]
+    pub const fn conformance(&self) -> DxfBinaryDocumentConformance {
+        self.conformance
+    }
+
+    #[must_use]
+    pub const fn eof_occurrence(&self) -> Option<u64> {
+        self.eof_occurrence
+    }
+
+    #[must_use]
+    pub const fn trailing_span(&self) -> Option<ByteSpan> {
+        self.trailing_span
     }
 
     pub fn read_span(&self, span: ByteSpan, destination: &mut [u8]) -> Result<(), DxfError> {
@@ -371,9 +473,11 @@ mod tests {
 
     use super::{DxfBinaryRawDocument, DxfBinaryRawGroup};
     use crate::{
-        DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAcadVersionState, DxfBinaryGroupCodeEncoding,
-        DxfCancellationToken, DxfError, DxfErrorCode, DxfFileSource, DxfMemorySource,
-        DxfReadControl, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+        DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAcadVersionState, DxfBinaryDocumentConformance,
+        DxfBinaryGroupCodeEncoding, DxfBinarySectionClosure, DxfBinarySectionKind,
+        DxfBinarySectionName, DxfCancellationToken, DxfDiagnosticCode, DxfError, DxfErrorCode,
+        DxfFileSource, DxfMemorySource, DxfReadControl, DxfReadOptions, DxfResourceProfile,
+        NoopDxfReadObserver,
     };
 
     #[test]
@@ -583,6 +687,167 @@ mod tests {
         }
         assert_eq!(document.groups().count(), 4_106);
         assert!(document.group(4_106).is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn binary_structure_index_accounts_known_unknown_and_group_zero() -> Result<(), Box<dyn Error>>
+    {
+        let encoding = DxfBinaryGroupCodeEncoding::TwoByteLittleEndian;
+        let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+        pair(&mut bytes, encoding, 0, b"SECTION\0");
+        pair(&mut bytes, encoding, 2, b"HEADER\0");
+        pair(&mut bytes, encoding, 9, b"$ACADVER\0");
+        pair(&mut bytes, encoding, 1, b"AC1032\0");
+        pair(&mut bytes, encoding, 0, b"ENDSEC\0");
+        pair(&mut bytes, encoding, 0, b"SECTION\0");
+        pair(&mut bytes, encoding, 2, b"ENTITIES\0");
+        pair(&mut bytes, encoding, 0, b"LINE\0");
+        pair(&mut bytes, encoding, 10, &1_f64.to_le_bytes());
+        pair(&mut bytes, encoding, 0, b"ENDSEC\0");
+        pair(&mut bytes, encoding, 0, b"SECTION\0");
+        pair(&mut bytes, encoding, 2, b"ACDSDATA\0");
+        pair(&mut bytes, encoding, 0, b"ACDSRECORD\0");
+        pair(&mut bytes, encoding, 0, b"ENDSEC\0");
+        pair(&mut bytes, encoding, 0, b"EOF\0");
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open(&source, DxfReadOptions::strict())?;
+        let index = document.structure_index();
+
+        assert_eq!(document.conformance(), DxfBinaryDocumentConformance::Strict);
+        assert_eq!(document.eof_occurrence(), Some(14));
+        assert_eq!(document.trailing_span(), None);
+        assert!(document.diagnostics().is_empty());
+        assert_eq!(index.source_id(), document.source_id());
+        assert_eq!(index.total_group_count(), 15);
+        assert_eq!(index.inside_section_group_count(), 14);
+        assert_eq!(index.outside_section_group_count(), 1);
+        assert_eq!(index.zero_group_count(), 9);
+        assert_eq!(index.sections().len(), 3);
+        assert_eq!(
+            index.sections()[0].name(),
+            DxfBinarySectionName::Known(DxfBinarySectionKind::Header)
+        );
+        assert_eq!(
+            index.sections()[1].name(),
+            DxfBinarySectionName::Known(DxfBinarySectionKind::Entities)
+        );
+        let unknown = index.sections()[2];
+        assert_eq!(unknown.name(), DxfBinarySectionName::Unknown);
+        assert_eq!(unknown.closure(), DxfBinarySectionClosure::Closed);
+        let mut name = [0_u8; 8];
+        document.read_span(
+            unknown
+                .name_span()
+                .ok_or_else(|| io::Error::other("missing unknown name span"))?,
+            &mut name,
+        )?;
+        assert_eq!(&name, b"ACDSDATA");
+        assert_eq!(index.section_ordinal_for_group(14), None);
+        Ok(())
+    }
+
+    #[test]
+    fn malformed_binary_sections_are_indexed_without_semantic_guessing()
+    -> Result<(), Box<dyn Error>> {
+        let encoding = DxfBinaryGroupCodeEncoding::TwoByteLittleEndian;
+        let mut bytes = fixture(b"AC1032", encoding, 1, false);
+        bytes.truncate(bytes.len() - 6);
+        pair(&mut bytes, encoding, 0, b"ENDSEC\0");
+        pair(&mut bytes, encoding, 0, b"SECTION\0");
+        pair(&mut bytes, encoding, 0, b"SECTION\0");
+        pair(&mut bytes, encoding, 2, b"OBJECTS\0");
+        pair(&mut bytes, encoding, 0, b"EOF\0");
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open(&source, DxfReadOptions::strict())?;
+        let index = document.structure_index();
+        let codes: Vec<_> = index
+            .diagnostics()
+            .iter()
+            .map(|diagnostic| diagnostic.code())
+            .collect();
+
+        assert_eq!(index.sections().len(), 3);
+        assert_eq!(
+            index.sections()[1].closure(),
+            DxfBinarySectionClosure::Interrupted
+        );
+        assert_eq!(
+            index.sections()[2].closure(),
+            DxfBinarySectionClosure::Unclosed
+        );
+        assert_eq!(
+            codes,
+            [
+                DxfDiagnosticCode::SECTION_END_ORPHAN,
+                DxfDiagnosticCode::SECTION_NAME_INVALID,
+                DxfDiagnosticCode::SECTION_INTERRUPTED,
+                DxfDiagnosticCode::SECTION_UNCLOSED,
+            ]
+        );
+        assert_eq!(
+            index.inside_section_group_count() + index.outside_section_group_count(),
+            document.group_count()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn strict_binary_eof_and_compatible_recoveries_are_exact() -> Result<(), Box<dyn Error>> {
+        let encoding = DxfBinaryGroupCodeEncoding::TwoByteLittleEndian;
+        let complete = fixture(b"AC1032", encoding, 1, false);
+
+        let missing = &complete[..complete.len() - 6];
+        let source = DxfMemorySource::new(missing, DxfResourceProfile::Safe)?;
+        assert!(matches!(
+            open(&source, DxfReadOptions::strict()),
+            Err(DxfError::MissingBinaryEof { .. })
+        ));
+        let recovered = open(&source, DxfReadOptions::compatible())?;
+        assert_eq!(
+            recovered.conformance(),
+            DxfBinaryDocumentConformance::Recovered
+        );
+        assert_eq!(recovered.eof_occurrence(), None);
+        assert_eq!(recovered.trailing_span(), None);
+        assert_eq!(
+            recovered.diagnostics()[0].code(),
+            DxfDiagnosticCode::BINARY_EOF_MISSING_RECOVERED
+        );
+
+        let mut trailing = complete.clone();
+        trailing.extend_from_slice(b"opaque-tail");
+        let source = DxfMemorySource::new(&trailing, DxfResourceProfile::Safe)?;
+        assert!(matches!(
+            open(&source, DxfReadOptions::strict()),
+            Err(DxfError::TrailingBinaryData { .. })
+        ));
+        let recovered = open(&source, DxfReadOptions::compatible())?;
+        let tail = recovered
+            .trailing_span()
+            .ok_or_else(|| io::Error::other("missing trailing span"))?;
+        assert_eq!(tail.start(), complete.len() as u64);
+        assert_eq!(tail.end(), trailing.len() as u64);
+        assert_eq!(recovered.eof_occurrence(), Some(5));
+        assert_eq!(recovered.group_count(), 6);
+        assert_eq!(
+            recovered.diagnostics()[0].code(),
+            DxfDiagnosticCode::BINARY_TRAILING_DATA_IGNORED
+        );
+        let mut raw_tail = vec![0_u8; tail.len() as usize];
+        recovered.read_span(tail, &mut raw_tail)?;
+        assert_eq!(raw_tail, b"opaque-tail");
+
+        let mut wrong_case = missing.to_vec();
+        pair(&mut wrong_case, encoding, 0, b"eof\0");
+        let source = DxfMemorySource::new(&wrong_case, DxfResourceProfile::Safe)?;
+        assert!(matches!(
+            open(&source, DxfReadOptions::strict()),
+            Err(DxfError::MissingBinaryEof { .. })
+        ));
+        let recovered = open(&source, DxfReadOptions::compatible())?;
+        assert_eq!(recovered.eof_occurrence(), None);
+        assert_eq!(recovered.group_count(), 6);
         Ok(())
     }
 

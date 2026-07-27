@@ -31,6 +31,8 @@ impl DxfErrorCode {
     pub const INVALID_BINARY_OPENING: Self = Self("DXF-E0216");
     pub const BINARY_ACADVER_UNAVAILABLE: Self = Self("DXF-E0217");
     pub const BINARY_ENCODING_DIALECT_MISMATCH: Self = Self("DXF-E0218");
+    pub const MISSING_BINARY_EOF: Self = Self("DXF-E0219");
+    pub const TRAILING_BINARY_DATA: Self = Self("DXF-E0220");
     pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
     pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
@@ -135,6 +137,12 @@ pub enum DxfError {
         declared_version: DxfAcadVersion,
         span: ByteSpan,
     },
+    MissingBinaryEof {
+        at_offset: u64,
+    },
+    TrailingBinaryData {
+        span: ByteSpan,
+    },
     SourceIdentityMismatch {
         expected: DxfSourceId,
         observed: DxfSourceId,
@@ -194,6 +202,8 @@ impl DxfError {
             Self::BinaryEncodingDialectMismatch { .. } => {
                 DxfErrorCode::BINARY_ENCODING_DIALECT_MISMATCH
             }
+            Self::MissingBinaryEof { .. } => DxfErrorCode::MISSING_BINARY_EOF,
+            Self::TrailingBinaryData { .. } => DxfErrorCode::TRAILING_BINARY_DATA,
             Self::SourceIdentityMismatch { .. } => DxfErrorCode::SOURCE_IDENTITY_MISMATCH,
             Self::VerbatimOutputLengthMismatch { .. } => {
                 DxfErrorCode::VERBATIM_OUTPUT_LENGTH_MISMATCH
@@ -328,6 +338,18 @@ impl fmt::Display for DxfError {
                 "{}: Binary DXF encoding {encoding:?} disagrees with declared {} at byte span [{}, {})",
                 self.code(),
                 declared_version.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::MissingBinaryEof { at_offset } => write!(
+                formatter,
+                "{}: Binary DXF document has no terminal 0/EOF marker at byte offset {at_offset}",
+                self.code()
+            ),
+            Self::TrailingBinaryData { span } => write!(
+                formatter,
+                "{}: strict Binary DXF document has trailing data at byte span [{}, {})",
+                self.code(),
                 span.start(),
                 span.end()
             ),
@@ -490,6 +512,18 @@ mod tests {
                 },
                 DxfErrorCode::BINARY_ENCODING_DIALECT_MISMATCH,
                 "DXF-E0218",
+            ),
+            (
+                DxfError::MissingBinaryEof { at_offset: 46 },
+                DxfErrorCode::MISSING_BINARY_EOF,
+                "DXF-E0219",
+            ),
+            (
+                DxfError::TrailingBinaryData {
+                    span: ByteSpan::new(46, 52).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::TRAILING_BINARY_DATA,
+                "DXF-E0220",
             ),
             (
                 DxfError::SourceIdentityMismatch {
