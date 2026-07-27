@@ -8,6 +8,9 @@ use crate::{
     DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, DxfRawValueProvenance,
     DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState, DxfSourceId,
     ascii_group::trim_horizontal_ascii,
+    ascii_numeric::{
+        DxfAsciiNumericIssue, parse_f64 as parse_ascii_f64, parse_i16 as parse_ascii_i16,
+    },
     generated::header_schema::{
         DxfHeaderSchemaField, DxfSchemaStorageKind, HEADER_FIELDS, SCHEMA_VERSION,
     },
@@ -123,15 +126,6 @@ impl DxfElapsedDays {
     pub fn day_parts(self) -> Option<DxfDayParts> {
         DxfDayParts::from_raw(self.0)
     }
-}
-
-/// Exact failure while interpreting one ASCII numeric value.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[non_exhaustive]
-pub enum DxfAsciiNumericIssue {
-    Empty,
-    InvalidSyntax { token_offset: u64 },
-    OutOfRange,
 }
 
 /// Structural or lexical reason why a reviewed numeric HEADER field is invalid.
@@ -1056,12 +1050,13 @@ fn decode_double(
 ) -> Result<Result<DxfDouble, DxfHeaderNumericIssue>, DxfError> {
     ensure_not_cancelled(cancellation)?;
     match document.format() {
-        DxfRawDocumentFormat::Ascii => read_ascii_numeric(
+        DxfRawDocumentFormat::Ascii => Ok(read_ascii_numeric(
             document,
             group.value_payload_span(),
-            parse_ascii_double,
+            parse_ascii_f64,
             cancellation,
-        ),
+        )?
+        .map(DxfDouble::from_f64)),
         DxfRawDocumentFormat::Binary => {
             let mut bytes = [0_u8; 8];
             read_fixed_payload(document, group, &mut bytes, cancellation)?;
@@ -1140,95 +1135,6 @@ fn parse_ascii_numeric<T>(
     Ok(parse(token).map_err(DxfHeaderNumericIssue::InvalidAsciiNumber))
 }
 
-fn parse_ascii_i16(token: &[u8]) -> Result<i16, DxfAsciiNumericIssue> {
-    if token.is_empty() {
-        return Err(DxfAsciiNumericIssue::Empty);
-    }
-    let (negative, digits, offset) = match token[0] {
-        b'+' => (false, &token[1..], 1_usize),
-        b'-' => (true, &token[1..], 1_usize),
-        _ => (false, token, 0_usize),
-    };
-    if digits.is_empty() {
-        return Err(invalid_syntax(offset));
-    }
-    let mut magnitude = 0_i32;
-    for (index, byte) in digits.iter().copied().enumerate() {
-        if !byte.is_ascii_digit() {
-            return Err(invalid_syntax(offset + index));
-        }
-        magnitude = magnitude
-            .checked_mul(10)
-            .and_then(|value| value.checked_add(i32::from(byte - b'0')))
-            .ok_or(DxfAsciiNumericIssue::OutOfRange)?;
-        let limit = if negative { 32_768 } else { 32_767 };
-        if magnitude > limit {
-            return Err(DxfAsciiNumericIssue::OutOfRange);
-        }
-    }
-    let signed = if negative { -magnitude } else { magnitude };
-    i16::try_from(signed).map_err(|_| DxfAsciiNumericIssue::OutOfRange)
-}
-
-fn parse_ascii_double(token: &[u8]) -> Result<DxfDouble, DxfAsciiNumericIssue> {
-    validate_double_syntax(token)?;
-    let text = std::str::from_utf8(token).map_err(|_| invalid_syntax(0))?;
-    let value = text
-        .parse::<f64>()
-        .map_err(|_| DxfAsciiNumericIssue::OutOfRange)?;
-    if !value.is_finite() || (value == 0.0 && mantissa_has_nonzero_digit(token)) {
-        return Err(DxfAsciiNumericIssue::OutOfRange);
-    }
-    Ok(DxfDouble::from_f64(value))
-}
-
-fn mantissa_has_nonzero_digit(token: &[u8]) -> bool {
-    token
-        .iter()
-        .copied()
-        .take_while(|byte| !matches!(byte, b'e' | b'E'))
-        .any(|byte| matches!(byte, b'1'..=b'9'))
-}
-
-fn validate_double_syntax(token: &[u8]) -> Result<(), DxfAsciiNumericIssue> {
-    if token.is_empty() {
-        return Err(DxfAsciiNumericIssue::Empty);
-    }
-    let mut index = usize::from(matches!(token[0], b'+' | b'-'));
-    let mut mantissa_digits = 0_usize;
-    while matches!(token.get(index), Some(byte) if byte.is_ascii_digit()) {
-        mantissa_digits += 1;
-        index += 1;
-    }
-    if token.get(index) == Some(&b'.') {
-        index += 1;
-        while matches!(token.get(index), Some(byte) if byte.is_ascii_digit()) {
-            mantissa_digits += 1;
-            index += 1;
-        }
-    }
-    if mantissa_digits == 0 {
-        return Err(invalid_syntax(index));
-    }
-    if matches!(token.get(index), Some(b'e' | b'E')) {
-        index += 1;
-        if matches!(token.get(index), Some(b'+' | b'-')) {
-            index += 1;
-        }
-        let exponent_start = index;
-        while matches!(token.get(index), Some(byte) if byte.is_ascii_digit()) {
-            index += 1;
-        }
-        if index == exponent_start {
-            return Err(invalid_syntax(index));
-        }
-    }
-    if index != token.len() {
-        return Err(invalid_syntax(index));
-    }
-    Ok(())
-}
-
 fn field_provenance(source_id: DxfSourceId, spec: FieldSpec) -> DxfSemanticFieldProvenance {
     DxfSemanticFieldProvenance::new(source_id, HEADER_NAMESPACE, spec.id)
 }
@@ -1254,13 +1160,6 @@ fn marker_provenance(variable: DxfHeaderVariable) -> Result<DxfRawValueProvenanc
 fn group_provenance(group: DxfRawGroup) -> Result<DxfRawValueProvenance, DxfError> {
     DxfRawValueProvenance::new(group.occurrence(), group.value_payload_span())
         .ok_or_else(invalid_internal_data)
-}
-
-fn invalid_syntax(offset: usize) -> DxfAsciiNumericIssue {
-    match u64::try_from(offset) {
-        Ok(token_offset) => DxfAsciiNumericIssue::InvalidSyntax { token_offset },
-        Err(_) => DxfAsciiNumericIssue::OutOfRange,
-    }
 }
 
 fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {

@@ -9,6 +9,7 @@ mod ascii_document;
 mod ascii_group;
 mod ascii_index;
 mod ascii_line;
+mod ascii_numeric;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
@@ -61,6 +62,7 @@ pub type DxfBinaryStructureIndex = DxfAsciiStructureIndex;
 pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };
+pub use ascii_numeric::DxfAsciiNumericIssue;
 pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
@@ -82,9 +84,8 @@ pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
 pub use header_numeric::{
-    DxfAsciiNumericIssue, DxfDayParts, DxfDouble, DxfElapsedDays, DxfHeaderNumericDirectory,
-    DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView,
-    DxfJulianDate,
+    DxfDayParts, DxfDouble, DxfElapsedDays, DxfHeaderNumericDirectory, DxfHeaderNumericEntry,
+    DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView, DxfJulianDate,
 };
 pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
 pub use header_view::{

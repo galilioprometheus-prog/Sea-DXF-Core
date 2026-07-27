@@ -1,7 +1,8 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o adds DIMENSION formatting and precision HEADER integers
+M6.5o-r1 isolates strict ASCII numeric token parsing without changing DXF
+behavior or support
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -110,7 +111,11 @@ M6.5o adds DIMENSION formatting and precision HEADER integers
    exact signed 16-bit values and raw provenance remain authoritative across
    AC1009-AC1032 ASCII and Binary. No precision, unit, bitmask, separator
    character, enum, default, range, applicability, or cross-variable semantics
-   are inferred.
+   are inferred. M6.5o-r1 moves the existing strict ASCII `i16` and `f64`
+   token parsers into one private module with focused unit tests. The public
+   `DxfAsciiNumericIssue` re-export, exact IEEE-754 conversion, invalid-state
+   mapping, streaming reads, provenance, dependencies, and support claims
+   remain unchanged.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
