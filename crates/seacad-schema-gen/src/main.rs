@@ -422,7 +422,9 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
         (StorageKind::ElapsedDays | StorageKind::JulianDate, [40]) => true,
         (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
         (StorageKind::Int16, [group_code]) => {
-            (60..=79).contains(group_code) || (270..=289).contains(group_code)
+            (60..=79).contains(group_code)
+                || (270..=289).contains(group_code)
+                || (370..=389).contains(group_code)
         }
         _ => false,
     };
@@ -690,7 +692,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 101);
+        assert_eq!(families[0].fields.len(), 117);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -783,11 +785,21 @@ mod tests {
             "tduupdate",
             "tdindwg",
             "tdusrtimer",
+            "endcaps",
+            "extnames",
+            "halogap",
+            "hidetext",
+            "indexctl",
+            "intersectiondisplay",
+            "joinstyle",
+            "lwdisplay",
+            "obsltype",
+            "pstylemode",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[91].id, "endcaps");
+        assert_eq!(families[0].fields[101].id, "celweight");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -907,6 +919,18 @@ mod tests {
         let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("invalid extended int16 wire family unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let lineweight = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "celweight")
+            .ok_or("missing lineweight int16 field")?;
+        families[0].fields[lineweight].group_codes = vec![369];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid lineweight int16 wire family unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         Ok(())
     }

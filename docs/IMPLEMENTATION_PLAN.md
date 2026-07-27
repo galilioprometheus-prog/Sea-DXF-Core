@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5l adds extended integer and strict Boolean HEADER values
+M6.5m adds the remaining non-DIMENSION numeric and Boolean HEADER values
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -93,7 +93,14 @@ M6.5l adds extended integer and strict Boolean HEADER values
    fields. Boolean accepts only `0/1`; other source values remain typed invalid
    with raw provenance. AC1009 cannot physically encode those group codes in
    Binary DXF, while AC1012-AC1032 exercise both representations. A 1 GiB
-   evidence gate is required before any large-file claim.
+   evidence gate is required before any large-file claim. M6.5m appends the
+   remaining sixteen reviewed numeric or Boolean HEADER fields outside the
+   `$DIM*` family. Ten group-62/70 values remain physically representable in
+   AC1009 Binary; six group-280/290/370/380 values are absent from its standard
+   parity fixture because the one-byte pre-R13 group-code header cannot encode
+   them. AC1012-AC1032 exercise all sixteen through the same generic generated
+   directory. Enum, color, lineweight, units, display, xref, timer, default,
+   range, and applicability meanings remain unclaimed.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
