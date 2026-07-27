@@ -21,6 +21,7 @@ mod source;
 mod source_id;
 mod source_scan;
 mod text_decoder;
+mod text_escape;
 mod text_view;
 mod verbatim;
 
@@ -54,6 +55,10 @@ pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
 pub use text_decoder::{
     DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
+};
+pub use text_escape::{
+    DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
+    decode_dxf_text_escapes_to_utf8_without_replacement,
 };
 pub use text_view::DxfTextValueDecodeReceipt;
 pub use verbatim::DxfVerbatimWriteReceipt;

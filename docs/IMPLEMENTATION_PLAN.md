@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M4.3b2 source-anchored replacement-free group-value decoding complete;
-awaiting user approval for the M4.3c documented escape layer
+Status: M4.3c1 bounded CIF decode and fail-closed MIF recognition complete;
+awaiting user approval for M4.3c2 evidence-backed MIF mapping
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
