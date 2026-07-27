@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5n adds the first DIMENSION HEADER double-scalar batch
+M6.5o adds DIMENSION formatting and precision HEADER integers
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -105,7 +105,12 @@ M6.5n adds the first DIMENSION HEADER double-scalar batch
    physically representable in AC1009-AC1032 ASCII and Binary and retain exact
    IEEE-754 payloads and raw provenance. Dimension units, scale, tolerance,
    layout, sign, zero, default, range, applicability, and cross-variable
-   meanings remain unclaimed.
+   meanings remain unclaimed. M6.5o appends fourteen group-70 `$DIM*`
+   formatting and precision fields through the same generic directory. Their
+   exact signed 16-bit values and raw provenance remain authoritative across
+   AC1009-AC1032 ASCII and Binary. No precision, unit, bitmask, separator
+   character, enum, default, range, applicability, or cross-variable semantics
+   are inferred.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

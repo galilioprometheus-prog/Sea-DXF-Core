@@ -191,6 +191,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_dimtxt.raw_provenance(),
             &2.25_f64.to_le_bytes(),
         )?;
+        let ascii_dimadec = ascii_directory
+            .entry("dimadec")
+            .and_then(|entry| entry.value().as_int16())
+            .ok_or(io::Error::other("missing ASCII DIMADEC"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_dimadec.raw_provenance(),
+            b"3",
+        )?;
+        let binary_dimdsep = binary_directory
+            .entry("dimdsep")
+            .and_then(|entry| entry.value().as_int16())
+            .ok_or(io::Error::other("missing Binary DIMDSEP"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_dimdsep.raw_provenance(),
+            &44_i16.to_le_bytes(),
+        )?;
         if version != DxfAcadVersion::Ac1009 {
             let ascii_endcaps = ascii_directory
                 .entry("endcaps")
@@ -520,6 +538,57 @@ fn dimension_double_fields_preserve_failure_evidence() -> Result<(), Box<dyn Err
 }
 
 #[test]
+fn dimension_formatting_fields_preserve_i16_failure_evidence() -> Result<(), Box<dyn Error>> {
+    let bytes = ascii_document(
+        "AC1032",
+        "9\n$DIMADEC\n71\n3\n9\n$DIMALTD\n70\n32768\n9\n$DIMZIN\n70\n8\n9\n$DIMZIN\n70\n12\n",
+    );
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.header_numeric_directory(&DxfCancellationToken::default())?;
+
+    let wrong_group = directory
+        .entry("dimadec")
+        .and_then(|entry| entry.value().as_int16())
+        .ok_or(io::Error::other("missing DIMADEC"))?;
+    assert_eq!(
+        wrong_group.invalid_issue(),
+        Some(&DxfHeaderNumericIssue::InvalidGroupCode(code(71)?))
+    );
+    assert_raw_value(
+        DxfRawDocumentView::from(&document),
+        wrong_group.raw_provenance(),
+        b"3",
+    )?;
+
+    let malformed = directory
+        .entry("dimaltd")
+        .and_then(|entry| entry.value().as_int16())
+        .ok_or(io::Error::other("missing DIMALTD"))?;
+    assert!(matches!(
+        malformed.invalid_issue(),
+        Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+    ));
+    assert_raw_value(
+        DxfRawDocumentView::from(&document),
+        malformed.raw_provenance(),
+        b"32768",
+    )?;
+
+    let duplicate = directory
+        .entry("dimzin")
+        .and_then(|entry| entry.value().as_int16())
+        .ok_or(io::Error::other("missing DIMZIN"))?;
+    assert_count_issue(duplicate.invalid_issue(), true, 2)?;
+    assert_raw_value(
+        DxfRawDocumentView::from(&document),
+        duplicate.raw_provenance(),
+        b"12",
+    )?;
+    Ok(())
+}
+
+#[test]
 fn coordinate_components_keep_independent_failure_evidence() -> Result<(), Box<dyn Error>> {
     let partial_bytes = ascii_document("AC1032", "9\n$EXTMAX\n10\n1\n21\n2\n");
     let partial_source = DxfMemorySource::new(&partial_bytes, DxfResourceProfile::Safe)?;
@@ -794,6 +863,16 @@ fn binary_preserves_ieee_bits_and_signed_boundaries() -> Result<(), Box<dyn Erro
         dimension_position.raw_provenance(),
         &nan_bits.to_le_bytes(),
     )?;
+    let dimension_separator = directory
+        .entry("dimdsep")
+        .and_then(|entry| entry.value().as_int16())
+        .ok_or(io::Error::other("missing binary DIMDSEP"))?;
+    assert_eq!(dimension_separator.value(), Some(&i16::MIN));
+    assert_raw_value(
+        DxfRawDocumentView::from(&document),
+        dimension_separator.raw_provenance(),
+        &i16::MIN.to_le_bytes(),
+    )?;
     let invalid_boolean = directory
         .entry("extnames")
         .and_then(|entry| entry.value().as_boolean())
@@ -1032,6 +1111,20 @@ fn assert_standard_directory(
         (133, "dimtsz", "$DIMTSZ", &[40]),
         (134, "dimtvp", "$DIMTVP", &[40]),
         (135, "dimtxt", "$DIMTXT", &[40]),
+        (136, "dimadec", "$DIMADEC", &[70]),
+        (137, "dimaltd", "$DIMALTD", &[70]),
+        (138, "dimalttd", "$DIMALTTD", &[70]),
+        (139, "dimalttz", "$DIMALTTZ", &[70]),
+        (140, "dimaltu", "$DIMALTU", &[70]),
+        (141, "dimaltz", "$DIMALTZ", &[70]),
+        (142, "dimaunit", "$DIMAUNIT", &[70]),
+        (143, "dimazin", "$DIMAZIN", &[70]),
+        (144, "dimdec", "$DIMDEC", &[70]),
+        (145, "dimdsep", "$DIMDSEP", &[70]),
+        (146, "dimlunit", "$DIMLUNIT", &[70]),
+        (147, "dimtdec", "$DIMTDEC", &[70]),
+        (148, "dimtzin", "$DIMTZIN", &[70]),
+        (149, "dimzin", "$DIMZIN", &[70]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -1355,6 +1448,30 @@ fn assert_standard_directory(
             Some(expected.to_bits())
         );
     }
+    for (field_id, expected) in [
+        ("dimadec", 3_i16),
+        ("dimaltd", 4),
+        ("dimalttd", 2),
+        ("dimalttz", 12),
+        ("dimaltu", 2),
+        ("dimaltz", 8),
+        ("dimaunit", 0),
+        ("dimazin", 3),
+        ("dimdec", 5),
+        ("dimdsep", 44),
+        ("dimlunit", 2),
+        ("dimtdec", 4),
+        ("dimtzin", 12),
+        ("dimzin", 8),
+    ] {
+        assert_eq!(
+            directory
+                .entry(field_id)
+                .and_then(|entry| entry.value().as_int16())
+                .and_then(|value| value.value()),
+            Some(&expected)
+        );
+    }
     if version != DxfAcadVersion::Ac1009 {
         assert_eq!(
             directory
@@ -1481,10 +1598,12 @@ fn ascii_standard_fixture(version: &str) -> Result<Vec<u8>, io::Error> {
     );
     let remaining_fields = b"9\n$CELWEIGHT\n370\n-1\n9\n$CEPSNTYPE\n380\n3\n9\n$CSHADOW\n280\n2\n9\n$DISPSILH\n70\n1\n9\n$INSUNITS\n70\n6\n9\n$INTERFERECOLOR\n62\n1\n9\n$INTERSECTIONCOLOR\n70\n257\n9\n$OBSCOLOR\n70\n256\n9\n$SORTENTS\n280\n127\n9\n$UCSORTHOVIEW\n70\n4\n9\n$UNITMODE\n70\n1\n9\n$USRTIMER\n70\n1\n9\n$VISRETAIN\n70\n1\n9\n$WORLDVIEW\n70\n0\n9\n$XCLIPFRAME\n290\n1\n9\n$XEDIT\n290\n0\n";
     let dimension_fields = b"9\n$DIMALTF\n40\n25.4\n9\n$DIMALTRND\n40\n0.125\n9\n$DIMASZ\n40\n2.5\n9\n$DIMCEN\n40\n-0.5\n9\n$DIMDLE\n40\n1.25\n9\n$DIMDLI\n40\n3.75\n9\n$DIMEXE\n40\n1.5\n9\n$DIMEXO\n40\n0.625\n9\n$DIMFAC\n40\n0.75\n9\n$DIMGAP\n40\n-0.25\n9\n$DIMLFAC\n40\n10\n9\n$DIMRND\n40\n0.05\n9\n$DIMSCALE\n40\n100\n9\n$DIMTFAC\n40\n0.625\n9\n$DIMTM\n40\n0.01\n9\n$DIMTP\n40\n0.02\n9\n$DIMTSZ\n40\n0\n9\n$DIMTVP\n40\n-0.75\n9\n$DIMTXT\n40\n2.25\n";
+    let dimension_formatting_fields = b"9\n$DIMADEC\n70\n3\n9\n$DIMALTD\n70\n4\n9\n$DIMALTTD\n70\n2\n9\n$DIMALTTZ\n70\n12\n9\n$DIMALTU\n70\n2\n9\n$DIMALTZ\n70\n8\n9\n$DIMAUNIT\n70\n0\n9\n$DIMAZIN\n70\n3\n9\n$DIMDEC\n70\n5\n9\n$DIMDSEP\n70\n44\n9\n$DIMLUNIT\n70\n2\n9\n$DIMTDEC\n70\n4\n9\n$DIMTZIN\n70\n12\n9\n$DIMZIN\n70\n8\n";
     let document_suffix = b"0\nENDSEC\n0\nEOF\n";
     bytes.truncate(bytes.len().saturating_sub(document_suffix.len()));
     bytes.extend_from_slice(remaining_fields);
     bytes.extend_from_slice(dimension_fields);
+    bytes.extend_from_slice(dimension_formatting_fields);
     bytes.extend_from_slice(document_suffix);
     if version == "AC1009" {
         let extension = b"9\n$ENDCAPS\n";
@@ -1495,6 +1614,7 @@ fn ascii_standard_fixture(version: &str) -> Result<Vec<u8>, io::Error> {
         bytes.truncate(extension_start);
         bytes.extend_from_slice(b"9\n$DISPSILH\n70\n1\n9\n$INSUNITS\n70\n6\n9\n$INTERFERECOLOR\n62\n1\n9\n$INTERSECTIONCOLOR\n70\n257\n9\n$OBSCOLOR\n70\n256\n9\n$UCSORTHOVIEW\n70\n4\n9\n$UNITMODE\n70\n1\n9\n$USRTIMER\n70\n1\n9\n$VISRETAIN\n70\n1\n9\n$WORLDVIEW\n70\n0\n");
         bytes.extend_from_slice(dimension_fields);
+        bytes.extend_from_slice(dimension_formatting_fields);
         bytes.extend_from_slice(document_suffix);
     }
     Ok(bytes)
@@ -1593,6 +1713,20 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$USRTIMER".as_slice(), 70, 1),
         (b"$VISRETAIN".as_slice(), 70, 1),
         (b"$WORLDVIEW".as_slice(), 70, 0),
+        (b"$DIMADEC".as_slice(), 70, 3),
+        (b"$DIMALTD".as_slice(), 70, 4),
+        (b"$DIMALTTD".as_slice(), 70, 2),
+        (b"$DIMALTTZ".as_slice(), 70, 12),
+        (b"$DIMALTU".as_slice(), 70, 2),
+        (b"$DIMALTZ".as_slice(), 70, 8),
+        (b"$DIMAUNIT".as_slice(), 70, 0),
+        (b"$DIMAZIN".as_slice(), 70, 3),
+        (b"$DIMDEC".as_slice(), 70, 5),
+        (b"$DIMDSEP".as_slice(), 70, 44),
+        (b"$DIMLUNIT".as_slice(), 70, 2),
+        (b"$DIMTDEC".as_slice(), 70, 4),
+        (b"$DIMTZIN".as_slice(), 70, 12),
+        (b"$DIMZIN".as_slice(), 70, 8),
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_i16(&mut bytes, version, group_code, value)?;
@@ -1703,6 +1837,8 @@ fn binary_boundary_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
     push_binary_i16(&mut bytes, version, 370, i16::MIN)?;
     push_binary_string(&mut bytes, version, 9, b"$DIMTVP")?;
     push_binary_double_bits(&mut bytes, version, 40, angle_bits)?;
+    push_binary_string(&mut bytes, version, 9, b"$DIMDSEP")?;
+    push_binary_i16(&mut bytes, version, 70, i16::MIN)?;
     binary_suffix(&mut bytes, version)?;
     Ok(bytes)
 }
