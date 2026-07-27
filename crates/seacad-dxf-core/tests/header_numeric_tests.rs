@@ -127,6 +127,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_ortho_view.raw_provenance(),
             &6_i16.to_le_bytes(),
         )?;
+        let ascii_thickness = ascii_directory
+            .entry("thickness")
+            .and_then(|entry| entry.value().as_double())
+            .ok_or(io::Error::other("missing ASCII THICKNESS"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_thickness.raw_provenance(),
+            b"-1.25",
+        )?;
+        let binary_tree_depth = binary_directory
+            .entry("treedepth")
+            .and_then(|entry| entry.value().as_int16())
+            .ok_or(io::Error::other("missing Binary TREEDEPTH"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_tree_depth.raw_provenance(),
+            &10_i16.to_le_bytes(),
+        )?;
     }
     Ok(())
 }
@@ -266,6 +284,28 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
         .header_numeric_directory(&DxfCancellationToken::default())?;
     for field_id in ["psvpscale", "shadedif"] {
         let issue = malformed_display
+            .entry(field_id)
+            .and_then(|entry| match entry.value() {
+                DxfHeaderNumericValue::Double(value) => value.invalid_issue(),
+                DxfHeaderNumericValue::Int16(value) => value.invalid_issue(),
+                _ => None,
+            });
+        assert!(matches!(
+            issue,
+            Some(DxfHeaderNumericIssue::InvalidAsciiNumber(_))
+        ));
+    }
+
+    let malformed_surface_bytes = ascii_document(
+        "AC1032",
+        "9\n$TEXTSIZE\n40\nnot-a-number\n9\n$SURFTAB2\n70\n32768\n",
+    );
+    let malformed_surface_source =
+        DxfMemorySource::new(&malformed_surface_bytes, DxfResourceProfile::Safe)?;
+    let malformed_surface = open_ascii(&malformed_surface_source)?
+        .header_numeric_directory(&DxfCancellationToken::default())?;
+    for field_id in ["textsize", "surftab2"] {
+        let issue = malformed_surface
             .entry(field_id)
             .and_then(|entry| match entry.value() {
                 DxfHeaderNumericValue::Double(value) => value.invalid_issue(),
@@ -642,6 +682,18 @@ fn assert_standard_directory(
         (70, "shadowplanelocation", "$SHADOWPLANELOCATION", &[40]),
         (71, "sketchinc", "$SKETCHINC", &[40]),
         (72, "skpoly", "$SKPOLY", &[70]),
+        (73, "splinesegs", "$SPLINESEGS", &[70]),
+        (74, "splinetype", "$SPLINETYPE", &[70]),
+        (75, "surftab1", "$SURFTAB1", &[70]),
+        (76, "surftab2", "$SURFTAB2", &[70]),
+        (77, "surftype", "$SURFTYPE", &[70]),
+        (78, "surfu", "$SURFU", &[70]),
+        (79, "surfv", "$SURFV", &[70]),
+        (80, "textsize", "$TEXTSIZE", &[40]),
+        (81, "thickness", "$THICKNESS", &[40]),
+        (82, "tilemode", "$TILEMODE", &[70]),
+        (83, "tracewid", "$TRACEWID", &[40]),
+        (84, "treedepth", "$TREEDEPTH", &[70]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -820,6 +872,38 @@ fn assert_standard_directory(
             .and_then(|value| value.value()),
         Some(&2)
     );
+    assert_eq!(
+        directory
+            .entry("splinesegs")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.value()),
+        Some(&8)
+    );
+    assert_eq!(
+        directory
+            .entry("textsize")
+            .and_then(|entry| entry.value().as_double())
+            .and_then(|value| value.value())
+            .copied()
+            .map(DxfDouble::to_bits),
+        Some(2.5_f64.to_bits())
+    );
+    assert_eq!(
+        directory
+            .entry("thickness")
+            .and_then(|entry| entry.value().as_double())
+            .and_then(|value| value.value())
+            .copied()
+            .map(DxfDouble::to_bits),
+        Some((-1.25_f64).to_bits())
+    );
+    assert_eq!(
+        directory
+            .entry("treedepth")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.value()),
+        Some(&10)
+    );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
     assert!(!debug.contains("$ANGBASE"));
@@ -919,7 +1003,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$PUCSORGBACK\n10\n101\n20\n102\n30\n103\n9\n$PUCSORGBOTTOM\n10\n111\n20\n112\n30\n113\n9\n$PUCSORGFRONT\n10\n121\n20\n122\n30\n123\n9\n$PUCSORGLEFT\n10\n131\n20\n132\n30\n133\n9\n$PUCSORGRIGHT\n10\n141\n20\n142\n30\n143\n9\n$PUCSORGTOP\n10\n151\n20\n152\n30\n153\n9\n$UCSORGBACK\n10\n-101\n20\n-102\n30\n-103\n9\n$UCSORGBOTTOM\n10\n-111\n20\n-112\n30\n-113\n9\n$UCSORGFRONT\n10\n-121\n20\n-122\n30\n-123\n9\n$UCSORGLEFT\n10\n-131\n20\n-132\n30\n-133\n9\n$UCSORGRIGHT\n10\n-141\n20\n-142\n30\n-143\n9\n$UCSORGTOP\n10\n-151\n20\n-152\n30\n-153\n9\n$CECOLOR\n62\n256\n9\n$CELTSCALE\n40\n0.25\n9\n$CHAMFERA\n40\n1.25\n9\n$CHAMFERB\n40\n2.5\n9\n$CHAMFERC\n40\n3.75\n9\n$CHAMFERD\n40\n0.7853981633974483\n9\n$CMLJUST\n70\n2\n9\n$CMLSCALE\n40\n20\n9\n$ELEVATION\n40\n-12.5\n9\n$FILLETRAD\n40\n4.25\n9\n$FILLMODE\n70\n1\n9\n$LTSCALE\n40\n2.5\n9\n$LIMCHECK\n70\n1\n9\n$LUNITS\n70\n2\n9\n$LUPREC\n70\n4\n9\n$MAXACTVP\n70\n64\n9\n$MEASUREMENT\n70\n1\n9\n$MIRRTEXT\n70\n0\n9\n$ORTHOMODE\n70\n1\n9\n$PDMODE\n70\n34\n9\n$PDSIZE\n40\n-3.5\n9\n$PELEVATION\n40\n-7.25\n9\n$PLIMCHECK\n70\n0\n9\n$PLINEWID\n40\n0.75\n9\n$PLINEGEN\n70\n1\n9\n$PROXYGRAPHICS\n70\n1\n9\n$PSLTSCALE\n70\n0\n9\n$PSVPSCALE\n40\n1.5\n9\n$PUCSORTHOVIEW\n70\n6\n9\n$QTEXTMODE\n70\n0\n9\n$REGENMODE\n70\n1\n9\n$SHADEDGE\n70\n3\n9\n$SHADEDIF\n70\n70\n9\n$SHADOWPLANELOCATION\n40\n-100.25\n9\n$SKETCHINC\n40\n0.5\n9\n$SKPOLY\n70\n2\n9\n$SPLINESEGS\n70\n8\n9\n$SPLINETYPE\n70\n6\n9\n$SURFTAB1\n70\n6\n9\n$SURFTAB2\n70\n8\n9\n$SURFTYPE\n70\n6\n9\n$SURFU\n70\n12\n9\n$SURFV\n70\n14\n9\n$TEXTSIZE\n40\n2.5\n9\n$THICKNESS\n40\n-1.25\n9\n$TILEMODE\n70\n1\n9\n$TRACEWID\n40\n0.375\n9\n$TREEDEPTH\n70\n10\n",
     )
 }
 
@@ -997,6 +1081,15 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$SHADEDGE".as_slice(), 70, 3),
         (b"$SHADEDIF".as_slice(), 70, 70),
         (b"$SKPOLY".as_slice(), 70, 2),
+        (b"$SPLINESEGS".as_slice(), 70, 8),
+        (b"$SPLINETYPE".as_slice(), 70, 6),
+        (b"$SURFTAB1".as_slice(), 70, 6),
+        (b"$SURFTAB2".as_slice(), 70, 8),
+        (b"$SURFTYPE".as_slice(), 70, 6),
+        (b"$SURFU".as_slice(), 70, 12),
+        (b"$SURFV".as_slice(), 70, 14),
+        (b"$TILEMODE".as_slice(), 70, 1),
+        (b"$TREEDEPTH".as_slice(), 70, 10),
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_i16(&mut bytes, version, group_code, value)?;
@@ -1017,6 +1110,9 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$PSVPSCALE".as_slice(), 1.5),
         (b"$SHADOWPLANELOCATION".as_slice(), -100.25),
         (b"$SKETCHINC".as_slice(), 0.5),
+        (b"$TEXTSIZE".as_slice(), 2.5),
+        (b"$THICKNESS".as_slice(), -1.25),
+        (b"$TRACEWID".as_slice(), 0.375),
     ] {
         push_binary_string(&mut bytes, version, 9, name)?;
         push_binary_double_bits(&mut bytes, version, 40, value.to_bits())?;

@@ -674,7 +674,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 73);
+        assert_eq!(families[0].fields.len(), 85);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -737,11 +737,23 @@ mod tests {
             "pelevation",
             "plimcheck",
             "plinewid",
+            "plinegen",
+            "proxygraphics",
+            "psltscale",
+            "psvpscale",
+            "pucsorthoview",
+            "qtextmode",
+            "regenmode",
+            "shadedge",
+            "shadedif",
+            "shadowplanelocation",
+            "sketchinc",
+            "skpoly",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[61].id, "plinegen");
+        assert_eq!(families[0].fields[73].id, "splinesegs");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
