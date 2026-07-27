@@ -3,8 +3,9 @@ use std::{error::Error, io, num::NonZeroU64};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
     DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfErrorCode, DxfGroupCode,
-    DxfHeaderNumericIssue, DxfHeaderNumericView, DxfMemorySource, DxfRawDocumentView,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, NoopDxfReadObserver,
+    DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue,
+    DxfHeaderNumericView, DxfMemorySource, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticValueState, NoopDxfReadObserver,
 };
 
 #[test]
@@ -13,12 +14,16 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
         let ascii_bytes = ascii_standard_fixture(version.code());
         let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
         let ascii = open_ascii(&ascii_source)?;
+        let ascii_directory = ascii.header_numeric_directory(&DxfCancellationToken::default())?;
+        assert_standard_directory(&ascii_directory, ascii.source_id())?;
         let ascii_view = ascii.header_numeric_view(&DxfCancellationToken::default())?;
         assert_standard_view(&ascii_view, ascii.source_id())?;
 
         let binary_bytes = binary_standard_fixture(version, 0.5_f64.to_bits())?;
         let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
         let binary = open_binary(&binary_source)?;
+        let binary_directory = binary.header_numeric_directory(&DxfCancellationToken::default())?;
+        assert_standard_directory(&binary_directory, binary.source_id())?;
         let binary_view = binary.header_numeric_view(&DxfCancellationToken::default())?;
         assert_standard_view(&binary_view, binary.source_id())?;
 
@@ -51,6 +56,18 @@ fn absent_wrong_missing_multiple_and_duplicate_are_distinct() -> Result<(), Box<
     let wrong_bytes = ascii_document("AC1032", "9\n$ANGDIR\n71\n1\n");
     let wrong_source = DxfMemorySource::new(&wrong_bytes, DxfResourceProfile::Safe)?;
     let wrong = open_ascii(&wrong_source)?;
+    let wrong_directory = wrong.header_numeric_directory(&DxfCancellationToken::default())?;
+    let wrong_entry = wrong_directory
+        .entry("angdir")
+        .ok_or(io::Error::other("missing numeric directory entry"))?;
+    assert!(wrong_entry.value().as_double().is_none());
+    assert_eq!(
+        wrong_entry
+            .value()
+            .as_int16()
+            .and_then(|value| value.invalid_issue()),
+        Some(&DxfHeaderNumericIssue::InvalidGroupCode(code(71)?))
+    );
     let wrong_view = wrong.header_numeric_view(&DxfCancellationToken::default())?;
     assert_eq!(
         wrong_view.angle_direction().invalid_issue(),
@@ -223,12 +240,70 @@ fn cancellation_and_public_metadata_remain_bounded() -> Result<(), Box<dyn Error
         .err()
         .ok_or(io::Error::other("cancelled semantic read passed"))?;
     assert_eq!(error.code(), DxfErrorCode::CANCELLED);
+    let directory_error = document
+        .header_numeric_directory(&cancellation)
+        .err()
+        .ok_or(io::Error::other("cancelled directory read passed"))?;
+    assert_eq!(directory_error.code(), DxfErrorCode::CANCELLED);
 
     assert_copy::<DxfDouble>();
     assert_copy::<DxfAsciiNumericIssue>();
     assert_copy::<DxfHeaderNumericIssue>();
+    assert_copy::<DxfHeaderNumericValue>();
+    assert_copy::<DxfHeaderNumericEntry>();
     assert_copy::<DxfHeaderNumericView>();
+    assert_send_sync::<DxfHeaderNumericDirectory>();
     assert_send_sync::<DxfHeaderNumericView>();
+    Ok(())
+}
+
+fn assert_standard_directory(
+    directory: &DxfHeaderNumericDirectory,
+    source_id: seacad_dxf_core::DxfSourceId,
+) -> Result<(), Box<dyn Error>> {
+    assert_eq!(directory.schema_version(), "dxf.v1");
+    assert_eq!(directory.source_id(), source_id);
+    let expected = [
+        (0_u64, "acadmaintver", "$ACADMAINTVER"),
+        (2, "angbase", "$ANGBASE"),
+        (3, "angdir", "$ANGDIR"),
+        (4, "attmode", "$ATTMODE"),
+        (5, "aunits", "$AUNITS"),
+        (6, "auprec", "$AUPREC"),
+    ];
+    assert_eq!(directory.entries().len(), expected.len());
+    for (entry, (ordinal, id, name)) in directory.entries().iter().zip(expected) {
+        assert_eq!(entry.schema_ordinal(), ordinal);
+        assert_eq!(entry.schema_field_id(), id);
+        assert_eq!(entry.dxf_name(), name);
+        assert_eq!(entry.value().state(), DxfSemanticValueState::Explicit);
+        assert_eq!(
+            entry.value().field_provenance().document_source_id(),
+            source_id
+        );
+        assert_eq!(directory.entry_at_schema_ordinal(ordinal), Some(entry));
+    }
+    assert!(directory.entry("acadver").is_none());
+    assert!(directory.entry_at_schema_ordinal(1).is_none());
+    assert_eq!(
+        directory
+            .entry("angbase")
+            .and_then(|entry| entry.value().as_double())
+            .and_then(|value| value.value())
+            .copied()
+            .map(DxfDouble::to_bits),
+        Some(0.5_f64.to_bits())
+    );
+    assert_eq!(
+        directory
+            .entry("angdir")
+            .and_then(|entry| entry.value().as_int16())
+            .and_then(|value| value.value()),
+        Some(&1)
+    );
+    let debug = format!("{directory:?}");
+    assert!(debug.contains("numeric_field_count"));
+    assert!(!debug.contains("$ANGBASE"));
     Ok(())
 }
 

@@ -1,14 +1,16 @@
 //! Source-anchored numeric HEADER semantics over the shared raw document API.
 
-use std::{io, num::NonZeroU64};
+use std::{fmt, io, num::NonZeroU64};
 
 use crate::{
     ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError,
-    DxfGroupCode, DxfHeaderSchemaDirectory, DxfHeaderVariable, DxfHeaderVariableLookupState,
+    DxfGroupCode, DxfHeaderSchemaMatch, DxfHeaderVariable, DxfHeaderVariableLookupState,
     DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, DxfRawValueProvenance,
-    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
+    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState, DxfSourceId,
     ascii_group::trim_horizontal_ascii,
-    generated::header_schema::{DxfSchemaStorageKind, HEADER_FIELDS},
+    generated::header_schema::{
+        DxfHeaderSchemaField, DxfSchemaStorageKind, HEADER_FIELDS, SCHEMA_VERSION,
+    },
 };
 
 const HEADER_NAMESPACE: &str = "header";
@@ -66,6 +68,196 @@ pub enum DxfHeaderNumericIssue {
     MultipleVariables { occurrence_count: NonZeroU64 },
 }
 
+/// One schema-selected numeric representation and its four-state provenance.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfHeaderNumericValue {
+    Double(DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>),
+    Int16(DxfSemanticValue<i16, DxfHeaderNumericIssue>),
+}
+
+impl DxfHeaderNumericValue {
+    #[must_use]
+    pub const fn state(&self) -> DxfSemanticValueState {
+        match self {
+            Self::Double(value) => value.state(),
+            Self::Int16(value) => value.state(),
+        }
+    }
+
+    #[must_use]
+    pub const fn field_provenance(&self) -> DxfSemanticFieldProvenance {
+        match self {
+            Self::Double(value) => value.field_provenance(),
+            Self::Int16(value) => value.field_provenance(),
+        }
+    }
+
+    #[must_use]
+    pub const fn raw_provenance(&self) -> Option<DxfRawValueProvenance> {
+        match self {
+            Self::Double(value) => value.raw_provenance(),
+            Self::Int16(value) => value.raw_provenance(),
+        }
+    }
+
+    #[must_use]
+    pub const fn as_double(&self) -> Option<&DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>> {
+        match self {
+            Self::Double(value) => Some(value),
+            Self::Int16(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_int16(&self) -> Option<&DxfSemanticValue<i16, DxfHeaderNumericIssue>> {
+        match self {
+            Self::Int16(value) => Some(value),
+            Self::Double(_) => None,
+        }
+    }
+}
+
+/// Numeric HEADER field resolved from one generated schema ordinal.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfHeaderNumericEntry {
+    schema_ordinal: u32,
+    schema_field_id: &'static str,
+    dxf_name: &'static str,
+    value: DxfHeaderNumericValue,
+}
+
+impl DxfHeaderNumericEntry {
+    #[must_use]
+    pub const fn schema_ordinal(self) -> u64 {
+        self.schema_ordinal as u64
+    }
+
+    #[must_use]
+    pub const fn schema_field_id(self) -> &'static str {
+        self.schema_field_id
+    }
+
+    #[must_use]
+    pub const fn dxf_name(self) -> &'static str {
+        self.dxf_name
+    }
+
+    #[must_use]
+    pub const fn value(&self) -> &DxfHeaderNumericValue {
+        &self.value
+    }
+}
+
+/// Lazy schema-ordered directory of every generated numeric HEADER field.
+pub struct DxfHeaderNumericDirectory {
+    source_id: DxfSourceId,
+    entries: Box<[DxfHeaderNumericEntry]>,
+}
+
+impl DxfHeaderNumericDirectory {
+    fn from_document(
+        document: DxfRawDocumentView<'_>,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<Self, DxfError> {
+        let raw_directory = document.resolve_header_schema(cancellation)?;
+        if raw_directory.source_id() != document.source_id() {
+            return Err(DxfError::SourceIdentityMismatch {
+                expected: document.source_id(),
+                observed: raw_directory.source_id(),
+            });
+        }
+        let numeric_count = HEADER_FIELDS
+            .iter()
+            .filter(|field| is_numeric_storage(field.storage))
+            .count();
+        let mut entries = Vec::new();
+        entries
+            .try_reserve_exact(numeric_count)
+            .map_err(|_| out_of_memory())?;
+        for (ordinal, field) in HEADER_FIELDS.iter().enumerate() {
+            ensure_not_cancelled(cancellation)?;
+            let value = match field.storage {
+                DxfSchemaStorageKind::Double => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field)?;
+                    Some(DxfHeaderNumericValue::Double(double_field(
+                        document,
+                        matched,
+                        spec,
+                        cancellation,
+                    )?))
+                }
+                DxfSchemaStorageKind::Int16 => {
+                    let matched = schema_match(&raw_directory, ordinal, field)?;
+                    let spec = FieldSpec::from_schema(field)?;
+                    Some(DxfHeaderNumericValue::Int16(int16_field(
+                        document,
+                        matched,
+                        spec,
+                        cancellation,
+                    )?))
+                }
+                DxfSchemaStorageKind::ExactText | DxfSchemaStorageKind::Handle => None,
+            };
+            if let Some(value) = value {
+                entries.push(DxfHeaderNumericEntry {
+                    schema_ordinal: u32::try_from(ordinal).map_err(|_| invalid_internal_data())?,
+                    schema_field_id: field.id,
+                    dxf_name: field.dxf_name,
+                    value,
+                });
+            }
+        }
+        ensure_not_cancelled(cancellation)?;
+        Ok(Self {
+            source_id: document.source_id(),
+            entries: entries.into_boxed_slice(),
+        })
+    }
+
+    #[must_use]
+    pub const fn schema_version(&self) -> &'static str {
+        SCHEMA_VERSION
+    }
+
+    #[must_use]
+    pub const fn source_id(&self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub fn entries(&self) -> &[DxfHeaderNumericEntry] {
+        &self.entries
+    }
+
+    #[must_use]
+    pub fn entry(&self, schema_field_id: &str) -> Option<&DxfHeaderNumericEntry> {
+        self.entries
+            .iter()
+            .find(|entry| entry.schema_field_id == schema_field_id)
+    }
+
+    #[must_use]
+    pub fn entry_at_schema_ordinal(&self, schema_ordinal: u64) -> Option<&DxfHeaderNumericEntry> {
+        let schema_ordinal = u32::try_from(schema_ordinal).ok()?;
+        self.entries
+            .binary_search_by_key(&schema_ordinal, |entry| entry.schema_ordinal)
+            .ok()
+            .and_then(|index| self.entries.get(index))
+    }
+}
+
+impl fmt::Debug for DxfHeaderNumericDirectory {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("DxfHeaderNumericDirectory")
+            .field("source_id", &self.source_id)
+            .field("numeric_field_count", &self.entries.len())
+            .finish()
+    }
+}
+
 /// Fixed-size numeric projection for the first reviewed HEADER schema slice.
 ///
 /// Values are source spelling or binary payload interpretations only. This
@@ -86,56 +278,15 @@ impl DxfHeaderNumericView {
         document: DxfRawDocumentView<'_>,
         cancellation: &DxfCancellationToken,
     ) -> Result<Self, DxfError> {
-        let directory = document.resolve_header_schema(cancellation)?;
-        if directory.source_id() != document.source_id() {
-            return Err(DxfError::SourceIdentityMismatch {
-                expected: document.source_id(),
-                observed: directory.source_id(),
-            });
-        }
+        let directory = DxfHeaderNumericDirectory::from_document(document, cancellation)?;
         let view = Self {
             source_id: document.source_id(),
-            acad_maintenance_version: int16_field(
-                document,
-                &directory,
-                FieldSpec::new(
-                    "acadmaintver",
-                    "$ACADMAINTVER",
-                    70,
-                    DxfSchemaStorageKind::Int16,
-                ),
-                cancellation,
-            )?,
-            angle_base: double_field(
-                document,
-                &directory,
-                FieldSpec::new("angbase", "$ANGBASE", 50, DxfSchemaStorageKind::Double),
-                cancellation,
-            )?,
-            angle_direction: int16_field(
-                document,
-                &directory,
-                FieldSpec::new("angdir", "$ANGDIR", 70, DxfSchemaStorageKind::Int16),
-                cancellation,
-            )?,
-            attribute_mode: int16_field(
-                document,
-                &directory,
-                FieldSpec::new("attmode", "$ATTMODE", 70, DxfSchemaStorageKind::Int16),
-                cancellation,
-            )?,
-            angular_units: int16_field(
-                document,
-                &directory,
-                FieldSpec::new("aunits", "$AUNITS", 70, DxfSchemaStorageKind::Int16),
-                cancellation,
-            )?,
-            angular_precision: int16_field(
-                document,
-                &directory,
-                FieldSpec::new("auprec", "$AUPREC", 70, DxfSchemaStorageKind::Int16),
-                cancellation,
-            )?,
+            acad_maintenance_version: required_int16(&directory, "acadmaintver")?,
+            angle_base: required_double(&directory, "angbase")?,
+            angle_direction: required_int16(&directory, "angdir")?,
+            attribute_mode: required_int16(&directory, "attmode")?,
+            angular_units: required_int16(&directory, "aunits")?,
+            angular_precision: required_int16(&directory, "auprec")?,
         };
         ensure_not_cancelled(cancellation)?;
         Ok(view)
@@ -178,6 +329,14 @@ impl DxfHeaderNumericView {
 }
 
 impl DxfRawDocumentView<'_> {
+    /// Lazily resolves every generated numeric HEADER field in schema order.
+    pub fn header_numeric_directory(
+        self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfHeaderNumericDirectory, DxfError> {
+        DxfHeaderNumericDirectory::from_document(self, cancellation)
+    }
+
     /// Lazily resolves and reads the reviewed numeric HEADER schema slice.
     pub fn header_numeric_view(
         self,
@@ -188,6 +347,13 @@ impl DxfRawDocumentView<'_> {
 }
 
 impl DxfAsciiRawDocument<'_> {
+    pub fn header_numeric_directory(
+        &self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfHeaderNumericDirectory, DxfError> {
+        DxfRawDocumentView::from(self).header_numeric_directory(cancellation)
+    }
+
     pub fn header_numeric_view(
         &self,
         cancellation: &DxfCancellationToken,
@@ -197,6 +363,13 @@ impl DxfAsciiRawDocument<'_> {
 }
 
 impl DxfBinaryRawDocument<'_> {
+    pub fn header_numeric_directory(
+        &self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfHeaderNumericDirectory, DxfError> {
+        DxfRawDocumentView::from(self).header_numeric_directory(cancellation)
+    }
+
     pub fn header_numeric_view(
         &self,
         cancellation: &DxfCancellationToken,
@@ -208,24 +381,70 @@ impl DxfBinaryRawDocument<'_> {
 #[derive(Clone, Copy)]
 struct FieldSpec {
     id: &'static str,
-    dxf_name: &'static str,
     group_code: i16,
-    storage: DxfSchemaStorageKind,
 }
 
 impl FieldSpec {
-    const fn new(
-        id: &'static str,
-        dxf_name: &'static str,
-        group_code: i16,
-        storage: DxfSchemaStorageKind,
-    ) -> Self {
-        Self {
-            id,
-            dxf_name,
+    fn from_schema(field: &DxfHeaderSchemaField) -> Result<Self, DxfError> {
+        let group_code = match field.group_codes {
+            [group_code] => *group_code,
+            _ => return Err(invalid_internal_data()),
+        };
+        Ok(Self {
+            id: field.id,
             group_code,
-            storage,
-        }
+        })
+    }
+}
+
+fn is_numeric_storage(storage: DxfSchemaStorageKind) -> bool {
+    matches!(
+        storage,
+        DxfSchemaStorageKind::Double | DxfSchemaStorageKind::Int16
+    )
+}
+
+fn schema_match<'a>(
+    directory: &'a crate::DxfHeaderSchemaDirectory,
+    ordinal: usize,
+    field: &DxfHeaderSchemaField,
+) -> Result<&'a DxfHeaderSchemaMatch, DxfError> {
+    let ordinal = u64::try_from(ordinal).map_err(|_| invalid_internal_data())?;
+    let matched = directory
+        .match_at(ordinal)
+        .ok_or_else(invalid_internal_data)?;
+    if matched.schema_ordinal() != ordinal
+        || matched.schema_field_id() != field.id
+        || matched.dxf_name() != field.dxf_name
+    {
+        return Err(invalid_internal_data());
+    }
+    Ok(matched)
+}
+
+fn required_int16(
+    directory: &DxfHeaderNumericDirectory,
+    schema_field_id: &str,
+) -> Result<DxfSemanticValue<i16, DxfHeaderNumericIssue>, DxfError> {
+    match directory
+        .entry(schema_field_id)
+        .map(DxfHeaderNumericEntry::value)
+    {
+        Some(DxfHeaderNumericValue::Int16(value)) => Ok(*value),
+        Some(DxfHeaderNumericValue::Double(_)) | None => Err(invalid_internal_data()),
+    }
+}
+
+fn required_double(
+    directory: &DxfHeaderNumericDirectory,
+    schema_field_id: &str,
+) -> Result<DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>, DxfError> {
+    match directory
+        .entry(schema_field_id)
+        .map(DxfHeaderNumericEntry::value)
+    {
+        Some(DxfHeaderNumericValue::Double(value)) => Ok(*value),
+        Some(DxfHeaderNumericValue::Int16(_)) | None => Err(invalid_internal_data()),
     }
 }
 
@@ -240,12 +459,12 @@ enum ResolvedGroup {
 
 fn int16_field(
     document: DxfRawDocumentView<'_>,
-    directory: &DxfHeaderSchemaDirectory,
+    matched: &DxfHeaderSchemaMatch,
     spec: FieldSpec,
     cancellation: &DxfCancellationToken,
 ) -> Result<DxfSemanticValue<i16, DxfHeaderNumericIssue>, DxfError> {
-    let field = field_provenance(document.source_id(), spec)?;
-    match resolve_group(document, directory, spec, cancellation)? {
+    let field = field_provenance(document.source_id(), spec);
+    match resolve_group(document, matched, spec, cancellation)? {
         ResolvedGroup::Absent => Ok(DxfSemanticValue::absent(field)),
         ResolvedGroup::Invalid { issue, raw } => Ok(DxfSemanticValue::invalid(issue, field, raw)),
         ResolvedGroup::Explicit(group) => {
@@ -260,12 +479,12 @@ fn int16_field(
 
 fn double_field(
     document: DxfRawDocumentView<'_>,
-    directory: &DxfHeaderSchemaDirectory,
+    matched: &DxfHeaderSchemaMatch,
     spec: FieldSpec,
     cancellation: &DxfCancellationToken,
 ) -> Result<DxfSemanticValue<DxfDouble, DxfHeaderNumericIssue>, DxfError> {
-    let field = field_provenance(document.source_id(), spec)?;
-    match resolve_group(document, directory, spec, cancellation)? {
+    let field = field_provenance(document.source_id(), spec);
+    match resolve_group(document, matched, spec, cancellation)? {
         ResolvedGroup::Absent => Ok(DxfSemanticValue::absent(field)),
         ResolvedGroup::Invalid { issue, raw } => Ok(DxfSemanticValue::invalid(issue, field, raw)),
         ResolvedGroup::Explicit(group) => {
@@ -280,12 +499,11 @@ fn double_field(
 
 fn resolve_group(
     document: DxfRawDocumentView<'_>,
-    directory: &DxfHeaderSchemaDirectory,
+    matched: &DxfHeaderSchemaMatch,
     spec: FieldSpec,
     cancellation: &DxfCancellationToken,
 ) -> Result<ResolvedGroup, DxfError> {
     ensure_not_cancelled(cancellation)?;
-    let matched = directory.entry(spec.id).ok_or_else(invalid_internal_data)?;
     match matched.state() {
         DxfHeaderVariableLookupState::Absent => Ok(ResolvedGroup::Absent),
         DxfHeaderVariableLookupState::Ambiguous => {
@@ -550,24 +768,8 @@ fn validate_double_syntax(token: &[u8]) -> Result<(), DxfAsciiNumericIssue> {
     Ok(())
 }
 
-fn field_provenance(
-    source_id: DxfSourceId,
-    spec: FieldSpec,
-) -> Result<DxfSemanticFieldProvenance, DxfError> {
-    let field = HEADER_FIELDS
-        .iter()
-        .find(|field| {
-            field.id == spec.id
-                && field.dxf_name == spec.dxf_name
-                && field.group_codes == [spec.group_code]
-                && field.storage == spec.storage
-        })
-        .ok_or_else(invalid_internal_data)?;
-    Ok(DxfSemanticFieldProvenance::new(
-        source_id,
-        HEADER_NAMESPACE,
-        field.id,
-    ))
+fn field_provenance(source_id: DxfSourceId, spec: FieldSpec) -> DxfSemanticFieldProvenance {
+    DxfSemanticFieldProvenance::new(source_id, HEADER_NAMESPACE, spec.id)
 }
 
 fn variable_provenance(

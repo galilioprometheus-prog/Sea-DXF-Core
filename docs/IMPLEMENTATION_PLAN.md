@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5b exposes the first source-anchored numeric HEADER semantic view
+M6.5c exposes a schema-driven numeric HEADER semantic directory
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -45,8 +45,12 @@ M6.5b exposes the first source-anchored numeric HEADER semantic view
    document and schema directory, preserving exact provenance and separating
    absence, structural conflicts, ASCII syntax/range failures, and explicit
    values. `DxfDouble` retains IEEE-754 bits; no default, enum, range, or unit
-   conversion is applied. A 1 GiB evidence gate is required before any
-   large-file claim.
+   conversion is applied. M6.5c resolves every generated numeric field by its
+   schema ordinal into one ordered directory, then projects the existing
+   six-field typed view from that directory. Adding a reviewed numeric schema
+   row therefore does not require another handwritten resolution state machine.
+   It does not add defaults, enum meaning, applicability, ranges, or units. A
+   1 GiB evidence gate is required before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
