@@ -21,6 +21,7 @@ mod read_options;
 mod source;
 mod source_id;
 mod source_scan;
+mod text_control;
 mod text_decoder;
 mod text_escape;
 mod text_view;
@@ -54,6 +55,10 @@ pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
+pub use text_control::{
+    DxfDecodedTextSpan, DxfTextControlContext, DxfTextControlCursor, DxfTextControlError,
+    DxfTextControlIssue, DxfTextControlToken, DxfTextControlTokenKind,
+};
 pub use text_decoder::{
     DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
 };

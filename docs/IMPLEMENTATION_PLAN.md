@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
-Status: M4.3c2b exact CP1361/Johab storage and MIF decode complete; awaiting
-user approval for M4.3c3 documented MTEXT/control tokenization
+Status: M4 complete through M4.3c3 documented lossless MTEXT/percent-control
+tokenization; awaiting user approval for M5.1 Binary DXF framing contract
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
