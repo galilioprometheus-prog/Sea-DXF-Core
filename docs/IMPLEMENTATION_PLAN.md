@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.4c adds collision-safe exact HEADER name lookup
+M6.4d adds one-pass schema-wide HEADER resolution
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -35,7 +35,10 @@ M6.4c adds collision-safe exact HEADER name lookup
    path. M6.4c adds exact raw-byte HEADER name lookup with duplicate evidence,
    keyed per-document fingerprints only as a candidate filter, and bounded
    source comparison that remains authoritative even on a fingerprint
-   collision. A 1 GiB evidence gate is required before any large-file claim.
+   collision. M6.4d resolves every generated HEADER schema field together in
+   one explicit lazy directory, avoiding a field-by-variable scan while
+   retaining exact duplicate evidence. A 1 GiB evidence gate is required
+   before any large-file claim.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

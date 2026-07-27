@@ -170,6 +170,14 @@ impl<'a> DxfRawDocumentView<'a> {
         self.document.read_span(span, destination)
     }
 
+    pub(crate) fn raw_span_equals_exact(
+        self,
+        span: ByteSpan,
+        expected: &[u8],
+    ) -> Result<bool, DxfError> {
+        span_equals(self, span, expected)
+    }
+
     #[must_use]
     pub fn acad_version_report(self) -> &'a DxfAcadVersionReport {
         self.document.acad_version_report()

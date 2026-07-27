@@ -22,6 +22,7 @@ mod generated;
 mod handle;
 mod handseed;
 mod header_index;
+mod header_schema_directory;
 mod header_view;
 mod johab;
 mod limits;
@@ -79,6 +80,7 @@ pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physica
 pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
+pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
 };
