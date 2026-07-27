@@ -683,7 +683,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 17);
+        assert_eq!(families[0].fields.len(), 25);
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);

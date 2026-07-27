@@ -276,7 +276,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 17);
+        assert_eq!(directory.matches().len(), 25);
         assert!(directory.entry("unknown").is_none());
         assert_match(
             directory.entry("acadver"),
@@ -312,7 +312,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 17);
+        assert_eq!(directory.matches().len(), 25);
         assert_eq!(source.reads(), reads_after_open + 9);
         Ok(())
     }
@@ -391,7 +391,7 @@ mod tests {
         let directory = view.resolve_header_schema(&DxfCancellationToken::default())?;
         assert_eq!(directory.source_id(), view.source_id());
         assert_eq!(directory.schema_version(), "dxf.v1");
-        assert_eq!(directory.matches().len(), 17);
+        assert_eq!(directory.matches().len(), 25);
         assert_match(
             directory.entry("acadmaintver"),
             DxfHeaderVariableLookupState::Unique,

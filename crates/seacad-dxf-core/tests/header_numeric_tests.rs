@@ -37,6 +37,24 @@ fn every_supported_version_has_ascii_binary_numeric_parity() -> Result<(), Box<d
             binary_view.angle_base().raw_provenance(),
             &0.5_f64.to_le_bytes(),
         )?;
+        let ascii_ucs = ascii_directory
+            .entry("ucsorg")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing ASCII UCSORG"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&ascii),
+            ascii_ucs[2].raw_provenance(),
+            b"-3",
+        )?;
+        let binary_ucs = binary_directory
+            .entry("ucsorg")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing Binary UCSORG"))?;
+        assert_raw_value(
+            DxfRawDocumentView::from(&binary),
+            binary_ucs[2].raw_provenance(),
+            &(-3_f64).to_le_bytes(),
+        )?;
     }
     Ok(())
 }
@@ -221,6 +239,27 @@ fn coordinate_components_keep_independent_failure_evidence() -> Result<(), Box<d
             Some(&DxfHeaderNumericIssue::MissingValue)
         );
     }
+
+    let ucs_bytes = ascii_document("AC1032", "9\n$UCSXDIR\n10\n1\n30\n0\n30\n0\n");
+    let ucs_source = DxfMemorySource::new(&ucs_bytes, DxfResourceProfile::Safe)?;
+    let ucs = open_ascii(&ucs_source)?;
+    let ucs_directory = ucs.header_numeric_directory(&DxfCancellationToken::default())?;
+    let ucs_value = ucs_directory
+        .entry("ucsxdir")
+        .and_then(|entry| entry.value().as_double3())
+        .ok_or(io::Error::other("missing malformed UCSXDIR"))?;
+    assert_eq!(
+        ucs_value[0].value().copied().map(DxfDouble::to_f64),
+        Some(1.0)
+    );
+    assert_eq!(
+        ucs_value[1].invalid_issue(),
+        Some(&DxfHeaderNumericIssue::InvalidGroupCode(code(30)?))
+    );
+    assert_eq!(
+        ucs_value[2].value().copied().map(DxfDouble::to_f64),
+        Some(0.0)
+    );
     Ok(())
 }
 
@@ -385,6 +424,14 @@ fn assert_standard_directory(
         (14, "pextmax", "$PEXTMAX", &[10, 20, 30]),
         (15, "pextmin", "$PEXTMIN", &[10, 20, 30]),
         (16, "pinsbase", "$PINSBASE", &[10, 20, 30]),
+        (17, "plimmax", "$PLIMMAX", &[10, 20]),
+        (18, "plimmin", "$PLIMMIN", &[10, 20]),
+        (19, "pucsorg", "$PUCSORG", &[10, 20, 30]),
+        (20, "pucsxdir", "$PUCSXDIR", &[10, 20, 30]),
+        (21, "pucsydir", "$PUCSYDIR", &[10, 20, 30]),
+        (22, "ucsorg", "$UCSORG", &[10, 20, 30]),
+        (23, "ucsxdir", "$UCSXDIR", &[10, 20, 30]),
+        (24, "ucsydir", "$UCSYDIR", &[10, 20, 30]),
     ];
     assert_eq!(directory.entries().len(), expected.len());
     for (entry, &(ordinal, id, name, group_codes)) in directory.entries().iter().zip(expected) {
@@ -431,6 +478,27 @@ fn assert_standard_directory(
             .and_then(|entry| entry.value().as_double2())
             .ok_or(io::Error::other("missing LIMMIN tuple"))?,
         &[-10.0, -20.0],
+    );
+    assert_double_components(
+        directory
+            .entry("plimmax")
+            .and_then(|entry| entry.value().as_double2())
+            .ok_or(io::Error::other("missing PLIMMAX tuple"))?,
+        &[100.0, 200.0],
+    );
+    assert_double_components(
+        directory
+            .entry("pucsorg")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing PUCSORG tuple"))?,
+        &[1.0, 2.0, 3.0],
+    );
+    assert_double_components(
+        directory
+            .entry("ucsorg")
+            .and_then(|entry| entry.value().as_double3())
+            .ok_or(io::Error::other("missing UCSORG tuple"))?,
+        &[-1.0, -2.0, -3.0],
     );
     let debug = format!("{directory:?}");
     assert!(debug.contains("numeric_field_count"));
@@ -531,7 +599,7 @@ fn assert_raw_value(
 fn ascii_standard_fixture(version: &str) -> Vec<u8> {
     ascii_document(
         version,
-        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n",
+        "9\n$ACADMAINTVER\n70\n-32768\n9\n$ANGBASE\n50\n +5.000000000000000E-1 \n9\n$ANGDIR\n70\n+1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$EXTMAX\n10\n1.25\n20\n-2.5\n30\n3.75\n9\n$EXTMIN\n10\n-4.5\n20\n5.25\n30\n-6.75\n9\n$INSBASE\n10\n7\n20\n8\n30\n9\n9\n$LIMMAX\n10\n10\n20\n20\n9\n$LIMMIN\n10\n-10\n20\n-20\n9\n$PEXTMAX\n10\n11\n20\n22\n30\n33\n9\n$PEXTMIN\n10\n-11\n20\n-22\n30\n-33\n9\n$PINSBASE\n10\n0.125\n20\n0.25\n30\n0.5\n9\n$PLIMMAX\n10\n100\n20\n200\n9\n$PLIMMIN\n10\n-100\n20\n-200\n9\n$PUCSORG\n10\n1\n20\n2\n30\n3\n9\n$PUCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$PUCSYDIR\n10\n0\n20\n1\n30\n0\n9\n$UCSORG\n10\n-1\n20\n-2\n30\n-3\n9\n$UCSXDIR\n10\n1\n20\n0\n30\n0\n9\n$UCSYDIR\n10\n0\n20\n1\n30\n0\n",
     )
 }
 
@@ -564,6 +632,14 @@ fn binary_standard_fixture(version: DxfAcadVersion, angle_bits: u64) -> Result<V
         (b"$PEXTMAX".as_slice(), &[11.0, 22.0, 33.0][..]),
         (b"$PEXTMIN".as_slice(), &[-11.0, -22.0, -33.0][..]),
         (b"$PINSBASE".as_slice(), &[0.125, 0.25, 0.5][..]),
+        (b"$PLIMMAX".as_slice(), &[100.0, 200.0][..]),
+        (b"$PLIMMIN".as_slice(), &[-100.0, -200.0][..]),
+        (b"$PUCSORG".as_slice(), &[1.0, 2.0, 3.0][..]),
+        (b"$PUCSXDIR".as_slice(), &[1.0, 0.0, 0.0][..]),
+        (b"$PUCSYDIR".as_slice(), &[0.0, 1.0, 0.0][..]),
+        (b"$UCSORG".as_slice(), &[-1.0, -2.0, -3.0][..]),
+        (b"$UCSXDIR".as_slice(), &[1.0, 0.0, 0.0][..]),
+        (b"$UCSYDIR".as_slice(), &[0.0, 1.0, 0.0][..]),
     ] {
         push_binary_double_tuple(&mut bytes, version, name, values)?;
     }

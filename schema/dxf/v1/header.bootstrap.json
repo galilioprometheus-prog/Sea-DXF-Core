@@ -205,6 +205,102 @@
       "source_id": "autodesk.header.2026",
       "evidence": "row:$PINSBASE",
       "review_state": "shape_only"
+    },
+    {
+      "id": "plimmax",
+      "dxf_name": "$PLIMMAX",
+      "group_codes": [10, 20],
+      "storage": "double2",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PLIMMAX",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "plimmin",
+      "dxf_name": "$PLIMMIN",
+      "group_codes": [10, 20],
+      "storage": "double2",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PLIMMIN",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pucsorg",
+      "dxf_name": "$PUCSORG",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PUCSORG",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pucsxdir",
+      "dxf_name": "$PUCSXDIR",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PUCSXDIR",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "pucsydir",
+      "dxf_name": "$PUCSYDIR",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$PUCSYDIR",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "ucsorg",
+      "dxf_name": "$UCSORG",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$UCSORG",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "ucsxdir",
+      "dxf_name": "$UCSXDIR",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$UCSXDIR",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "ucsydir",
+      "dxf_name": "$UCSYDIR",
+      "group_codes": [10, 20, 30],
+      "storage": "double3",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$UCSYDIR",
+      "review_state": "shape_only"
     }
   ]
 }
