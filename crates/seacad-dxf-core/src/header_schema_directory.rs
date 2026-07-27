@@ -276,7 +276,7 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 3);
+        assert_eq!(directory.matches().len(), 9);
         assert!(directory.entry("unknown").is_none());
         assert_match(
             directory.entry("acadver"),
@@ -312,8 +312,8 @@ mod tests {
         let directory = DxfRawDocumentView::from(&document)
             .resolve_header_schema(&DxfCancellationToken::default())?;
 
-        assert_eq!(directory.matches().len(), 3);
-        assert_eq!(source.reads(), reads_after_open + 3);
+        assert_eq!(directory.matches().len(), 9);
+        assert_eq!(source.reads(), reads_after_open + 9);
         Ok(())
     }
 
@@ -391,7 +391,14 @@ mod tests {
         let directory = view.resolve_header_schema(&DxfCancellationToken::default())?;
         assert_eq!(directory.source_id(), view.source_id());
         assert_eq!(directory.schema_version(), "dxf.v1");
-        assert_eq!(directory.matches().len(), 3);
+        assert_eq!(directory.matches().len(), 9);
+        assert_match(
+            directory.entry("acadmaintver"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            4,
+            None,
+        )?;
         assert_match(
             directory.entry("acadver"),
             DxfHeaderVariableLookupState::Unique,
@@ -400,23 +407,58 @@ mod tests {
             None,
         )?;
         assert_match(
+            directory.entry("angbase"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            6,
+            None,
+        )?;
+        assert_match(
+            directory.entry("angdir"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            8,
+            None,
+        )?;
+        assert_match(
+            directory.entry("attmode"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            10,
+            None,
+        )?;
+        assert_match(
+            directory.entry("aunits"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            12,
+            None,
+        )?;
+        assert_match(
+            directory.entry("auprec"),
+            DxfHeaderVariableLookupState::Unique,
+            1,
+            14,
+            None,
+        )?;
+        assert_match(
             directory.entry("dwgcodepage"),
             DxfHeaderVariableLookupState::Unique,
             1,
-            4,
+            16,
             None,
         )?;
         assert_match(
             directory.entry("handseed"),
             DxfHeaderVariableLookupState::Unique,
             1,
-            6,
+            18,
             None,
         )?;
         assert_eq!(directory.matches()[0].schema_ordinal(), 0);
-        assert_eq!(directory.matches()[0].dxf_name(), "$ACADVER");
+        assert_eq!(directory.matches()[0].dxf_name(), "$ACADMAINTVER");
         assert_eq!(
-            directory.match_at(2).map(|entry| entry.schema_field_id()),
+            directory.match_at(8).map(|entry| entry.schema_field_id()),
             Some("handseed")
         );
         let debug = format!("{directory:?}");
@@ -450,7 +492,7 @@ mod tests {
 
     fn ascii_fixture(version: &str, unknown_count: usize) -> Vec<u8> {
         let mut bytes = format!(
-            "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n9\n$DWGCODEPAGE\n3\nANSI_1252\n9\n$HANDSEED\n5\nFF\n"
+            "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n9\n$ACADMAINTVER\n70\n1\n9\n$ANGBASE\n50\n0.5\n9\n$ANGDIR\n70\n1\n9\n$ATTMODE\n70\n2\n9\n$AUNITS\n70\n0\n9\n$AUPREC\n70\n4\n9\n$DWGCODEPAGE\n3\nANSI_1252\n9\n$HANDSEED\n5\nFF\n"
         )
         .into_bytes();
         for index in 0..unknown_count {
@@ -467,31 +509,79 @@ mod tests {
             (2, b"HEADER"),
             (9, b"$ACADVER"),
             (1, version.code().as_bytes()),
-            (9, b"$DWGCODEPAGE"),
+        ] {
+            push_binary_string(&mut bytes, version, code, value)?;
+        }
+        push_binary_string(&mut bytes, version, 9, b"$ACADMAINTVER")?;
+        push_binary_i16(&mut bytes, version, 70, 1)?;
+        push_binary_string(&mut bytes, version, 9, b"$ANGBASE")?;
+        push_binary_f64(&mut bytes, version, 50, 0.5)?;
+        for (name, value) in [
+            (b"$ANGDIR".as_slice(), 1_i16),
+            (b"$ATTMODE", 2),
+            (b"$AUNITS", 0),
+            (b"$AUPREC", 4),
+        ] {
+            push_binary_string(&mut bytes, version, 9, name)?;
+            push_binary_i16(&mut bytes, version, 70, value)?;
+        }
+        for (code, value) in [
+            (9_i16, b"$DWGCODEPAGE".as_slice()),
             (3, b"ANSI_1252"),
             (9, b"$HANDSEED"),
             (5, b"FF"),
             (0, b"ENDSEC"),
             (0, b"EOF"),
         ] {
-            push_binary_group(&mut bytes, version, code, value)?;
+            push_binary_string(&mut bytes, version, code, value)?;
         }
         Ok(bytes)
     }
 
-    fn push_binary_group(
+    fn push_binary_string(
         bytes: &mut Vec<u8>,
         version: DxfAcadVersion,
         group_code: i16,
         value: &[u8],
+    ) -> Result<(), io::Error> {
+        push_binary_group_code(bytes, version, group_code)?;
+        bytes.extend_from_slice(value);
+        bytes.push(0);
+        Ok(())
+    }
+
+    fn push_binary_i16(
+        bytes: &mut Vec<u8>,
+        version: DxfAcadVersion,
+        group_code: i16,
+        value: i16,
+    ) -> Result<(), io::Error> {
+        push_binary_group_code(bytes, version, group_code)?;
+        bytes.extend_from_slice(&value.to_le_bytes());
+        Ok(())
+    }
+
+    fn push_binary_f64(
+        bytes: &mut Vec<u8>,
+        version: DxfAcadVersion,
+        group_code: i16,
+        value: f64,
+    ) -> Result<(), io::Error> {
+        push_binary_group_code(bytes, version, group_code)?;
+        bytes.extend_from_slice(&value.to_le_bytes());
+        Ok(())
+    }
+
+    fn push_binary_group_code(
+        bytes: &mut Vec<u8>,
+        version: DxfAcadVersion,
+        group_code: i16,
     ) -> Result<(), io::Error> {
         if version == DxfAcadVersion::Ac1009 {
             bytes.push(u8::try_from(group_code).map_err(|_| io::Error::other("group code"))?);
         } else {
             bytes.extend_from_slice(&group_code.to_le_bytes());
         }
-        bytes.extend_from_slice(value);
-        bytes.push(0);
         Ok(())
     }
 

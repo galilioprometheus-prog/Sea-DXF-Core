@@ -3,6 +3,18 @@
   "namespace": "header",
   "fields": [
     {
+      "id": "acadmaintver",
+      "dxf_name": "$ACADMAINTVER",
+      "group_codes": [70],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ACADMAINTVER",
+      "review_state": "shape_only"
+    },
+    {
       "id": "acadver",
       "dxf_name": "$ACADVER",
       "group_codes": [1],
@@ -12,6 +24,66 @@
       "default_policy": "not_yet_reviewed",
       "source_id": "autodesk.header.2026",
       "evidence": "row:$ACADVER",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "angbase",
+      "dxf_name": "$ANGBASE",
+      "group_codes": [50],
+      "storage": "double",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ANGBASE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "angdir",
+      "dxf_name": "$ANGDIR",
+      "group_codes": [70],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ANGDIR",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "attmode",
+      "dxf_name": "$ATTMODE",
+      "group_codes": [70],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$ATTMODE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "aunits",
+      "dxf_name": "$AUNITS",
+      "group_codes": [70],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$AUNITS",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "auprec",
+      "dxf_name": "$AUPREC",
+      "group_codes": [70],
+      "storage": "int16",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$AUPREC",
       "review_state": "shape_only"
     },
     {

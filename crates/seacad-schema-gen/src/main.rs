@@ -69,8 +69,10 @@ struct SchemaField {
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum StorageKind {
+    Double,
     ExactText,
     Handle,
+    Int16,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -413,16 +415,18 @@ fn validate_fields(
 }
 
 fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(), SchemaError> {
-    let valid = matches!(
-        (field.storage, field.group_codes.as_slice()),
-        (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5])
-    );
+    let valid = match (field.storage, field.group_codes.as_slice()) {
+        (StorageKind::Double, [group_code]) => (10..=59).contains(group_code),
+        (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
+        (StorageKind::Int16, [group_code]) => (60..=79).contains(group_code),
+        _ => false,
+    };
     if !valid {
         return Err(SchemaError::new(
             "SCHEMA_WIRE_SHAPE",
             path,
             format!("{entry}.group_codes"),
-            "bootstrap storage kind does not match the reviewed M5 wire family",
+            "storage kind does not match the reviewed M5 wire family",
         ));
     }
     Ok(())
@@ -486,7 +490,7 @@ fn render_registry(
     output.push_str("#![allow(dead_code)]\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) enum DxfSchemaStorageKind {\n");
-    output.push_str("    ExactText,\n    Handle,\n}\n\n");
+    output.push_str("    Double,\n    ExactText,\n    Handle,\n    Int16,\n}\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, PartialEq)]\n");
     output.push_str("pub(crate) struct DxfHeaderSchemaField {\n");
     output.push_str("    pub id: &'static str,\n    pub dxf_name: &'static str,\n");
@@ -539,8 +543,10 @@ fn render_registry(
 
 fn storage_variant(storage: StorageKind) -> &'static str {
     match storage {
+        StorageKind::Double => "Double",
         StorageKind::ExactText => "ExactText",
         StorageKind::Handle => "Handle",
+        StorageKind::Int16 => "Int16",
     }
 }
 
@@ -667,6 +673,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
+        assert_eq!(families[0].fields.len(), 9);
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -704,12 +711,41 @@ mod tests {
     fn invalid_wire_shape_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, mut families) = load_schema(&root)?;
-        families[0].fields[0].group_codes = vec![70];
+        families[0].fields[0].group_codes = vec![80];
         let error = validate_schema(&manifest, &sources, &families)
             .err()
             .ok_or("invalid wire shape unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         assert_eq!(error.path, "schema/dxf/v1/header.bootstrap.json");
+        Ok(())
+    }
+
+    #[test]
+    fn numeric_wire_family_boundaries_fail_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let double = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "angbase")
+            .ok_or("missing double field")?;
+        families[0].fields[double].group_codes = vec![60];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid double wire family unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+
+        let (manifest, sources, mut families) = load_schema(&root)?;
+        let int16 = families[0]
+            .fields
+            .iter()
+            .position(|field| field.id == "angdir")
+            .ok_or("missing int16 field")?;
+        families[0].fields[int16].group_codes = vec![59];
+        let error = validate_schema(&manifest, &sources, &families)
+            .err()
+            .ok_or("invalid int16 wire family unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         Ok(())
     }
 
