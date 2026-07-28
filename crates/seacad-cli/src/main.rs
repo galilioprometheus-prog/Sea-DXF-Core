@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 mod locale;
+mod report;
 
 use std::{
     env,
@@ -15,13 +16,17 @@ use std::{
 use clap::{Arg, ArgAction, ArgMatches, Command, error::ErrorKind, value_parser};
 use seacad_dxf_core::{
     DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfBinaryDocumentConformance,
-    DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDiagnostic,
-    DxfDiagnosticSeverity, DxfError, DxfFileSource, DxfPhysicalFormat, DxfReadMode, DxfReadOptions,
-    DxfResourceProfile, NoopDxfReadObserver, probe_dxf_physical_format, scan_dxf_source,
+    DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDiagnostic, DxfError,
+    DxfFileSource, DxfPhysicalFormat, DxfReadMode, DxfReadOptions, DxfResourceProfile,
+    NoopDxfReadObserver, probe_dxf_physical_format, scan_dxf_source,
 };
-use serde::Serialize;
 
 use crate::locale::{CliLanguage, write_usage_error};
+use crate::report::{
+    CliReport, DiagnosticReport, DocumentReport, ErrorReport, FormatReport, OptionsReport,
+    SourceReport, SpanReport, ascii_conformance_name, binary_conformance_name, physical_name,
+    profile_name, read_mode_name, severity_name,
+};
 
 const JSON_SCHEMA_VERSION: &str = "v1";
 const CLI_INTERNAL_ERROR: &str = "CLI-E0001";
@@ -309,66 +314,6 @@ fn localized_version_arg(language: CliLanguage, heading: &'static str) -> Arg {
 struct CliOutcome {
     report: CliReport,
     exit_code: u8,
-}
-
-#[derive(Serialize)]
-struct CliReport {
-    schema_version: &'static str,
-    command: &'static str,
-    status: &'static str,
-    options: OptionsReport,
-    source: SourceReport,
-    format: FormatReport,
-    document: Option<DocumentReport>,
-    diagnostics: Vec<DiagnosticReport>,
-    error: Option<ErrorReport>,
-}
-
-#[derive(Serialize)]
-struct OptionsReport {
-    read_mode: &'static str,
-    resource_profile: &'static str,
-    language: &'static str,
-}
-
-#[derive(Serialize)]
-struct SourceReport {
-    id: Option<String>,
-    bytes: Option<u64>,
-    path: Option<String>,
-}
-
-#[derive(Serialize)]
-struct FormatReport {
-    physical: &'static str,
-}
-
-#[derive(Serialize)]
-struct DocumentReport {
-    conformance: &'static str,
-    groups: u64,
-    eof_occurrence: Option<u64>,
-    trailing_bytes: u64,
-    diagnostics_truncated: bool,
-}
-
-#[derive(Serialize)]
-struct DiagnosticReport {
-    code: &'static str,
-    severity: &'static str,
-    span: Option<SpanReport>,
-}
-
-#[derive(Serialize)]
-struct SpanReport {
-    start: u64,
-    end: u64,
-}
-
-#[derive(Serialize)]
-struct ErrorReport {
-    code: String,
-    message: String,
 }
 
 fn execute(options: &CliOptions) -> CliOutcome {
@@ -845,56 +790,6 @@ fn error_text<'a>(language: CliLanguage, code: &str, english: &'a str) -> &'a st
         "DXF-E0302" => "độ dài đầu ra Verbatim không khớp",
         "DXF-E0303" => "định danh đầu ra Verbatim không khớp",
         _ => english,
-    }
-}
-
-const fn read_mode_name(mode: DxfReadMode) -> &'static str {
-    match mode {
-        DxfReadMode::Strict => "strict",
-        DxfReadMode::Compatible => "compatible",
-        _ => "unknown",
-    }
-}
-
-const fn profile_name(profile: DxfResourceProfile) -> &'static str {
-    match profile {
-        DxfResourceProfile::Safe => "safe",
-        DxfResourceProfile::Large => "large",
-        _ => "unknown",
-    }
-}
-
-const fn physical_name(format: DxfPhysicalFormat) -> &'static str {
-    match format {
-        DxfPhysicalFormat::AsciiCandidate => "ascii_candidate",
-        DxfPhysicalFormat::Binary => "binary",
-        DxfPhysicalFormat::Unknown => "unknown",
-        _ => "unknown",
-    }
-}
-
-const fn ascii_conformance_name(conformance: DxfAsciiDocumentConformance) -> &'static str {
-    match conformance {
-        DxfAsciiDocumentConformance::Strict => "strict",
-        DxfAsciiDocumentConformance::Recovered => "recovered",
-        _ => "unknown",
-    }
-}
-
-const fn binary_conformance_name(conformance: DxfBinaryDocumentConformance) -> &'static str {
-    match conformance {
-        DxfBinaryDocumentConformance::Strict => "strict",
-        DxfBinaryDocumentConformance::Recovered => "recovered",
-        _ => "unknown",
-    }
-}
-
-const fn severity_name(severity: DxfDiagnosticSeverity) -> &'static str {
-    match severity {
-        DxfDiagnosticSeverity::Info => "info",
-        DxfDiagnosticSeverity::Warning => "warning",
-        DxfDiagnosticSeverity::Error => "error",
-        _ => "unknown",
     }
 }
 
