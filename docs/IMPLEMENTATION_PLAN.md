@@ -1,8 +1,8 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o-r1 isolates strict ASCII numeric token parsing without changing DXF
-behavior or support
+M6.5o-r2 isolates exact HEADER scalar representations without changing DXF
+behavior, public API, or support
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -115,7 +115,12 @@ behavior or support
    token parsers into one private module with focused unit tests. The public
    `DxfAsciiNumericIssue` re-export, exact IEEE-754 conversion, invalid-state
    mapping, streaming reads, provenance, dependencies, and support claims
-   remain unchanged.
+   remain unchanged. M6.5o-r2 moves `DxfDouble`, `DxfDayParts`,
+   `DxfJulianDate`, and `DxfElapsedDays` into one private `header_scalar`
+   module. Their crate-root re-exports, exact bit preservation, finite
+   `i64`-bounded day splitting, calendar/timezone non-interpretation, and all
+   HEADER decoding behavior remain unchanged. Mutation testing adds explicit
+   finite-value and `i64::MIN` boundary coverage before the move.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

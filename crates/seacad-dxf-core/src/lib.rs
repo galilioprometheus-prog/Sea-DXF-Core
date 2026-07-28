@@ -24,6 +24,7 @@ mod handle;
 mod handseed;
 mod header_index;
 mod header_numeric;
+mod header_scalar;
 mod header_schema_directory;
 mod header_view;
 mod johab;
@@ -84,9 +85,10 @@ pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
 pub use header_numeric::{
-    DxfDayParts, DxfDouble, DxfElapsedDays, DxfHeaderNumericDirectory, DxfHeaderNumericEntry,
-    DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView, DxfJulianDate,
+    DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue,
+    DxfHeaderNumericView,
 };
+pub use header_scalar::{DxfDayParts, DxfDouble, DxfElapsedDays, DxfJulianDate};
 pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,

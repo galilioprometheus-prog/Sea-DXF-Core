@@ -901,6 +901,8 @@ fn binary_preserves_ieee_bits_and_signed_boundaries() -> Result<(), Box<dyn Erro
 
 #[test]
 fn date_and_elapsed_day_parts_are_exact_and_timezone_free() -> Result<(), Box<dyn Error>> {
+    assert!(DxfDouble::from_f64(1.0).is_finite());
+
     let date_raw = DxfDouble::from_f64(2_451_544.915_682_87);
     let date = DxfJulianDate::from_raw(date_raw);
     assert_eq!(date.raw(), date_raw);
@@ -935,6 +937,12 @@ fn date_and_elapsed_day_parts_are_exact_and_timezone_free() -> Result<(), Box<dy
         .ok_or(io::Error::other("negative elapsed parts"))?;
     assert_eq!(negative.whole_days(), -3);
     assert_eq!(negative.fractional_day().to_bits(), (-0.25_f64).to_bits());
+
+    let minimum = DxfElapsedDays::from_raw(DxfDouble::from_f64(i64::MIN as f64))
+        .day_parts()
+        .ok_or(io::Error::other("minimum elapsed parts"))?;
+    assert_eq!(minimum.whole_days(), i64::MIN);
+    assert_eq!(minimum.fractional_day().to_bits(), 0.0_f64.to_bits());
     Ok(())
 }
 
