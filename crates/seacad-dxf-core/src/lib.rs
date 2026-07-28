@@ -24,6 +24,7 @@ mod handle;
 mod handseed;
 mod header_index;
 mod header_numeric;
+mod header_numeric_value;
 mod header_scalar;
 mod header_schema_directory;
 mod header_view;
@@ -84,10 +85,8 @@ pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physica
 pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
-pub use header_numeric::{
-    DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericIssue, DxfHeaderNumericValue,
-    DxfHeaderNumericView,
-};
+pub use header_numeric::{DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericView};
+pub use header_numeric_value::{DxfHeaderNumericIssue, DxfHeaderNumericValue};
 pub use header_scalar::{DxfDayParts, DxfDouble, DxfElapsedDays, DxfJulianDate};
 pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
 pub use header_view::{

@@ -59,7 +59,7 @@ fixtures are unchanged.
 
 The moved function bodies are unchanged. Across the two resulting files, the
 target's maximum cognitive complexity remains 11, maximum cyclomatic
-complexity remains 31, and maximum function SLOC remains 106.
+complexity remains 35, and maximum function SLOC remains 106.
 `DxfDayParts::from_raw` is the most complex function in the new scalar module,
 with cognitive complexity 2 and cyclomatic complexity 4.
 

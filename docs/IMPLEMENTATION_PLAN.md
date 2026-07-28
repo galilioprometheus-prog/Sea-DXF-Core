@@ -1,7 +1,7 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o-r2 isolates exact HEADER scalar representations without changing DXF
+M6.5o-r3 isolates typed numeric HEADER result contracts without changing DXF
 behavior, public API, or support
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
@@ -120,7 +120,13 @@ behavior, public API, or support
    module. Their crate-root re-exports, exact bit preservation, finite
    `i64`-bounded day splitting, calendar/timezone non-interpretation, and all
    HEADER decoding behavior remain unchanged. Mutation testing adds explicit
-   finite-value and `i64::MIN` boundary coverage before the move.
+   finite-value and `i64::MIN` boundary coverage before the move. M6.5o-r3
+   moves `DxfHeaderNumericIssue`, `DxfHeaderNumericValue`, and their tuple
+   state/provenance projections into one private `header_numeric_value` module.
+   Crate-root paths, enum shapes, semantic states, exact raw provenance, and
+   decoder behavior remain unchanged. Mutation testing adds direct coverage for
+   defaulted/absent tuples and provenance that first appears in a later tuple
+   component.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

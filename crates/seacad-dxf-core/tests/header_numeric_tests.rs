@@ -1,11 +1,12 @@
 use std::{error::Error, io, num::NonZeroU64};
 
 use seacad_dxf_core::{
-    DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
+    ByteSpan, DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
     DxfBinaryRawDocument, DxfCancellationToken, DxfDayParts, DxfDouble, DxfElapsedDays,
     DxfErrorCode, DxfGroupCode, DxfHeaderNumericDirectory, DxfHeaderNumericEntry,
     DxfHeaderNumericIssue, DxfHeaderNumericValue, DxfHeaderNumericView, DxfJulianDate,
-    DxfMemorySource, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
+    DxfMemorySource, DxfRawDocumentView, DxfRawValueProvenance, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState, DxfSourceId,
     NoopDxfReadObserver,
 };
 
@@ -943,6 +944,48 @@ fn date_and_elapsed_day_parts_are_exact_and_timezone_free() -> Result<(), Box<dy
         .ok_or(io::Error::other("minimum elapsed parts"))?;
     assert_eq!(minimum.whole_days(), i64::MIN);
     assert_eq!(minimum.fractional_day().to_bits(), 0.0_f64.to_bits());
+    Ok(())
+}
+
+#[test]
+fn numeric_value_contract_preserves_tuple_states_and_late_provenance() -> Result<(), Box<dyn Error>>
+{
+    let field = DxfSemanticFieldProvenance::new(
+        DxfSourceId::from([0x5a; DxfSourceId::BYTE_LEN]),
+        "header",
+        "tuple",
+    );
+    let span = ByteSpan::new(40, 48).ok_or(io::Error::other("tuple span"))?;
+    let raw = DxfRawValueProvenance::new(7, span).ok_or(io::Error::other("tuple raw"))?;
+
+    let defaulted2 = DxfHeaderNumericValue::Double2([
+        DxfSemanticValue::defaulted(DxfDouble::from_f64(1.0), field),
+        DxfSemanticValue::defaulted(DxfDouble::from_f64(2.0), field),
+    ]);
+    assert_eq!(defaulted2.state(), DxfSemanticValueState::Defaulted);
+    assert_eq!(defaulted2.raw_provenance(), None);
+
+    let absent2 = DxfHeaderNumericValue::Double2([
+        DxfSemanticValue::absent(field),
+        DxfSemanticValue::absent(field),
+    ]);
+    assert_eq!(absent2.state(), DxfSemanticValueState::Absent);
+
+    let defaulted3 = DxfHeaderNumericValue::Double3([
+        DxfSemanticValue::defaulted(DxfDouble::from_f64(1.0), field),
+        DxfSemanticValue::defaulted(DxfDouble::from_f64(2.0), field),
+        DxfSemanticValue::defaulted(DxfDouble::from_f64(3.0), field),
+    ]);
+    assert_eq!(defaulted3.state(), DxfSemanticValueState::Defaulted);
+    assert_eq!(defaulted3.raw_provenance(), None);
+
+    let late_raw = DxfHeaderNumericValue::Double3([
+        DxfSemanticValue::absent(field),
+        DxfSemanticValue::absent(field),
+        DxfSemanticValue::explicit(DxfDouble::from_f64(3.0), field, raw),
+    ]);
+    assert_eq!(late_raw.state(), DxfSemanticValueState::Invalid);
+    assert_eq!(late_raw.raw_provenance(), Some(raw));
     Ok(())
 }
 
