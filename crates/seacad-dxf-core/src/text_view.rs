@@ -3,8 +3,9 @@
 use std::io;
 
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfError, DxfIoOperation, DxfSourceId, DxfTextDecodeResult,
-    DxfTextDecodeStatus, DxfTextEncodingResolution, text_decoder::DxfTextDecoderSession,
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfError, DxfIoOperation,
+    DxfRawDocumentView, DxfSourceId, DxfTextDecodeResult, DxfTextDecodeStatus,
+    DxfTextEncodingResolution, text_decoder::DxfTextDecoderSession,
 };
 
 const SOURCE_CHUNK_BYTES: usize = 4 * 1024;
@@ -47,22 +48,19 @@ impl DxfTextValueDecodeReceipt {
     }
 }
 
-impl DxfAsciiRawDocument<'_> {
+impl DxfRawDocumentView<'_> {
     /// Decodes one group value selected by this document's occurrence index.
     ///
     /// The destination is caller-owned. Only its prefix through
     /// `decode_result().written()` is defined output. On `OutputFull`, retry
     /// the same occurrence from the beginning with a larger destination.
     pub fn decode_group_value_to_utf8_without_replacement(
-        &self,
+        self,
         group_occurrence: u64,
         destination: &mut [u8],
     ) -> Result<DxfTextValueDecodeReceipt, DxfError> {
-        let index = usize::try_from(group_occurrence).map_err(|_| invalid_source_data())?;
         let group = self
-            .groups()
-            .get(index)
-            .copied()
+            .group(group_occurrence)
             .ok_or_else(invalid_source_data)?;
         if group.occurrence() != group_occurrence
             || self.text_encoding_report().source_id() != self.source_id()
@@ -70,7 +68,7 @@ impl DxfAsciiRawDocument<'_> {
             return Err(invalid_source_data());
         }
 
-        let value_span = group.value_content_span();
+        let value_span = group.value_payload_span();
         let encoding = self.text_encoding_report().resolution();
         let Some(decoder) = encoding.decoder() else {
             return Ok(DxfTextValueDecodeReceipt {
@@ -99,8 +97,30 @@ impl DxfAsciiRawDocument<'_> {
     }
 }
 
+impl DxfAsciiRawDocument<'_> {
+    pub fn decode_group_value_to_utf8_without_replacement(
+        &self,
+        group_occurrence: u64,
+        destination: &mut [u8],
+    ) -> Result<DxfTextValueDecodeReceipt, DxfError> {
+        DxfRawDocumentView::from(self)
+            .decode_group_value_to_utf8_without_replacement(group_occurrence, destination)
+    }
+}
+
+impl DxfBinaryRawDocument<'_> {
+    pub fn decode_group_value_to_utf8_without_replacement(
+        &self,
+        group_occurrence: u64,
+        destination: &mut [u8],
+    ) -> Result<DxfTextValueDecodeReceipt, DxfError> {
+        DxfRawDocumentView::from(self)
+            .decode_group_value_to_utf8_without_replacement(group_occurrence, destination)
+    }
+}
+
 fn decode_span(
-    document: &DxfAsciiRawDocument<'_>,
+    document: DxfRawDocumentView<'_>,
     span: ByteSpan,
     decoder: crate::DxfTextDecoder,
     destination: &mut [u8],

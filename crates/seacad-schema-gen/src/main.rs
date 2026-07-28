@@ -420,7 +420,7 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
             (10..=18).contains(x) && *y == *x + 10 && *z == *x + 20
         }
         (StorageKind::ElapsedDays | StorageKind::JulianDate, [40]) => true,
-        (StorageKind::ExactText, [1 | 3]) | (StorageKind::Handle, [5]) => true,
+        (StorageKind::ExactText, [1 | 2 | 3 | 6 | 7 | 8]) | (StorageKind::Handle, [5]) => true,
         (StorageKind::Int16, [group_code]) => {
             (60..=79).contains(group_code)
                 || (270..=289).contains(group_code)
@@ -714,8 +714,8 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EvidenceKind, MANIFEST_PATH, SchemaManifest, evidence_matches, load_schema,
-        normalized_receipt, render_registry, validate_schema,
+        EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches, load_schema,
+        normalized_receipt, render_registry, validate_schema, validate_wire_shape,
     };
 
     #[test]
@@ -723,7 +723,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 187);
+        assert_eq!(families[0].fields.len(), 198);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -897,6 +897,8 @@ mod tests {
         }
         assert_eq!(families[0].fields[166].id, "dimassoc");
         assert_eq!(families[0].fields[186].id, "userr5");
+        assert_eq!(families[0].fields[187].id, "celtype");
+        assert_eq!(families[0].fields[197].id, "dimtxsty");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -940,6 +942,38 @@ mod tests {
             .ok_or("invalid wire shape unexpectedly passed")?;
         assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         assert_eq!(error.path, "schema/dxf/v1/header.bootstrap.json");
+        Ok(())
+    }
+
+    #[test]
+    fn exact_text_wire_codes_are_explicitly_bounded() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, families) = load_schema(&root)?;
+        for code in [1, 2, 3, 6, 7, 8] {
+            let field = families[0]
+                .fields
+                .iter()
+                .find(|field| {
+                    matches!(field.storage, StorageKind::ExactText) && field.group_codes == [code]
+                })
+                .ok_or("missing reviewed exact-text wire code")?;
+            validate_wire_shape(field, "test", "field")?;
+        }
+        validate_schema(&manifest, &sources, &families)?;
+
+        for code in [0, 4, 5, 9] {
+            let mut field = families[0]
+                .fields
+                .iter()
+                .find(|field| matches!(field.storage, StorageKind::ExactText))
+                .cloned()
+                .ok_or("missing exact-text field")?;
+            field.group_codes = vec![code];
+            let error = validate_wire_shape(&field, "test", "field")
+                .err()
+                .ok_or("invalid exact-text wire code unexpectedly passed")?;
+            assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+        }
         Ok(())
     }
 

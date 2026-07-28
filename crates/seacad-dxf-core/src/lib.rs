@@ -27,6 +27,7 @@ mod header_numeric;
 mod header_numeric_value;
 mod header_scalar;
 mod header_schema_directory;
+mod header_text;
 mod header_view;
 mod johab;
 mod limits;
@@ -89,6 +90,9 @@ pub use header_numeric::{DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHe
 pub use header_numeric_value::{DxfHeaderNumericIssue, DxfHeaderNumericValue};
 pub use header_scalar::{DxfDayParts, DxfDouble, DxfElapsedDays, DxfJulianDate};
 pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
+pub use header_text::{
+    DxfHeaderTextDirectory, DxfHeaderTextEntry, DxfHeaderTextIssue, DxfHeaderTextValue,
+};
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
 };

@@ -2245,6 +2245,138 @@
       "source_id": "autodesk.header.2026",
       "evidence": "row:$USERR1 - 5",
       "review_state": "shape_only"
+    },
+    {
+      "id": "celtype",
+      "dxf_name": "$CELTYPE",
+      "group_codes": [6],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$CELTYPE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "clayer",
+      "dxf_name": "$CLAYER",
+      "group_codes": [8],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$CLAYER",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "cmlstyle",
+      "dxf_name": "$CMLSTYLE",
+      "group_codes": [2],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$CMLSTYLE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimapost",
+      "dxf_name": "$DIMAPOST",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMAPOST",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimblk",
+      "dxf_name": "$DIMBLK",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMBLK",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimblk1",
+      "dxf_name": "$DIMBLK1",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMBLK1",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimblk2",
+      "dxf_name": "$DIMBLK2",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMBLK2",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimldrblk",
+      "dxf_name": "$DIMLDRBLK",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMLDRBLK",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimpost",
+      "dxf_name": "$DIMPOST",
+      "group_codes": [1],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMPOST",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimstyle",
+      "dxf_name": "$DIMSTYLE",
+      "group_codes": [2],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMSTYLE",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dimtxsty",
+      "dxf_name": "$DIMTXSTY",
+      "group_codes": [7],
+      "storage": "exact_text",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DIMTXSTY",
+      "review_state": "shape_only"
     }
   ]
 }

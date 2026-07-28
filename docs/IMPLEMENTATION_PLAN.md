@@ -178,8 +178,10 @@ identifiers
     directory. The five-field user-variable expansions retain their exact
     published range-row evidence; runtime parsing, defaults, ranges, semantic
     interpretation, and version applicability remain unchanged or unclaimed.
-    M6.6a-b add one source-anchored generic text
-    directory and the remaining twenty-three text, name, path, and GUID fields
+    M6.6a adds one source-anchored generic text directory and appends
+    `$CELTYPE`, `$CLAYER`, `$CMLSTYLE`, `$DIMAPOST`, `$DIMBLK`, `$DIMBLK1`,
+    `$DIMBLK2`, `$DIMLDRBLK`, `$DIMPOST`, `$DIMSTYLE`, and `$DIMTXSTY`.
+    M6.6b appends the remaining twelve text, name, path, and GUID fields
     without filesystem resolution or silent normalization. M6.6c adds the four
     remaining HEADER handle fields without resolving their references. M6.7
     closes the 206 documented rows and 214 expanded field slots with explicit
