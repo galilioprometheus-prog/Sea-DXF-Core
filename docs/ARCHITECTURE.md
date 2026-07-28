@@ -8,7 +8,10 @@ selection UX, snapping, CAD commands, geometry booleans, filesystem resolution
 for external references, scripting, plugins, or GUI code.
 
 `seacad-cli` is the first consumer and verification shell. It may format human
-and versioned JSON reports, but it must not implement parsing or semantic rules.
+and versioned JSON reports and aggregate offline corpus receipts, but it must
+not implement parsing or semantic rules. The corpus harness delegates every
+selected file to the strict DXF core and owns only bounded traversal,
+aggregation, and privacy redaction.
 
 ## Data flow
 

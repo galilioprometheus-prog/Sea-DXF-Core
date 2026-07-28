@@ -41,6 +41,11 @@ JSON v1 yet.
 A cell changes only after its milestone closes with deterministic evidence.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
+Q2.2 adds an offline strict-verification receipt harness whose output is
+aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
+hard traversal ceilings, not achieved corpus evidence, performance evidence,
+or increased support claims. Final corpus scale and six-native release
+receipts remain M13 work.
 M5.2a requires the canonical opening and verifies `$ACADVER` against the
 selected group-code encoding. M5.2b requires or explicitly recovers terminal
 EOF, retains compatible trailing bytes as one opaque span, and accounts every

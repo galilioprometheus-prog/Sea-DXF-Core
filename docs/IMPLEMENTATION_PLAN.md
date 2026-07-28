@@ -4,7 +4,9 @@ Status: M5 completed through M5.2c verified Binary replay and CLI integration;
 M6.5p appends sixteen dimension flag and suppression integers through the
 generic HEADER numeric directory without Boolean coercion or new decoder logic;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
-coverage across Linux, Windows, and macOS on both x64 and ARM64
+coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
+bounded aggregate-only offline corpus manifest and cross-platform receipt
+harness without publishing private corpus identifiers
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.

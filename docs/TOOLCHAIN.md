@@ -47,6 +47,25 @@ consecutive nightly six-platform runs pass. A runner outage or preview-runner
 failure is recorded as a failed evidence run and is never converted into a
 passing Core 1.0 receipt.
 
+## Q2.2 offline corpus receipt harness
+
+Q2.2 adds the workspace binary `seacad-corpus-receipt`. It uses the existing
+Rust, `serde`, `serde_json`, and DXF core dependencies; no package or external
+tool is added.
+
+Run it against an offline corpus with:
+
+```text
+cargo +1.97.1 run --locked -p seacad-cli --bin seacad-corpus-receipt -- \
+  corpus/offline-manifest.json <offline-corpus-root>
+```
+
+The committed manifest contains only public policy and aggregate bounds.
+Private inputs remain outside Git, normally under the ignored
+`corpus-private/` directory. Receipt JSON records OS/architecture and aggregate
+counts only; it omits paths, filenames, source identities, and per-file hashes.
+The harness uses strict framing and the existing `Safe` resource profile.
+
 ## Q1 dependency-policy tool
 
 Q1 adds `cargo-deny 0.20.2` as a separately installed development tool. It is
