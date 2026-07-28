@@ -1,8 +1,8 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o-r5 isolates CLI output rendering and localized output contracts without
-changing DXF behavior, CLI output, public API, or support
+M6.5o-r6 isolates the CLI command definition and parsed option contract without
+changing DXF behavior, CLI behavior, public API, or support
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -138,6 +138,12 @@ changing DXF behavior, CLI output, public API, or support
    resource profile, conformance, severity, and localized error-code mapping.
    Command execution, report construction, JSON schema v1, exit behavior,
    redaction, DXF core behavior, and support claims remain unchanged.
+   M6.5o-r6 moves the Clap command tree, parsed `CliOptions`, action names, and
+   help writer into one private `command` module. The moved command block is
+   byte-for-byte identical after visibility normalization. A direct contract
+   test locks root help plus inspect/verify usage in English and Vietnamese.
+   Argument names, defaults, validation, exit behavior, execution, rendering,
+   DXF core behavior, dependencies, and support claims remain unchanged.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.
