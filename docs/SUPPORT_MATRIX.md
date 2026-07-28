@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M5.2c can open an immutable raw ASCII framing document, enforce
+SeaCad through M6.5p can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -19,7 +19,12 @@ the exact HEADER `$ACADVER` must agree, and an 8 KiB bounded cursor losslessly
 accounts every accepted group/value span under a one-pass SHA-256 identity.
 Binary Strict/Compatible EOF conformance, section ranges, unknown sections, and
 every numeric group-zero occurrence are indexed by the shared state machine.
-Binary also has verified byte-identical new-file replay and CLI inspection. Each
+Binary also has verified byte-identical new-file replay and CLI inspection. A
+shared borrowed raw-document adapter and generated HEADER directory resolve 166
+reviewed fields across ASCII and Binary without a second source scan. Numeric
+values retain exact signed integers or IEEE-754 bits, tuple components retain
+independent provenance, strict Booleans reject values outside `0/1`, and date
+or elapsed-day values do not infer calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -28,8 +33,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored caller-buffer UTF-8 view + bounded CIF/all five MIF selectors + exact MTEXT/percent token spans; formatting values and record semantics not implemented | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Exact supported `$ACADVER` discovery only | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored text layers + shared 166-field lazy HEADER directory; record/entity semantics not implemented | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared 166-field lazy HEADER directory with exact numeric/handle provenance; record/entity semantics not implemented | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 

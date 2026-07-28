@@ -6,14 +6,16 @@ through AC1032.
 
 ## Current status
 
-Checkpoint M4.3a is complete. SeaCad can frame raw ASCII DXF losslessly with
-bounded Strict/Compatible reading, preserve exact source bytes, compute a
-SHA-256 source identity, discover the documented `$ACADVER` dialect from
-AC1009 through AC1032 with byte-span provenance, account exact section
-envelopes, index every numeric group code 0, discover `$DWGCODEPAGE`, derive a
-version-backed text-storage policy without OS fallback, and write a separately
-verified byte-identical Verbatim copy. Decoded Unicode views, section payload
-semantics, entities, and geometry are not implemented yet.
+Checkpoint M6.5p and the Q1 dependency-policy gate are complete. SeaCad opens
+bounded lossless ASCII and Binary DXF AC1009 through AC1032, preserves exact
+source bytes under a one-pass SHA-256 identity, indexes section envelopes and
+group-zero records, resolves the reviewed text-storage and escape layers, and
+writes a separately verified byte-identical Verbatim copy. The shared lazy
+HEADER view exposes 166 provenance-backed schema fields, including exact
+numeric tuples, flags, dates, elapsed times, and handles, without applying
+unreviewed defaults or enum meanings. Broader record semantics, entities,
+geometry, transactions, preserve-patch, and canonical writers remain future
+milestones.
 
 ## Workspace
 
@@ -22,7 +24,8 @@ semantics, entities, and geometry are not implemented yet.
   writer today; broader semantics, topology, and transactions arrive later.
 - `seacad-cli`: operational `inspect` and `verify` commands with English or
   Vietnamese human output and stable JSON v1. `corpus` arrives later.
-- `seacad-schema-gen`: reserved for provenance-backed schema generation at M6.
+- `seacad-schema-gen`: deterministic provenance-backed schema generation and
+  cross-platform generated-output verification.
 
 The previous CAD workspaces under `D:\Backups` are immutable research inputs.
 Production code is not copied from them. Tests, fixtures, and knowledge may be

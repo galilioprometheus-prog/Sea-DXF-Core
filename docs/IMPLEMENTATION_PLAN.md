@@ -2,7 +2,9 @@
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
 M6.5p appends sixteen dimension flag and suppression integers through the
-generic HEADER numeric directory without Boolean coercion or new decoder logic
+generic HEADER numeric directory without Boolean coercion or new decoder logic;
+Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
+coverage across Linux, Windows, and macOS on both x64 and ARM64
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -157,14 +159,31 @@ generic HEADER numeric directory without Boolean coercion or new decoder logic
    approved package sources. The CI action and checkout action are pinned by
    commit SHA. This checkpoint changes packaging and quality gates only; it
    does not change the Rust API, DXF behavior, CLI output, or `Cargo.lock`.
-9. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
-10. M8: exact basic geometry and coordinate-system preservation.
-11. M9: polyline, mesh, spline, and helix families.
-12. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
+9. Q2: stage six-native-platform evidence before semantic expansion. Q2.1
+   retains full required quality checks on Linux x64, Windows x64, and macOS
+   ARM64 for every push and pull request; adds native schema, workspace build,
+   and core smoke coverage on Linux ARM64, Windows ARM64, and macOS x64; and
+   runs the full workspace gate on all six platforms nightly and on manual
+   dispatch. Supplemental runners remain staged until twenty consecutive
+   nightly runs pass. Q2.2 adds the redacted offline corpus manifest and
+   receipt harness without placing private DXF bytes, paths, or per-file hashes
+   in the repository.
+10. M6 closure: complete the documented HEADER inventory before topology.
+    M6.5q appends the remaining twenty-one expanded numeric fields through the
+    generic numeric directory. M6.6a-b add one source-anchored generic text
+    directory and the remaining twenty-three text, name, path, and GUID fields
+    without filesystem resolution or silent normalization. M6.6c adds the four
+    remaining HEADER handle fields without resolving their references. M6.7
+    closes the 206 documented rows and 214 expanded field slots with explicit
+    ASCII/Binary and AC1009-AC1032 evidence.
+11. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
+12. M8: exact basic geometry and coordinate-system preservation.
+13. M9: polyline, mesh, spline, and helix families.
+14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
-13. M11: immutable atomic transactions, inverse journals, and handle policy.
-14. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
-15. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
+15. M11: immutable atomic transactions, inverse journals, and handle policy.
+16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
+17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 
 Every item is split into reviewable micro-milestones and stops after its own
