@@ -1,8 +1,8 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o-r4 isolates the CLI report model and stable output names without changing
-DXF behavior, CLI output, public API, or support
+M6.5o-r5 isolates CLI output rendering and localized output contracts without
+changing DXF behavior, CLI output, public API, or support
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -131,7 +131,13 @@ DXF behavior, CLI output, public API, or support
    rendering, exit codes, JSON schema v1, localized text, path redaction, DXF
    decoding, dependencies, streaming, and support claims remain unchanged.
    Mutation testing directly locks every published core enum variant used in
-   report output.
+   report output. M6.5o-r5 moves JSON and localized human rendering together
+   with the stable CLI error codes into one private `output` module. The moved
+   renderer is byte-for-byte identical after visibility normalization.
+   Contract tests lock every published status, physical format, read mode,
+   resource profile, conformance, severity, and localized error-code mapping.
+   Command execution, report construction, JSON schema v1, exit behavior,
+   redaction, DXF core behavior, and support claims remain unchanged.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

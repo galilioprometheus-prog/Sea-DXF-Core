@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 mod locale;
+mod output;
 mod report;
 
 use std::{
@@ -22,6 +23,10 @@ use seacad_dxf_core::{
 };
 
 use crate::locale::{CliLanguage, write_usage_error};
+use crate::output::{
+    CLI_INTERNAL_ERROR, CLI_OUTPUT_ERROR, CLI_RECOVERED_NOT_VERIFIED, CLI_UNKNOWN_FORMAT,
+    CLI_UNSUPPORTED_FORMAT, render_json, render_text,
+};
 use crate::report::{
     CliReport, DiagnosticReport, DocumentReport, ErrorReport, FormatReport, OptionsReport,
     SourceReport, SpanReport, ascii_conformance_name, binary_conformance_name, physical_name,
@@ -29,11 +34,6 @@ use crate::report::{
 };
 
 const JSON_SCHEMA_VERSION: &str = "v1";
-const CLI_INTERNAL_ERROR: &str = "CLI-E0001";
-const CLI_UNSUPPORTED_FORMAT: &str = "CLI-E0002";
-const CLI_UNKNOWN_FORMAT: &str = "CLI-E0003";
-const CLI_RECOVERED_NOT_VERIFIED: &str = "CLI-E0004";
-const CLI_OUTPUT_ERROR: &str = "CLI-E0005";
 
 fn main() -> ExitCode {
     let args: Vec<OsString> = env::args_os().collect();
@@ -570,226 +570,6 @@ fn cli_failure(
     CliOutcome {
         report,
         exit_code: 1,
-    }
-}
-
-fn render_json(writer: &mut dyn Write, report: &CliReport) -> io::Result<()> {
-    serde_json::to_writer_pretty(&mut *writer, report).map_err(io::Error::other)?;
-    writeln!(writer)
-}
-
-fn render_text(
-    writer: &mut dyn Write,
-    report: &CliReport,
-    language: CliLanguage,
-) -> io::Result<()> {
-    writeln!(writer, "SeaCad {}", report.command)?;
-    writeln!(
-        writer,
-        "{}: {}",
-        language.pick("Status", "Trạng thái"),
-        status_text(language, report.status)
-    )?;
-    writeln!(
-        writer,
-        "{}: {}",
-        language.pick("Read mode", "Chế độ đọc"),
-        read_mode_text(language, report.options.read_mode)
-    )?;
-    writeln!(
-        writer,
-        "{}: {}",
-        language.pick("Resource profile", "Hồ sơ tài nguyên"),
-        profile_text(language, report.options.resource_profile)
-    )?;
-    writeln!(
-        writer,
-        "{}: {}",
-        language.pick("Physical format", "Định dạng vật lý"),
-        physical_text(language, report.format.physical)
-    )?;
-    if let Some(path) = &report.source.path {
-        writeln!(writer, "{}: {path}", language.pick("Path", "Đường dẫn"))?;
-    }
-    if let Some(bytes) = report.source.bytes {
-        writeln!(writer, "{}: {bytes}", language.pick("Bytes", "Số byte"))?;
-    }
-    if let Some(source_id) = &report.source.id {
-        writeln!(
-            writer,
-            "{}: {source_id}",
-            language.pick("Source ID", "ID nguồn")
-        )?;
-    }
-    if let Some(document) = &report.document {
-        writeln!(
-            writer,
-            "{}: {}",
-            language.pick("Conformance", "Mức tuân thủ"),
-            conformance_text(language, document.conformance)
-        )?;
-        writeln!(
-            writer,
-            "{}: {}",
-            language.pick("Groups", "Số group"),
-            document.groups
-        )?;
-        let eof = document.eof_occurrence.map_or_else(
-            || language.pick("absent", "không có").to_owned(),
-            |value| value.to_string(),
-        );
-        writeln!(
-            writer,
-            "{}: {eof}",
-            language.pick("EOF occurrence", "Vị trí EOF")
-        )?;
-        writeln!(
-            writer,
-            "{}: {}",
-            language.pick("Trailing bytes", "Byte phía sau EOF"),
-            document.trailing_bytes
-        )?;
-    }
-    writeln!(
-        writer,
-        "{}: {}",
-        language.pick("Diagnostics", "Chẩn đoán"),
-        report.diagnostics.len()
-    )?;
-    for diagnostic in &report.diagnostics {
-        if let Some(span) = &diagnostic.span {
-            writeln!(
-                writer,
-                "  {} {} [{}, {})",
-                diagnostic.code,
-                severity_text(language, diagnostic.severity),
-                span.start,
-                span.end
-            )?;
-        } else {
-            writeln!(
-                writer,
-                "  {} {}",
-                diagnostic.code,
-                severity_text(language, diagnostic.severity)
-            )?;
-        }
-    }
-    if let Some(error) = &report.error {
-        writeln!(
-            writer,
-            "{} {}: {}",
-            language.pick("Error", "Lỗi"),
-            error.code,
-            error_text(language, &error.code, &error.message)
-        )?;
-    }
-    Ok(())
-}
-
-fn status_text(language: CliLanguage, status: &str) -> &str {
-    match (language, status) {
-        (CliLanguage::English, "ok") => "OK",
-        (CliLanguage::English, "verified") => "VERIFIED",
-        (CliLanguage::English, "recovered") => "RECOVERED",
-        (CliLanguage::English, "not_verified") => "NOT VERIFIED",
-        (CliLanguage::English, "invalid") => "INVALID",
-        (CliLanguage::English, "unsupported") => "UNSUPPORTED",
-        (CliLanguage::Vietnamese, "ok") => "TỐT",
-        (CliLanguage::Vietnamese, "verified") => "ĐÃ XÁC MINH",
-        (CliLanguage::Vietnamese, "recovered") => "ĐÃ PHỤC HỒI",
-        (CliLanguage::Vietnamese, "not_verified") => "CHƯA XÁC MINH",
-        (CliLanguage::Vietnamese, "invalid") => "KHÔNG HỢP LỆ",
-        (CliLanguage::Vietnamese, "unsupported") => "CHƯA HỖ TRỢ",
-        _ => status,
-    }
-}
-
-fn physical_text(language: CliLanguage, physical: &str) -> &str {
-    match (language, physical) {
-        (CliLanguage::English, "ascii_candidate") => "ASCII DXF candidate",
-        (CliLanguage::English, "binary") => "Binary DXF",
-        (CliLanguage::English, "unknown") => "Unknown",
-        (CliLanguage::Vietnamese, "ascii_candidate") => "ứng viên DXF ASCII",
-        (CliLanguage::Vietnamese, "binary") => "DXF nhị phân",
-        (CliLanguage::Vietnamese, "unknown") => "không xác định",
-        _ => physical,
-    }
-}
-
-fn read_mode_text(language: CliLanguage, mode: &str) -> &str {
-    match (language, mode) {
-        (CliLanguage::Vietnamese, "strict") => "nghiêm ngặt (strict)",
-        (CliLanguage::Vietnamese, "compatible") => "tương thích (compatible)",
-        _ => mode,
-    }
-}
-
-fn profile_text(language: CliLanguage, profile: &str) -> &str {
-    match (language, profile) {
-        (CliLanguage::Vietnamese, "safe") => "an toàn (safe)",
-        (CliLanguage::Vietnamese, "large") => "lớn (large)",
-        _ => profile,
-    }
-}
-
-fn conformance_text(language: CliLanguage, conformance: &str) -> &str {
-    match (language, conformance) {
-        (CliLanguage::Vietnamese, "strict") => "nghiêm ngặt (strict)",
-        (CliLanguage::Vietnamese, "recovered") => "đã phục hồi (recovered)",
-        _ => conformance,
-    }
-}
-
-fn severity_text(language: CliLanguage, severity: &str) -> &str {
-    match (language, severity) {
-        (CliLanguage::Vietnamese, "info") => "thông tin",
-        (CliLanguage::Vietnamese, "warning") => "cảnh báo",
-        (CliLanguage::Vietnamese, "error") => "lỗi",
-        _ => severity,
-    }
-}
-
-fn error_text<'a>(language: CliLanguage, code: &str, english: &'a str) -> &'a str {
-    if language == CliLanguage::English {
-        return english
-            .strip_prefix(code)
-            .and_then(|message| message.strip_prefix(": "))
-            .unwrap_or(english);
-    }
-    match code {
-        CLI_INTERNAL_ERROR => "trạng thái nội bộ của CLI không hợp lệ",
-        CLI_UNSUPPORTED_FORMAT => "định dạng DXF này chưa được hỗ trợ",
-        CLI_UNKNOWN_FORMAT => "nguồn không phải ứng viên DXF ASCII hoặc Binary đã biết",
-        CLI_RECOVERED_NOT_VERIFIED => {
-            "framing phục hồi chỉ được kiểm tra hoặc sao chép nguyên trạng"
-        }
-        CLI_OUTPUT_ERROR => "không thể ghi đầu ra CLI",
-        "DXF-E0001" => "thao tác vào/ra thất bại",
-        "DXF-E0002" => "thao tác đã bị hủy",
-        "DXF-E0101" => "nguồn vượt giới hạn số byte",
-        "DXF-E0102" => "nguồn vượt giới hạn số record",
-        "DXF-E0103" => "giá trị vượt giới hạn số byte",
-        "DXF-E0105" => "offset byte bị tràn số nguyên",
-        "DXF-E0201" => "group code ASCII không hợp lệ",
-        "DXF-E0202" => "group ASCII không có dòng giá trị",
-        "DXF-E0203" => "tài liệu ASCII không có marker 0/EOF kết thúc",
-        "DXF-E0204" => "tài liệu ASCII nghiêm ngặt có dữ liệu sau EOF",
-        "DXF-E0210" => "sentinel Binary DXF không hợp lệ",
-        "DXF-E0211" => "group code Binary DXF bị cắt ngắn",
-        "DXF-E0212" => "group code Binary DXF không hợp lệ",
-        "DXF-E0213" => "group code Binary DXF chưa có wire family được công bố",
-        "DXF-E0214" => "giá trị Binary DXF bị cắt ngắn",
-        "DXF-E0215" => "chuỗi Binary DXF không có byte NUL kết thúc",
-        "DXF-E0216" => "Binary DXF không có record mở đầu 0/SECTION chuẩn",
-        "DXF-E0217" => "Binary DXF không có đúng một HEADER $ACADVER được hỗ trợ",
-        "DXF-E0218" => "encoding Binary DXF không khớp dialect đã khai báo",
-        "DXF-E0219" => "tài liệu Binary DXF không có marker 0/EOF kết thúc",
-        "DXF-E0220" => "tài liệu Binary DXF nghiêm ngặt có dữ liệu sau EOF",
-        "DXF-E0301" => "định danh nguồn đã thay đổi",
-        "DXF-E0302" => "độ dài đầu ra Verbatim không khớp",
-        "DXF-E0303" => "định danh đầu ra Verbatim không khớp",
-        _ => english,
     }
 }
 
