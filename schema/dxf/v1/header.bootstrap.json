@@ -2521,6 +2521,54 @@
       "source_id": "autodesk.header.2026",
       "evidence": "row:$VERSIONGUID",
       "review_state": "shape_only"
+    },
+    {
+      "id": "cepsnid",
+      "dxf_name": "$CEPSNID",
+      "group_codes": [390],
+      "storage": "handle",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$CEPSNID",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "dragvs",
+      "dxf_name": "$DRAGVS",
+      "group_codes": [349],
+      "storage": "handle",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$DRAGVS",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "interfereobjvs",
+      "dxf_name": "$INTERFEREOBJVS",
+      "group_codes": [345],
+      "storage": "handle",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$INTERFEREOBJVS",
+      "review_state": "shape_only"
+    },
+    {
+      "id": "interferevpvs",
+      "dxf_name": "$INTERFEREVPVS",
+      "group_codes": [346],
+      "storage": "handle",
+      "cardinality": "optional",
+      "applicability": "not_yet_reviewed",
+      "default_policy": "not_yet_reviewed",
+      "source_id": "autodesk.header.2026",
+      "evidence": "row:$INTERFEREVPVS",
+      "review_state": "shape_only"
     }
   ]
 }

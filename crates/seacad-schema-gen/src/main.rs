@@ -420,7 +420,8 @@ fn validate_wire_shape(field: &SchemaField, path: &str, entry: &str) -> Result<(
             (10..=18).contains(x) && *y == *x + 10 && *z == *x + 20
         }
         (StorageKind::ElapsedDays | StorageKind::JulianDate, [40]) => true,
-        (StorageKind::ExactText, [1 | 2 | 3 | 6 | 7 | 8]) | (StorageKind::Handle, [5]) => true,
+        (StorageKind::ExactText, [1 | 2 | 3 | 6 | 7 | 8]) => true,
+        (StorageKind::Handle, [5 | 345 | 346 | 349 | 390]) => true,
         (StorageKind::Int16, [group_code]) => {
             (60..=79).contains(group_code)
                 || (270..=289).contains(group_code)
@@ -723,7 +724,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 210);
+        assert_eq!(families[0].fields.len(), 214);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -916,6 +917,10 @@ mod tests {
         for (field, expected_id) in families[0].fields[198..].iter().zip(m6_6b_ids) {
             assert_eq!(field.id, expected_id);
         }
+        let m6_6c_ids = ["cepsnid", "dragvs", "interfereobjvs", "interferevpvs"];
+        for (field, expected_id) in families[0].fields[210..].iter().zip(m6_6c_ids) {
+            assert_eq!(field.id, expected_id);
+        }
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -989,6 +994,38 @@ mod tests {
             let error = validate_wire_shape(&field, "test", "field")
                 .err()
                 .ok_or("invalid exact-text wire code unexpectedly passed")?;
+            assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn handle_wire_codes_are_explicitly_bounded() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, families) = load_schema(&root)?;
+        for code in [5, 345, 346, 349, 390] {
+            let field = families[0]
+                .fields
+                .iter()
+                .find(|field| {
+                    matches!(field.storage, StorageKind::Handle) && field.group_codes == [code]
+                })
+                .ok_or("missing reviewed handle wire code")?;
+            validate_wire_shape(field, "test", "field")?;
+        }
+        validate_schema(&manifest, &sources, &families)?;
+
+        for code in [4, 6, 344, 347, 348, 350, 389, 391] {
+            let mut field = families[0]
+                .fields
+                .iter()
+                .find(|field| matches!(field.storage, StorageKind::Handle))
+                .cloned()
+                .ok_or("missing handle field")?;
+            field.group_codes = vec![code];
+            let error = validate_wire_shape(&field, "test", "field")
+                .err()
+                .ok_or("invalid handle wire code unexpectedly passed")?;
             assert_eq!(error.code, "SCHEMA_WIRE_SHAPE");
         }
         Ok(())

@@ -22,6 +22,7 @@ mod format_probe;
 mod generated;
 mod handle;
 mod handseed;
+mod header_handle;
 mod header_index;
 mod header_numeric;
 mod header_numeric_value;
@@ -85,6 +86,9 @@ pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
 pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
+pub use header_handle::{
+    DxfHeaderHandleDirectory, DxfHeaderHandleEntry, DxfHeaderHandleIssue, DxfHeaderHandleValue,
+};
 pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
 pub use header_numeric::{DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericView};
 pub use header_numeric_value::{DxfHeaderNumericIssue, DxfHeaderNumericValue};

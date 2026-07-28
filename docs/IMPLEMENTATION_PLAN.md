@@ -184,7 +184,9 @@ identifiers
     M6.6b appends the remaining twelve text, name, path, and GUID fields
     through the generic exact-text directory without filesystem resolution,
     symbol lookup, GUID validation, or silent normalization. M6.6c adds the four
-    remaining HEADER handle fields without resolving their references. M6.7
+    remaining HEADER handle fields through a generic source-anchored handle
+    directory. It retains exact hexadecimal spelling and provenance without
+    resolving pointer, ownership, or object identity semantics. M6.7
     closes the 206 documented rows and 214 expanded field slots with explicit
     ASCII/Binary and AC1009-AC1032 evidence.
 11. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
