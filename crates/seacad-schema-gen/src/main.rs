@@ -571,8 +571,39 @@ fn storage_variant(storage: StorageKind) -> &'static str {
 
 fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
     match kind {
-        EvidenceKind::Row => field.evidence == format!("row:{}", field.dxf_name),
+        EvidenceKind::Row => row_evidence_matches(field),
     }
+}
+
+fn row_evidence_matches(field: &SchemaField) -> bool {
+    let Some(anchor) = field.evidence.strip_prefix("row:") else {
+        return false;
+    };
+    if anchor == field.dxf_name {
+        return true;
+    }
+    let Some((first_name, last_suffix)) = anchor.rsplit_once(" - ") else {
+        return false;
+    };
+    let digit_start = first_name
+        .bytes()
+        .rposition(|byte| !byte.is_ascii_digit())
+        .map_or(0, |index| index + 1);
+    if digit_start == 0 || digit_start == first_name.len() {
+        return false;
+    }
+    let (prefix, first_suffix) = first_name.split_at(digit_start);
+    let Some(field_suffix) = field.dxf_name.strip_prefix(prefix) else {
+        return false;
+    };
+    let (Ok(first), Ok(last), Ok(current)) = (
+        first_suffix.parse::<u32>(),
+        last_suffix.parse::<u32>(),
+        field_suffix.parse::<u32>(),
+    ) else {
+        return false;
+    };
+    first <= current && current <= last
 }
 
 fn check_output(target: &Path, expected: &str) -> Result<(), SchemaError> {
@@ -683,8 +714,8 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        MANIFEST_PATH, SchemaManifest, load_schema, normalized_receipt, render_registry,
-        validate_schema,
+        EvidenceKind, MANIFEST_PATH, SchemaManifest, evidence_matches, load_schema,
+        normalized_receipt, render_registry, validate_schema,
     };
 
     #[test]
@@ -692,7 +723,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 166);
+        assert_eq!(families[0].fields.len(), 187);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -844,12 +875,28 @@ mod tests {
             "dimtdec",
             "dimtzin",
             "dimzin",
+            "dimalt",
+            "dimaso",
+            "dimlim",
+            "dimsah",
+            "dimsd1",
+            "dimsd2",
+            "dimse1",
+            "dimse2",
+            "dimsho",
+            "dimsoxd",
+            "dimtih",
+            "dimtix",
+            "dimtofl",
+            "dimtoh",
+            "dimtol",
+            "dimupt",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[150].id, "dimalt");
-        assert_eq!(families[0].fields[165].id, "dimupt");
+        assert_eq!(families[0].fields[166].id, "dimassoc");
+        assert_eq!(families[0].fields[186].id, "userr5");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
@@ -1036,6 +1083,20 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn ranged_row_evidence_expands_only_declared_numeric_suffix() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (_, _, families) = load_schema(&root)?;
+        let mut field = families[0].fields[0].clone();
+        field.evidence = "row:$USERI1 - 5".to_string();
+        field.dxf_name = "$USERI3".to_string();
+        assert!(evidence_matches(EvidenceKind::Row, &field));
+        field.dxf_name = "$USERI6".to_string();
+        assert!(!evidence_matches(EvidenceKind::Row, &field));
+        field.dxf_name = "$USERJ3".to_string();
+        assert!(!evidence_matches(EvidenceKind::Row, &field));
+        Ok(())
+    }
     #[test]
     fn wrong_evidence_anchor_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");

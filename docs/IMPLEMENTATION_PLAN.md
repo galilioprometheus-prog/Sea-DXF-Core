@@ -1,12 +1,13 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5p appends sixteen dimension flag and suppression integers through the
-generic HEADER numeric directory without Boolean coercion or new decoder logic;
-Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
-coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
-bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers
+M6.5q appends the remaining twenty-one expanded numeric HEADER fields through
+the generic directory, including range-anchored `$USERI1 - 5` and `$USERR1 - 5`
+evidence without new runtime decoder logic; Q1 enforces the reviewed cargo-deny
+dependency policy; Q2.1 stages native CI coverage across Linux, Windows, and
+macOS on both x64 and ARM64; Q2.2 adds the bounded aggregate-only offline corpus
+manifest and cross-platform receipt harness without publishing private corpus
+identifiers
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -171,8 +172,13 @@ harness without publishing private corpus identifiers
    receipt harness without placing private DXF bytes, paths, or per-file hashes
    in the repository.
 10. M6 closure: complete the documented HEADER inventory before topology.
-    M6.5q appends the remaining twenty-one expanded numeric fields through the
-    generic numeric directory. M6.6a-b add one source-anchored generic text
+    M6.5q appends `$DIMASSOC`, `$DIMATFIT`, `$DIMCLRD`, `$DIMCLRE`, `$DIMCLRT`,
+    `$DIMJUST`, `$DIMLWD`, `$DIMLWE`, `$DIMTAD`, `$DIMTMOVE`, `$DIMTOLJ`,
+    `$USERI1`-`$USERI5`, and `$USERR1`-`$USERR5` through the generic numeric
+    directory. The five-field user-variable expansions retain their exact
+    published range-row evidence; runtime parsing, defaults, ranges, semantic
+    interpretation, and version applicability remain unchanged or unclaimed.
+    M6.6a-b add one source-anchored generic text
     directory and the remaining twenty-three text, name, path, and GUID fields
     without filesystem resolution or silent normalization. M6.6c adds the four
     remaining HEADER handle fields without resolving their references. M6.7
