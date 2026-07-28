@@ -27,8 +27,18 @@
 
 - `proptest` may be added when property tests begin.
 - `cargo-fuzz` runs as a separately installed tool on supported CI hosts.
-- `cargo-audit`, `cargo-deny`, `cargo-llvm-cov`, `cargo-cyclonedx`, and
-  `cargo-semver-checks` are installed only at their named quality milestones.
+- Q1 approves `cargo-deny 0.20.2` as a separately installed quality tool.
+  `cargo deny --locked check` is required locally and the
+  `dependency-policy` workflow enforces advisories, licenses, duplicate and
+  wildcard dependencies, exact reviewed features, audited build scripts, and
+  approved package sources.
+- Every policy exception must name the exact crate, version, path or feature,
+  and review reason. Broad exceptions are prohibited. Q1's only content bypass
+  is `libc 0.2.189` file `etc/libc-util.py`, locked to SHA-256
+  `a99fdefe6354c28c52eeac9c1e851041b69dad25b8a3b521d4f57b761517c798`;
+  it is packaged maintenance tooling and is not executed by SeaCad.
+- `cargo-audit`, `cargo-llvm-cov`, `cargo-cyclonedx`, and
+  `cargo-semver-checks` remain deferred to their named quality milestones.
 
 ## Internal tools
 

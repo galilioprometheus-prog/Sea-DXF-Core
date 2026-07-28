@@ -18,3 +18,26 @@ M0 baseline recorded on 2026-07-26:
 
 OpenSpace, ODA File Converter, GUI frameworks, scripting runtimes, Wasmtime,
 and extra Cargo QA tools are intentionally not installed by M0.
+
+## Q1 dependency-policy tool
+
+Q1 adds `cargo-deny 0.20.2` as a separately installed development tool. It is
+not a workspace or runtime dependency.
+
+Local installation:
+
+```text
+cargo install --locked cargo-deny --version 0.20.2
+```
+
+Required local gate:
+
+```text
+cargo deny --locked check
+```
+
+The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
+commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
+`actions/checkout` v6.0.2 pinned to commit
+`de0fac2e4500dabe0009e67214ff5f5447ce83dd`, with credential persistence
+disabled.

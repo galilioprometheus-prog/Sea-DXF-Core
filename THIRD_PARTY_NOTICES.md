@@ -6,6 +6,27 @@ Development uses the Rust toolchain and GitHub Actions under their respective
 licenses. Runtime and tooling dependencies added by later milestones must be
 recorded here after license and supply-chain review.
 
+## Q1 dependency-policy tooling
+
+Q1 uses the following development-only tooling. Neither tool is linked into
+SeaCad binaries, added to the workspace dependency graph, or recorded in
+`Cargo.lock`.
+
+| Tool | Version | License |
+| --- | ---: | --- |
+| `cargo-deny` | 0.20.2 | MIT OR Apache-2.0 |
+| `EmbarkStudios/cargo-deny-action` | 2.1.1 | MIT OR Apache-2.0 |
+
+The CI action is pinned to commit
+`3c6349835b2b7b196a839186cb8b78e02f7b5f25`, which installs
+`cargo-deny 0.20.2`. The workflow also pins `actions/checkout` v6.0.2 to commit
+`de0fac2e4500dabe0009e67214ff5f5447ce83dd` and disables credential
+persistence.
+
+These tools inspect manifests, registry metadata, and the resolved dependency
+graph. They do not modify DXF data, SeaCad runtime behavior, public APIs, or
+`Cargo.lock`.
+
 ## M2.3 runtime dependency
 
 SeaCad uses `sha2 0.11.0` from RustCrypto for bounded SHA-256 source

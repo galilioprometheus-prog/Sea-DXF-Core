@@ -151,14 +151,20 @@ generic HEADER numeric directory without Boolean coercion or new decoder logic
    obsolete `$DIMASO` field is not merged with or used as a fallback for
    `$DIMASSOC`. Flag, suppression, placement, default, range, applicability,
    and cross-variable meanings remain unclaimed.
-8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
-9. M8: exact basic geometry and coordinate-system preservation.
-10. M9: polyline, mesh, spline, and helix families.
-11. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
+8. Q1: automate dependency policy with `cargo-deny 0.20.2`. The required
+   `cargo deny --locked check` gate covers advisories, licenses, duplicate and
+   wildcard dependencies, exact reviewed features, audited build scripts, and
+   approved package sources. The CI action and checkout action are pinned by
+   commit SHA. This checkpoint changes packaging and quality gates only; it
+   does not change the Rust API, DXF behavior, CLI output, or `Cargo.lock`.
+9. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
+10. M8: exact basic geometry and coordinate-system preservation.
+11. M9: polyline, mesh, spline, and helix families.
+12. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
-12. M11: immutable atomic transactions, inverse journals, and handle policy.
-13. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
-14. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
+13. M11: immutable atomic transactions, inverse journals, and handle policy.
+14. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
+15. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 
 Every item is split into reviewable micro-milestones and stops after its own

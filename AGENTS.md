@@ -52,6 +52,7 @@ custom, proxy, and non-public payloads remain exact opaque data.
 Run the smallest relevant tests first, then before every checkpoint:
 
 ```text
+cargo deny --locked check
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace

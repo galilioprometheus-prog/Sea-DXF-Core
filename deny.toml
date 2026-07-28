@@ -1,0 +1,90 @@
+[graph]
+targets = [
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+]
+all-features = true
+
+[advisories]
+unmaintained = "all"
+unsound = "all"
+yanked = "deny"
+ignore = []
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "Unicode-3.0",
+]
+confidence-threshold = 0.93
+include-dev = true
+
+[licenses.private]
+ignore = true
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+allow-wildcard-paths = true
+highlight = "all"
+
+[[bans.features]]
+crate = "sha2@0.11.0"
+allow = []
+exact = true
+
+[[bans.features]]
+crate = "encoding_rs@0.8.35"
+allow = ["alloc"]
+exact = true
+
+[[bans.features]]
+crate = "clap@4.6.4"
+allow = ["error-context", "help", "std", "suggestions", "usage"]
+exact = true
+
+[[bans.features]]
+crate = "serde@1.0.229"
+allow = ["derive", "serde_derive", "std"]
+exact = true
+
+[[bans.features]]
+crate = "serde_json@1.0.151"
+allow = ["std"]
+exact = true
+
+[bans.build]
+allow-build-scripts = [
+    "libc@0.2.189",
+    "proc-macro2@1.0.107",
+    "quote@1.0.47",
+    "serde@1.0.229",
+    "serde_core@1.0.229",
+    "serde_json@1.0.151",
+    "zmij@1.0.23",
+]
+executables = "deny"
+interpreted = "deny"
+enable-builtin-globs = true
+include-dependencies = false
+include-workspace = false
+include-archives = true
+
+# libc 0.2.189 ships this audited Python maintenance helper in its package.
+# The exact path and SHA-256 avoid a crate-wide interpreted-file exception.
+[[bans.build.bypass]]
+name = "libc"
+version = "=0.2.189"
+allow = [
+    { path = "etc/libc-util.py", checksum = "a99fdefe6354c28c52eeac9c1e851041b69dad25b8a3b521d4f57b761517c798" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
