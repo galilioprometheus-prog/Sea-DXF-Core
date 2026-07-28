@@ -182,7 +182,8 @@ identifiers
     `$CELTYPE`, `$CLAYER`, `$CMLSTYLE`, `$DIMAPOST`, `$DIMBLK`, `$DIMBLK1`,
     `$DIMBLK2`, `$DIMLDRBLK`, `$DIMPOST`, `$DIMSTYLE`, and `$DIMTXSTY`.
     M6.6b appends the remaining twelve text, name, path, and GUID fields
-    without filesystem resolution or silent normalization. M6.6c adds the four
+    through the generic exact-text directory without filesystem resolution,
+    symbol lookup, GUID validation, or silent normalization. M6.6c adds the four
     remaining HEADER handle fields without resolving their references. M6.7
     closes the 206 documented rows and 214 expanded field slots with explicit
     ASCII/Binary and AC1009-AC1032 evidence.

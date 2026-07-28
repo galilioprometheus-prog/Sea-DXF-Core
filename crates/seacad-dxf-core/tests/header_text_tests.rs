@@ -21,6 +21,18 @@ const TEXT_FIELDS: &[(u64, &str, &str, i16)] = &[
     (195, "dimpost", "$DIMPOST", 1),
     (196, "dimstyle", "$DIMSTYLE", 2),
     (197, "dimtxsty", "$DIMTXSTY", 7),
+    (198, "fingerprintguid", "$FINGERPRINTGUID", 2),
+    (199, "hyperlinkbase", "$HYPERLINKBASE", 1),
+    (200, "menu", "$MENU", 1),
+    (201, "projectname", "$PROJECTNAME", 1),
+    (202, "pucsbase", "$PUCSBASE", 2),
+    (203, "pucsname", "$PUCSNAME", 2),
+    (204, "pucsorthoref", "$PUCSORTHOREF", 2),
+    (205, "textstyle", "$TEXTSTYLE", 7),
+    (206, "ucsbase", "$UCSBASE", 2),
+    (207, "ucsname", "$UCSNAME", 2),
+    (208, "ucsorthoref", "$UCSORTHOREF", 2),
+    (209, "versionguid", "$VERSIONGUID", 2),
 ];
 
 #[test]
@@ -35,6 +47,7 @@ fn ascii_and_binary_preserve_exact_text_and_schema_order() -> Result<(), Box<dyn
         DxfRawDocumentView::from(&ascii),
         b" Layer/../MiXeD ",
     )?;
+    assert_m6_6b_exact_values(&ascii_directory, DxfRawDocumentView::from(&ascii))?;
 
     let binary_bytes = binary_fixture()?;
     let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
@@ -46,6 +59,7 @@ fn ascii_and_binary_preserve_exact_text_and_schema_order() -> Result<(), Box<dyn
         DxfRawDocumentView::from(&binary),
         b" Layer/../MiXeD ",
     )?;
+    assert_m6_6b_exact_values(&binary_directory, DxfRawDocumentView::from(&binary))?;
     Ok(())
 }
 
@@ -189,8 +203,23 @@ fn assert_decoded(
     Ok(())
 }
 
+fn assert_m6_6b_exact_values(
+    directory: &DxfHeaderTextDirectory,
+    document: DxfRawDocumentView<'_>,
+) -> Result<(), Box<dyn Error>> {
+    for (id, expected) in [
+        ("fingerprintguid", b"{A1b2-C3d4}".as_slice()),
+        ("hyperlinkbase", b" ..\\Refs/../MiXeD Case/ ".as_slice()),
+        ("projectname", b" Project Alpha ".as_slice()),
+        ("versionguid", b"{DeAd-BeEf}".as_slice()),
+    ] {
+        assert_decoded(explicit(directory, id)?, document, expected)?;
+    }
+    Ok(())
+}
+
 fn standard_text_body() -> &'static str {
-    "9\n$DWGCODEPAGE\n3\nUTF-8\n9\n$CELTYPE\n6\nDash Dot\n9\n$CLAYER\n8\n Layer/../MiXeD \n9\n$CMLSTYLE\n2\nMLine Style\n9\n$DIMAPOST\n1\n[] mm\n9\n$DIMBLK\n1\n_ARCHTICK\n9\n$DIMBLK1\n1\nArrow One\n9\n$DIMBLK2\n1\nArrow Two\n9\n$DIMLDRBLK\n1\nLeader Arrow\n9\n$DIMPOST\n1\n<> units\n9\n$DIMSTYLE\n2\nDim Style\n9\n$DIMTXSTY\n7\nText Style\n"
+    "9\n$DWGCODEPAGE\n3\nUTF-8\n9\n$CELTYPE\n6\nDash Dot\n9\n$CLAYER\n8\n Layer/../MiXeD \n9\n$CMLSTYLE\n2\nMLine Style\n9\n$DIMAPOST\n1\n[] mm\n9\n$DIMBLK\n1\n_ARCHTICK\n9\n$DIMBLK1\n1\nArrow One\n9\n$DIMBLK2\n1\nArrow Two\n9\n$DIMLDRBLK\n1\nLeader Arrow\n9\n$DIMPOST\n1\n<> units\n9\n$DIMSTYLE\n2\nDim Style\n9\n$DIMTXSTY\n7\nText Style\n9\n$FINGERPRINTGUID\n2\n{A1b2-C3d4}\n9\n$HYPERLINKBASE\n1\n ..\\Refs/../MiXeD Case/ \n9\n$MENU\n1\n acad.cuix \n9\n$PROJECTNAME\n1\n Project Alpha \n9\n$PUCSBASE\n2\n Paper Base \n9\n$PUCSNAME\n2\n Paper Current \n9\n$PUCSORTHOREF\n2\n Paper Ref \n9\n$TEXTSTYLE\n7\n Standard Mixed \n9\n$UCSBASE\n2\n Model Base \n9\n$UCSNAME\n2\n Model Current \n9\n$UCSORTHOREF\n2\n Model Ref \n9\n$VERSIONGUID\n2\n{DeAd-BeEf}\n"
 }
 
 fn ascii_fixture(body: &str) -> Vec<u8> {
@@ -221,6 +250,18 @@ fn binary_fixture() -> Result<Vec<u8>, io::Error> {
         (b"$DIMPOST", 1, b"<> units"),
         (b"$DIMSTYLE", 2, b"Dim Style"),
         (b"$DIMTXSTY", 7, b"Text Style"),
+        (b"$FINGERPRINTGUID", 2, b"{A1b2-C3d4}"),
+        (b"$HYPERLINKBASE", 1, b" ..\\Refs/../MiXeD Case/ "),
+        (b"$MENU", 1, b" acad.cuix "),
+        (b"$PROJECTNAME", 1, b" Project Alpha "),
+        (b"$PUCSBASE", 2, b" Paper Base "),
+        (b"$PUCSNAME", 2, b" Paper Current "),
+        (b"$PUCSORTHOREF", 2, b" Paper Ref "),
+        (b"$TEXTSTYLE", 7, b" Standard Mixed "),
+        (b"$UCSBASE", 2, b" Model Base "),
+        (b"$UCSNAME", 2, b" Model Current "),
+        (b"$UCSORTHOREF", 2, b" Model Ref "),
+        (b"$VERSIONGUID", 2, b"{DeAd-BeEf}"),
     ] {
         push_binary_string(&mut bytes, 9, name);
         push_binary_string(&mut bytes, group_code, value);
