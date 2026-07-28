@@ -17,11 +17,15 @@ SeaCad binaries, added to the workspace dependency graph, or recorded in
 | `cargo-deny` | 0.20.2 | MIT OR Apache-2.0 |
 | `EmbarkStudios/cargo-deny-action` | 2.1.1 | MIT OR Apache-2.0 |
 
-The CI action is pinned to commit
+The dependency-policy action is pinned to commit
 `3c6349835b2b7b196a839186cb8b78e02f7b5f25`, which installs
-`cargo-deny 0.20.2`. The workflow also pins `actions/checkout` v6.0.2 to commit
-`de0fac2e4500dabe0009e67214ff5f5447ce83dd` and disables credential
-persistence.
+`cargo-deny 0.20.2`. Baseline CI and dependency policy pin
+`actions/checkout` v6.0.2 to commit
+`de0fac2e4500dabe0009e67214ff5f5447ce83dd`. Q2.1 supplemental native jobs
+pin the MIT-licensed v4.2.2 Node20-compatible release to commit
+`11bd71901bbe5b1630ceea73d27597364c9af683`. Every checkout disables credential
+persistence. Neither checkout release is linked into SeaCad binaries or added
+to `Cargo.lock`.
 
 These tools inspect manifests, registry metadata, and the resolved dependency
 graph. They do not modify DXF data, SeaCad runtime behavior, public APIs, or

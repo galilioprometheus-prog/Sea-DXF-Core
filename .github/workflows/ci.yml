@@ -50,6 +50,7 @@ jobs:
         run: cargo +1.97.1 test --workspace
 
   native-smoke:
+    # Supplemental runners use the Node20 checkout runtime for compatibility.
     name: ${{ matrix.name }} smoke
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     strategy:
@@ -66,7 +67,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe000e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - name: Install pinned Rust toolchain
@@ -79,6 +80,7 @@ jobs:
         run: cargo +1.97.1 test -p seacad-dxf-core --lib
 
   additional-native-quality:
+    # Supplemental runners use the Node20 checkout runtime for compatibility.
     name: ${{ matrix.name }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     strategy:
@@ -95,7 +97,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe000e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - name: Install pinned Rust toolchain

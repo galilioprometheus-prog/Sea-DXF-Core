@@ -33,6 +33,13 @@ It adds native schema generation, workspace checking, and core smoke tests on:
 - Windows ARM64: `windows-11-arm`;
 - macOS x64: `macos-15-intel`.
 
+The supplemental jobs pin `actions/checkout` v4.2.2 commit
+`11bd71901bbe5b1630ceea73d27597364c9af683`, whose action manifest uses the
+Node20 runtime. The baseline matrix and dependency-policy workflow retain the
+reviewed v6.0.2 Node24 pin. This split is required because all three
+supplemental hosted runners repeatedly failed to resolve the v6 action before
+checkout while the baseline jobs resolved the same v6 SHA successfully.
+
 A daily schedule and manual dispatch run the full formatting, generated-schema,
 Clippy, and workspace-test gate on all six native platforms. The three new
 push/pull-request jobs remain staged rather than required until twenty

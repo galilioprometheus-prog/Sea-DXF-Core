@@ -49,8 +49,11 @@ native execution receipt.
 ## Workflow security and determinism
 
 - Workflow permissions remain limited to `contents: read`.
-- Every checkout uses `actions/checkout` v6.0.2 pinned to commit
-  `de0fac2e4500dabe000e67214ff5f5447ce83dd`.
+- Baseline jobs use `actions/checkout` v6.0.2 pinned to commit
+  `de0fac2e4500dabe0009e67214ff5f5447ce83dd`.
+- Supplemental jobs use `actions/checkout` v4.2.2 pinned to commit
+  `11bd71901bbe5b1630ceea73d27597364c9af683` for its Node20 runner
+  compatibility.
 - Persisted checkout credentials remain disabled in every job.
 - Rust remains pinned to 1.97.1; no floating toolchain or runner alias is used.
 - Matrix jobs use `fail-fast: false`, so one platform cannot hide the remaining
@@ -60,7 +63,8 @@ native execution receipt.
 ## Local verification
 
 The reviewed Windows x64 host reported `cargo-deny 0.20.2`. The required local
-gates passed:
+gates passed before the initial commit and again after the compatibility
+follow-up:
 
 | Command | Result |
 | --- | --- |
@@ -73,14 +77,38 @@ gates passed:
 
 No local YAML parser or separately approved `actionlint` installation was
 available. GitHub workflow acceptance and all six native outcomes therefore
-remain mandatory post-push evidence; they are not claimed by this local
-receipt.
+remain mandatory post-push evidence.
+
+## Post-push compatibility evidence
+
+Approved commit `ca1456a2c9439184fcf01aab43a68c37bbbe67ff` triggered CI run
+<https://github.com/seaflower205/SeaCad/actions/runs/30352355247> and Dependency
+Policy run <https://github.com/seaflower205/SeaCad/actions/runs/30352355266>.
+Dependency Policy and all three baseline jobs passed.
+
+On both the original attempt and one failed-job rerun, Linux ARM64, Windows
+ARM64, and macOS x64 reached their matching hosted runner but failed during job
+setup before repository checkout. Every annotation reported that the runner
+could not resolve the pinned v6 checkout action. GitHub API evidence confirmed
+that the v6 tag and SHA exist, repository Actions policy allows public actions,
+and the three jobs received the intended runner labels. No SeaCad command ran
+on the failed jobs.
+
+The v6 action manifest uses Node24. The independently verified v4.2.2 tag points
+to signed commit `11bd71901bbe5b1630ceea73d27597364c9af683`, uses Node20, and
+retains the MIT license. The Q2.1 follow-up therefore changes only supplemental
+checkout steps to that exact v4 pin. Baseline and dependency-policy jobs retain
+v6. A subsequent six-platform run must pass before Q2.1 can be tagged.
 
 ## Diff and dependency boundary
 
-Before adding this receipt, Q2.1 changed five CI/documentation files with 131
-insertions and 21 deletions. No file under `crates/` or `schema/` changed.
-`Cargo.toml`, `Cargo.lock`, and `deny.toml` remain unchanged.
+Before adding the initial receipt, Q2.1 changed five CI/documentation files
+with 131 insertions and 21 deletions. No file under `crates/` or `schema/`
+changed. `Cargo.toml`, `Cargo.lock`, and `deny.toml` remain unchanged.
+
+The post-push compatibility follow-up changes the workflow, this receipt,
+`docs/TOOLCHAIN.md`, and `THIRD_PARTY_NOTICES.md`; it changes no runtime or
+schema file.
 
 `Cargo.lock` retains SHA-256
 `f48f459ed5a7c7b9fb9d184d78099c5c6b31b260b3d13df632dbf539ea07ad70`.
@@ -89,12 +117,13 @@ insertions and 21 deletions. No file under `crates/` or `schema/` changed.
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `.github/workflows/ci.yml` | `5691df3a91167c6d41287251361d8a5fa615b5638b015088aa8a6483d0a3a4d9` |
+| `.github/workflows/ci.yml` | `799de07ff5aeac5837577a8ccb46ee4d0f6ba56e2170642053fe413e4399c8db` |
 | `README.md` | `7345913e6318d8dc93e8210843cfe745efd08f88787a3cd126f4243891f4ab0b` |
 | `docs/IMPLEMENTATION_PLAN.md` | `fbf77a7d4df38359a43caa8f659d69479bee782b8ca96f212c05df9febdd096a` |
 | `docs/SUPPORT_MATRIX.md` | `9854a60a0662c64dbc4c5d826f74d1e313adcc1dd1263cbaf96b4a2f30e802e2` |
-| `docs/TOOLCHAIN.md` | `35886eb43425aeab04deeb661e68afc652a38f4b9e5bb5d97b55f51ae51abc38` |
+| `docs/TOOLCHAIN.md` | `cddbb961e34479e660894ad9b25953207f66bd20a7497e38ef680c56f52773cb` |
+| `THIRD_PARTY_NOTICES.md` | `983c0deda6aab40fe98c26085bff20f595c04e2f4a856b194cf3f050acd41d4d` |
 | locally built `cargo-deny.exe` 0.20.2 | `379f7dd526ff77e001b6381d81e01593addace433c4be6a73e286d774371a2a9` |
 
-No commit, remote workflow run, or annotated tag is claimed by this receipt.
-Those actions require checkpoint approval and successful GitHub evidence.
+The initial commit and failed remote run are recorded above. No annotated tag
+exists; successful six-platform GitHub evidence remains mandatory first.
