@@ -1,8 +1,8 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5o-r6 isolates the CLI command definition and parsed option contract without
-changing DXF behavior, CLI behavior, public API, or support
+M6.5p appends sixteen dimension flag and suppression integers through the
+generic HEADER numeric directory without Boolean coercion or new decoder logic
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -144,6 +144,13 @@ changing DXF behavior, CLI behavior, public API, or support
    test locks root help plus inspect/verify usage in English and Vietnamese.
    Argument names, defaults, validation, exit behavior, execution, rendering,
    DXF core behavior, dependencies, and support claims remain unchanged.
+   M6.5p appends `$DIMALT`, `$DIMASO`, `$DIMLIM`, `$DIMSAH`, `$DIMSD1`,
+   `$DIMSD2`, `$DIMSE1`, `$DIMSE2`, `$DIMSHO`, `$DIMSOXD`, `$DIMTIH`,
+   `$DIMTIX`, `$DIMTOFL`, `$DIMTOH`, `$DIMTOL`, and `$DIMUPT` as exact
+   group-70 signed 16-bit values. Values are not coerced to Boolean, and the
+   obsolete `$DIMASO` field is not merged with or used as a fallback for
+   `$DIMASSOC`. Flag, suppression, placement, default, range, applicability,
+   and cross-variable meanings remain unclaimed.
 8. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 9. M8: exact basic geometry and coordinate-system preservation.
 10. M9: polyline, mesh, spline, and helix families.

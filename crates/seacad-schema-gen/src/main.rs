@@ -692,7 +692,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, families) = load_schema(&root)?;
         validate_schema(&manifest, &sources, &families)?;
-        assert_eq!(families[0].fields.len(), 150);
+        assert_eq!(families[0].fields.len(), 166);
         let previous_ids = [
             "acadmaintver",
             "acadver",
@@ -830,12 +830,26 @@ mod tests {
             "dimtsz",
             "dimtvp",
             "dimtxt",
+            "dimadec",
+            "dimaltd",
+            "dimalttd",
+            "dimalttz",
+            "dimaltu",
+            "dimaltz",
+            "dimaunit",
+            "dimazin",
+            "dimdec",
+            "dimdsep",
+            "dimlunit",
+            "dimtdec",
+            "dimtzin",
+            "dimzin",
         ];
         for (field, expected_id) in families[0].fields.iter().zip(previous_ids) {
             assert_eq!(field.id, expected_id);
         }
-        assert_eq!(families[0].fields[136].id, "dimadec");
-        assert_eq!(families[0].fields[149].id, "dimzin");
+        assert_eq!(families[0].fields[150].id, "dimalt");
+        assert_eq!(families[0].fields[165].id, "dimupt");
         let first = normalized_receipt(&manifest, &sources, &families)?;
         let second = normalized_receipt(&manifest, &sources, &families)?;
         assert_eq!(first, second);
