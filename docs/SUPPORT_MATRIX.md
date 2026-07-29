@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2i can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2j can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -92,7 +92,9 @@ explicit. Separate lazy integer semantics preserve optional flags, four
 polyface indices, and identifier, with helpers for the seven meaningful flag
 bits. Fail-closed family evidence classifies only non-conflicting parent and
 VERTEX flag combinations and retains unavailable, conflicting, matched, or
-mismatched states. Each storage decode receipt retains
+mismatched states. Complete family-consistent classic 2D/3D sequences expose
+consecutive and proven closing segment topology; unsupported or indeterminate
+records expose zero segments with typed state. Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -472,6 +474,13 @@ or polyface face. Parent/vertex comparison retains `Matched`, `Mismatched`, or
 multiple family bits remain conflicting. This does not enforce consistency,
 interpret indices, validate applicability, resolve faces, transform
 coordinates, assemble geometry, edit/write, or render.
+M9.2j creates consecutive and flag-proven closing topology only for complete
+`SEQEND`-terminated classic 2D/3D sequences whose VERTEX family evidence all
+matches the parent. Segments retain exact endpoint entries and ordinals.
+Incomplete sequences, mesh/polyface families, indeterminate parents, and
+inconsistent vertices emit no segments and retain typed record state. This
+does not project coordinates/effective widths, derive bulge geometry, transform
+OCS/WCS, build meshes, resolve faces, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

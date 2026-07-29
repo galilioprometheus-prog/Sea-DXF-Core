@@ -60,7 +60,8 @@ lazily projects optional VERTEX flags, four polyface indices, and identifier
 with seven meaningful flag helpers but no vertex classification or face
 resolution; M9.2i classifies non-conflicting POLYLINE and VERTEX family bits
 and compares parent/child evidence while retaining unavailable, conflicting,
-and mismatched states
+and mismatched states; M9.2j builds consecutive and closing topology only for
+complete, family-consistent classic 2D/3D sequences
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -585,6 +586,15 @@ and mismatched states
     version applicability, require every VERTEX to match, interpret indices,
     resolve faces, transform coordinates, assemble geometry, edit, write, or
     render.
+    M9.2j builds consecutive segments, plus a last-to-first segment only when
+    parent flag bit `1` is usable and set, for complete `SEQEND`-terminated 2D
+    or 3D sequences whose every VERTEX family matches. Each segment retains
+    exact start/end VERTEX entries and source-local ordinals. Incomplete
+    sequences, mesh/polyface parents, indeterminate parents, or inconsistent
+    vertices receive typed record states and zero segments. This does not
+    project coordinates or effective widths, interpret bulge geometry, apply
+    elevation/extrusion transforms, build mesh topology, resolve faces, edit,
+    write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

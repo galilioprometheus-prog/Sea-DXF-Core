@@ -65,6 +65,7 @@ mod polyline_family_semantic;
 mod polyline_record_card;
 mod polyline_record_semantic;
 mod polyline_record_value;
+mod polyline_segment;
 mod polyline_sequence;
 mod polyline_vertex_card;
 mod polyline_vertex_integer_semantic;
@@ -293,6 +294,10 @@ pub use polyline_record_value::{
     DxfPolylineRecordNumber, DxfPolylineRecordNumericIssue, DxfPolylineRecordValue,
     DxfPolylineRecordValueDirectory, DxfPolylineRecordValueEntry, DxfPolylineRecordValueRange,
     DxfPolylineRecordValueRole,
+};
+pub use polyline_segment::{
+    DxfPolylineSegmentDirectory, DxfPolylineSegmentEntry, DxfPolylineSegmentRange,
+    DxfPolylineSegmentRecordEntry, DxfPolylineSegmentRecordState, DxfPolylineSegmentTopology,
 };
 pub use polyline_sequence::{
     DxfPolylineSequenceDirectory, DxfPolylineSequenceEntry, DxfPolylineSequenceState,
