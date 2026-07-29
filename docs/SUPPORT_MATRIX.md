@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2h can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2i can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -90,7 +90,9 @@ cardinality without selecting values. Lazy double semantics require location,
 apply only width/bulge zero defaults, and keep optional tangent absence
 explicit. Separate lazy integer semantics preserve optional flags, four
 polyface indices, and identifier, with helpers for the seven meaningful flag
-bits. No vertex family is inferred. Each storage decode receipt retains
+bits. Fail-closed family evidence classifies only non-conflicting parent and
+VERTEX flag combinations and retains unavailable, conflicting, matched, or
+mismatched states. Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -462,6 +464,13 @@ provenance when available. Seven helpers expose only meaningful flag bits;
 unused bit `4` has no helper. This does not require integer fields, interpret
 negative-index edge visibility or zero termination, classify vertex families,
 validate indices, resolve faces, apply parent mesh metadata, transform
+coordinates, assemble geometry, edit/write, or render.
+M9.2i classifies usable, non-conflicting parent flags as 2D, 3D, polygon mesh,
+or polyface mesh and VERTEX flags as 2D, 3D, polygon mesh, polyface coordinate,
+or polyface face. Parent/vertex comparison retains `Matched`, `Mismatched`, or
+`NotComparable`; missing/invalid/duplicate flags remain unavailable and
+multiple family bits remain conflicting. This does not enforce consistency,
+interpret indices, validate applicability, resolve faces, transform
 coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.

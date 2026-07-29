@@ -58,7 +58,9 @@ documented record defaults, and exact flag-bit helpers while keeping obsolete
 group `66` outside semantic policy and avoiding mesh classification; M9.2h
 lazily projects optional VERTEX flags, four polyface indices, and identifier
 with seven meaningful flag helpers but no vertex classification or face
-resolution
+resolution; M9.2i classifies non-conflicting POLYLINE and VERTEX family bits
+and compares parent/child evidence while retaining unavailable, conflicting,
+and mismatched states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -574,6 +576,15 @@ resolution
     negative-index edge visibility or zero termination, classify vertex
     families, validate indices, resolve faces, apply parent mesh metadata,
     transform coordinates, assemble geometry, edit, write, or render.
+    M9.2i lazily classifies parent flags as 2D, 3D, polygon mesh, or polyface
+    mesh, and usable VERTEX flags as 2D, 3D, polygon mesh, polyface coordinate,
+    or polyface face evidence. Multiple simultaneous parent/vertex family bits
+    remain `Conflicting`; absent, invalid, or duplicate flags remain
+    `Unavailable`. Parent/vertex pairs are `Matched`, `Mismatched`, or
+    `NotComparable` without precedence. This does not validate subclass or
+    version applicability, require every VERTEX to match, interpret indices,
+    resolve faces, transform coordinates, assemble geometry, edit, write, or
+    render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
