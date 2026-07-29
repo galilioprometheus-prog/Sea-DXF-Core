@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.3a can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.3b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -83,6 +83,13 @@ as a soft-pointer occurrence without claiming that surrounding groups form a
 valid XDATA container. No target lookup, dangling-reference status, ownership
 enforcement, purge behavior, dictionary/reactor context, INSERT/XREF mutation,
 or graph is implemented.
+M7.3b performs document-local lookup of those pointer/owner occurrences against
+the M7.2b uniquely parsed identity index. Lexically invalid, null, missing,
+unique, and ambiguous targets remain distinct. Records with invalid or multiple
+identity candidates cannot become targets; duplicate identities are returned as
+an ambiguous shared match slice. Resolution does not validate whether a
+particular record type may use the code, enforce one-owner or purge rules,
+traverse a graph, interpret containers, or perform clone/INSERT/XREF rewriting.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

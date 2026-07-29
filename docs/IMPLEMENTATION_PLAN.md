@@ -230,6 +230,15 @@ harness without publishing private corpus identifiers
     documented pre-R13 Binary escape while keeping unavailable group codes above
     255 absent in both physical fixtures. Target resolution, existence checks,
     ownership enforcement, and container semantics remain deferred.
+    M7.3b resolves every M7.3a occurrence against the uniquely parsed M7.2b
+    identity index with five explicit states: lexical `Invalid`, `Null`,
+    `Missing`, `Unique`, and duplicate-preserving `Ambiguous`. Multiple or
+    invalid identity candidates never become targets, and null remains null
+    even if a record carries identity value zero. The directory owns one shared
+    identity index and one shared reference index, keeping storage linear rather
+    than copying target lists per reference. This is document-local lookup only;
+    ownership validity, graph traversal, container meaning, and edit behavior
+    remain deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

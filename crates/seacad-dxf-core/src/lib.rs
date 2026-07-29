@@ -23,6 +23,7 @@ mod generated;
 mod handle;
 mod handle_identity;
 mod handle_reference;
+mod handle_resolution;
 mod handseed;
 mod header_handle;
 mod header_index;
@@ -97,6 +98,9 @@ pub use handle_identity::{
     DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfHandleIdentityState,
 };
 pub use handle_reference::{DxfHandleReferenceDirectory, DxfHandleReferenceEntry};
+pub use handle_resolution::{
+    DxfHandleResolutionDirectory, DxfHandleResolutionEntry, DxfHandleResolutionState,
+};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_handle::{
     DxfHeaderHandleDirectory, DxfHeaderHandleEntry, DxfHeaderHandleIssue, DxfHeaderHandleValue,
