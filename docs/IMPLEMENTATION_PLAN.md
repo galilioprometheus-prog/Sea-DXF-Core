@@ -63,7 +63,9 @@ and compares parent/child evidence while retaining unavailable, conflicting,
 and mismatched states; M9.2j builds consecutive and closing topology only for
 complete, family-consistent classic 2D/3D sequences; M9.2k lazily binds each
 proven segment to parent and endpoint semantics while
-keeping local and parent width evidence separate
+keeping local and parent width evidence separate; M9.2l derives planar 2D OCS
+line/arc geometry with parent elevation and exact 3D WCS line geometry while
+rejecting unavailable, contradictory, degenerate, or non-finite inputs
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -604,6 +606,16 @@ keeping local and parent width evidence separate
     value to be usable. Per-field invalidity remains independent. This does not
     derive arc geometry, resolve width precedence, apply elevation/extrusion
     transforms, tessellate, edit, write, or render.
+    M9.2l lazily derives geometry for each M9.2j segment. Classic 2D segments
+    use VERTEX X/Y in OCS plus the parent POLYLINE elevation; a zero bulge
+    retains a straight segment and a usable nonzero bulge derives finite
+    center, radius, and signed sweep. The otherwise-ignored VERTEX Z does not
+    alter 2D elevation. Classic 3D segments retain exact WCS endpoints and are
+    straight only; a nonzero bulge is a typed contradiction. Missing or
+    invalid endpoints/elevation/bulge, zero-length arc chords, and non-finite
+    derived values fail typed per segment. This does not transform OCS to WCS,
+    validate extrusion, choose effective widths, tessellate, edit, write, or
+    render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2k can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2l can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -96,7 +96,11 @@ mismatched states. Complete family-consistent classic 2D/3D sequences expose
 consecutive and proven closing segment topology; unsupported or indeterminate
 records expose zero segments with typed state. Lazy segment bindings expose the
 2D OCS/3D WCS boundary, endpoint tuples, local widths/bulge/tangent, and parent
-default widths without choosing effective width. Each storage decode receipt retains
+default widths without choosing effective width. Classic 2D segments now
+retain planar straight or derived circular OCS geometry at the parent
+elevation, while classic 3D segments retain exact straight WCS endpoints;
+unavailable, contradictory, degenerate, and non-finite inputs remain typed.
+Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -105,8 +109,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE/VERTEX record/sequence evidence; no OCS/WCS transformation | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE/VERTEX record/sequence evidence; no OCS/WCS transformation | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE and classic POLYLINE segment geometry; no OCS/WCS transformation | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE and classic POLYLINE segment geometry; no OCS/WCS transformation | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -488,6 +492,14 @@ It preserves the 2D OCS versus 3D WCS boundary and keeps start-vertex local
 widths separate from parent default widths. Invalid endpoint, width, bulge, or
 tangent fields remain independently unavailable. This does not choose effective
 widths, derive arc geometry, transform coordinates, tessellate, edit/write, or
+render.
+M9.2l derives classic 2D straight/circular segment geometry in OCS from VERTEX
+X/Y, parent elevation, and start-vertex bulge; stored 2D VERTEX Z is retained
+by earlier evidence but ignored geometrically as Autodesk documents. Classic
+3D segments retain exact WCS endpoints and accept only straight geometry.
+Unavailable endpoints/elevation/bulge, nonzero 3D bulge, degenerate arc
+chords, and non-finite derivation fail typed. This does not transform OCS to
+WCS, validate extrusion, select effective widths, tessellate, edit/write, or
 render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.

@@ -66,6 +66,7 @@ mod polyline_record_card;
 mod polyline_record_semantic;
 mod polyline_record_value;
 mod polyline_segment;
+mod polyline_segment_geometry;
 mod polyline_segment_semantic;
 mod polyline_sequence;
 mod polyline_vertex_card;
@@ -299,6 +300,11 @@ pub use polyline_record_value::{
 pub use polyline_segment::{
     DxfPolylineSegmentDirectory, DxfPolylineSegmentEntry, DxfPolylineSegmentRange,
     DxfPolylineSegmentRecordEntry, DxfPolylineSegmentRecordState, DxfPolylineSegmentTopology,
+};
+pub use polyline_segment_geometry::{
+    DxfPolylineOcsArcSegment, DxfPolylineOcsLineSegment, DxfPolylineSegmentGeometry,
+    DxfPolylineSegmentGeometryDirectory, DxfPolylineSegmentGeometryIssue,
+    DxfPolylineSegmentGeometrySemantics, DxfPolylineWcsLineSegment,
 };
 pub use polyline_segment_semantic::{
     DxfPolylineSegmentCoordinateSystem, DxfPolylineSegmentSemanticDirectory,
