@@ -19,6 +19,7 @@ mod binary_group;
 mod binary_wire;
 mod circular_geometry;
 mod circular_geometry_card;
+mod circular_geometry_semantic;
 mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
@@ -117,6 +118,10 @@ pub use circular_geometry_card::{
     DxfCircularGeometryCardDirectory, DxfCircularGeometryCardMember,
     DxfCircularGeometryCardMemberRange, DxfCircularGeometryValueCard,
     DxfCircularGeometryValueCardState,
+};
+pub use circular_geometry_semantic::{
+    DxfCircularGeometrySemanticDirectory, DxfCircularGeometrySemanticIssue,
+    DxfCircularGeometrySemanticValue, DxfCircularGeometrySemantics,
 };
 pub use common_owner_candidate::{
     DxfCommonOwnerCandidateDirectory, DxfCommonOwnerCandidateEntry, DxfCommonOwnerCandidateRange,

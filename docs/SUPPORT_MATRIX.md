@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.2b can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.2c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -44,7 +44,8 @@ component failures and apply only reviewed extrusion defaults. Date or elapsed-d
 calendars or timezones. Exact uppercase `CIRCLE` and `ARC` records separately
 expose source-order OCS center, radius, angle, and extrusion evidence without
 assembling or transforming circular geometry, plus fixed per-role cardinality
-cards that retain every occurrence. Each
+cards that retain every occurrence. Lazy circular semantic projections preserve
+required-value failures and apply only reviewed extrusion defaults. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -53,8 +54,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE semantics + CIRCLE/ARC evidence; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE semantics + CIRCLE/ARC evidence; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE and CIRCLE/ARC component semantics; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE and CIRCLE/ARC component semantics; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -202,6 +203,16 @@ invalid ASCII values remain card members and no value is copied or selected.
 The cards do not establish required fields, valid geometry, defaults, angle or
 radius constraints, canonical values, coordinate transformation, or assembled
 circular semantics.
+M8.2c lazily maps unique valid CIRCLE/ARC OCS center and radius cards to exact
+semantic values; ARC additionally exposes start/end values explicitly named as
+DXF-file degrees. Missing, invalid ASCII, and duplicate required values remain
+typed invalid with available raw provenance. Absent extrusion X/Y/Z components
+independently default to `0`, `0`, and `1`, while present invalid or duplicate
+evidence never defaults. Tuple/scalar helpers return values only from explicit
+or reviewed-default states. Negative radius and out-of-range angle values remain
+exact rather than silently validated or normalized. This is component semantics,
+not radius conformance, ARC sweep interpretation, OCS transformation, or
+assembled circular geometry.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

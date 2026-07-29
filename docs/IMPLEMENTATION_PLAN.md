@@ -15,7 +15,8 @@ every occurrence through compact evidence-member references; M8.1c lazily
 projects required WCS tuples and reviewed per-component extrusion defaults into
 source-anchored semantic states; M8.2a adds a separate exact CIRCLE/ARC defining-
 value evidence directory that preserves their OCS boundary; M8.2b adds fixed
-per-role CIRCLE/ARC cardinality cards with compact evidence references
+per-role CIRCLE/ARC cardinality cards with compact evidence references; M8.2c
+adds lazy required-value semantics and reviewed extrusion defaults
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -326,6 +327,12 @@ per-role CIRCLE/ARC cardinality cards with compact evidence references
     compact member slice pointing back to M8.2a values. Numeric validity remains
     independent from cardinality; no occurrence is copied, selected, defaulted,
     validated, normalized, or transformed.
+    M8.2c lazily projects required OCS center and radius values for CIRCLE and
+    ARC, plus required degree-valued start/end angles for ARC. Missing, invalid,
+    or duplicate required values remain typed invalid. Absent extrusion X/Y/Z
+    independently receives the reviewed `0/0/1` defaults; present invalid or
+    duplicate evidence is never hidden. Radius constraints, angle normalization,
+    ARC sweep, OCS transformation, and geometry assembly remain deferred.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
