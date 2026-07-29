@@ -67,7 +67,9 @@ keeping local and parent width evidence separate; M9.2l derives planar 2D OCS
 line/arc geometry with parent elevation and exact 3D WCS line geometry while
 rejecting unavailable, contradictory, degenerate, or non-finite inputs; M9.2m
 projects classic 2D segment geometry into WCS with the documented arbitrary-axis
-algorithm while preserving native 3D WCS lines
+algorithm while preserving native 3D WCS lines; M9.2n selects effective classic
+2D segment widths with explicit VERTEX values taking precedence over parent
+POLYLINE defaults independently for start and end
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -628,6 +630,14 @@ algorithm while preserving native 3D WCS lines
     length extrusion, and non-finite derivation remain typed per segment. This
     does not validate planarity against external engines, select effective
     widths, tessellate, edit, write, or render.
+    M9.2n resolves effective start and end width independently for every proven
+    classic 2D segment. A source-explicit VERTEX `40` or `41`, including exact
+    zero, wins; only an omitted/defaulted VERTEX field selects the corresponding
+    parent POLYLINE default. Each result retains `Vertex` or `ParentDefault`
+    origin. Invalid vertex fields, unusable parent defaults, and classic 3D
+    segments remain typed without cross-component fallback. This does not
+    validate nonnegative widths, construct wide outlines or joins, tessellate,
+    edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

@@ -69,6 +69,7 @@ mod polyline_segment;
 mod polyline_segment_geometry;
 mod polyline_segment_semantic;
 mod polyline_segment_wcs_geometry;
+mod polyline_segment_width;
 mod polyline_sequence;
 mod polyline_vertex_card;
 mod polyline_vertex_integer_semantic;
@@ -315,6 +316,10 @@ pub use polyline_segment_wcs_geometry::{
     DxfPolylineTransformedWcsArcSegment, DxfPolylineTransformedWcsLineSegment,
     DxfPolylineWcsSegmentGeometry, DxfPolylineWcsSegmentGeometryDirectory,
     DxfPolylineWcsSegmentGeometryIssue, DxfPolylineWcsSegmentGeometrySemantics,
+};
+pub use polyline_segment_width::{
+    DxfPolylineEffectiveWidth, DxfPolylineEffectiveWidthOrigin, DxfPolylineSegmentEffectiveWidths,
+    DxfPolylineSegmentWidthDirectory, DxfPolylineSegmentWidthIssue,
 };
 pub use polyline_sequence::{
     DxfPolylineSequenceDirectory, DxfPolylineSequenceEntry, DxfPolylineSequenceState,
