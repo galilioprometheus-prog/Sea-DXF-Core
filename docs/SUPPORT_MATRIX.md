@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.4c can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -55,7 +55,10 @@ uppercase `RAY` and `XLINE` records separately expose source-order WCS
 start/first-point and unit-direction evidence without normalization, selection,
 or infinite-line assembly, plus fixed per-role cardinality cards. Lazy
 RAY/XLINE semantic projections preserve required-component failures without
-normalizing direction. Each
+normalizing direction. Exact uppercase `LWPOLYLINE` records separately expose
+source-order floating-point elevation, thickness, constant width, OCS vertex,
+per-vertex width, bulge, and extrusion evidence without vertex grouping,
+defaults, validation, or polyline assembly. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -64,8 +67,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, and RAY/XLINE component semantics; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, and RAY/XLINE component semantics; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE floating evidence; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE floating evidence; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -273,6 +276,16 @@ Non-unit and zero direction triples remain exact rather than silently rejected
 or normalized. This is component semantics, not vector conformance, direction
 or extent inference, coordinate transformation, or assembled infinite-line
 geometry.
+M9.1a recognizes exact uppercase `LWPOLYLINE` markers only in complete
+`BLOCKS` or `ENTITIES` sections and indexes group codes `38`, `39`, `43`,
+`10`, `20`, `40`, `41`, `42`, `210`, `220`, and `230` by documented
+floating-point role. Source order, duplicates, empty slices, invalid ASCII
+numbers, exact binary64 bits, raw spans, and the containing raw record remain
+visible. Group codes `90`, `70`, and `91` remain intact in raw evidence but
+their integer meaning is not projected by this checkpoint. Vertex grouping,
+defaults, count/order/cardinality validation, width precedence, bulge
+interpretation, version applicability, OCS transformation, editing, and
+assembled polyline geometry remain deferred.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

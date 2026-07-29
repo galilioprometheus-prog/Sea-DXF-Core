@@ -50,6 +50,7 @@ mod infinite_line_geometry;
 mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
 mod johab;
+mod lightweight_polyline;
 mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -203,6 +204,11 @@ pub use infinite_line_geometry_card::{
 pub use infinite_line_geometry_semantic::{
     DxfInfiniteLineGeometrySemanticDirectory, DxfInfiniteLineGeometrySemanticIssue,
     DxfInfiniteLineGeometrySemanticValue, DxfInfiniteLineGeometrySemantics,
+};
+pub use lightweight_polyline::{
+    DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
+    DxfLightweightPolylineRecordEntry, DxfLightweightPolylineValue,
+    DxfLightweightPolylineValueRange, DxfLightweightPolylineValueRole,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{

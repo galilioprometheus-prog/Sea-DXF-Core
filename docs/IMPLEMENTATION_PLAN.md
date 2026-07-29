@@ -25,7 +25,9 @@ defaults without range validation or ellipse assembly; M8.4a adds exact
 RAY/XLINE WCS point and unit-direction evidence without normalization or
 infinite-line assembly; M8.4b adds six fixed per-role RAY/XLINE cardinality
 cards with compact evidence references; M8.4c adds lazy required-value
-semantics without unit-vector validation or normalization
+semantics without unit-vector validation or normalization; M9.1a adds exact
+LWPOLYLINE floating-point evidence without grouping vertices or assembling a
+polyline
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -382,7 +384,16 @@ semantics without unit-vector validation or normalization
     Non-unit and zero direction triples remain exact; vector validation,
     normalization, direction/extent inference, coordinate transformation, and
     infinite-line assembly remain deferred.
-13. M9: polyline, mesh, spline, and helix families.
+13. M9: polyline, mesh, spline, and helix families. M9.1a indexes exact
+    uppercase `LWPOLYLINE` records in complete `BLOCKS` and `ENTITIES`
+    sections and retains source-order elevation, thickness, constant width,
+    OCS vertex X/Y, per-vertex start/end width, bulge, and extrusion-component
+    occurrences with exact ASCII/Binary double evidence. Duplicates, invalid
+    ASCII values, and empty floating-value slices remain explicit. Integer
+    count, flags, and vertex identifiers remain available in the raw record but
+    are not interpreted here. It does not group values into vertices, apply
+    defaults, validate count/order/cardinality, transform OCS, or assemble a
+    polyline.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
