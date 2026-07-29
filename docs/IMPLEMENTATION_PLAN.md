@@ -18,7 +18,8 @@ value evidence directory that preserves their OCS boundary; M8.2b adds fixed
 per-role CIRCLE/ARC cardinality cards with compact evidence references; M8.2c
 adds lazy required-value semantics and reviewed extrusion defaults; M8.3a adds
 exact ELLIPSE WCS center, relative major-axis endpoint, ratio, parameter, and
-extrusion-component evidence without assembling ellipse geometry
+extrusion-component evidence without assembling ellipse geometry; M8.3b adds
+twelve fixed per-role ELLIPSE cardinality cards with compact evidence references
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -343,6 +344,12 @@ extrusion-component evidence without assembling ellipse geometry
     ASCII/Binary double evidence. It does not select values, apply defaults,
     validate ratio or parameter ranges, assemble an ellipse, or transform
     coordinate systems.
+    M8.3b materializes twelve stable role cards for every `ELLIPSE`, covering
+    WCS center X/Y/Z, relative major-axis endpoint X/Y/Z, ratio, start/end
+    parameters, and extrusion X/Y/Z. Each card reports `Absent`, `Unique`, or
+    `Multiple` and owns a compact member slice pointing back to M8.3a values.
+    Numeric validity remains independent from cardinality; no occurrence is
+    copied, selected, defaulted, validated, normalized, or transformed.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

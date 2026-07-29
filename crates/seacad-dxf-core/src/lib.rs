@@ -24,6 +24,7 @@ mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
 mod ellipse_geometry;
+mod ellipse_geometry_card;
 mod encoding;
 mod error;
 mod format_probe;
@@ -136,6 +137,11 @@ pub use dialect::{
 pub use ellipse_geometry::{
     DxfEllipseGeometryDirectory, DxfEllipseGeometryNumericIssue, DxfEllipseGeometryRecordEntry,
     DxfEllipseGeometryValue, DxfEllipseGeometryValueRange, DxfEllipseGeometryValueRole,
+};
+pub use ellipse_geometry_card::{
+    DxfEllipseGeometryCardDirectory, DxfEllipseGeometryCardMember,
+    DxfEllipseGeometryCardMemberRange, DxfEllipseGeometryValueCard,
+    DxfEllipseGeometryValueCardState,
 };
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
