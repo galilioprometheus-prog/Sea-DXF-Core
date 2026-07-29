@@ -65,7 +65,9 @@ complete, family-consistent classic 2D/3D sequences; M9.2k lazily binds each
 proven segment to parent and endpoint semantics while
 keeping local and parent width evidence separate; M9.2l derives planar 2D OCS
 line/arc geometry with parent elevation and exact 3D WCS line geometry while
-rejecting unavailable, contradictory, degenerate, or non-finite inputs
+rejecting unavailable, contradictory, degenerate, or non-finite inputs; M9.2m
+projects classic 2D segment geometry into WCS with the documented arbitrary-axis
+algorithm while preserving native 3D WCS lines
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -616,6 +618,16 @@ rejecting unavailable, contradictory, degenerate, or non-finite inputs
     derived values fail typed per segment. This does not transform OCS to WCS,
     validate extrusion, choose effective widths, tessellate, edit, write, or
     render.
+    M9.2m normalizes each usable classic 2D POLYLINE extrusion direction and
+    applies Autodesk's arbitrary-axis algorithm, including its exact `1/64`
+    square polar-cap branch, to transform OCS line/arc start, end, center, and
+    elevation into finite WCS coordinates. Transformed arcs retain their
+    normalized WCS normal, radius, signed sweep, and bulge. Classic 3D segments
+    remain exact native WCS lines and do not depend on their irrelevant
+    extrusion field. Source-geometry failure, unavailable extrusion, zero-
+    length extrusion, and non-finite derivation remain typed per segment. This
+    does not validate planarity against external engines, select effective
+    widths, tessellate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2l can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2m can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -100,6 +100,9 @@ default widths without choosing effective width. Classic 2D segments now
 retain planar straight or derived circular OCS geometry at the parent
 elevation, while classic 3D segments retain exact straight WCS endpoints;
 unavailable, contradictory, degenerate, and non-finite inputs remain typed.
+Usable classic 2D geometry is also projected into WCS by the documented
+arbitrary-axis algorithm with normalized extrusion and explicit transform
+failures; native 3D WCS lines remain unchanged.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -109,8 +112,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE and classic POLYLINE segment geometry; no OCS/WCS transformation | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE and classic POLYLINE segment geometry; no OCS/WCS transformation | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -501,6 +504,13 @@ Unavailable endpoints/elevation/bulge, nonzero 3D bulge, degenerate arc
 chords, and non-finite derivation fail typed. This does not transform OCS to
 WCS, validate extrusion, select effective widths, tessellate, edit/write, or
 render.
+M9.2m transforms usable classic 2D segment geometry from OCS to WCS with the
+normalized extrusion direction and Autodesk arbitrary-axis algorithm. It
+retains transformed WCS endpoints/centers, normalized normal, radius, signed
+sweep, and bulge; classic 3D WCS lines pass through exactly without consulting
+extrusion. Source geometry, unavailable/zero-length extrusion, and non-finite
+transform failures remain typed. This does not claim external-engine
+conformance, effective widths, tessellation, edit/write, or rendering.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
