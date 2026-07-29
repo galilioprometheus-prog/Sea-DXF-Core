@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1f can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1g can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -70,7 +70,9 @@ thickness, constant width, and extrusion without admitting vertex-scoped
 fields or selecting values. Lazy record semantics apply only documented
 defaults, expose Closed/Plinegen bits, compare declared and observed anchor
 counts, and retain constant/variable width coexistence without choosing an
-effective width. Each
+effective width. Consecutive and proven closing segment topology now binds OCS
+endpoints plus local width/bulge fields to each segment's start vertex without
+assembling transformed line or arc geometry. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -346,6 +348,17 @@ states. Explicit constant-width and per-vertex-width occurrence shapes remain
 neutral as none, constant only, variable only, or both. This does not validate
 count/width domains, select width precedence, publish effective segment widths,
 transform OCS, infer closure geometry, or assemble segments.
+M9.1g builds guaranteed consecutive segments between adjacent retained
+group-10 vertices. A unique usable Closed flag adds the last-to-first segment;
+absent flags default open, while invalid or duplicate flags keep closure
+indeterminate and do not add it. This yields `n-1` segments for open records and
+`n` for closed nonempty records, including a self-closing single-vertex case.
+Each lazy segment view exposes its start/end grouped vertex semantics, the
+start vertex's local width pair, and its bulge. Usable signed zero bulge is
+straight, usable nonzero bulge is an exact arc factor, and invalid vertex
+semantics remain indeterminate. This does not choose effective width, compute
+arc center/radius/sweep, transform OCS to WCS, validate count agreement or
+geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

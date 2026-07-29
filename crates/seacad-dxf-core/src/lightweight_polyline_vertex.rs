@@ -226,6 +226,16 @@ impl DxfLightweightPolylineVertexDirectory {
     }
 
     #[must_use]
+    pub const fn floating_evidence_directory(&self) -> &DxfLightweightPolylineDirectory {
+        &self.floating
+    }
+
+    #[must_use]
+    pub const fn integer_evidence_directory(&self) -> &DxfLightweightPolylineIntegerDirectory {
+        &self.integers
+    }
+
+    #[must_use]
     pub fn records(&self) -> &[DxfLightweightPolylineGroupedRecordEntry] {
         &self.records
     }

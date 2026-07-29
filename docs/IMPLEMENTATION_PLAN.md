@@ -36,7 +36,9 @@ width or segment assembly; M9.1e adds eight fixed record-level cardinality
 cards for count, flags, elevation, thickness, constant width, and extrusion
 without admitting vertex-scoped fields or applying record semantics; M9.1f
 adds typed record defaults, flag helpers, declared-versus-observed vertex-count
-comparison, and neutral constant/variable width coexistence evidence
+comparison, and neutral constant/variable width coexistence evidence; M9.1g
+builds consecutive/closing segment topology and binds each segment to the
+starting vertex's local widths and bulge without assembling OCS geometry
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -448,6 +450,17 @@ comparison, and neutral constant/variable width coexistence evidence
     not choose precedence when constant `43` and per-vertex `40/41` coexist.
     Count-domain validation, effective segment widths, OCS transformation,
     closure, and segment assembly remain deferred.
+    M9.1g creates one guaranteed consecutive segment for each adjacent retained
+    vertex pair. A unique usable Closed flag additionally creates the documented
+    last-to-first segment; absent flags default open, while invalid or duplicate
+    flags leave closure indeterminate and never invent that segment. Closed
+    records therefore have one segment per retained vertex, including one
+    self-closing segment for a single retained vertex. Lazy segment semantics
+    bind OCS endpoints, local start/end widths, and bulge to the segment's start
+    vertex. Zero bulge reports straight, nonzero bulge reports an arc factor,
+    and unusable bulge remains indeterminate. This does not compute arc center,
+    radius, sweep, or endpoint transforms; select effective width; validate
+    count agreement; transform OCS; edit/write; or render geometry.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
