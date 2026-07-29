@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2j can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2k can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -94,7 +94,9 @@ bits. Fail-closed family evidence classifies only non-conflicting parent and
 VERTEX flag combinations and retains unavailable, conflicting, matched, or
 mismatched states. Complete family-consistent classic 2D/3D sequences expose
 consecutive and proven closing segment topology; unsupported or indeterminate
-records expose zero segments with typed state. Each storage decode receipt retains
+records expose zero segments with typed state. Lazy segment bindings expose the
+2D OCS/3D WCS boundary, endpoint tuples, local widths/bulge/tangent, and parent
+default widths without choosing effective width. Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -481,6 +483,12 @@ Incomplete sequences, mesh/polyface families, indeterminate parents, and
 inconsistent vertices emit no segments and retain typed record state. This
 does not project coordinates/effective widths, derive bulge geometry, transform
 OCS/WCS, build meshes, resolve faces, edit/write, or render.
+M9.2k lazily binds every proven segment to parent and endpoint semantic values.
+It preserves the 2D OCS versus 3D WCS boundary and keeps start-vertex local
+widths separate from parent default widths. Invalid endpoint, width, bulge, or
+tangent fields remain independently unavailable. This does not choose effective
+widths, derive arc geometry, transform coordinates, tessellate, edit/write, or
+render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

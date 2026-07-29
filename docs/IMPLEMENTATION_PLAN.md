@@ -61,7 +61,9 @@ with seven meaningful flag helpers but no vertex classification or face
 resolution; M9.2i classifies non-conflicting POLYLINE and VERTEX family bits
 and compares parent/child evidence while retaining unavailable, conflicting,
 and mismatched states; M9.2j builds consecutive and closing topology only for
-complete, family-consistent classic 2D/3D sequences
+complete, family-consistent classic 2D/3D sequences; M9.2k lazily binds each
+proven segment to parent and endpoint semantics while
+keeping local and parent width evidence separate
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -595,6 +597,13 @@ complete, family-consistent classic 2D/3D sequences
     project coordinates or effective widths, interpret bulge geometry, apply
     elevation/extrusion transforms, build mesh topology, resolve faces, edit,
     write, or render.
+    M9.2k binds each M9.2j segment to exact start/end VERTEX semantics and its
+    parent POLYLINE record semantics. It exposes the 2D OCS versus 3D WCS
+    boundary, endpoint tuples, start-vertex local widths/bulge/tangent, and
+    parent default widths without choosing effective widths or requiring every
+    value to be usable. Per-field invalidity remains independent. This does not
+    derive arc geometry, resolve width precedence, apply elevation/extrusion
+    transforms, tessellate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
