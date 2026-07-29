@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.4a can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.4b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -53,7 +53,7 @@ assembling ellipse geometry. Lazy ELLIPSE semantic projections preserve
 required-value failures and apply only reviewed extrusion defaults. Exact
 uppercase `RAY` and `XLINE` records separately expose source-order WCS
 start/first-point and unit-direction evidence without normalization, selection,
-or infinite-line assembly. Each
+or infinite-line assembly, plus fixed per-role cardinality cards. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -62,8 +62,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, and ELLIPSE semantics + RAY/XLINE evidence; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, and ELLIPSE semantics + RAY/XLINE evidence; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, and ELLIPSE semantics + RAY/XLINE evidence/cards; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, and ELLIPSE semantics + RAY/XLINE evidence/cards; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -256,6 +256,13 @@ ASCII numbers, exact binary64 bits, and raw spans remain visible. Cardinality,
 required-field validation, unit-vector validation or normalization, direction
 or extent interpretation, subclass/version applicability, coordinate
 transformation, editing, and rendering remain deferred.
+M8.4b adds six stable cards per RAY/XLINE for WCS start/first-point X/Y/Z and
+unit-direction X/Y/Z. Compact member ordinals point back into the retained
+M8.4a evidence directory. `Absent`, `Unique`, and `Multiple` report occurrence
+count only; invalid ASCII values remain card members and no value is copied or
+selected. The cards do not establish required fields, valid unit vectors,
+direction or extent semantics, canonical values, coordinate transformation, or
+assembled infinite-line geometry.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

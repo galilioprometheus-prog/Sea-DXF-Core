@@ -23,7 +23,8 @@ twelve fixed per-role ELLIPSE cardinality cards with compact evidence
 references; M8.3c adds lazy required-value semantics and reviewed extrusion
 defaults without range validation or ellipse assembly; M8.4a adds exact
 RAY/XLINE WCS point and unit-direction evidence without normalization or
-infinite-line assembly
+infinite-line assembly; M8.4b adds six fixed per-role RAY/XLINE cardinality
+cards with compact evidence references
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -368,6 +369,12 @@ infinite-line assembly
     ASCII/Binary double evidence. It does not select values, validate
     completeness or unit length, infer extent/direction semantics, validate
     version applicability, or assemble infinite geometry.
+    M8.4b materializes six stable role cards for every `RAY` and `XLINE`,
+    covering WCS start/first-point X/Y/Z and unit-direction X/Y/Z. Each card
+    reports `Absent`, `Unique`, or `Multiple` and owns a compact member slice
+    pointing back to M8.4a values. Numeric validity remains independent from
+    cardinality; no occurrence is copied, selected, defaulted, validated,
+    normalized, or transformed.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
