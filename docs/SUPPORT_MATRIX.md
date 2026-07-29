@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4g can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -34,9 +34,11 @@ application-group context, and conservative reactor, extension-dictionary, or
 common-owner candidates grouped per raw record with typed cardinality; these
 can be conservatively compared with unique incoming ownership-class evidence
 as matched, conflicting, or non-comparable, but remain evidence rather than a
-validated topology. Completely closed
-known record-bearing sections expose format-neutral group-zero record chunks,
-while record types remain uninterpreted. Date or elapsed-day values do not infer
+validated topology. Completely closed known record-bearing sections expose
+format-neutral group-zero record chunks. Exact uppercase `POINT` and `LINE`
+records in complete `BLOCKS` or `ENTITIES` sections additionally expose
+source-order WCS and extrusion coordinate-component evidence with exact
+ASCII/Binary double bits or typed lexical failure. Date or elapsed-day values do not infer
 calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -46,8 +48,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence; no validated topology | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence; no validated topology | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE component evidence; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE component evidence; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -154,6 +156,14 @@ evidence ordinals, target match, incoming link, and incoming source evidence
 remain accessible. The comparison does not select an authoritative owner,
 declare either direction valid, apply the one-owner rule, validate record or
 target types, or implement graph/lifecycle/edit/write behavior.
+M8.1a recognizes exact uppercase `POINT` and `LINE` markers only in complete
+`BLOCKS` or `ENTITIES` record ranges. It indexes documented WCS location/start,
+WCS endpoint, and optional extrusion components by numeric group code without
+depending on group order. Source order, duplicates, empty slices, invalid ASCII
+numbers, and exact binary64 bits remain visible. It does not choose canonical
+components, apply omitted defaults, validate entity completeness, normalize an
+extrusion vector, transform coordinate systems, expose thickness or POINT angle,
+or claim complete POINT/LINE geometry support.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

@@ -8,7 +8,9 @@ coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
 harness without publishing private corpus identifiers; M7.4g conservatively
 compares a uniquely resolved common-owner candidate with a unique incoming
-ownership-class link and retains matched, conflicting, or non-comparable state
+ownership-class link and retains matched, conflicting, or non-comparable state;
+M8.1a adds exact POINT/LINE coordinate-component evidence without assembling or
+transforming geometry
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -290,7 +292,13 @@ ownership-class link and retains matched, conflicting, or non-comparable state
     or ambiguous shape remains `NotComparable` with both underlying dimensions
     intact. This is bidirectional evidence, not authoritative owner selection,
     record-type validation, or one-owner conformance.
-12. M8: exact basic geometry and coordinate-system preservation.
+12. M8: exact basic geometry and coordinate-system preservation. M8.1a indexes
+    exact uppercase `POINT` and `LINE` records in complete `BLOCKS` and
+    `ENTITIES` sections and retains source-order WCS location/start, WCS
+    endpoint, and extrusion-component occurrences with exact ASCII/Binary
+    double evidence. Duplicates, invalid ASCII values, and empty component
+    slices remain explicit. It does not select canonical components, apply
+    defaults, validate completeness, or transform coordinate systems.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

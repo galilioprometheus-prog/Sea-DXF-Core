@@ -11,6 +11,7 @@ mod ascii_group;
 mod ascii_index;
 mod ascii_line;
 mod ascii_numeric;
+mod basic_geometry;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
@@ -43,6 +44,7 @@ mod owner_evidence_comparison;
 mod ownership_evidence;
 mod progress;
 mod raw_document;
+mod raw_double;
 mod raw_handle;
 mod raw_record;
 mod read_options;
@@ -82,6 +84,11 @@ pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };
 pub use ascii_numeric::DxfAsciiNumericIssue;
+pub use basic_geometry::{
+    DxfBasicGeometryComponent, DxfBasicGeometryComponentRange, DxfBasicGeometryComponentRole,
+    DxfBasicGeometryDirectory, DxfBasicGeometryKind, DxfBasicGeometryNumericIssue,
+    DxfBasicGeometryRecordEntry,
+};
 pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{

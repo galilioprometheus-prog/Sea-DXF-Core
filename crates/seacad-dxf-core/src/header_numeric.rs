@@ -8,14 +8,13 @@ use crate::{
     DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, DxfRawValueProvenance,
     DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
     ascii_group::trim_horizontal_ascii,
-    ascii_numeric::{
-        DxfAsciiNumericIssue, parse_f64 as parse_ascii_f64, parse_i16 as parse_ascii_i16,
-    },
+    ascii_numeric::{DxfAsciiNumericIssue, parse_i16 as parse_ascii_i16},
     generated::header_schema::{
         DxfHeaderSchemaField, DxfSchemaStorageKind, HEADER_FIELDS, SCHEMA_VERSION,
     },
     header_numeric_value::{DxfHeaderNumericIssue, DxfHeaderNumericValue},
     header_scalar::{DxfDouble, DxfElapsedDays, DxfJulianDate},
+    raw_double::decode_raw_double,
 };
 
 const HEADER_NAMESPACE: &str = "header";
@@ -711,21 +710,8 @@ fn decode_double(
     group: DxfRawGroup,
     cancellation: &DxfCancellationToken,
 ) -> Result<Result<DxfDouble, DxfHeaderNumericIssue>, DxfError> {
-    ensure_not_cancelled(cancellation)?;
-    match document.format() {
-        DxfRawDocumentFormat::Ascii => Ok(read_ascii_numeric(
-            document,
-            group.value_payload_span(),
-            parse_ascii_f64,
-            cancellation,
-        )?
-        .map(DxfDouble::from_f64)),
-        DxfRawDocumentFormat::Binary => {
-            let mut bytes = [0_u8; 8];
-            read_fixed_payload(document, group, &mut bytes, cancellation)?;
-            Ok(Ok(DxfDouble::from_bits(u64::from_le_bytes(bytes))))
-        }
-    }
+    decode_raw_double(document, group, cancellation)
+        .map(|value| value.map_err(DxfHeaderNumericIssue::InvalidAsciiNumber))
 }
 
 fn read_fixed_payload<const N: usize>(
