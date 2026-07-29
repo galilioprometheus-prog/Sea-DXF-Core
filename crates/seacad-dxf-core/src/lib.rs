@@ -63,6 +63,7 @@ mod owner_evidence_comparison;
 mod ownership_evidence;
 mod polyline_record_value;
 mod polyline_sequence;
+mod polyline_vertex_card;
 mod polyline_vertex_value;
 mod progress;
 mod raw_document;
@@ -278,6 +279,10 @@ pub use polyline_record_value::{
 pub use polyline_sequence::{
     DxfPolylineSequenceDirectory, DxfPolylineSequenceEntry, DxfPolylineSequenceState,
     DxfPolylineVertexRecordRange,
+};
+pub use polyline_vertex_card::{
+    DxfPolylineVertexCardDirectory, DxfPolylineVertexCardMember, DxfPolylineVertexCardMemberRange,
+    DxfPolylineVertexValueCard, DxfPolylineVertexValueCardState,
 };
 pub use polyline_vertex_value::{
     DxfPolylineVertexNumber, DxfPolylineVertexNumericIssue, DxfPolylineVertexValue,

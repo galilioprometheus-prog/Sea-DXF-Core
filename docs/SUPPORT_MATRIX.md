@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2c can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -80,9 +80,10 @@ record slices and closed/interrupted/unclosed SEQEND boundary evidence without
 classifying polyline families. Their sixteen documented record-level numeric
 roles retain exact double/int16 values, duplicates, and typed ASCII failures;
 each retained VERTEX separately exposes thirteen documented double/int16/int32
-roles with the same wire-level fidelity and strict record locality. No vertex
-family is inferred. Each storage decode receipt retains source ID, occurrence,
-raw span, encoding, and
+roles with the same wire-level fidelity and strict record locality. Thirteen
+fixed cards per VERTEX separately retain absent, unique, or multiple
+cardinality without selecting values. No vertex family is inferred. Each
+storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
@@ -410,6 +411,14 @@ SEQEND payloads cannot cross record boundaries. This does not select values,
 apply defaults, interpret flags, bulge, tangent, or signed indices, classify
 2D/3D/mesh/polyface vertices, validate domains, resolve polyface faces,
 transform coordinates, assemble geometry, edit/write, or render.
+M9.2d adds thirteen fixed cards to every M9.2c VERTEX entry in stable role
+order. Cards report `Absent`, `Unique`, or `Multiple` and retain compact member
+references to every source-order M9.2c occurrence. Numeric parsing success or
+failure does not change cardinality; an empty VERTEX has thirteen absent cards,
+and the contract remains available for closed, interrupted, and unclosed
+sequences. This does not select canonical values, apply defaults, interpret
+fields, classify vertex families, validate domains, resolve faces, transform
+coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

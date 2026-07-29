@@ -47,7 +47,9 @@ sixteen documented classic POLYLINE numeric roles in exact double or signed
 16-bit wire domains without selecting values or interpreting flags; M9.2c
 retains all thirteen documented classic VERTEX numeric roles in exact double,
 signed-16-bit, or signed-32-bit wire domains without classifying vertices or
-resolving polyface indices
+resolving polyface indices; M9.2d adds thirteen fixed cardinality cards to each
+retained VERTEX without selecting values or coupling lexical validity to
+occurrence count
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -513,6 +515,15 @@ resolving polyface indices
     apply defaults, interpret flags/bulge/tangent/index signs, classify 2D/3D/
     mesh/polyface vertices, validate coordinates or widths, resolve faces,
     transform OCS/WCS, assemble geometry, edit, write, or render.
+    M9.2d assigns thirteen stable per-role cards to every M9.2c VERTEX entry.
+    Each card reports `Absent`, `Unique`, or `Multiple` and retains compact
+    source-order member references back to the exact M9.2c value occurrences.
+    Lexical validity remains independent from cardinality; empty VERTEX records
+    receive thirteen absent cards, and closed/interrupted/unclosed sequence
+    states retain the same card contract. This does not select or decode a
+    canonical value, apply defaults, interpret flags/bulge/tangent/index signs,
+    classify vertex families, validate domains, resolve faces, transform
+    coordinates, assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
