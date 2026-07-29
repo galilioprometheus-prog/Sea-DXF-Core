@@ -61,6 +61,7 @@ mod lightweight_polyline_vertex_semantic;
 mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
+mod polyline_record_value;
 mod polyline_sequence;
 mod progress;
 mod raw_document;
@@ -267,6 +268,11 @@ pub use owner_evidence_comparison::{
 pub use ownership_evidence::{
     DxfIncomingOwnershipState, DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry,
     DxfOwnershipLinkRange, DxfOwnershipTargetEntry, DxfResolvedOwnershipLink,
+};
+pub use polyline_record_value::{
+    DxfPolylineRecordNumber, DxfPolylineRecordNumericIssue, DxfPolylineRecordValue,
+    DxfPolylineRecordValueDirectory, DxfPolylineRecordValueEntry, DxfPolylineRecordValueRange,
+    DxfPolylineRecordValueRole,
 };
 pub use polyline_sequence::{
     DxfPolylineSequenceDirectory, DxfPolylineSequenceEntry, DxfPolylineSequenceState,

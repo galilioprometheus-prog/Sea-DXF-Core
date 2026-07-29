@@ -42,7 +42,9 @@ starting vertex's local widths and bulge without assembling OCS geometry;
 M9.1h lazily derives finite straight or circular OCS segment geometry from
 usable endpoints and bulge with typed unavailable/degenerate/overflow failures;
 M9.2a indexes exact classic POLYLINE records with consecutive VERTEX records
-and typed closed, interrupted, or unclosed SEQEND boundaries
+and typed closed, interrupted, or unclosed SEQEND boundaries; M9.2b retains all
+sixteen documented classic POLYLINE numeric roles in exact double or signed
+16-bit wire domains without selecting values or interpreting flags
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -485,6 +487,17 @@ and typed closed, interrupted, or unclosed SEQEND boundaries
     section-local record topology, not POLYLINE or VERTEX value decoding, flag
     interpretation, polyline/mesh/face classification, coordinate semantics,
     geometry, editing, writing, or rendering.
+    M9.2b layers source-order numeric evidence over every M9.2a POLYLINE
+    sequence entry. It retains dummy/elevation `10/20/30`, thickness `39`,
+    default widths `40/41`, obsolete entities-follow `66`, flags `70`, mesh
+    counts/densities/type `71`-`75`, and extrusion `210/220/230` in their exact
+    documented double or signed-16-bit wire domains. Duplicates, ASCII lexical
+    or range failures, binary values, raw spans, interrupted/unclosed sequence
+    states, and empty value slices remain explicit. VERTEX record values cannot
+    enter the POLYLINE slice. This does not apply defaults, require dummy zero,
+    use group `66`, interpret flags or surface type, validate counts/densities/
+    widths/extrusion, classify polyline families, decode vertices, transform
+    coordinates, assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

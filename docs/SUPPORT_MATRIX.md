@@ -77,8 +77,10 @@ endpoints and derives finite circular center/radius/signed sweep from usable
 nonzero bulge, with typed unavailable, degenerate, and overflow states. Classic
 POLYLINE records now expose exact section-local consecutive VERTEX
 record slices and closed/interrupted/unclosed SEQEND boundary evidence without
-decoding their values or classifying polyline families. Each storage decode
-receipt retains source ID, occurrence, raw span, encoding, and
+classifying polyline families. Their sixteen documented record-level numeric
+roles retain exact double/int16 values, duplicates, and typed ASCII failures;
+VERTEX payloads remain separate. Each storage decode receipt retains source ID,
+occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
@@ -86,8 +88,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE sequence topology; no OCS/WCS transformation | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE sequence topology; no OCS/WCS transformation | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE record/sequence evidence; no OCS/WCS transformation | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE record/sequence evidence; no OCS/WCS transformation | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -383,6 +385,17 @@ spellings are not guessed into a sequence. Group `66` is deliberately ignored.
 This is record topology only, not value/cardinality/default semantics, 2D/3D/
 mesh/polyface classification, vertex-face resolution, coordinate transforms,
 geometry, editing, writing, or rendering.
+M9.2b retains all numeric groups documented on each recognized classic
+POLYLINE record: dummy/elevation `10/20/30`, thickness `39`, default widths
+`40/41`, obsolete entities-follow `66`, flags `70`, mesh counts/densities/type
+`71`-`75`, and extrusion `210/220/230`. The nine double roles and seven signed
+16-bit roles remain distinct, source ordered, and source anchored; duplicates,
+ASCII syntax/range failures, exact Binary values, and empty slices remain
+visible for closed, interrupted, and unclosed sequences. Numeric groups inside
+the following VERTEX records are excluded. This does not choose a canonical
+value, apply defaults, require dummy zero, interpret group `66`, flags, or
+surface type, validate domains, classify polyline families, decode VERTEX
+payloads, transform coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
