@@ -222,6 +222,14 @@ harness without publishing private corpus identifiers
     explicit ambiguous result. Parsed and null values are evidence rather than
     proof of semantic validity, and reference/ownership resolution stays
     deferred.
+    M7.3a adds a source-order directory of raw record occurrences classified as
+    soft/hard pointers or soft/hard owners. Each entry retains its exact record,
+    raw group, class, spelling access, and parsed or invalid handle evidence.
+    Object identities and `320..329` arbitrary handles are excluded; the latter
+    are not translated references. AC1009 parity admits `1005` through the
+    documented pre-R13 Binary escape while keeping unavailable group codes above
+    255 absent in both physical fixtures. Target resolution, existence checks,
+    ownership enforcement, and container semantics remain deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

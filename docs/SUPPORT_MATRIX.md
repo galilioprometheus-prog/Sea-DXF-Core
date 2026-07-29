@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.2b can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.3a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -75,6 +75,14 @@ lookup; duplicate parsed values across records return an ambiguous match set.
 Raw spelling remains authoritative, null is not rejected semantically, and no
 record type, target existence, ownership, pointer edge, dictionary, reactor, or
 XDATA meaning is inferred.
+M7.3a indexes source-order occurrences whose numeric code classifies as a soft
+or hard pointer or a soft or hard owner inside the complete M7.2a records.
+Every entry retains its record and M7.1b raw handle evidence. Identity codes
+`5`/`105` and arbitrary codes `320..329` are excluded. Code `1005` is retained
+as a soft-pointer occurrence without claiming that surrounding groups form a
+valid XDATA container. No target lookup, dangling-reference status, ownership
+enforcement, purge behavior, dictionary/reactor context, INSERT/XREF mutation,
+or graph is implemented.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
