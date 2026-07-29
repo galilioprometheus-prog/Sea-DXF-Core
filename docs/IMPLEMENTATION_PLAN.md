@@ -6,9 +6,10 @@ ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
 coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers; M7.4d joins every
-resolved pointer/owner occurrence to its exact application-group context
-without changing reference class or target state
+harness without publishing private corpus identifiers; M7.4e adds conservative
+semantic-role evidence over exact handle code, reference class, application
+context, closed-group state, and common record-bearing section while retaining
+the independent target-resolution state
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -266,7 +267,16 @@ without changing reference class or target state
     of outside, `{ACAD_REACTORS`, `{ACAD_XDICTIONARY`, or another application
     group, with the exact group entry and malformed closure state still
     available. Numeric pointer/owner class and target-resolution state remain
-    independent evidence; semantic roles and owner reconciliation stay deferred.
+    independent evidence. M7.4e conservatively classifies every contextual
+    reference as a generic pointer, generic ownership-class reference,
+    persistent-reactor candidate, extension-dictionary candidate, or common
+    owner-pointer candidate. Candidate roles require the exact documented code,
+    numeric class, application context, closed-group state where applicable,
+    and one of `TABLES`, `BLOCKS`, `ENTITIES`, or `OBJECTS`; malformed groups
+    fall back to generic evidence. Roles do not erase invalid, null, missing,
+    unique, or ambiguous target state. Record-type legality, authoritative owner
+    reconciliation, one-owner conformance, graph topology, and container
+    semantics stay deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

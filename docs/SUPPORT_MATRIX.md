@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4d can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4e can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -29,8 +29,10 @@ handle-valued numeric group codes have a context-neutral pointer/owner
 classification, and any one raw group occurrence can be projected into an
 exact source-anchored handle or typed lexical failure. Complete raw records
 also expose identity evidence, document-local pointer/owner target resolution,
-and incoming soft/hard ownership-class evidence grouped by unique target;
-these remain evidence rather than a validated topology. Completely closed
+incoming soft/hard ownership-class evidence grouped by unique target, exact
+application-group context, and conservative reactor, extension-dictionary, or
+common-owner candidates; these remain evidence rather than a validated
+topology. Completely closed
 known record-bearing sections expose format-neutral group-zero record chunks,
 while record types remain uninterpreted. Date or elapsed-day values do not infer
 calendars or timezones. Each
@@ -42,8 +44,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + document-local handle target and ownership-class evidence; no validated topology | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + document-local handle target and ownership-class evidence; no validated topology | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + contextual handle target/ownership/role evidence; no validated topology | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + contextual handle target/ownership/role evidence; no validated topology | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -120,6 +122,17 @@ plus outside, reactor, extension-dictionary, or other application-group context
 and the exact optional M7.4c group entry. This does not yet reinterpret a
 context/class combination as a semantic reactor, extension dictionary, or
 ordinary owner relation.
+M7.4e adds a separate conservative role entry for every M7.4d contextual
+reference. Exact closed `330` soft pointers inside `{ACAD_REACTORS`, exact
+closed `360` hard owners inside `{ACAD_XDICTIONARY`, and exact outside-group
+`330` soft pointers receive candidate roles only in complete `TABLES`,
+`BLOCKS`, `ENTITIES`, or `OBJECTS` records. All other shapes remain generic
+pointer or ownership-class evidence; interrupted and unclosed groups never
+receive specialized candidates. Invalid, null, missing, unique, and ambiguous
+target-resolution states remain independently accessible. Candidate roles do
+not validate record-type legality, target existence, authoritative ownership,
+one-owner conformance, dictionary membership, reactor payloads, lifecycle,
+purge behavior, cycles, edits, or writes.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
