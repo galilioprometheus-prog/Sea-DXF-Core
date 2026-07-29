@@ -32,7 +32,9 @@ and vertex identifiers without interpreting or reconciling them; M9.1c groups
 vertex-scoped evidence by exact group-10 anchors with fixed cardinality cards
 and explicit pre-anchor orphans; M9.1d lazily projects required OCS X/Y,
 defaulted local widths/bulge, and optional vertex identifiers without effective
-width or segment assembly
+width or segment assembly; M9.1e adds eight fixed record-level cardinality
+cards for count, flags, elevation, thickness, constant width, and extrusion
+without admitting vertex-scoped fields or applying record semantics
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -426,6 +428,14 @@ width or segment assembly
     exists. Constant/variable-width precedence, count reconciliation, flag and
     bulge interpretation, OCS transformation, closure, and segment assembly
     remain deferred.
+    M9.1e materializes eight stable record-level cards for vertex count `90`,
+    flags `70`, OCS elevation `38`, thickness `39`, constant width `43`, and
+    extrusion `210/220/230`. Each card reports `Absent`, `Unique`, or
+    `Multiple` and owns compact members that resolve to the exact M9.1a/b
+    floating or integer evidence. Vertex coordinates `10/20`, local widths
+    `40/41`, bulge `42`, and identifier `91` remain excluded from these cards.
+    Lexical validity stays independent from occurrence cardinality; no value is
+    selected, defaulted, interpreted, reconciled, validated, or transformed.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

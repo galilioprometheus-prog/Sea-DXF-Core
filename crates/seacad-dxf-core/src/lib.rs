@@ -52,6 +52,7 @@ mod infinite_line_geometry_semantic;
 mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
+mod lightweight_polyline_record_card;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
@@ -219,6 +220,12 @@ pub use lightweight_polyline_integer::{
     DxfLightweightPolylineIntegerIssue, DxfLightweightPolylineIntegerRange,
     DxfLightweightPolylineIntegerRecordEntry, DxfLightweightPolylineIntegerRole,
     DxfLightweightPolylineIntegerValue,
+};
+pub use lightweight_polyline_record_card::{
+    DxfLightweightPolylineRecordCard, DxfLightweightPolylineRecordCardDirectory,
+    DxfLightweightPolylineRecordCardEntry, DxfLightweightPolylineRecordCardMember,
+    DxfLightweightPolylineRecordCardMemberRange, DxfLightweightPolylineRecordCardState,
+    DxfLightweightPolylineRecordRole,
 };
 pub use lightweight_polyline_vertex::{
     DxfLightweightPolylineGroupedRecordEntry, DxfLightweightPolylineVertexCard,

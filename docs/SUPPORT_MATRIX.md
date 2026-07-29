@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1d can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1e can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -64,7 +64,10 @@ wire domains without selection or interpretation. Exact group-10 anchors now
 form conservative vertex slices with six fixed cardinality cards; pre-anchor
 vertex evidence remains explicit as orphans. Lazy vertex semantics require OCS
 X/Y, apply only documented local-width/bulge zero defaults, and retain optional
-identifier state without claiming effective widths or segments. Each
+identifier state without claiming effective widths or segments. Eight fixed
+record-level cards separately retain cardinality for count, flags, elevation,
+thickness, constant width, and extrusion without admitting vertex-scoped
+fields or selecting values. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -321,6 +324,15 @@ default for absent `40/41` does not select an effective width when record-level
 constant width `43` exists. Width precedence, range validation, declared-count
 reconciliation, flags, bulge geometry, version applicability, OCS
 transformation, closure, and segment assembly remain deferred.
+M9.1e adds eight fixed cards per recognized LWPOLYLINE record for vertex count
+`90`, flags `70`, OCS elevation `38`, thickness `39`, constant width `43`, and
+extrusion X/Y/Z `210/220/230`. Compact members resolve to exact M9.1a/M9.1b
+floating or signed-integer evidence. Vertex-scoped `10/20/40/41/42/91` values
+cannot enter these cards. `Absent`, `Unique`, and `Multiple` describe
+occurrence cardinality independently from lexical validity; the cards do not
+select canonical values, apply defaults, interpret flags or widths, reconcile
+declared and observed counts, validate version applicability, transform OCS,
+or assemble geometry.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
