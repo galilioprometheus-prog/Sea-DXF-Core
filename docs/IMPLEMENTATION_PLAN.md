@@ -21,7 +21,9 @@ exact ELLIPSE WCS center, relative major-axis endpoint, ratio, parameter, and
 extrusion-component evidence without assembling ellipse geometry; M8.3b adds
 twelve fixed per-role ELLIPSE cardinality cards with compact evidence
 references; M8.3c adds lazy required-value semantics and reviewed extrusion
-defaults without range validation or ellipse assembly
+defaults without range validation or ellipse assembly; M8.4a adds exact
+RAY/XLINE WCS point and unit-direction evidence without normalization or
+infinite-line assembly
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -359,6 +361,13 @@ defaults without range validation or ellipse assembly
     defaults; present invalid or duplicate evidence is never hidden. Ratio and
     parameter constraints, endpoint/sweep inference, coordinate transformation,
     and ellipse assembly remain deferred.
+    M8.4a indexes exact uppercase `RAY` and `XLINE` records in complete
+    `BLOCKS` and `ENTITIES` sections through a separate infinite-line evidence
+    directory. It retains the RAY start/XLINE first point `10/20/30` and unit
+    direction vector `11/21/31` in WCS, in source order, with exact
+    ASCII/Binary double evidence. It does not select values, validate
+    completeness or unit length, infer extent/direction semantics, validate
+    version applicability, or assemble infinite geometry.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

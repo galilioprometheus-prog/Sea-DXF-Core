@@ -46,6 +46,7 @@ mod header_scalar;
 mod header_schema_directory;
 mod header_text;
 mod header_view;
+mod infinite_line_geometry;
 mod johab;
 mod limits;
 mod owner_evidence_comparison;
@@ -185,6 +186,12 @@ pub use header_text::{
 };
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
+};
+pub use infinite_line_geometry::{
+    DxfInfiniteLineGeometryDirectory, DxfInfiniteLineGeometryKind,
+    DxfInfiniteLineGeometryNumericIssue, DxfInfiniteLineGeometryRecordEntry,
+    DxfInfiniteLineGeometryValue, DxfInfiniteLineGeometryValueRange,
+    DxfInfiniteLineGeometryValueRole,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{
