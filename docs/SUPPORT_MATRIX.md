@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2f can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2g can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -80,7 +80,9 @@ record slices and closed/interrupted/unclosed SEQEND boundary evidence without
 classifying polyline families. Their sixteen documented record-level numeric
 roles retain exact double/int16 values, duplicates, and typed ASCII failures;
 sixteen fixed record cards separately retain per-role cardinality without
-admitting VERTEX values or selecting occurrences;
+admitting VERTEX values or selecting occurrences. Lazy record semantics require
+dummy X/Y/elevation, apply the documented zero and extrusion defaults, and
+expose each documented flag bit while ignoring obsolete entities-follow `66`;
 each retained VERTEX separately exposes thirteen documented double/int16/int32
 roles with the same wire-level fidelity and strict record locality. Thirteen
 fixed cards per VERTEX separately retain absent, unique, or multiple
@@ -440,6 +442,17 @@ absent cards, and VERTEX values cannot enter record cards. The contract remains
 available for closed, interrupted, and unclosed sequences. This does not select
 values, apply defaults, interpret fields, classify polyline families, validate
 domains, transform coordinates, assemble geometry, edit/write, or render.
+M9.2g lazily maps fifteen meaningful POLYLINE record roles. Dummy X/Y and
+elevation are required; absent thickness, default widths, flags, mesh
+counts/densities/type, and extrusion receive only their documented defaults.
+Unique values remain exact, and missing required values, invalid ASCII, or
+duplicates remain typed invalid with raw provenance when available. Eight
+helpers independently expose the documented flag bits. Obsolete group `66`
+remains accessible through record cards/evidence but is ignored by semantic
+policy. This does not enforce dummy zero, validate widths/counts/densities/
+surface type or extrusion, reconcile contradictory flags, classify 2D/3D/
+mesh/polyface families, apply mesh metadata to vertices, resolve faces,
+transform coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

@@ -53,7 +53,9 @@ occurrence count; M9.2e lazily projects required location, defaulted local
 widths/bulge, and optional curve-fit tangent direction without classifying
 vertices or interpreting integer fields; M9.2f adds sixteen fixed cardinality
 cards to each classic POLYLINE record without selecting values or admitting
-VERTEX payloads
+VERTEX payloads; M9.2g lazily projects required dummy/elevation components,
+documented record defaults, and exact flag-bit helpers while keeping obsolete
+group `66` outside semantic policy and avoiding mesh classification
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -546,6 +548,19 @@ VERTEX payloads
     values, apply defaults, interpret flags or counts, classify polyline
     families, validate domains, transform coordinates, assemble geometry,
     edit, write, or render.
+    M9.2g lazily projects fifteen meaningful M9.2f record roles. Dummy X/Y and
+    elevation `10/20/30` are required; absent thickness `39`, default widths
+    `40/41`, flags `70`, mesh counts/densities/type `71`-`75`, and extrusion
+    `210/220/230` receive only their documented zero or `(0, 0, 1)` defaults.
+    Unique values preserve exact double bits or signed-i16 values; invalid
+    ASCII, missing required components, and duplicates remain typed invalid
+    with raw provenance when available. Helpers expose each of the eight
+    documented flag bits independently. Obsolete entities-follow `66` stays
+    available only through M9.2b/f evidence and is ignored semantically. This
+    does not enforce dummy zero, validate numeric domains or smooth-surface
+    codes, reconcile contradictory flags, classify polyline families, apply
+    mesh metadata to VERTEX records, resolve faces, transform coordinates,
+    assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

@@ -62,6 +62,7 @@ mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod polyline_record_card;
+mod polyline_record_semantic;
 mod polyline_record_value;
 mod polyline_sequence;
 mod polyline_vertex_card;
@@ -276,6 +277,10 @@ pub use ownership_evidence::{
 pub use polyline_record_card::{
     DxfPolylineRecordCardDirectory, DxfPolylineRecordCardMember, DxfPolylineRecordCardMemberRange,
     DxfPolylineRecordValueCard, DxfPolylineRecordValueCardState,
+};
+pub use polyline_record_semantic::{
+    DxfPolylineRecordSemanticDirectory, DxfPolylineRecordSemanticDouble,
+    DxfPolylineRecordSemanticInteger, DxfPolylineRecordSemanticIssue, DxfPolylineRecordSemantics,
 };
 pub use polyline_record_value::{
     DxfPolylineRecordNumber, DxfPolylineRecordNumericIssue, DxfPolylineRecordValue,
