@@ -44,7 +44,10 @@ usable endpoints and bulge with typed unavailable/degenerate/overflow failures;
 M9.2a indexes exact classic POLYLINE records with consecutive VERTEX records
 and typed closed, interrupted, or unclosed SEQEND boundaries; M9.2b retains all
 sixteen documented classic POLYLINE numeric roles in exact double or signed
-16-bit wire domains without selecting values or interpreting flags
+16-bit wire domains without selecting values or interpreting flags; M9.2c
+retains all thirteen documented classic VERTEX numeric roles in exact double,
+signed-16-bit, or signed-32-bit wire domains without classifying vertices or
+resolving polyface indices
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -498,6 +501,18 @@ sixteen documented classic POLYLINE numeric roles in exact double or signed
     use group `66`, interpret flags or surface type, validate counts/densities/
     widths/extrusion, classify polyline families, decode vertices, transform
     coordinates, assemble geometry, edit, write, or render.
+    M9.2c layers source-order numeric evidence over every VERTEX retained by
+    M9.2a. It retains location `10/20/30`, widths `40/41`, bulge `42`, curve-fit
+    tangent direction `50`, flags `70`, polyface indices `71`-`74`, and vertex
+    identifier `91` in their exact documented double, signed-16-bit, or signed-
+    32-bit wire domains. Every entry remains linked to its POLYLINE record and
+    sequence-local ordinal; duplicates, ASCII lexical or range failures, exact
+    Binary values, raw spans, empty value slices, and closed/interrupted/
+    unclosed sequence states remain explicit. POLYLINE and SEQEND payloads
+    cannot enter a VERTEX slice. This does not select canonical occurrences,
+    apply defaults, interpret flags/bulge/tangent/index signs, classify 2D/3D/
+    mesh/polyface vertices, validate coordinates or widths, resolve faces,
+    transform OCS/WCS, assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2a can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -79,8 +79,10 @@ POLYLINE records now expose exact section-local consecutive VERTEX
 record slices and closed/interrupted/unclosed SEQEND boundary evidence without
 classifying polyline families. Their sixteen documented record-level numeric
 roles retain exact double/int16 values, duplicates, and typed ASCII failures;
-VERTEX payloads remain separate. Each storage decode receipt retains source ID,
-occurrence, raw span, encoding, and
+each retained VERTEX separately exposes thirteen documented double/int16/int32
+roles with the same wire-level fidelity and strict record locality. No vertex
+family is inferred. Each storage decode receipt retains source ID, occurrence,
+raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
@@ -88,8 +90,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE record/sequence evidence; no OCS/WCS transformation | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE record/sequence evidence; no OCS/WCS transformation | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE/VERTEX record/sequence evidence; no OCS/WCS transformation | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE/VERTEX record/sequence evidence; no OCS/WCS transformation | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -396,6 +398,18 @@ the following VERTEX records are excluded. This does not choose a canonical
 value, apply defaults, require dummy zero, interpret group `66`, flags, or
 surface type, validate domains, classify polyline families, decode VERTEX
 payloads, transform coordinates, assemble geometry, edit/write, or render.
+M9.2c retains every documented numeric group on each VERTEX record belonging
+to an M9.2a classic POLYLINE sequence: location `10/20/30`, start/end width
+`40/41`, bulge `42`, curve-fit tangent direction `50`, flags `70`, polyface
+indices `71`-`74`, and vertex identifier `91`. Seven double, five signed-16-
+bit, and one signed-32-bit roles remain distinct, source ordered, and source
+anchored. Entries retain their parent POLYLINE and sequence-local ordinal;
+duplicates, ASCII syntax/range failures, exact Binary values, empty slices,
+and all three sequence states remain visible. POLYLINE, other VERTEX, and
+SEQEND payloads cannot cross record boundaries. This does not select values,
+apply defaults, interpret flags, bulge, tangent, or signed indices, classify
+2D/3D/mesh/polyface vertices, validate domains, resolve polyface faces,
+transform coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
