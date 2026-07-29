@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1c can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -62,7 +62,9 @@ defaults, validation, or polyline assembly. Separate typed integer evidence
 retains LWPOLYLINE count, flags, and vertex identifiers in their exact signed
 wire domains without selection or interpretation. Exact group-10 anchors now
 form conservative vertex slices with six fixed cardinality cards; pre-anchor
-vertex evidence remains explicit as orphans. Each
+vertex evidence remains explicit as orphans. Lazy vertex semantics require OCS
+X/Y, apply only documented local-width/bulge zero defaults, and retain optional
+identifier state without claiming effective widths or segments. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -71,8 +73,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE evidence/vertex cards; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE evidence/vertex cards; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE vertex semantics; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE vertex semantics; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -309,6 +311,16 @@ roles remain outside the vertex grouping. This is deterministic grouping
 evidence, not default application, canonical selection, declared-count
 reconciliation, flag/bulge interpretation, identifier uniqueness, version
 applicability, OCS transformation, or assembled segment geometry.
+M9.1d lazily maps every grouped LWPOLYLINE vertex card set into typed semantic
+states. Unique valid OCS X/Y values are explicit; missing Y, invalid ASCII, and
+duplicate required coordinates remain invalid with available raw provenance.
+Absent local start/end width and bulge fields receive documented zero defaults;
+present invalid or duplicate values remain invalid. Identifier is explicit,
+absent, or invalid without a default. These are local field semantics: a zero
+default for absent `40/41` does not select an effective width when record-level
+constant width `43` exists. Width precedence, range validation, declared-count
+reconciliation, flags, bulge geometry, version applicability, OCS
+transformation, closure, and segment assembly remain deferred.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

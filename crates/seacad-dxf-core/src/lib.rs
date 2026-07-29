@@ -53,6 +53,7 @@ mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
 mod lightweight_polyline_vertex;
+mod lightweight_polyline_vertex_semantic;
 mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -224,6 +225,11 @@ pub use lightweight_polyline_vertex::{
     DxfLightweightPolylineVertexCardState, DxfLightweightPolylineVertexDirectory,
     DxfLightweightPolylineVertexEntry, DxfLightweightPolylineVertexMember,
     DxfLightweightPolylineVertexRole,
+};
+pub use lightweight_polyline_vertex_semantic::{
+    DxfLightweightPolylineVertexSemanticDirectory, DxfLightweightPolylineVertexSemanticDouble,
+    DxfLightweightPolylineVertexSemanticIdentifier, DxfLightweightPolylineVertexSemanticIssue,
+    DxfLightweightPolylineVertexSemantics,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{

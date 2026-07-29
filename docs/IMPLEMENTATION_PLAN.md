@@ -30,7 +30,9 @@ LWPOLYLINE floating-point evidence without grouping vertices or assembling a
 polyline; M9.1b adds exact signed integer evidence for LWPOLYLINE count, flags,
 and vertex identifiers without interpreting or reconciling them; M9.1c groups
 vertex-scoped evidence by exact group-10 anchors with fixed cardinality cards
-and explicit pre-anchor orphans
+and explicit pre-anchor orphans; M9.1d lazily projects required OCS X/Y,
+defaulted local widths/bulge, and optional vertex identifiers without effective
+width or segment assembly
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -415,6 +417,15 @@ and explicit pre-anchor orphans
     This does not apply defaults, select values, validate lexical content,
     reconcile declared count, interpret flags/bulges, transform OCS, or
     assemble segments.
+    M9.1d lazily projects each grouped vertex into source-anchored semantic
+    states. OCS X/Y are required; missing Y, invalid ASCII, or duplicates fail
+    typed. Absent local start/end width and bulge fields receive the documented
+    zero defaults, while present invalid or duplicate evidence is never hidden.
+    Vertex identifiers remain explicit, absent, or invalid without a default.
+    Local width defaults do not claim effective width when constant width `43`
+    exists. Constant/variable-width precedence, count reconciliation, flag and
+    bulge interpretation, OCS transformation, closure, and segment assembly
+    remain deferred.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
