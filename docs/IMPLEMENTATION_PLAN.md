@@ -214,6 +214,14 @@ harness without publishing private corpus identifiers
     recognized sections without indexing partial records. Record type
     interpretation, handle identity, ownership, and reference resolution remain
     deferred.
+    M7.2b layers source-anchored group-code `5` and `105` identity evidence over
+    every M7.2a raw record. Absent, uniquely parsed, uniquely invalid, and
+    multiple-candidate records remain distinct; exact candidate spelling stays
+    readable from the matching source. Only records with one lexically parsed
+    candidate enter the handle-sorted lookup, where duplicate values remain an
+    explicit ambiguous result. Parsed and null values are evidence rather than
+    proof of semantic validity, and reference/ownership resolution stays
+    deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

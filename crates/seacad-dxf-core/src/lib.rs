@@ -21,6 +21,7 @@ mod format_probe;
 #[allow(dead_code)]
 mod generated;
 mod handle;
+mod handle_identity;
 mod handseed;
 mod header_handle;
 mod header_index;
@@ -89,6 +90,10 @@ pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physica
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
     parse_dxf_handle_hex,
+};
+pub use handle_identity::{
+    DxfHandleIdentityCandidateRange, DxfHandleIdentityDirectory, DxfHandleIdentityEntry,
+    DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfHandleIdentityState,
 };
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_handle::{
