@@ -6,7 +6,9 @@ ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
 coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers
+harness without publishing private corpus identifiers; M7.4a aggregates
+source-anchored soft/hard ownership-class evidence by uniquely resolved target
+without claiming a complete ownership graph
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -239,6 +241,14 @@ harness without publishing private corpus identifiers
     than copying target lists per reference. This is document-local lookup only;
     ownership validity, graph traversal, container meaning, and edit behavior
     remain deferred.
+    M7.4a filters that resolved evidence to soft-owner and hard-owner
+    occurrences, retains every invalid, null, missing, unique, or ambiguous
+    occurrence in source order, and groups only uniquely resolved links by
+    target record. Zero, one, and multiple incoming ownership-class links are
+    therefore observable without copying target lists. This is not yet a
+    complete ownership graph: context-specific owner pointers such as common
+    group code `330`, legal record-type usage, one-owner conformance, lifecycle
+    behavior, cycles, and container semantics remain deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

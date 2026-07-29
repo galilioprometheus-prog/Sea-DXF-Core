@@ -35,6 +35,7 @@ mod header_text;
 mod header_view;
 mod johab;
 mod limits;
+mod ownership_evidence;
 mod progress;
 mod raw_document;
 mod raw_handle;
@@ -117,6 +118,9 @@ pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use ownership_evidence::{
+    DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry, DxfResolvedOwnershipLink,
+};
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
 };

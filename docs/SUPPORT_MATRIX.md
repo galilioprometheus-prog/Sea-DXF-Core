@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.3b can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -27,10 +27,12 @@ IEEE-754 bits, tuple components retain independent provenance, strict Booleans
 reject values outside `0/1`, exact text retains source spelling, documented
 handle-valued numeric group codes have a context-neutral pointer/owner
 classification, and any one raw group occurrence can be projected into an
-exact source-anchored handle or typed lexical failure. Handles remain
-identifiers without target or topology resolution. Completely closed known
-record-bearing sections also expose format-neutral group-zero record chunks;
-record types remain uninterpreted. Date or elapsed-day values do not infer
+exact source-anchored handle or typed lexical failure. Complete raw records
+also expose identity evidence, document-local pointer/owner target resolution,
+and incoming soft/hard ownership-class evidence grouped by unique target;
+these remain evidence rather than a validated topology. Completely closed
+known record-bearing sections expose format-neutral group-zero record chunks,
+while record types remain uninterpreted. Date or elapsed-day values do not infer
 calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -40,8 +42,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw handle projection + closed-section group-zero record chunks; no record type or target resolution | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw handle projection + closed-section group-zero record chunks; no record type or target resolution | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + document-local handle target and ownership-class evidence; no validated topology | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + document-local handle target and ownership-class evidence; no validated topology | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -90,6 +92,14 @@ identity candidates cannot become targets; duplicate identities are returned as
 an ambiguous shared match slice. Resolution does not validate whether a
 particular record type may use the code, enforce one-owner or purge rules,
 traverse a graph, interpret containers, or perform clone/INSERT/XREF rewriting.
+M7.4a retains only soft-owner and hard-owner occurrences in a source-order
+ownership-evidence directory. All five M7.3b resolution states stay visible;
+only unique resolutions enter a compact incoming-link index grouped by target
+record, so zero, one, or multiple incoming ownership-class links can be queried
+without copying target arrays. This does not infer a complete owner from
+context-specific `330` pointers, validate record-type legality, enforce the
+one-owner rule, apply hard/soft purge behavior, diagnose cycles, or interpret
+dictionaries and other containers.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
