@@ -207,6 +207,13 @@ harness without publishing private corpus identifiers
     ASCII and Binary share the same API and fixed 16-byte parser; raw spelling
     remains readable only from the matching source document. Target lookup,
     record identity, dangling-reference checks, and topology remain deferred.
+    M7.2a adds one format-neutral directory of group-zero-delimited raw chunks
+    inside completely closed `CLASSES`, `TABLES`, `BLOCKS`, `ENTITIES`, and
+    `OBJECTS` sections. It excludes framing markers and unknown/non-record
+    sections, retains exact group ranges, and reports interrupted or unclosed
+    recognized sections without indexing partial records. Record type
+    interpretation, handle identity, ownership, and reference resolution remain
+    deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

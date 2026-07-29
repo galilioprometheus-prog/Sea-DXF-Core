@@ -15,7 +15,7 @@ pub struct DxfAsciiGroupRange {
 }
 
 impl DxfAsciiGroupRange {
-    fn new(start: u32, end: u32) -> Result<Self, DxfError> {
+    pub(crate) fn new(start: u32, end: u32) -> Result<Self, DxfError> {
         if start <= end {
             Ok(Self { start, end })
         } else {

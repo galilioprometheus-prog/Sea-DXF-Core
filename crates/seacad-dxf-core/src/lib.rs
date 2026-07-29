@@ -35,6 +35,7 @@ mod limits;
 mod progress;
 mod raw_document;
 mod raw_handle;
+mod raw_record;
 mod read_options;
 mod semantic_value;
 mod source;
@@ -113,6 +114,10 @@ pub use raw_document::{
     DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
 };
 pub use raw_handle::{DxfRawHandleLookup, DxfRawHandleValue};
+pub use raw_record::{
+    DxfRawRecord, DxfRawRecordDirectory, DxfRawRecordRange, DxfRawRecordSection,
+    DxfRawRecordSectionKind, DxfRawRecordSectionState,
+};
 pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use semantic_value::{
     DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
