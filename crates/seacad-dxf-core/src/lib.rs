@@ -119,7 +119,8 @@ pub use header_view::{
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use ownership_evidence::{
-    DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry, DxfResolvedOwnershipLink,
+    DxfIncomingOwnershipState, DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry,
+    DxfOwnershipLinkRange, DxfOwnershipTargetEntry, DxfResolvedOwnershipLink,
 };
 pub use progress::{
     DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,

@@ -7,8 +7,9 @@ use std::{
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfError, DxfHandleGroupClass, DxfHandleParseIssue,
-    DxfHandleResolutionState, DxfMemorySource, DxfOwnershipEvidenceDirectory,
-    DxfOwnershipEvidenceEntry, DxfRawDocumentView, DxfReadOptions, DxfResolvedOwnershipLink,
+    DxfHandleResolutionState, DxfIncomingOwnershipState, DxfMemorySource,
+    DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry, DxfOwnershipLinkRange,
+    DxfOwnershipTargetEntry, DxfRawDocumentView, DxfReadOptions, DxfResolvedOwnershipLink,
     DxfResourceProfile, NoopDxfReadObserver,
 };
 
@@ -92,11 +93,52 @@ fn unresolved_owner_occurrences_do_not_enter_the_incoming_target_index()
 }
 
 #[test]
+fn every_raw_record_has_typed_incoming_ownership_cardinality() -> Result<(), Box<dyn Error>> {
+    let bytes = ascii_fixture(DxfAcadVersion::Ac1032);
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.ownership_evidence_directory(&DxfCancellationToken::default())?;
+
+    assert_eq!(directory.target_entries().len(), 8);
+    let expected = [
+        DxfIncomingOwnershipState::MultipleIncomingLinks { link_count: 2 },
+        DxfIncomingOwnershipState::UniqueIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+        DxfIncomingOwnershipState::NoIncomingLink,
+    ];
+    for (record_ordinal, (entry, state)) in
+        directory.target_entries().iter().zip(expected).enumerate()
+    {
+        let record_ordinal = u64::try_from(record_ordinal)?;
+        assert_eq!(directory.target_entry(record_ordinal), Some(*entry));
+        assert_eq!(entry.record().ordinal(), record_ordinal);
+        assert_eq!(entry.state(), state);
+        assert_eq!(
+            entry.incoming_range().len(),
+            directory
+                .incoming_links_for_target_record(record_ordinal)
+                .ok_or_else(invalid_test_data)?
+                .len() as u64
+        );
+    }
+    assert_eq!(directory.target_entry(u64::MAX), None);
+    Ok(())
+}
+
+#[test]
 fn directory_is_cancellable_linear_filtered_and_publicly_bounded() -> Result<(), Box<dyn Error>> {
     assert_send_sync::<DxfOwnershipEvidenceDirectory>();
     assert_copy::<DxfOwnershipEvidenceEntry>();
+    assert_copy::<DxfOwnershipLinkRange>();
+    assert_copy::<DxfOwnershipTargetEntry>();
+    assert_copy::<DxfIncomingOwnershipState>();
     assert_copy::<DxfResolvedOwnershipLink>();
     assert_send_sync::<DxfOwnershipEvidenceEntry>();
+    assert_send_sync::<DxfOwnershipTargetEntry>();
     assert_send_sync::<DxfResolvedOwnershipLink>();
 
     let bytes = ascii_fixture(DxfAcadVersion::Ac1032);
@@ -107,9 +149,11 @@ fn directory_is_cancellable_linear_filtered_and_publicly_bounded() -> Result<(),
     assert_eq!(source.reads() - reads_after_open, 17);
     assert_eq!(directory.entries().len(), 7);
     assert_eq!(directory.resolution_directory().entries().len(), 9);
+    assert_eq!(directory.target_entries().len(), 8);
     assert!(directory.resolved_links().len() <= directory.entries().len());
     assert!(std::mem::size_of::<DxfOwnershipEvidenceEntry>() <= 176);
     assert!(std::mem::size_of::<DxfResolvedOwnershipLink>() <= 144);
+    assert!(std::mem::size_of::<DxfOwnershipTargetEntry>() <= 80);
     assert_eq!(directory.entry(u64::MAX), None);
     assert_eq!(directory.evidence_for_source_record(u64::MAX), None);
     assert_eq!(directory.incoming_links_for_target_record(u64::MAX), None);
@@ -154,6 +198,11 @@ fn assert_directory(
     if version == DxfAcadVersion::Ac1009 {
         assert!(directory.entries().is_empty());
         assert!(directory.resolved_links().is_empty());
+        assert_eq!(directory.target_entries().len(), 4);
+        assert!(directory.target_entries().iter().all(|entry| {
+            entry.state() == DxfIncomingOwnershipState::NoIncomingLink
+                && entry.incoming_range().is_empty()
+        }));
         return Ok(());
     }
 

@@ -5,8 +5,45 @@ use std::io;
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError, DxfHandleGroupClass,
     DxfHandleIdentityMatch, DxfHandleResolutionDirectory, DxfHandleResolutionEntry,
-    DxfHandleResolutionState, DxfIoOperation, DxfRawDocumentView, DxfSourceId,
+    DxfHandleResolutionState, DxfIoOperation, DxfRawDocumentView, DxfRawRecord, DxfSourceId,
 };
+
+/// Half-open range of resolved-link ordinals in an ownership-evidence directory.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfOwnershipLinkRange {
+    start: u32,
+    end: u32,
+}
+
+impl DxfOwnershipLinkRange {
+    fn new(start: u32, end: u32) -> Result<Self, DxfError> {
+        if start <= end {
+            Ok(Self { start, end })
+        } else {
+            Err(invalid_internal_data())
+        }
+    }
+
+    #[must_use]
+    pub const fn start(self) -> u64 {
+        self.start as u64
+    }
+
+    #[must_use]
+    pub const fn end(self) -> u64 {
+        self.end as u64
+    }
+
+    #[must_use]
+    pub const fn len(self) -> u64 {
+        (self.end - self.start) as u64
+    }
+
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.start == self.end
+    }
+}
 
 /// One source-order soft-owner or hard-owner handle occurrence.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -56,6 +93,40 @@ impl DxfResolvedOwnershipLink {
     }
 }
 
+/// Cardinality of uniquely resolved incoming ownership-class evidence.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfIncomingOwnershipState {
+    NoIncomingLink,
+    UniqueIncomingLink,
+    MultipleIncomingLinks { link_count: u32 },
+}
+
+/// One raw target record and its incoming ownership-class link range.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfOwnershipTargetEntry {
+    record: DxfRawRecord,
+    incoming_range: DxfOwnershipLinkRange,
+    state: DxfIncomingOwnershipState,
+}
+
+impl DxfOwnershipTargetEntry {
+    #[must_use]
+    pub const fn record(self) -> DxfRawRecord {
+        self.record
+    }
+
+    #[must_use]
+    pub const fn incoming_range(self) -> DxfOwnershipLinkRange {
+        self.incoming_range
+    }
+
+    #[must_use]
+    pub const fn state(self) -> DxfIncomingOwnershipState {
+        self.state
+    }
+}
+
 /// Immutable ownership-class evidence with incoming links grouped by target.
 ///
 /// Only soft-owner and hard-owner occurrences participate. Invalid, null,
@@ -68,6 +139,7 @@ pub struct DxfOwnershipEvidenceDirectory {
     resolutions: DxfHandleResolutionDirectory,
     entries: Box<[DxfOwnershipEvidenceEntry]>,
     resolved_links: Box<[DxfResolvedOwnershipLink]>,
+    targets: Box<[DxfOwnershipTargetEntry]>,
 }
 
 impl DxfOwnershipEvidenceDirectory {
@@ -119,11 +191,49 @@ impl DxfOwnershipEvidenceDirectory {
         });
         ensure_not_cancelled(cancellation)?;
 
+        let identity_entries = resolutions.identity_directory().entries();
+        let mut targets = Vec::new();
+        targets
+            .try_reserve(identity_entries.len())
+            .map_err(|_| out_of_memory())?;
+        let mut link_cursor = 0_usize;
+        for identity in identity_entries.iter().copied() {
+            ensure_not_cancelled(cancellation)?;
+            let start = compact_len(link_cursor)?;
+            while resolved_links
+                .get(link_cursor)
+                .is_some_and(|link| link.target().record().ordinal() == identity.record().ordinal())
+            {
+                link_cursor = link_cursor
+                    .checked_add(1)
+                    .ok_or_else(invalid_internal_data)?;
+            }
+            let end = compact_len(link_cursor)?;
+            let incoming_range = DxfOwnershipLinkRange::new(start, end)?;
+            let state = match incoming_range.len() {
+                0 => DxfIncomingOwnershipState::NoIncomingLink,
+                1 => DxfIncomingOwnershipState::UniqueIncomingLink,
+                link_count => DxfIncomingOwnershipState::MultipleIncomingLinks {
+                    link_count: u32::try_from(link_count).map_err(|_| invalid_internal_data())?,
+                },
+            };
+            targets.push(DxfOwnershipTargetEntry {
+                record: identity.record(),
+                incoming_range,
+                state,
+            });
+        }
+        if link_cursor != resolved_links.len() {
+            return Err(invalid_internal_data());
+        }
+        ensure_not_cancelled(cancellation)?;
+
         Ok(Self {
             source_id: document.source_id(),
             resolutions,
             entries: entries.into_boxed_slice(),
             resolved_links: resolved_links.into_boxed_slice(),
+            targets: targets.into_boxed_slice(),
         })
     }
 
@@ -171,19 +281,27 @@ impl DxfOwnershipEvidenceDirectory {
     }
 
     #[must_use]
+    pub fn target_entries(&self) -> &[DxfOwnershipTargetEntry] {
+        &self.targets
+    }
+
+    #[must_use]
+    pub fn target_entry(&self, record_ordinal: u64) -> Option<DxfOwnershipTargetEntry> {
+        let index = usize::try_from(record_ordinal).ok()?;
+        self.targets
+            .get(index)
+            .copied()
+            .filter(|entry| entry.record().ordinal() == record_ordinal)
+    }
+
+    #[must_use]
     pub fn incoming_links_for_target_record(
         &self,
         record_ordinal: u64,
     ) -> Option<&[DxfResolvedOwnershipLink]> {
-        self.resolutions
-            .identity_directory()
-            .entry(record_ordinal)?;
-        let start = self
-            .resolved_links
-            .partition_point(|link| link.target().record().ordinal() < record_ordinal);
-        let end = self
-            .resolved_links
-            .partition_point(|link| link.target().record().ordinal() <= record_ordinal);
+        let entry = self.target_entry(record_ordinal)?;
+        let start = usize::try_from(entry.incoming_range().start()).ok()?;
+        let end = usize::try_from(entry.incoming_range().end()).ok()?;
         self.resolved_links.get(start..end)
     }
 }

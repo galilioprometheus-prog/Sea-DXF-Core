@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4a can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -100,6 +100,13 @@ without copying target arrays. This does not infer a complete owner from
 context-specific `330` pointers, validate record-type legality, enforce the
 one-owner rule, apply hard/soft purge behavior, diagnose cycles, or interpret
 dictionaries and other containers.
+M7.4b adds one target entry per raw record with a compact incoming-link range
+and typed zero, one, or multiple uniquely resolved ownership-class cardinality.
+The target entries cover records without identities and records with invalid or
+duplicate identities as well as ordinary targets. Cardinality remains a view of
+incoming `350..369` evidence only; it is not a legal-owner or one-owner
+conformance decision and does not incorporate context-specific `330` owner
+pointers.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
