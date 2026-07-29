@@ -22,6 +22,7 @@ mod format_probe;
 #[allow(dead_code)]
 mod generated;
 mod handle;
+mod handle_context;
 mod handle_identity;
 mod handle_reference;
 mod handle_resolution;
@@ -98,6 +99,10 @@ pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physica
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
     parse_dxf_handle_hex,
+};
+pub use handle_context::{
+    DxfContextualHandleReferenceDirectory, DxfContextualHandleReferenceEntry,
+    DxfHandleReferenceContext,
 };
 pub use handle_identity::{
     DxfHandleIdentityCandidateRange, DxfHandleIdentityDirectory, DxfHandleIdentityEntry,

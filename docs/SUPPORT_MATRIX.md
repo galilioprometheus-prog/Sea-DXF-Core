@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4c can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -114,6 +114,12 @@ and invalid controls. Group ranges are record-local and retain closed,
 interrupted, or unclosed state. This is lexical container evidence only; handle
 occurrences inside the ranges retain their existing M7.3/M7.4 classifications
 until a later context join.
+M7.4d performs that context join for every M7.3b pointer/owner resolution.
+Each source-order entry preserves its numeric reference class and target state,
+plus outside, reactor, extension-dictionary, or other application-group context
+and the exact optional M7.4c group entry. This does not yet reinterpret a
+context/class combination as a semantic reactor, extension dictionary, or
+ordinary owner relation.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
