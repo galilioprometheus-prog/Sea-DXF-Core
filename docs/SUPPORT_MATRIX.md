@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1e can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -67,7 +67,10 @@ X/Y, apply only documented local-width/bulge zero defaults, and retain optional
 identifier state without claiming effective widths or segments. Eight fixed
 record-level cards separately retain cardinality for count, flags, elevation,
 thickness, constant width, and extrusion without admitting vertex-scoped
-fields or selecting values. Each
+fields or selecting values. Lazy record semantics apply only documented
+defaults, expose Closed/Plinegen bits, compare declared and observed anchor
+counts, and retain constant/variable width coexistence without choosing an
+effective width. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -333,6 +336,16 @@ occurrence cardinality independently from lexical validity; the cards do not
 select canonical values, apply defaults, interpret flags or widths, reconcile
 declared and observed counts, validate version applicability, transform OCS,
 or assemble geometry.
+M9.1f lazily maps the eight record cards into typed semantic states. Vertex
+count `90` is required; flags `70`, elevation `38`, thickness `39`, constant
+width `43`, and extrusion `210/220/230` receive only their documented defaults.
+Closed bit `1` and Plinegen bit `128` have direct helpers while all signed flag
+bits remain exact. The usable declared count is compared with the number of
+retained group-10 anchors, preserving matched, mismatched, and not-comparable
+states. Explicit constant-width and per-vertex-width occurrence shapes remain
+neutral as none, constant only, variable only, or both. This does not validate
+count/width domains, select width precedence, publish effective segment widths,
+transform OCS, infer closure geometry, or assemble segments.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

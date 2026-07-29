@@ -34,7 +34,9 @@ and explicit pre-anchor orphans; M9.1d lazily projects required OCS X/Y,
 defaulted local widths/bulge, and optional vertex identifiers without effective
 width or segment assembly; M9.1e adds eight fixed record-level cardinality
 cards for count, flags, elevation, thickness, constant width, and extrusion
-without admitting vertex-scoped fields or applying record semantics
+without admitting vertex-scoped fields or applying record semantics; M9.1f
+adds typed record defaults, flag helpers, declared-versus-observed vertex-count
+comparison, and neutral constant/variable width coexistence evidence
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -436,6 +438,16 @@ without admitting vertex-scoped fields or applying record semantics
     `40/41`, bulge `42`, and identifier `91` remain excluded from these cards.
     Lexical validity stays independent from occurrence cardinality; no value is
     selected, defaulted, interpreted, reconciled, validated, or transformed.
+    M9.1f lazily projects required signed-i32 vertex count, defaulted signed-i16
+    flags, defaulted elevation/thickness/constant-width doubles, and defaulted
+    extrusion components from the M9.1e cards. Flag helpers expose only the
+    documented Closed and Plinegen bits while retaining all raw bits. The
+    declared count is compared with the exact number of retained group-10
+    anchors as matched, mismatched, or not comparable. Separate width evidence
+    reports no explicit width, constant only, variable only, or both; it does
+    not choose precedence when constant `43` and per-vertex `40/41` coexist.
+    Count-domain validation, effective segment widths, OCS transformation,
+    closure, and segment assembly remain deferred.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

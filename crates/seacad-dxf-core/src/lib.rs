@@ -53,6 +53,7 @@ mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
 mod lightweight_polyline_record_card;
+mod lightweight_polyline_record_semantic;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
@@ -226,6 +227,12 @@ pub use lightweight_polyline_record_card::{
     DxfLightweightPolylineRecordCardEntry, DxfLightweightPolylineRecordCardMember,
     DxfLightweightPolylineRecordCardMemberRange, DxfLightweightPolylineRecordCardState,
     DxfLightweightPolylineRecordRole,
+};
+pub use lightweight_polyline_record_semantic::{
+    DxfLightweightPolylineRecordSemanticDirectory, DxfLightweightPolylineRecordSemanticDouble,
+    DxfLightweightPolylineRecordSemanticInteger, DxfLightweightPolylineRecordSemanticIssue,
+    DxfLightweightPolylineRecordSemantics, DxfLightweightPolylineVertexCountComparison,
+    DxfLightweightPolylineWidthEvidenceState,
 };
 pub use lightweight_polyline_vertex::{
     DxfLightweightPolylineGroupedRecordEntry, DxfLightweightPolylineVertexCard,
