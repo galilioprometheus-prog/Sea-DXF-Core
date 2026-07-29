@@ -10,7 +10,7 @@ use crate::{
     generated::header_schema::{
         DxfHeaderSchemaField, DxfSchemaStorageKind, HEADER_FIELDS, SCHEMA_VERSION,
     },
-    parse_dxf_handle_hex,
+    raw_handle::parse_raw_group_handle,
 };
 
 const HEADER_NAMESPACE: &str = "header";
@@ -322,7 +322,7 @@ fn handle_from_unique_variable(
                     Some(raw),
                 ));
             }
-            match parse_group_handle(document, group, cancellation)? {
+            match parse_raw_group_handle(document, group, cancellation)? {
                 Ok(handle) => {
                     let group_occurrence =
                         u32::try_from(group.occurrence()).map_err(|_| invalid_internal_data())?;
@@ -360,23 +360,6 @@ fn handle_from_unique_variable(
             ))
         }
     }
-}
-
-fn parse_group_handle(
-    document: DxfRawDocumentView<'_>,
-    group: DxfRawGroup,
-    cancellation: &DxfCancellationToken,
-) -> Result<Result<DxfHandle, DxfHandleParseIssue>, DxfError> {
-    ensure_not_cancelled(cancellation)?;
-    let span = group.value_payload_span();
-    if span.len() > DxfHandle::MAX_HEX_DIGITS as u64 {
-        return Ok(Err(DxfHandleParseIssue::TooLong));
-    }
-    let len = usize::try_from(span.len()).map_err(|_| invalid_internal_data())?;
-    let mut raw = [0_u8; DxfHandle::MAX_HEX_DIGITS];
-    document.read_span(span, &mut raw[..len])?;
-    ensure_not_cancelled(cancellation)?;
-    Ok(parse_dxf_handle_hex(&raw[..len]))
 }
 
 fn variable_provenance(

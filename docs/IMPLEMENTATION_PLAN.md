@@ -201,6 +201,12 @@ harness without publishing private corpus identifiers
     retains soft-pointer behavior. This checkpoint classifies codes only; it
     does not parse record values, resolve targets, validate existence, assign
     ownership, or construct document topology.
+    M7.1b adds a bounded, source-anchored projection for one raw group
+    occurrence. It distinguishes a missing occurrence, a non-handle group, and
+    a handle-valued group with an exact parsed value or typed lexical failure.
+    ASCII and Binary share the same API and fixed 16-byte parser; raw spelling
+    remains readable only from the matching source document. Target lookup,
+    record identity, dangling-reference checks, and topology remain deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

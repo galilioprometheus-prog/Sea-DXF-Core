@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -26,9 +26,10 @@ without a second source scan. Numeric values retain exact signed integers or
 IEEE-754 bits, tuple components retain independent provenance, strict Booleans
 reject values outside `0/1`, exact text retains source spelling, documented
 handle-valued numeric group codes have a context-neutral pointer/owner
-classification, handles remain identifiers without target or topology
-resolution, and date or elapsed-day values do not
-infer calendars or timezones. Each
+classification, and any one raw group occurrence can be projected into an
+exact source-anchored handle or typed lexical failure. Handles remain
+identifiers without target or topology resolution, and date or elapsed-day
+values do not infer calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -37,8 +38,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored text layers + shared 214-field lazy HEADER directory; numeric handle group-code roles classified without target resolution; record/entity semantics not implemented | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared 214-field lazy HEADER directory; numeric handle group-code roles classified without target resolution; record/entity semantics not implemented | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored HEADER directory + per-occurrence raw handle projection and role classification without target resolution; record/entity semantics not implemented | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER directory + per-occurrence raw handle projection and role classification without target resolution; record/entity semantics not implemented | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -54,6 +55,11 @@ M7.1a classifies only the numeric role of codes `5`, `105`, `320..369`,
 `390..399`, `480..481`, and `1005`. It does not scan records, parse arbitrary
 group payloads, resolve a handle, validate a target, infer ownership, or expose
 dictionary, reactor, XDATA container, or reference-graph semantics.
+M7.1b reads at most 16 payload bytes to project a selected handle-valued raw
+group. Missing occurrences, non-handle groups, exact values, and empty,
+overlong, or invalid hexadecimal spelling remain distinct. The projection does
+not establish a record boundary, object identity, target existence, or graph
+edge, and it does not traverse dictionaries, reactors, or XDATA containers.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

@@ -34,6 +34,7 @@ mod johab;
 mod limits;
 mod progress;
 mod raw_document;
+mod raw_handle;
 mod read_options;
 mod semantic_value;
 mod source;
@@ -111,6 +112,7 @@ pub use raw_document::{
     DxfHeaderVariableLookup, DxfHeaderVariableLookupState, DxfRawDocumentConformance,
     DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
 };
+pub use raw_handle::{DxfRawHandleLookup, DxfRawHandleValue};
 pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use semantic_value::{
     DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
