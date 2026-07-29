@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1g can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1h can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -72,7 +72,9 @@ defaults, expose Closed/Plinegen bits, compare declared and observed anchor
 counts, and retain constant/variable width coexistence without choosing an
 effective width. Consecutive and proven closing segment topology now binds OCS
 endpoints plus local width/bulge fields to each segment's start vertex without
-assembling transformed line or arc geometry. Each
+assembling transformed geometry. Lazy OCS segment geometry preserves straight
+endpoints and derives finite circular center/radius/signed sweep from usable
+nonzero bulge, with typed unavailable, degenerate, and overflow states. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -359,6 +361,15 @@ straight, usable nonzero bulge is an exact arc factor, and invalid vertex
 semantics remain indeterminate. This does not choose effective width, compute
 arc center/radius/sweep, transform OCS to WCS, validate count agreement or
 geometry, edit/write, or render.
+M9.1h maps a usable zero bulge to a straight segment retaining the exact OCS
+endpoint values. A usable nonzero bulge derives a finite circular OCS center,
+positive radius, and signed included-angle sweep; positive/negative bulges
+retain counterclockwise/clockwise orientation. Missing or invalid endpoint or
+bulge semantics, a zero chord with nonzero bulge, and non-finite intermediate
+arithmetic fail typed without publishing NaN or infinity. These derived
+binary64 values are not raw evidence or guaranteed cross-platform canonical
+bits. This does not select effective width, transform OCS to WCS, validate
+geometric tolerances or version applicability, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

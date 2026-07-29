@@ -55,6 +55,7 @@ mod lightweight_polyline_integer;
 mod lightweight_polyline_record_card;
 mod lightweight_polyline_record_semantic;
 mod lightweight_polyline_segment;
+mod lightweight_polyline_segment_geometry;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
@@ -240,6 +241,11 @@ pub use lightweight_polyline_segment::{
     DxfLightweightPolylineSegmentEntry, DxfLightweightPolylineSegmentRange,
     DxfLightweightPolylineSegmentRecordEntry, DxfLightweightPolylineSegmentSemantics,
     DxfLightweightPolylineSegmentShape, DxfLightweightPolylineSegmentTopology,
+};
+pub use lightweight_polyline_segment_geometry::{
+    DxfLightweightPolylineOcsArcSegment, DxfLightweightPolylineOcsLineSegment,
+    DxfLightweightPolylineOcsSegmentGeometry, DxfLightweightPolylineSegmentGeometryDirectory,
+    DxfLightweightPolylineSegmentGeometryIssue, DxfLightweightPolylineSegmentGeometrySemantics,
 };
 pub use lightweight_polyline_vertex::{
     DxfLightweightPolylineGroupedRecordEntry, DxfLightweightPolylineVertexCard,

@@ -38,7 +38,9 @@ without admitting vertex-scoped fields or applying record semantics; M9.1f
 adds typed record defaults, flag helpers, declared-versus-observed vertex-count
 comparison, and neutral constant/variable width coexistence evidence; M9.1g
 builds consecutive/closing segment topology and binds each segment to the
-starting vertex's local widths and bulge without assembling OCS geometry
+starting vertex's local widths and bulge without assembling OCS geometry;
+M9.1h lazily derives finite straight or circular OCS segment geometry from
+usable endpoints and bulge with typed unavailable/degenerate/overflow failures
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -461,6 +463,16 @@ starting vertex's local widths and bulge without assembling OCS geometry
     and unusable bulge remains indeterminate. This does not compute arc center,
     radius, sweep, or endpoint transforms; select effective width; validate
     count agreement; transform OCS; edit/write; or render geometry.
+    M9.1h maps zero bulge to an exact-endpoint straight OCS segment. Nonzero
+    bulge derives a circular center, positive radius, and signed included-angle
+    sweep from Autodesk's `bulge = tan(sweep / 4)` definition. Positive and
+    negative bulges retain counterclockwise and clockwise orientation. Missing
+    or invalid endpoint/bulge semantics, a nonzero-bulge zero chord, and any
+    non-finite or unrepresentable intermediate result remain typed failures;
+    no NaN or infinity is published. Derived binary64 results are not raw source
+    evidence or a cross-platform canonicalization. Effective width, OCS-to-WCS
+    transformation, geometric tolerance/conformance, editing, and rendering
+    remain deferred.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
