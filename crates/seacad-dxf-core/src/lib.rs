@@ -39,6 +39,7 @@ mod header_text;
 mod header_view;
 mod johab;
 mod limits;
+mod owner_evidence_comparison;
 mod ownership_evidence;
 mod progress;
 mod raw_document;
@@ -135,6 +136,10 @@ pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use owner_evidence_comparison::{
+    DxfOwnerEvidenceComparisonDirectory, DxfOwnerEvidenceComparisonEntry,
+    DxfOwnerEvidenceComparisonState,
+};
 pub use ownership_evidence::{
     DxfIncomingOwnershipState, DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry,
     DxfOwnershipLinkRange, DxfOwnershipTargetEntry, DxfResolvedOwnershipLink,

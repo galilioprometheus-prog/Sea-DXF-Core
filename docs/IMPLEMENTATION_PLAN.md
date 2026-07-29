@@ -6,9 +6,9 @@ ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
 coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers; M7.4f groups every
-conservative common-owner pointer candidate by source record with typed
-zero/one/multiple cardinality while retaining independent target matches
+harness without publishing private corpus identifiers; M7.4g conservatively
+compares a uniquely resolved common-owner candidate with a unique incoming
+ownership-class link and retains matched, conflicting, or non-comparable state
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -282,6 +282,14 @@ zero/one/multiple cardinality while retaining independent target matches
     record slice, and its exact target-match slice stays accessible. This is
     candidate cardinality only; comparison with incoming ownership-class links,
     authoritative owner selection, and one-owner conformance stay deferred.
+    M7.4g materializes one comparison entry per raw record. Comparison occurs
+    only when the record has exactly one common-owner candidate resolved to one
+    record and exactly one incoming ownership-class link. It compares the
+    candidate's target record with the incoming link's source record and emits
+    `Matched` or `Conflicting`; every absent, multiple, invalid, null, missing,
+    or ambiguous shape remains `NotComparable` with both underlying dimensions
+    intact. This is bidirectional evidence, not authoritative owner selection,
+    record-type validation, or one-owner conformance.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
