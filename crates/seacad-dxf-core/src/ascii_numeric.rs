@@ -10,6 +10,20 @@ pub enum DxfAsciiNumericIssue {
 }
 
 pub(crate) fn parse_i16(token: &[u8]) -> Result<i16, DxfAsciiNumericIssue> {
+    let value = parse_signed_integer(token, i16::MAX as u64, (i16::MAX as u64) + 1)?;
+    i16::try_from(value).map_err(|_| DxfAsciiNumericIssue::OutOfRange)
+}
+
+pub(crate) fn parse_i32(token: &[u8]) -> Result<i32, DxfAsciiNumericIssue> {
+    let value = parse_signed_integer(token, i32::MAX as u64, (i32::MAX as u64) + 1)?;
+    i32::try_from(value).map_err(|_| DxfAsciiNumericIssue::OutOfRange)
+}
+
+fn parse_signed_integer(
+    token: &[u8],
+    positive_limit: u64,
+    negative_limit: u64,
+) -> Result<i64, DxfAsciiNumericIssue> {
     if token.is_empty() {
         return Err(DxfAsciiNumericIssue::Empty);
     }
@@ -21,22 +35,26 @@ pub(crate) fn parse_i16(token: &[u8]) -> Result<i16, DxfAsciiNumericIssue> {
     if digits.is_empty() {
         return Err(invalid_syntax(offset));
     }
-    let mut magnitude = 0_i32;
+    let mut magnitude = 0_u64;
     for (index, byte) in digits.iter().copied().enumerate() {
         if !byte.is_ascii_digit() {
             return Err(invalid_syntax(offset + index));
         }
         magnitude = magnitude
             .checked_mul(10)
-            .and_then(|value| value.checked_add(i32::from(byte - b'0')))
+            .and_then(|value| value.checked_add(u64::from(byte - b'0')))
             .ok_or(DxfAsciiNumericIssue::OutOfRange)?;
-        let limit = if negative { 32_768 } else { 32_767 };
+        let limit = if negative {
+            negative_limit
+        } else {
+            positive_limit
+        };
         if magnitude > limit {
             return Err(DxfAsciiNumericIssue::OutOfRange);
         }
     }
-    let signed = if negative { -magnitude } else { magnitude };
-    i16::try_from(signed).map_err(|_| DxfAsciiNumericIssue::OutOfRange)
+    let magnitude = i64::try_from(magnitude).map_err(|_| DxfAsciiNumericIssue::OutOfRange)?;
+    Ok(if negative { -magnitude } else { magnitude })
 }
 
 pub(crate) fn parse_f64(token: &[u8]) -> Result<f64, DxfAsciiNumericIssue> {
@@ -107,7 +125,7 @@ fn invalid_syntax(offset: usize) -> DxfAsciiNumericIssue {
 
 #[cfg(test)]
 mod tests {
-    use super::{DxfAsciiNumericIssue, parse_f64, parse_i16};
+    use super::{DxfAsciiNumericIssue, parse_f64, parse_i16, parse_i32};
 
     #[test]
     fn parses_signed_i16_boundaries_and_reports_exact_failures() {
@@ -119,6 +137,21 @@ mod tests {
             Err(DxfAsciiNumericIssue::InvalidSyntax { token_offset: 2 })
         );
         assert_eq!(parse_i16(b"32768"), Err(DxfAsciiNumericIssue::OutOfRange));
+    }
+
+    #[test]
+    fn parses_signed_i32_boundaries_and_reports_exact_failures() {
+        assert_eq!(parse_i32(b"-2147483648"), Ok(i32::MIN));
+        assert_eq!(parse_i32(b"+2147483647"), Ok(i32::MAX));
+        assert_eq!(parse_i32(b""), Err(DxfAsciiNumericIssue::Empty));
+        assert_eq!(
+            parse_i32(b"12x"),
+            Err(DxfAsciiNumericIssue::InvalidSyntax { token_offset: 2 })
+        );
+        assert_eq!(
+            parse_i32(b"2147483648"),
+            Err(DxfAsciiNumericIssue::OutOfRange)
+        );
     }
 
     #[test]

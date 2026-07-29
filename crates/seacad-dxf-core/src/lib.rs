@@ -51,6 +51,7 @@ mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
 mod johab;
 mod lightweight_polyline;
+mod lightweight_polyline_integer;
 mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -58,6 +59,7 @@ mod progress;
 mod raw_document;
 mod raw_double;
 mod raw_handle;
+mod raw_integer;
 mod raw_record;
 mod read_options;
 mod semantic_value;
@@ -209,6 +211,12 @@ pub use lightweight_polyline::{
     DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
     DxfLightweightPolylineRecordEntry, DxfLightweightPolylineValue,
     DxfLightweightPolylineValueRange, DxfLightweightPolylineValueRole,
+};
+pub use lightweight_polyline_integer::{
+    DxfLightweightPolylineInteger, DxfLightweightPolylineIntegerDirectory,
+    DxfLightweightPolylineIntegerIssue, DxfLightweightPolylineIntegerRange,
+    DxfLightweightPolylineIntegerRecordEntry, DxfLightweightPolylineIntegerRole,
+    DxfLightweightPolylineIntegerValue,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{

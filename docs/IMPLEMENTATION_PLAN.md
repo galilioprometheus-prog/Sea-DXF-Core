@@ -27,7 +27,8 @@ infinite-line assembly; M8.4b adds six fixed per-role RAY/XLINE cardinality
 cards with compact evidence references; M8.4c adds lazy required-value
 semantics without unit-vector validation or normalization; M9.1a adds exact
 LWPOLYLINE floating-point evidence without grouping vertices or assembling a
-polyline
+polyline; M9.1b adds exact signed integer evidence for LWPOLYLINE count, flags,
+and vertex identifiers without interpreting or reconciling them
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -394,6 +395,14 @@ polyline
     are not interpreted here. It does not group values into vertices, apply
     defaults, validate count/order/cardinality, transform OCS, or assemble a
     polyline.
+    M9.1b indexes every LWPOLYLINE vertex-count `90`, flag `70`, and vertex-
+    identifier `91` occurrence in source order. The wire domains remain exact:
+    group `70` is signed 16-bit while groups `90/91` are signed 32-bit, with
+    typed ASCII syntax/range failures and exact Binary values. Duplicates and
+    empty integer slices remain explicit. It does not select a canonical count
+    or flag value, interpret flag bits, require non-negative values, associate
+    identifiers with vertices, compare declared and observed counts, validate
+    version applicability, or assemble a polyline.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
