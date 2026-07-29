@@ -48,6 +48,7 @@ mod header_text;
 mod header_view;
 mod infinite_line_geometry;
 mod infinite_line_geometry_card;
+mod infinite_line_geometry_semantic;
 mod johab;
 mod limits;
 mod owner_evidence_comparison;
@@ -198,6 +199,10 @@ pub use infinite_line_geometry_card::{
     DxfInfiniteLineGeometryCardDirectory, DxfInfiniteLineGeometryCardMember,
     DxfInfiniteLineGeometryCardMemberRange, DxfInfiniteLineGeometryValueCard,
     DxfInfiniteLineGeometryValueCardState,
+};
+pub use infinite_line_geometry_semantic::{
+    DxfInfiniteLineGeometrySemanticDirectory, DxfInfiniteLineGeometrySemanticIssue,
+    DxfInfiniteLineGeometrySemanticValue, DxfInfiniteLineGeometrySemantics,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{

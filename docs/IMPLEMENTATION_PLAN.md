@@ -24,7 +24,8 @@ references; M8.3c adds lazy required-value semantics and reviewed extrusion
 defaults without range validation or ellipse assembly; M8.4a adds exact
 RAY/XLINE WCS point and unit-direction evidence without normalization or
 infinite-line assembly; M8.4b adds six fixed per-role RAY/XLINE cardinality
-cards with compact evidence references
+cards with compact evidence references; M8.4c adds lazy required-value
+semantics without unit-vector validation or normalization
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -375,6 +376,12 @@ cards with compact evidence references
     pointing back to M8.4a values. Numeric validity remains independent from
     cardinality; no occurrence is copied, selected, defaulted, validated,
     normalized, or transformed.
+    M8.4c lazily projects required WCS start/first-point and unit-direction
+    cards for RAY/XLINE into exact semantic values. Missing, invalid, or
+    duplicate components remain typed invalid with available raw provenance.
+    Non-unit and zero direction triples remain exact; vector validation,
+    normalization, direction/extent inference, coordinate transformation, and
+    infinite-line assembly remain deferred.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
