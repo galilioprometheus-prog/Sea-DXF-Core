@@ -52,6 +52,7 @@ mod infinite_line_geometry_semantic;
 mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
+mod lightweight_polyline_vertex;
 mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -217,6 +218,12 @@ pub use lightweight_polyline_integer::{
     DxfLightweightPolylineIntegerIssue, DxfLightweightPolylineIntegerRange,
     DxfLightweightPolylineIntegerRecordEntry, DxfLightweightPolylineIntegerRole,
     DxfLightweightPolylineIntegerValue,
+};
+pub use lightweight_polyline_vertex::{
+    DxfLightweightPolylineGroupedRecordEntry, DxfLightweightPolylineVertexCard,
+    DxfLightweightPolylineVertexCardState, DxfLightweightPolylineVertexDirectory,
+    DxfLightweightPolylineVertexEntry, DxfLightweightPolylineVertexMember,
+    DxfLightweightPolylineVertexRole,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
 pub use owner_evidence_comparison::{

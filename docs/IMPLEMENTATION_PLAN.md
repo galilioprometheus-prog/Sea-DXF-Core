@@ -28,7 +28,9 @@ cards with compact evidence references; M8.4c adds lazy required-value
 semantics without unit-vector validation or normalization; M9.1a adds exact
 LWPOLYLINE floating-point evidence without grouping vertices or assembling a
 polyline; M9.1b adds exact signed integer evidence for LWPOLYLINE count, flags,
-and vertex identifiers without interpreting or reconciling them
+and vertex identifiers without interpreting or reconciling them; M9.1c groups
+vertex-scoped evidence by exact group-10 anchors with fixed cardinality cards
+and explicit pre-anchor orphans
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -403,6 +405,16 @@ and vertex identifiers without interpreting or reconciling them
     or flag value, interpret flag bits, require non-negative values, associate
     identifiers with vertices, compare declared and observed counts, validate
     version applicability, or assemble a polyline.
+    M9.1c conservatively starts one LWPOLYLINE vertex at each exact OCS-X group
+    `10` and assigns subsequent OCS-Y `20`, start/end width `40/41`, bulge `42`,
+    and vertex identifier `91` evidence through the next group `10`. Six fixed
+    cards per vertex report `Absent`, `Unique`, or `Multiple` while compact
+    members retain every M9.1a/b occurrence. Vertex-scoped evidence before the
+    first group `10` remains in a separate orphan slice rather than being
+    guessed onto a vertex. Entity-level values stay outside vertex grouping.
+    This does not apply defaults, select values, validate lexical content,
+    reconcile declared count, interpret flags/bulges, transform OCS, or
+    assemble segments.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

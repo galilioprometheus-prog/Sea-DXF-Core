@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.1c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -60,7 +60,9 @@ source-order floating-point elevation, thickness, constant width, OCS vertex,
 per-vertex width, bulge, and extrusion evidence without vertex grouping,
 defaults, validation, or polyline assembly. Separate typed integer evidence
 retains LWPOLYLINE count, flags, and vertex identifiers in their exact signed
-wire domains without selection or interpretation. Each
+wire domains without selection or interpretation. Exact group-10 anchors now
+form conservative vertex slices with six fixed cardinality cards; pre-anchor
+vertex evidence remains explicit as orphans. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -69,8 +71,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE floating/integer evidence; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE floating/integer evidence; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE evidence/vertex cards; no assembled geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE evidence/vertex cards; no assembled geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -297,6 +299,16 @@ This is integer wire evidence, not canonical-value selection, flag-bit
 interpretation, non-negative-domain validation, vertex association, declared-
 versus-observed count reconciliation, version applicability, or assembled
 polyline geometry.
+M9.1c starts a conservative vertex at every retained LWPOLYLINE OCS-X group
+`10`. OCS-Y `20`, start/end width `40/41`, bulge `42`, and identifier `91`
+occurrences following that anchor belong to its evidence slice until the next
+group `10`. Six fixed cards preserve absent, unique, or multiple cardinality
+independently from lexical validity. Vertex-scoped groups before the first
+anchor remain source-ordered orphan members; entity-level floating and integer
+roles remain outside the vertex grouping. This is deterministic grouping
+evidence, not default application, canonical selection, declared-count
+reconciliation, flag/bulge interpretation, identifier uniqueness, version
+applicability, OCS transformation, or assembled segment geometry.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
