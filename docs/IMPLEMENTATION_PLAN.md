@@ -16,7 +16,9 @@ projects required WCS tuples and reviewed per-component extrusion defaults into
 source-anchored semantic states; M8.2a adds a separate exact CIRCLE/ARC defining-
 value evidence directory that preserves their OCS boundary; M8.2b adds fixed
 per-role CIRCLE/ARC cardinality cards with compact evidence references; M8.2c
-adds lazy required-value semantics and reviewed extrusion defaults
+adds lazy required-value semantics and reviewed extrusion defaults; M8.3a adds
+exact ELLIPSE WCS center, relative major-axis endpoint, ratio, parameter, and
+extrusion-component evidence without assembling ellipse geometry
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -333,6 +335,14 @@ adds lazy required-value semantics and reviewed extrusion defaults
     independently receives the reviewed `0/0/1` defaults; present invalid or
     duplicate evidence is never hidden. Radius constraints, angle normalization,
     ARC sweep, OCS transformation, and geometry assembly remain deferred.
+    M8.3a indexes exact uppercase `ELLIPSE` records in complete `BLOCKS` and
+    `ENTITIES` sections through a separate WCS/parameter-aware evidence
+    directory. It retains WCS center `10/20/30`, WCS major-axis endpoint vector
+    `11/21/31`, minor-to-major axis ratio `40`, start/end parameters `41/42`,
+    and extrusion `210/220/230` occurrences in source order with exact
+    ASCII/Binary double evidence. It does not select values, apply defaults,
+    validate ratio or parameter ranges, assemble an ellipse, or transform
+    coordinate systems.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

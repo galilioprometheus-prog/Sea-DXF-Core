@@ -23,6 +23,7 @@ mod circular_geometry_semantic;
 mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
+mod ellipse_geometry;
 mod encoding;
 mod error;
 mod format_probe;
@@ -131,6 +132,10 @@ pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSe
 pub use dialect::{
     DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
     DxfAcadVersionValue,
+};
+pub use ellipse_geometry::{
+    DxfEllipseGeometryDirectory, DxfEllipseGeometryNumericIssue, DxfEllipseGeometryRecordEntry,
+    DxfEllipseGeometryValue, DxfEllipseGeometryValueRange, DxfEllipseGeometryValueRole,
 };
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
