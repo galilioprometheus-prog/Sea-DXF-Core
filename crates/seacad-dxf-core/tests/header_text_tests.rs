@@ -36,30 +36,32 @@ const TEXT_FIELDS: &[(u64, &str, &str, i16)] = &[
 ];
 
 #[test]
-fn ascii_and_binary_preserve_exact_text_and_schema_order() -> Result<(), Box<dyn Error>> {
-    let ascii_bytes = ascii_fixture(standard_text_body());
-    let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
-    let ascii = open_ascii(&ascii_source)?;
-    let ascii_directory = ascii.header_text_directory(&DxfCancellationToken::default())?;
-    assert_directory_shape(&ascii_directory, ascii.source_id())?;
-    assert_decoded(
-        explicit(&ascii_directory, "clayer")?,
-        DxfRawDocumentView::from(&ascii),
-        b" Layer/../MiXeD ",
-    )?;
-    assert_m6_6b_exact_values(&ascii_directory, DxfRawDocumentView::from(&ascii))?;
+fn every_supported_version_has_ascii_binary_text_parity() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        let ascii_bytes = ascii_fixture_for_version(version, standard_text_body());
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source)?;
+        let ascii_directory = ascii.header_text_directory(&DxfCancellationToken::default())?;
+        assert_directory_shape(&ascii_directory, ascii.source_id())?;
+        assert_decoded(
+            explicit(&ascii_directory, "clayer")?,
+            DxfRawDocumentView::from(&ascii),
+            b" Layer/../MiXeD ",
+        )?;
+        assert_m6_6b_exact_values(&ascii_directory, DxfRawDocumentView::from(&ascii))?;
 
-    let binary_bytes = binary_fixture()?;
-    let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
-    let binary = open_binary(&binary_source)?;
-    let binary_directory = binary.header_text_directory(&DxfCancellationToken::default())?;
-    assert_directory_shape(&binary_directory, binary.source_id())?;
-    assert_decoded(
-        explicit(&binary_directory, "clayer")?,
-        DxfRawDocumentView::from(&binary),
-        b" Layer/../MiXeD ",
-    )?;
-    assert_m6_6b_exact_values(&binary_directory, DxfRawDocumentView::from(&binary))?;
+        let binary_bytes = binary_fixture(version)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source)?;
+        let binary_directory = binary.header_text_directory(&DxfCancellationToken::default())?;
+        assert_directory_shape(&binary_directory, binary.source_id())?;
+        assert_decoded(
+            explicit(&binary_directory, "clayer")?,
+            DxfRawDocumentView::from(&binary),
+            b" Layer/../MiXeD ",
+        )?;
+        assert_m6_6b_exact_values(&binary_directory, DxfRawDocumentView::from(&binary))?;
+    }
     Ok(())
 }
 
@@ -219,26 +221,33 @@ fn assert_m6_6b_exact_values(
 }
 
 fn standard_text_body() -> &'static str {
-    "9\n$DWGCODEPAGE\n3\nUTF-8\n9\n$CELTYPE\n6\nDash Dot\n9\n$CLAYER\n8\n Layer/../MiXeD \n9\n$CMLSTYLE\n2\nMLine Style\n9\n$DIMAPOST\n1\n[] mm\n9\n$DIMBLK\n1\n_ARCHTICK\n9\n$DIMBLK1\n1\nArrow One\n9\n$DIMBLK2\n1\nArrow Two\n9\n$DIMLDRBLK\n1\nLeader Arrow\n9\n$DIMPOST\n1\n<> units\n9\n$DIMSTYLE\n2\nDim Style\n9\n$DIMTXSTY\n7\nText Style\n9\n$FINGERPRINTGUID\n2\n{A1b2-C3d4}\n9\n$HYPERLINKBASE\n1\n ..\\Refs/../MiXeD Case/ \n9\n$MENU\n1\n acad.cuix \n9\n$PROJECTNAME\n1\n Project Alpha \n9\n$PUCSBASE\n2\n Paper Base \n9\n$PUCSNAME\n2\n Paper Current \n9\n$PUCSORTHOREF\n2\n Paper Ref \n9\n$TEXTSTYLE\n7\n Standard Mixed \n9\n$UCSBASE\n2\n Model Base \n9\n$UCSNAME\n2\n Model Current \n9\n$UCSORTHOREF\n2\n Model Ref \n9\n$VERSIONGUID\n2\n{DeAd-BeEf}\n"
+    "9\n$DWGCODEPAGE\n3\nANSI_1252\n9\n$CELTYPE\n6\nDash Dot\n9\n$CLAYER\n8\n Layer/../MiXeD \n9\n$CMLSTYLE\n2\nMLine Style\n9\n$DIMAPOST\n1\n[] mm\n9\n$DIMBLK\n1\n_ARCHTICK\n9\n$DIMBLK1\n1\nArrow One\n9\n$DIMBLK2\n1\nArrow Two\n9\n$DIMLDRBLK\n1\nLeader Arrow\n9\n$DIMPOST\n1\n<> units\n9\n$DIMSTYLE\n2\nDim Style\n9\n$DIMTXSTY\n7\nText Style\n9\n$FINGERPRINTGUID\n2\n{A1b2-C3d4}\n9\n$HYPERLINKBASE\n1\n ..\\Refs/../MiXeD Case/ \n9\n$MENU\n1\n acad.cuix \n9\n$PROJECTNAME\n1\n Project Alpha \n9\n$PUCSBASE\n2\n Paper Base \n9\n$PUCSNAME\n2\n Paper Current \n9\n$PUCSORTHOREF\n2\n Paper Ref \n9\n$TEXTSTYLE\n7\n Standard Mixed \n9\n$UCSBASE\n2\n Model Base \n9\n$UCSNAME\n2\n Model Current \n9\n$UCSORTHOREF\n2\n Model Ref \n9\n$VERSIONGUID\n2\n{DeAd-BeEf}\n"
 }
 
 fn ascii_fixture(body: &str) -> Vec<u8> {
-    format!("0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n{body}0\nENDSEC\n0\nEOF\n").into_bytes()
+    ascii_fixture_for_version(DxfAcadVersion::Ac1032, body)
 }
 
-fn binary_fixture() -> Result<Vec<u8>, io::Error> {
-    let version = DxfAcadVersion::Ac1032;
+fn ascii_fixture_for_version(version: DxfAcadVersion, body: &str) -> Vec<u8> {
+    format!(
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n{body}0\nENDSEC\n0\nEOF\n",
+        version.code()
+    )
+    .into_bytes()
+}
+
+fn binary_fixture(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
     let mut bytes = DXF_BINARY_SENTINEL.to_vec();
     for (group_code, value) in [
         (0_i16, b"SECTION".as_slice()),
         (2, b"HEADER"),
         (9, b"$ACADVER"),
-        (1, b"AC1032"),
+        (1, version.code().as_bytes()),
     ] {
-        push_binary_string(&mut bytes, group_code, value);
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
     for (name, group_code, value) in [
-        (b"$DWGCODEPAGE".as_slice(), 3_i16, b"UTF-8".as_slice()),
+        (b"$DWGCODEPAGE".as_slice(), 3_i16, b"ANSI_1252".as_slice()),
         (b"$CELTYPE", 6, b"Dash Dot"),
         (b"$CLAYER", 8, b" Layer/../MiXeD "),
         (b"$CMLSTYLE", 2, b"MLine Style"),
@@ -263,20 +272,29 @@ fn binary_fixture() -> Result<Vec<u8>, io::Error> {
         (b"$UCSORTHOREF", 2, b" Model Ref "),
         (b"$VERSIONGUID", 2, b"{DeAd-BeEf}"),
     ] {
-        push_binary_string(&mut bytes, 9, name);
-        push_binary_string(&mut bytes, group_code, value);
+        push_binary_string(&mut bytes, version, 9, name)?;
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
     for (group_code, value) in [(0_i16, b"ENDSEC".as_slice()), (0, b"EOF")] {
-        push_binary_string(&mut bytes, group_code, value);
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
-    assert_eq!(version.code(), "AC1032");
     Ok(bytes)
 }
 
-fn push_binary_string(bytes: &mut Vec<u8>, group_code: i16, value: &[u8]) {
-    bytes.extend_from_slice(&group_code.to_le_bytes());
+fn push_binary_string(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    group_code: i16,
+    value: &[u8],
+) -> Result<(), io::Error> {
+    if version == DxfAcadVersion::Ac1009 {
+        bytes.push(u8::try_from(group_code).map_err(|_| io::Error::other("group code"))?);
+    } else {
+        bytes.extend_from_slice(&group_code.to_le_bytes());
+    }
     bytes.extend_from_slice(value);
     bytes.push(0);
+    Ok(())
 }
 
 fn open_ascii<'a>(source: &'a DxfMemorySource<'_>) -> Result<DxfAsciiRawDocument<'a>, DxfError> {

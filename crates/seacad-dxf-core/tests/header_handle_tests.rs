@@ -62,45 +62,48 @@ const HANDLE_FIELDS: [ExpectedHandleField; 5] = [
 ];
 
 #[test]
-fn ascii_and_binary_preserve_handle_values_raw_spelling_and_schema_order()
--> Result<(), Box<dyn Error>> {
-    let ascii_bytes = ascii_fixture(standard_handle_body());
-    let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
-    let ascii = open_ascii(&ascii_source)?;
-    let ascii_directory = ascii.header_handle_directory(&DxfCancellationToken::default())?;
-    assert_directory_shape(
-        &ascii_directory,
-        ascii.source_id(),
-        DxfRawDocumentView::from(&ascii),
-    )?;
-    assert_eq!(
-        explicit(&ascii_directory, "handseed")?.handle(),
-        ascii
-            .header_view()?
-            .handseed()
-            .value()
-            .copied()
-            .ok_or(io::Error::other("missing ASCII HANDSEED"))?
-    );
+fn every_supported_version_has_ascii_binary_handle_parity() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        let ascii_bytes = ascii_standard_fixture(version);
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source)?;
+        let ascii_directory = ascii.header_handle_directory(&DxfCancellationToken::default())?;
+        assert_directory_shape(
+            &ascii_directory,
+            ascii.source_id(),
+            DxfRawDocumentView::from(&ascii),
+            version,
+        )?;
+        assert_eq!(
+            explicit(&ascii_directory, "handseed")?.handle(),
+            ascii
+                .header_view()?
+                .handseed()
+                .value()
+                .copied()
+                .ok_or(io::Error::other("missing ASCII HANDSEED"))?
+        );
 
-    let binary_bytes = binary_fixture()?;
-    let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
-    let binary = open_binary(&binary_source)?;
-    let binary_directory = binary.header_handle_directory(&DxfCancellationToken::default())?;
-    assert_directory_shape(
-        &binary_directory,
-        binary.source_id(),
-        DxfRawDocumentView::from(&binary),
-    )?;
-    assert_eq!(
-        explicit(&binary_directory, "handseed")?.handle(),
-        binary
-            .header_view()?
-            .handseed()
-            .value()
-            .copied()
-            .ok_or(io::Error::other("missing Binary HANDSEED"))?
-    );
+        let binary_bytes = binary_fixture(version)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source)?;
+        let binary_directory = binary.header_handle_directory(&DxfCancellationToken::default())?;
+        assert_directory_shape(
+            &binary_directory,
+            binary.source_id(),
+            DxfRawDocumentView::from(&binary),
+            version,
+        )?;
+        assert_eq!(
+            explicit(&binary_directory, "handseed")?.handle(),
+            binary
+                .header_view()?
+                .handseed()
+                .value()
+                .copied()
+                .ok_or(io::Error::other("missing Binary HANDSEED"))?
+        );
+    }
     Ok(())
 }
 
@@ -207,6 +210,7 @@ fn assert_directory_shape(
     directory: &DxfHeaderHandleDirectory,
     source_id: seacad_dxf_core::DxfSourceId,
     document: DxfRawDocumentView<'_>,
+    version: DxfAcadVersion,
 ) -> Result<(), Box<dyn Error>> {
     assert_eq!(directory.source_id(), source_id);
     assert_eq!(directory.schema_version(), "dxf.v1");
@@ -216,7 +220,14 @@ fn assert_directory_shape(
         assert_eq!(entry.schema_field_id(), expected.id);
         assert_eq!(entry.dxf_name(), expected.name);
         assert_eq!(entry.group_code(), expected.group_code);
-        assert_eq!(entry.value().state(), DxfSemanticValueState::Explicit);
+        let is_physically_representable =
+            version != DxfAcadVersion::Ac1009 || expected.group_code <= i16::from(u8::MAX);
+        let expected_state = if is_physically_representable {
+            DxfSemanticValueState::Explicit
+        } else {
+            DxfSemanticValueState::Absent
+        };
+        assert_eq!(entry.value().state(), expected_state);
         assert_eq!(
             entry.value().field_provenance().document_source_id(),
             source_id
@@ -234,6 +245,11 @@ fn assert_directory_shape(
             directory.entry_at_schema_ordinal(expected.ordinal),
             Some(entry)
         );
+
+        if !is_physically_representable {
+            assert!(entry.value().raw_provenance().is_none());
+            continue;
+        }
 
         let value = explicit(directory, expected.id)?;
         assert_eq!(value.handle(), DxfHandle::from_u64(expected.parsed));
@@ -269,19 +285,35 @@ fn standard_handle_body() -> &'static str {
 }
 
 fn ascii_fixture(body: &str) -> Vec<u8> {
-    format!("0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n{body}0\nENDSEC\n0\nEOF\n").into_bytes()
+    ascii_fixture_for_version(DxfAcadVersion::Ac1032, body)
 }
 
-fn binary_fixture() -> Result<Vec<u8>, io::Error> {
-    let version = DxfAcadVersion::Ac1032;
+fn ascii_standard_fixture(version: DxfAcadVersion) -> Vec<u8> {
+    let body = if version == DxfAcadVersion::Ac1009 {
+        "9\n$HANDSEED\n5\n00000a\n"
+    } else {
+        standard_handle_body()
+    };
+    ascii_fixture_for_version(version, body)
+}
+
+fn ascii_fixture_for_version(version: DxfAcadVersion, body: &str) -> Vec<u8> {
+    format!(
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n{body}0\nENDSEC\n0\nEOF\n",
+        version.code()
+    )
+    .into_bytes()
+}
+
+fn binary_fixture(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
     let mut bytes = DXF_BINARY_SENTINEL.to_vec();
     for (group_code, value) in [
         (0_i16, b"SECTION".as_slice()),
         (2, b"HEADER"),
         (9, b"$ACADVER"),
-        (1, b"AC1032"),
+        (1, version.code().as_bytes()),
     ] {
-        push_binary_string(&mut bytes, group_code, value);
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
     for (name, group_code, value) in [
         (b"$HANDSEED".as_slice(), 5_i16, b"00000a".as_slice()),
@@ -290,20 +322,32 @@ fn binary_fixture() -> Result<Vec<u8>, io::Error> {
         (b"$INTERFEREOBJVS", 345, b"000B"),
         (b"$INTERFEREVPVS", 346, b"Ff"),
     ] {
-        push_binary_string(&mut bytes, 9, name);
-        push_binary_string(&mut bytes, group_code, value);
+        if version == DxfAcadVersion::Ac1009 && group_code > i16::from(u8::MAX) {
+            continue;
+        }
+        push_binary_string(&mut bytes, version, 9, name)?;
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
     for (group_code, value) in [(0_i16, b"ENDSEC".as_slice()), (0, b"EOF")] {
-        push_binary_string(&mut bytes, group_code, value);
+        push_binary_string(&mut bytes, version, group_code, value)?;
     }
-    assert_eq!(version.code(), "AC1032");
     Ok(bytes)
 }
 
-fn push_binary_string(bytes: &mut Vec<u8>, group_code: i16, value: &[u8]) {
-    bytes.extend_from_slice(&group_code.to_le_bytes());
+fn push_binary_string(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    group_code: i16,
+    value: &[u8],
+) -> Result<(), io::Error> {
+    if version == DxfAcadVersion::Ac1009 {
+        bytes.push(u8::try_from(group_code).map_err(|_| io::Error::other("group code"))?);
+    } else {
+        bytes.extend_from_slice(&group_code.to_le_bytes());
+    }
     bytes.extend_from_slice(value);
     bytes.push(0);
+    Ok(())
 }
 
 fn open_ascii<'a>(source: &'a DxfMemorySource<'_>) -> Result<DxfAsciiRawDocument<'a>, DxfError> {

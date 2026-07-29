@@ -1,13 +1,12 @@
 # DXF Core 1.0 Implementation Plan
 
 Status: M5 completed through M5.2c verified Binary replay and CLI integration;
-M6.5q appends the remaining twenty-one expanded numeric HEADER fields through
-the generic directory, including range-anchored `$USERI1 - 5` and `$USERR1 - 5`
-evidence without new runtime decoder logic; Q1 enforces the reviewed cargo-deny
-dependency policy; Q2.1 stages native CI coverage across Linux, Windows, and
-macOS on both x64 and ARM64; Q2.2 adds the bounded aggregate-only offline corpus
-manifest and cross-platform receipt harness without publishing private corpus
-identifiers
+M6.7 closes the source-anchored 206-row, 214-slot HEADER inventory with explicit
+ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
+Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
+coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
+bounded aggregate-only offline corpus manifest and cross-platform receipt
+harness without publishing private corpus identifiers
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -186,9 +185,14 @@ identifiers
     symbol lookup, GUID validation, or silent normalization. M6.6c adds the four
     remaining HEADER handle fields through a generic source-anchored handle
     directory. It retains exact hexadecimal spelling and provenance without
-    resolving pointer, ownership, or object identity semantics. M6.7
-    closes the 206 documented rows and 214 expanded field slots with explicit
-    ASCII/Binary and AC1009-AC1032 evidence.
+    resolving pointer, ownership, or object identity semantics. M6.7 closes the
+    206 documented rows and 214 expanded field slots with explicit ASCII/Binary
+    parity evidence across all nine supported AC1009-AC1032 dialects. Text
+    values retain exact source spelling under the existing encoding policy;
+    AC1009 fixtures leave post-R12 numeric and handle group codes absent in both
+    physical formats because its one-byte Binary header cannot encode them.
+    This closure does not add defaults, applicability, enums, ranges, topology,
+    filesystem behavior, or new support beyond the reviewed wire shapes.
 11. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
