@@ -13,7 +13,8 @@ M8.1a adds exact POINT/LINE coordinate-component evidence without assembling or
 transforming geometry; M8.1b adds fixed per-role cardinality cards that retain
 every occurrence through compact evidence-member references; M8.1c lazily
 projects required WCS tuples and reviewed per-component extrusion defaults into
-source-anchored semantic states
+source-anchored semantic states; M8.2a adds a separate exact CIRCLE/ARC defining-
+value evidence directory that preserves their OCS boundary
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -313,6 +314,12 @@ source-anchored semantic states
     Absent extrusion X/Y/Z components receive the reviewed `0/0/1` defaults
     independently, while explicit invalid or duplicate extrusion evidence stays
     invalid. No coordinate-system transformation or vector normalization occurs.
+    M8.2a indexes exact uppercase `CIRCLE` and `ARC` records in complete
+    `BLOCKS` and `ENTITIES` sections through a separate OCS-aware evidence
+    directory. It retains center `10/20/30`, radius `40`, ARC start/end angle
+    `50/51`, and extrusion `210/220/230` occurrences in source order with exact
+    ASCII/Binary double evidence. It does not select values, apply defaults,
+    interpret angle ranges, validate geometry, or transform OCS to WCS.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

@@ -17,6 +17,7 @@ mod basic_geometry_semantic;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
+mod circular_geometry;
 mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
@@ -105,6 +106,11 @@ pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,
     decode_binary_group_code,
+};
+pub use circular_geometry::{
+    DxfCircularGeometryDirectory, DxfCircularGeometryKind, DxfCircularGeometryNumericIssue,
+    DxfCircularGeometryRecordEntry, DxfCircularGeometryValue, DxfCircularGeometryValueRange,
+    DxfCircularGeometryValueRole,
 };
 pub use common_owner_candidate::{
     DxfCommonOwnerCandidateDirectory, DxfCommonOwnerCandidateEntry, DxfCommonOwnerCandidateRange,
