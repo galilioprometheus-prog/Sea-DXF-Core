@@ -40,7 +40,9 @@ comparison, and neutral constant/variable width coexistence evidence; M9.1g
 builds consecutive/closing segment topology and binds each segment to the
 starting vertex's local widths and bulge without assembling OCS geometry;
 M9.1h lazily derives finite straight or circular OCS segment geometry from
-usable endpoints and bulge with typed unavailable/degenerate/overflow failures
+usable endpoints and bulge with typed unavailable/degenerate/overflow failures;
+M9.2a indexes exact classic POLYLINE records with consecutive VERTEX records
+and typed closed, interrupted, or unclosed SEQEND boundaries
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -473,6 +475,16 @@ usable endpoints and bulge with typed unavailable/degenerate/overflow failures
     evidence or a cross-platform canonicalization. Effective width, OCS-to-WCS
     transformation, geometric tolerance/conformance, editing, and rendering
     remain deferred.
+    M9.2a recognizes exact uppercase classic `POLYLINE` records only in
+    complete `BLOCKS` and `ENTITIES` sections. It retains each consecutive
+    exact uppercase `VERTEX` record until exact uppercase `SEQEND`, another
+    record, or the containing section boundary. Sequence state is explicitly
+    `Closed`, `Interrupted`, or `Unclosed`; a closed entry retains its SEQEND,
+    and an interrupted entry retains the first unexpected record. The obsolete
+    group-66 entities-follow flag is ignored as documented. This is exact
+    section-local record topology, not POLYLINE or VERTEX value decoding, flag
+    interpretation, polyline/mesh/face classification, coordinate semantics,
+    geometry, editing, writing, or rendering.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

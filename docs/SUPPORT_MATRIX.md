@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.1h can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -74,8 +74,11 @@ effective width. Consecutive and proven closing segment topology now binds OCS
 endpoints plus local width/bulge fields to each segment's start vertex without
 assembling transformed geometry. Lazy OCS segment geometry preserves straight
 endpoints and derives finite circular center/radius/signed sweep from usable
-nonzero bulge, with typed unavailable, degenerate, and overflow states. Each
-storage decode receipt retains source ID, occurrence, raw span, encoding, and
+nonzero bulge, with typed unavailable, degenerate, and overflow states. Classic
+POLYLINE records now expose exact section-local consecutive VERTEX
+record slices and closed/interrupted/unclosed SEQEND boundary evidence without
+decoding their values or classifying polyline families. Each storage decode
+receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
@@ -83,8 +86,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE vertex semantics; no assembled geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE vertex semantics; no assembled geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE sequence topology; no OCS/WCS transformation | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS segment geometry + classic POLYLINE sequence topology; no OCS/WCS transformation | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -370,6 +373,16 @@ arithmetic fail typed without publishing NaN or infinity. These derived
 binary64 values are not raw evidence or guaranteed cross-platform canonical
 bits. This does not select effective width, transform OCS to WCS, validate
 geometric tolerances or version applicability, edit/write, or render.
+M9.2a recognizes exact uppercase classic `POLYLINE`, `VERTEX`, and `SEQEND`
+record markers only in complete `BLOCKS` or `ENTITIES` sections. Zero or more
+consecutive VERTEX records belong to the preceding recognized POLYLINE until
+SEQEND closes the sequence, the first unexpected record interrupts it, or the
+containing section ends with it unclosed. Closed and interrupted entries retain
+their exact boundary record; orphan VERTEX/SEQEND records and non-exact marker
+spellings are not guessed into a sequence. Group `66` is deliberately ignored.
+This is record topology only, not value/cardinality/default semantics, 2D/3D/
+mesh/polyface classification, vertex-face resolution, coordinate transforms,
+geometry, editing, writing, or rendering.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
