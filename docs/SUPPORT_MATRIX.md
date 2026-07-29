@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2e can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -79,6 +79,8 @@ POLYLINE records now expose exact section-local consecutive VERTEX
 record slices and closed/interrupted/unclosed SEQEND boundary evidence without
 classifying polyline families. Their sixteen documented record-level numeric
 roles retain exact double/int16 values, duplicates, and typed ASCII failures;
+sixteen fixed record cards separately retain per-role cardinality without
+admitting VERTEX values or selecting occurrences;
 each retained VERTEX separately exposes thirteen documented double/int16/int32
 roles with the same wire-level fidelity and strict record locality. Thirteen
 fixed cards per VERTEX separately retain absent, unique, or multiple
@@ -430,6 +432,14 @@ available. This does not decide OCS versus WCS, require a tangent from flag bit
 `2`, interpret integer fields, classify vertex families, validate ranges,
 resolve faces, transform coordinates, assemble geometry, edit/write, or
 render.
+M9.2f adds sixteen fixed cards to every M9.2b POLYLINE record entry in stable
+role order. Cards report `Absent`, `Unique`, or `Multiple` and retain compact
+member references to every source-order M9.2b occurrence. Numeric parsing
+success or failure does not change cardinality; an empty POLYLINE has sixteen
+absent cards, and VERTEX values cannot enter record cards. The contract remains
+available for closed, interrupted, and unclosed sequences. This does not select
+values, apply defaults, interpret fields, classify polyline families, validate
+domains, transform coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

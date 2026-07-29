@@ -51,7 +51,9 @@ resolving polyface indices; M9.2d adds thirteen fixed cardinality cards to each
 retained VERTEX without selecting values or coupling lexical validity to
 occurrence count; M9.2e lazily projects required location, defaulted local
 widths/bulge, and optional curve-fit tangent direction without classifying
-vertices or interpreting integer fields
+vertices or interpreting integer fields; M9.2f adds sixteen fixed cardinality
+cards to each classic POLYLINE record without selecting values or admitting
+VERTEX payloads
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -535,6 +537,15 @@ vertices or interpreting integer fields
     location is OCS or WCS, require a tangent from flag bit `2`, interpret flags
     or polyface indices, classify vertex families, validate ranges, resolve
     faces, transform coordinates, assemble geometry, edit, write, or render.
+    M9.2f assigns sixteen stable per-role cards to every M9.2b POLYLINE record
+    entry. Cards report `Absent`, `Unique`, or `Multiple` and retain compact
+    source-order references back to exact M9.2b values. Lexical validity remains
+    independent from cardinality; an empty POLYLINE receives sixteen absent
+    cards, and VERTEX values remain excluded. Closed/interrupted/unclosed
+    sequence states retain the same record-card contract. This does not select
+    values, apply defaults, interpret flags or counts, classify polyline
+    families, validate domains, transform coordinates, assemble geometry,
+    edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
