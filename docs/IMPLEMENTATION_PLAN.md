@@ -194,6 +194,13 @@ harness without publishing private corpus identifiers
     This closure does not add defaults, applicability, enums, ranges, topology,
     filesystem behavior, or new support beyond the reviewed wire shapes.
 11. M7: handles, ownership, references, dictionaries, XDATA, and reactors.
+    M7.1a adds a context-neutral, public classification registry for every
+    documented handle-valued numeric group-code family: object identity,
+    arbitrary handles, soft/hard pointers, and soft/hard owners. Plot-style
+    and `480..481` handles retain hard-pointer behavior, while XDATA `1005`
+    retains soft-pointer behavior. This checkpoint classifies codes only; it
+    does not parse record values, resolve targets, validate existence, assign
+    ownership, or construct document topology.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and

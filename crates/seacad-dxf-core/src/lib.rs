@@ -84,7 +84,10 @@ pub use encoding::{
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
-pub use handle::{DxfHandle, DxfHandleParseIssue, parse_dxf_handle_hex};
+pub use handle::{
+    DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
+    parse_dxf_handle_hex,
+};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
 pub use header_handle::{
     DxfHeaderHandleDirectory, DxfHeaderHandleEntry, DxfHeaderHandleIssue, DxfHeaderHandleValue,

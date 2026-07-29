@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M6.7 can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -24,8 +24,10 @@ shared borrowed raw-document adapter and generated HEADER directory resolve all
 214 expanded fields from the 206-row reviewed inventory across ASCII and Binary
 without a second source scan. Numeric values retain exact signed integers or
 IEEE-754 bits, tuple components retain independent provenance, strict Booleans
-reject values outside `0/1`, exact text retains source spelling, handles remain
-identifiers without topology resolution, and date or elapsed-day values do not
+reject values outside `0/1`, exact text retains source spelling, documented
+handle-valued numeric group codes have a context-neutral pointer/owner
+classification, handles remain identifiers without target or topology
+resolution, and date or elapsed-day values do not
 infer calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -35,8 +37,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored text layers + shared 214-field lazy HEADER directory with typed numeric, exact-text, and handle views; record/entity semantics not implemented | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared 214-field lazy HEADER directory with exact numeric, text, and handle provenance; record/entity semantics not implemented | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Source-anchored text layers + shared 214-field lazy HEADER directory; numeric handle group-code roles classified without target resolution; record/entity semantics not implemented | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared 214-field lazy HEADER directory; numeric handle group-code roles classified without target resolution; record/entity semantics not implemented | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -48,6 +50,10 @@ Binary group-code header cannot represent them. Absence in that fixture is
 physical evidence, not a version-applicability rule. Defaults, enum meaning,
 ranges, filesystem resolution, handle topology, and cross-variable semantics
 remain unreviewed.
+M7.1a classifies only the numeric role of codes `5`, `105`, `320..369`,
+`390..399`, `480..481`, and `1005`. It does not scan records, parse arbitrary
+group payloads, resolve a handle, validate a target, infer ownership, or expose
+dictionary, reactor, XDATA container, or reference-graph semantics.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
