@@ -66,6 +66,7 @@ mod polyline_record_semantic;
 mod polyline_record_value;
 mod polyline_sequence;
 mod polyline_vertex_card;
+mod polyline_vertex_integer_semantic;
 mod polyline_vertex_semantic;
 mod polyline_vertex_value;
 mod progress;
@@ -294,6 +295,10 @@ pub use polyline_sequence::{
 pub use polyline_vertex_card::{
     DxfPolylineVertexCardDirectory, DxfPolylineVertexCardMember, DxfPolylineVertexCardMemberRange,
     DxfPolylineVertexValueCard, DxfPolylineVertexValueCardState,
+};
+pub use polyline_vertex_integer_semantic::{
+    DxfPolylineVertexIntegerSemanticDirectory, DxfPolylineVertexIntegerSemanticIssue,
+    DxfPolylineVertexIntegerSemantics, DxfPolylineVertexSemanticI16, DxfPolylineVertexSemanticI32,
 };
 pub use polyline_vertex_semantic::{
     DxfPolylineVertexSemanticDirectory, DxfPolylineVertexSemanticDouble,

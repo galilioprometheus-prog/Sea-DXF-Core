@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2g can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2h can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -88,7 +88,9 @@ roles with the same wire-level fidelity and strict record locality. Thirteen
 fixed cards per VERTEX separately retain absent, unique, or multiple
 cardinality without selecting values. Lazy double semantics require location,
 apply only width/bulge zero defaults, and keep optional tangent absence
-explicit. No vertex family is inferred. Each storage decode receipt retains
+explicit. Separate lazy integer semantics preserve optional flags, four
+polyface indices, and identifier, with helpers for the seven meaningful flag
+bits. No vertex family is inferred. Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -453,6 +455,14 @@ policy. This does not enforce dummy zero, validate widths/counts/densities/
 surface type or extrusion, reconcile contradictory flags, classify 2D/3D/
 mesh/polyface families, apply mesh metadata to vertices, resolve faces,
 transform coordinates, assemble geometry, edit/write, or render.
+M9.2h lazily maps flags `70`, polyface indices `71`-`74`, and identifier `91`
+on every retained VERTEX. Absent fields remain absent; unique signed values
+stay exact; invalid ASCII and duplicates remain typed invalid with raw
+provenance when available. Seven helpers expose only meaningful flag bits;
+unused bit `4` has no helper. This does not require integer fields, interpret
+negative-index edge visibility or zero termination, classify vertex families,
+validate indices, resolve faces, apply parent mesh metadata, transform
+coordinates, assemble geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

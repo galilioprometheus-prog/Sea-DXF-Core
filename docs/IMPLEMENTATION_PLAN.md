@@ -55,7 +55,10 @@ vertices or interpreting integer fields; M9.2f adds sixteen fixed cardinality
 cards to each classic POLYLINE record without selecting values or admitting
 VERTEX payloads; M9.2g lazily projects required dummy/elevation components,
 documented record defaults, and exact flag-bit helpers while keeping obsolete
-group `66` outside semantic policy and avoiding mesh classification
+group `66` outside semantic policy and avoiding mesh classification; M9.2h
+lazily projects optional VERTEX flags, four polyface indices, and identifier
+with seven meaningful flag helpers but no vertex classification or face
+resolution
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -561,6 +564,16 @@ group `66` outside semantic policy and avoiding mesh classification
     codes, reconcile contradictory flags, classify polyline families, apply
     mesh metadata to VERTEX records, resolve faces, transform coordinates,
     assemble geometry, edit, write, or render.
+    M9.2h lazily projects the six integer-role M9.2d VERTEX cards: flags `70`,
+    four polyface indices `71`-`74`, and identifier `91`. Absent fields remain
+    explicitly absent because Autodesk publishes no default for them. Unique
+    signed-i16/i32 values remain exact; invalid ASCII and duplicates fail typed
+    with available raw provenance. Helpers expose the seven meaningful flag
+    bits independently while bit `4`, documented as not used, receives no
+    semantic helper. This does not require flags or identifiers, interpret
+    negative-index edge visibility or zero termination, classify vertex
+    families, validate indices, resolve faces, apply parent mesh metadata,
+    transform coordinates, assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
