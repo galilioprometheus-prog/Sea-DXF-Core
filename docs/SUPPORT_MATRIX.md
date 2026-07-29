@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2d can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2e can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -82,8 +82,10 @@ roles retain exact double/int16 values, duplicates, and typed ASCII failures;
 each retained VERTEX separately exposes thirteen documented double/int16/int32
 roles with the same wire-level fidelity and strict record locality. Thirteen
 fixed cards per VERTEX separately retain absent, unique, or multiple
-cardinality without selecting values. No vertex family is inferred. Each
-storage decode receipt retains source ID, occurrence, raw span, encoding, and
+cardinality without selecting values. Lazy double semantics require location,
+apply only width/bulge zero defaults, and keep optional tangent absence
+explicit. No vertex family is inferred. Each storage decode receipt retains
+source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
@@ -419,6 +421,15 @@ and the contract remains available for closed, interrupted, and unclosed
 sequences. This does not select canonical values, apply defaults, interpret
 fields, classify vertex families, validate domains, resolve faces, transform
 coordinates, assemble geometry, edit/write, or render.
+M9.2e lazily maps the seven double-role cards on every retained VERTEX.
+Location X/Y/Z are required components; absent start/end width and bulge use
+only their documented zero defaults; absent curve-fit tangent direction stays
+absent. Unique valid values remain exact, while missing required values,
+invalid ASCII, and duplicates remain typed invalid with raw provenance when
+available. This does not decide OCS versus WCS, require a tangent from flag bit
+`2`, interpret integer fields, classify vertex families, validate ranges,
+resolve faces, transform coordinates, assemble geometry, edit/write, or
+render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

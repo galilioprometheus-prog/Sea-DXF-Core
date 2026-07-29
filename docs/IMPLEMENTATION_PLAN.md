@@ -49,7 +49,9 @@ retains all thirteen documented classic VERTEX numeric roles in exact double,
 signed-16-bit, or signed-32-bit wire domains without classifying vertices or
 resolving polyface indices; M9.2d adds thirteen fixed cardinality cards to each
 retained VERTEX without selecting values or coupling lexical validity to
-occurrence count
+occurrence count; M9.2e lazily projects required location, defaulted local
+widths/bulge, and optional curve-fit tangent direction without classifying
+vertices or interpreting integer fields
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -524,6 +526,15 @@ occurrence count
     canonical value, apply defaults, interpret flags/bulge/tangent/index signs,
     classify vertex families, validate domains, resolve faces, transform
     coordinates, assemble geometry, edit, write, or render.
+    M9.2e lazily projects the seven double-role M9.2d cards. Location X/Y/Z are
+    required semantic components; absent start/end width and bulge receive only
+    their documented zero defaults; absent curve-fit tangent direction remains
+    explicitly absent. Unique valid values remain exact, while invalid ASCII,
+    missing required components, and duplicate occurrences fail typed with
+    available raw provenance. This neutral projection does not decide whether
+    location is OCS or WCS, require a tangent from flag bit `2`, interpret flags
+    or polyface indices, classify vertex families, validate ranges, resolve
+    faces, transform coordinates, assemble geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
