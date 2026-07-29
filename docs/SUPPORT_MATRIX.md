@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.1c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -39,7 +39,8 @@ format-neutral group-zero record chunks. Exact uppercase `POINT` and `LINE`
 records in complete `BLOCKS` or `ENTITIES` sections additionally expose
 source-order WCS and extrusion coordinate-component evidence with exact
 ASCII/Binary double bits or typed lexical failure, plus per-role absent, unique,
-or multiple cardinality cards. Date or elapsed-day values do not infer
+or multiple cardinality cards. Lazy semantic projections retain required WCS
+component failures and apply only reviewed extrusion defaults. Date or elapsed-day values do not infer
 calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -172,6 +173,15 @@ duplicates and lexical failures remain inspectable without copying component
 values. `Absent`, `Unique`, and `Multiple` describe occurrence cardinality only;
 they do not establish validity, completeness, a canonical component, an
 extrusion default, or an assembled/transformed geometry value.
+M8.1c lazily maps unique valid WCS location/start/endpoint cards to exact
+component values with field and raw provenance. Missing required components,
+invalid ASCII numbers, and duplicate occurrences become typed invalid states.
+Absent extrusion X/Y/Z cards independently default to `0`, `0`, and `1` as
+documented for POINT and LINE; explicit invalid or duplicate extrusion evidence
+is never hidden by a default. Triple helpers return a value only when all three
+components are explicit or reviewed defaults. This is component semantics, not
+coordinate transformation, extrusion normalization, subclass/version
+validation, editing, rendering, or complete geometry support.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

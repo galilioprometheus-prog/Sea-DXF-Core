@@ -11,7 +11,9 @@ compares a uniquely resolved common-owner candidate with a unique incoming
 ownership-class link and retains matched, conflicting, or non-comparable state;
 M8.1a adds exact POINT/LINE coordinate-component evidence without assembling or
 transforming geometry; M8.1b adds fixed per-role cardinality cards that retain
-every occurrence through compact evidence-member references
+every occurrence through compact evidence-member references; M8.1c lazily
+projects required WCS tuples and reviewed per-component extrusion defaults into
+source-anchored semantic states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -305,6 +307,12 @@ every occurrence through compact evidence-member references
     compact member slice pointing back to the M8.1a occurrence directory.
     Lexical validity remains independent from cardinality; no occurrence is
     copied, selected, defaulted, or transformed.
+    M8.1c adds lazy typed POINT and LINE component semantics. Unique valid WCS
+    location/start/endpoint components become explicit values; absent,
+    lexically invalid, or duplicate required components remain typed invalid.
+    Absent extrusion X/Y/Z components receive the reviewed `0/0/1` defaults
+    independently, while explicit invalid or duplicate extrusion evidence stays
+    invalid. No coordinate-system transformation or vector normalization occurs.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

@@ -13,6 +13,7 @@ mod ascii_line;
 mod ascii_numeric;
 mod basic_geometry;
 mod basic_geometry_card;
+mod basic_geometry_semantic;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
@@ -93,6 +94,11 @@ pub use basic_geometry::{
 pub use basic_geometry_card::{
     DxfBasicGeometryCardDirectory, DxfBasicGeometryCardMember, DxfBasicGeometryCardMemberRange,
     DxfBasicGeometryComponentCard, DxfBasicGeometryComponentCardState,
+};
+pub use basic_geometry_semantic::{
+    DxfBasicGeometrySemanticDirectory, DxfBasicGeometrySemanticEntry,
+    DxfBasicGeometrySemanticIssue, DxfBasicGeometrySemanticKind, DxfBasicGeometrySemanticValue,
+    DxfLineGeometrySemantics, DxfPointGeometrySemantics,
 };
 pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
