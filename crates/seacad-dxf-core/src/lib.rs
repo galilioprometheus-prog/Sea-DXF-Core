@@ -5,6 +5,7 @@
 
 #![forbid(unsafe_code)]
 
+mod application_group;
 mod ascii_document;
 mod ascii_group;
 mod ascii_index;
@@ -69,6 +70,10 @@ pub type DxfBinarySectionKind = DxfAsciiSectionKind;
 pub type DxfBinarySectionName = DxfAsciiSectionName;
 /// Binary view of the shared section and group-zero index.
 pub type DxfBinaryStructureIndex = DxfAsciiStructureIndex;
+pub use application_group::{
+    DxfApplicationControlEntry, DxfApplicationControlKind, DxfApplicationGroupDirectory,
+    DxfApplicationGroupEntry, DxfApplicationGroupKind, DxfApplicationGroupState,
+};
 pub use ascii_line::{
     DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
 };

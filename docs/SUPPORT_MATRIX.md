@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4b can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -107,6 +107,13 @@ duplicate identities as well as ordinary targets. Cardinality remains a view of
 incoming `350..369` evidence only; it is not a legal-owner or one-owner
 conformance decision and does not incorporate context-specific `330` owner
 pointers.
+M7.4c adds source-order evidence for every group-code `102` application control
+inside complete raw records. Exact `{ACAD_REACTORS` and
+`{ACAD_XDICTIONARY` starts are distinguished from other starts, closing braces,
+and invalid controls. Group ranges are record-local and retain closed,
+interrupted, or unclosed state. This is lexical container evidence only; handle
+occurrences inside the ranges retain their existing M7.3/M7.4 classifications
+until a later context join.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

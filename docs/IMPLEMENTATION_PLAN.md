@@ -6,9 +6,9 @@ ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
 coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers; M7.4b materializes
-typed zero/one/multiple incoming ownership-class cardinality for every raw
-record without claiming a complete ownership graph
+harness without publishing private corpus identifiers; M7.4c indexes exact
+record-local group-code 102 application-control evidence without claiming
+owner, reactor, or extension-dictionary validity
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -255,6 +255,12 @@ record without claiming a complete ownership graph
     `UniqueIncomingLink`, or `MultipleIncomingLinks` state. Construction is a
     linear merge over target-sorted M7.4a links. These states describe only
     incoming `350..369` evidence and are not one-owner conformance results.
+    M7.4c indexes every group-code `102` occurrence inside complete raw records
+    as an exact known start, other application start, close, or invalid control.
+    Known starts distinguish `{ACAD_REACTORS` and `{ACAD_XDICTIONARY`; each
+    start retains closed, interrupted-by-another-start, or unclosed state plus
+    exact source/content ranges bounded to its record. This lexical context does
+    not yet reinterpret the `330` or `360` handles inside it.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
