@@ -14,7 +14,8 @@ transforming geometry; M8.1b adds fixed per-role cardinality cards that retain
 every occurrence through compact evidence-member references; M8.1c lazily
 projects required WCS tuples and reviewed per-component extrusion defaults into
 source-anchored semantic states; M8.2a adds a separate exact CIRCLE/ARC defining-
-value evidence directory that preserves their OCS boundary
+value evidence directory that preserves their OCS boundary; M8.2b adds fixed
+per-role CIRCLE/ARC cardinality cards with compact evidence references
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -320,6 +321,11 @@ value evidence directory that preserves their OCS boundary
     `50/51`, and extrusion `210/220/230` occurrences in source order with exact
     ASCII/Binary double evidence. It does not select values, apply defaults,
     interpret angle ranges, validate geometry, or transform OCS to WCS.
+    M8.2b materializes seven stable role cards for every `CIRCLE` and nine for
+    every `ARC`. Each card reports `Absent`, `Unique`, or `Multiple` and owns a
+    compact member slice pointing back to M8.2a values. Numeric validity remains
+    independent from cardinality; no occurrence is copied, selected, defaulted,
+    validated, normalized, or transformed.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

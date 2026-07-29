@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.2a can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.2b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -43,7 +43,8 @@ or multiple cardinality cards. Lazy semantic projections retain required WCS
 component failures and apply only reviewed extrusion defaults. Date or elapsed-day values do not infer
 calendars or timezones. Exact uppercase `CIRCLE` and `ARC` records separately
 expose source-order OCS center, radius, angle, and extrusion evidence without
-assembling or transforming circular geometry. Each
+assembling or transforming circular geometry, plus fixed per-role cardinality
+cards that retain every occurrence. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
@@ -193,6 +194,14 @@ numbers, exact binary64 bits, and raw spans remain visible. Thickness `39`,
 cardinality, defaults, required-field or positive-radius validation, angle
 normalization, sweep interpretation, OCS transformation, and assembled circular
 geometry remain deferred.
+M8.2b adds seven stable cards per CIRCLE for OCS center X/Y/Z, radius, and
+extrusion X/Y/Z, plus nine per ARC by inserting start/end angle before
+extrusion. Compact member ordinals point back into the retained M8.2a evidence
+directory. `Absent`, `Unique`, and `Multiple` report occurrence count only;
+invalid ASCII values remain card members and no value is copied or selected.
+The cards do not establish required fields, valid geometry, defaults, angle or
+radius constraints, canonical values, coordinate transformation, or assembled
+circular semantics.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
