@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M7.4e can open an immutable raw ASCII framing document, enforce
+SeaCad through M7.4f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -31,8 +31,8 @@ exact source-anchored handle or typed lexical failure. Complete raw records
 also expose identity evidence, document-local pointer/owner target resolution,
 incoming soft/hard ownership-class evidence grouped by unique target, exact
 application-group context, and conservative reactor, extension-dictionary, or
-common-owner candidates; these remain evidence rather than a validated
-topology. Completely closed
+common-owner candidates grouped per raw record with typed cardinality; these
+remain evidence rather than a validated topology. Completely closed
 known record-bearing sections expose format-neutral group-zero record chunks,
 while record types remain uninterpreted. Date or elapsed-day values do not infer
 calendars or timezones. Each
@@ -44,8 +44,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + contextual handle target/ownership/role evidence; no validated topology | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + contextual handle target/ownership/role evidence; no validated topology | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + contextual handle/owner-candidate evidence; no validated topology | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + contextual handle/owner-candidate evidence; no validated topology | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -133,6 +133,15 @@ target-resolution states remain independently accessible. Candidate roles do
 not validate record-type legality, target existence, authoritative ownership,
 one-owner conformance, dictionary membership, reactor payloads, lifecycle,
 purge behavior, cycles, edits, or writes.
+M7.4f filters every M7.4e `CommonOwnerPointerCandidate` into a source-order
+candidate directory and creates one compact entry for every raw record. Each
+record reports `NoCandidate`, `UniqueCandidate`, or `MultipleCandidates` and a
+half-open candidate slice. Invalid, null, missing, unique, and ambiguous target
+states all remain present, and the exact identity-match slice is available per
+candidate. This cardinality does not compare the candidate target with the
+source records of incoming ownership-class links, select an authoritative
+owner, establish one-owner conformance, validate a record type, or implement
+graph/lifecycle/edit/write behavior.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

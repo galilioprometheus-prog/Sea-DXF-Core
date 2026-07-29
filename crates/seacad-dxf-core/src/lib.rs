@@ -14,6 +14,7 @@ mod ascii_numeric;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
+mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
 mod encoding;
@@ -85,6 +86,10 @@ pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,
     decode_binary_group_code,
+};
+pub use common_owner_candidate::{
+    DxfCommonOwnerCandidateDirectory, DxfCommonOwnerCandidateEntry, DxfCommonOwnerCandidateRange,
+    DxfCommonOwnerCandidateState, DxfCommonOwnerRecordEntry,
 };
 pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
 pub use dialect::{

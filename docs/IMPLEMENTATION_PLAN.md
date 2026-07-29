@@ -6,10 +6,9 @@ ASCII/Binary parity evidence across all nine supported AC1009-AC1032 dialects;
 Q1 enforces the reviewed cargo-deny dependency policy; Q2.1 stages native CI
 coverage across Linux, Windows, and macOS on both x64 and ARM64; Q2.2 adds the
 bounded aggregate-only offline corpus manifest and cross-platform receipt
-harness without publishing private corpus identifiers; M7.4e adds conservative
-semantic-role evidence over exact handle code, reference class, application
-context, closed-group state, and common record-bearing section while retaining
-the independent target-resolution state
+harness without publishing private corpus identifiers; M7.4f groups every
+conservative common-owner pointer candidate by source record with typed
+zero/one/multiple cardinality while retaining independent target matches
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -276,7 +275,13 @@ the independent target-resolution state
     fall back to generic evidence. Roles do not erase invalid, null, missing,
     unique, or ambiguous target state. Record-type legality, authoritative owner
     reconciliation, one-owner conformance, graph topology, and container
-    semantics stay deferred.
+    semantics stay deferred. M7.4f filters those common-owner pointer candidates
+    into one source-order evidence stream and materializes one compact card per
+    raw record with `NoCandidate`, `UniqueCandidate`, or `MultipleCandidates`.
+    Every invalid, null, missing, unique, or ambiguous candidate remains in the
+    record slice, and its exact target-match slice stays accessible. This is
+    candidate cardinality only; comparison with incoming ownership-class links,
+    authoritative owner selection, and one-owner conformance stay deferred.
 12. M8: exact basic geometry and coordinate-system preservation.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
