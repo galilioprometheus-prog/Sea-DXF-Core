@@ -12,6 +12,7 @@ mod ascii_index;
 mod ascii_line;
 mod ascii_numeric;
 mod basic_geometry;
+mod basic_geometry_card;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
@@ -88,6 +89,10 @@ pub use basic_geometry::{
     DxfBasicGeometryComponent, DxfBasicGeometryComponentRange, DxfBasicGeometryComponentRole,
     DxfBasicGeometryDirectory, DxfBasicGeometryKind, DxfBasicGeometryNumericIssue,
     DxfBasicGeometryRecordEntry,
+};
+pub use basic_geometry_card::{
+    DxfBasicGeometryCardDirectory, DxfBasicGeometryCardMember, DxfBasicGeometryCardMemberRange,
+    DxfBasicGeometryComponentCard, DxfBasicGeometryComponentCardState,
 };
 pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
 pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};

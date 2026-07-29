@@ -10,7 +10,8 @@ harness without publishing private corpus identifiers; M7.4g conservatively
 compares a uniquely resolved common-owner candidate with a unique incoming
 ownership-class link and retains matched, conflicting, or non-comparable state;
 M8.1a adds exact POINT/LINE coordinate-component evidence without assembling or
-transforming geometry
+transforming geometry; M8.1b adds fixed per-role cardinality cards that retain
+every occurrence through compact evidence-member references
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -299,6 +300,11 @@ transforming geometry
     double evidence. Duplicates, invalid ASCII values, and empty component
     slices remain explicit. It does not select canonical components, apply
     defaults, validate completeness, or transform coordinate systems.
+    M8.1b materializes six stable role cards for every `POINT` and nine for
+    every `LINE`. Each card reports `Absent`, `Unique`, or `Multiple` and owns a
+    compact member slice pointing back to the M8.1a occurrence directory.
+    Lexical validity remains independent from cardinality; no occurrence is
+    copied, selected, defaulted, or transformed.
 13. M9: polyline, mesh, spline, and helix families.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.

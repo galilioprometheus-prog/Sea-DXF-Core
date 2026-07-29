@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M8.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M8.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -38,7 +38,8 @@ validated topology. Completely closed known record-bearing sections expose
 format-neutral group-zero record chunks. Exact uppercase `POINT` and `LINE`
 records in complete `BLOCKS` or `ENTITIES` sections additionally expose
 source-order WCS and extrusion coordinate-component evidence with exact
-ASCII/Binary double bits or typed lexical failure. Date or elapsed-day values do not infer
+ASCII/Binary double bits or typed lexical failure, plus per-role absent, unique,
+or multiple cardinality cards. Date or elapsed-day values do not infer
 calendars or timezones. Each
 storage decode receipt retains source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -164,6 +165,13 @@ numbers, and exact binary64 bits remain visible. It does not choose canonical
 components, apply omitted defaults, validate entity completeness, normalize an
 extrusion vector, transform coordinate systems, expose thickness or POINT angle,
 or claim complete POINT/LINE geometry support.
+M8.1b adds a stable card for every documented M8.1a role applicable to each
+recognized record: six cards for `POINT` and nine for `LINE`. Card members are
+compact ordinals back into the source-order occurrence directory, so all
+duplicates and lexical failures remain inspectable without copying component
+values. `Absent`, `Unique`, and `Multiple` describe occurrence cardinality only;
+they do not establish validity, completeness, a canonical component, an
+extrusion default, or an assembled/transformed geometry value.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
