@@ -25,6 +25,7 @@ mod diagnostic;
 mod dialect;
 mod ellipse_geometry;
 mod ellipse_geometry_card;
+mod ellipse_geometry_semantic;
 mod encoding;
 mod error;
 mod format_probe;
@@ -142,6 +143,10 @@ pub use ellipse_geometry_card::{
     DxfEllipseGeometryCardDirectory, DxfEllipseGeometryCardMember,
     DxfEllipseGeometryCardMemberRange, DxfEllipseGeometryValueCard,
     DxfEllipseGeometryValueCardState,
+};
+pub use ellipse_geometry_semantic::{
+    DxfEllipseGeometrySemanticDirectory, DxfEllipseGeometrySemanticIssue,
+    DxfEllipseGeometrySemanticValue, DxfEllipseGeometrySemantics,
 };
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
