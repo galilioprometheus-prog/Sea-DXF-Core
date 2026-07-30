@@ -1,0 +1,93 @@
+# DXF Entity Semantic Completion Plan
+
+## Goal
+
+DXF Core completion requires more than lossless framing. For every documented
+graphical entity in the AC1009--AC1032 scope, SeaCad must retain all public
+group-code evidence, expose typed cardinality and semantic states, and provide
+exact geometry where the public DXF contract defines enough information.
+Proprietary payloads remain bounded opaque bytes with a typed public envelope.
+
+The existing raw record layer already preserves unknown, custom, proxy, and
+future records. This plan closes documented entity semantics without weakening
+that forward-compatible boundary.
+
+## Normative inventory
+
+The Autodesk DXF entity reference lists 45 public entity topics:
+
+`3DFACE`, `3DSOLID`, `ACAD_PROXY_ENTITY`, `ARC`, `ATTDEF`, `ATTRIB`,
+`BODY`, `CIRCLE`, `DIMENSION`, `ELLIPSE`, `HATCH`, `HELIX`, `IMAGE`,
+`INSERT`, `LEADER`, `LIGHT`, `LINE`, `LWPOLYLINE`, `MESH`, `MLINE`,
+`MLEADERSTYLE`, `MLEADER`, `MTEXT`, `OLEFRAME`, `OLE2FRAME`, `POINT`,
+`POLYLINE`, `RAY`, `REGION`, `SECTION`, `SEQEND`, `SHAPE`, `SOLID`,
+`SPLINE`, `SUN`, `SURFACE`, `TABLE`, `TEXT`, `TOLERANCE`, `TRACE`,
+`UNDERLAY`, `VERTEX`, `VIEWPORT`, `WIPEOUT`, and `XLINE`.
+
+Normative references:
+
+- Autodesk, About the DXF ENTITIES Section:
+  <https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-DXF/files/GUID-7D07C886-FD1D-4A0C-A7AB-B4D21F18E484.htm>
+- Autodesk, About Object and Entity Codes:
+  <https://help.autodesk.com/cloudhelp/2019/ENU/AutoCAD-DXF/files/GUID-A35B8C2A-1885-4A8E-8533-E61D8A423D62.htm>
+
+On-wire aliases and specializations written by supported AutoCAD releases are
+part of the same inventory. The reviewed AutoCAD 2027 oracle observed examples
+including `ACAD_TABLE`, `ARC_DIMENSION`, `LARGE_RADIAL_DIMENSION`,
+`MULTILEADER`, `PDFUNDERLAY`, `SECTIONOBJECT`, `PLANESURFACE`,
+`EXTRUDEDSURFACE`, `LOFTEDSURFACE`, `REVOLVEDSURFACE`, and
+`SWEPTSURFACE`. Every alias requires an explicit public-topic mapping or an
+explicit opaque classification; filename or record position is never semantic
+evidence.
+
+## Completion levels
+
+Each entity family advances independently through:
+
+1. exact marker and section-scoped source evidence;
+2. fixed per-role cardinality without selecting duplicates;
+3. typed values, documented defaults, flags, and structural validation;
+4. exact coordinate-system and geometry semantics where publicly specified;
+5. source-bound edit planning and verified ASCII/Binary materialization;
+6. dialect fixtures, malformed fixtures, private-corpus accounting, and all
+   six native CI targets.
+
+An entity is not called semantically complete at levels 1 or 2. Rendering,
+tessellation, external file resolution, fonts, raster decoding, and proprietary
+modeler interpretation remain separate capabilities.
+
+## Current baseline
+
+Deep typed semantics already cover `POINT`, `LINE`, `CIRCLE`, `ARC`,
+`ELLIPSE`, `RAY`, `XLINE`, `LWPOLYLINE`, classic
+`POLYLINE`/`VERTEX`/`SEQEND`, `INSERT`, `ATTRIB`, and `ATTDEF`, plus
+`BLOCK`/`ENDBLK` topology. M14 starts the missing public entity inventory.
+
+## Milestone queue
+
+- M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
+- M14.2: text and symbols — `TEXT`, `MTEXT`, `SHAPE`, `TOLERANCE`.
+- M14.3: curves — `SPLINE`, `HELIX`.
+- M14.4: fills and meshes — `HATCH`, `MESH`.
+- M14.5: annotation graphs — `DIMENSION` families, `LEADER`, `MLEADER`,
+  `MLEADERSTYLE`.
+- M14.6: compound linework — `MLINE`.
+- M14.7: raster and external graphics — `IMAGE`, `WIPEOUT`, `UNDERLAY`.
+- M14.8: view and lighting — `VIEWPORT`, `LIGHT`, `SUN`, `SECTION`.
+- M14.9: tables and embedded content — `TABLE`, `OLEFRAME`, `OLE2FRAME`.
+- M14.10: public envelopes with opaque proprietary payloads — `3DSOLID`,
+  `BODY`, `REGION`, `SURFACE` families, and `ACAD_PROXY_ENTITY`.
+- M14.11: version applicability, aliases, common entity properties, edit/write
+  closure, corpus accounting, and generated support-matrix completeness.
+
+Every micro-milestone must cover ASCII and Binary, all applicable dialects,
+exact source identity, cancellation, duplicate/invalid evidence, and public API
+bounds before its support state can advance.
+
+## Legacy evidence boundary
+
+`D:\SeaCad\cad_2026-07-23_source` is a read-only behavioral oracle. Its
+inventories, authored fixtures, aggregate counters, and failure notes may guide
+tests and risk ordering. Its parser implementation is not copied, translated,
+vendored, or used as a runtime dependency. Autodesk documentation remains
+normative.

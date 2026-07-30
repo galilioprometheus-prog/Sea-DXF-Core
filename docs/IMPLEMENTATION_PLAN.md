@@ -1333,6 +1333,24 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     This closes the first native artifact workflow receipt, not permanent
     retention, signatures, private corpus scale, the twenty-night sequence, or
     final Core 1.0 authorization.
+18. M14: complete the documented DXF entity semantic inventory while M13
+    release evidence continues independently in the background.
+    `docs/DXF_ENTITY_COMPLETION_PLAN.md` defines the 45-topic Autodesk entity
+    inventory, observed on-wire aliases, six completion levels, and the
+    ordered M14.1--M14.11 family queue. Public group codes become typed and
+    source-anchored; proprietary ACIS, OLE, proxy, raster, font, and external
+    reference payloads remain bounded opaque data unless a later named
+    milestone supplies a public exact decoder. Unknown future records remain
+    lossless raw records.
+    M14.1a recognizes exact uppercase `3DFACE`, `SOLID`, and `TRACE` markers
+    only in complete raw records belonging to `BLOCKS` or `ENTITIES`. It
+    retains all twelve documented corner components plus 3DFACE invisible-edge
+    flags or SOLID/TRACE thickness and extrusion components in source order,
+    preserving duplicates, exact binary64 bits, signed-16-bit flags, raw group
+    spans, and typed ASCII lexical failures across ASCII and Binary AC1009--
+    AC1032. This is occurrence evidence only: it does not select values, apply
+    corner/extrusion/thickness defaults, reorder SOLID/TRACE corners, transform
+    OCS to WCS, validate flags or normals, assemble faces, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

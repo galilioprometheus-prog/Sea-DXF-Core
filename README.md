@@ -6,7 +6,8 @@ through AC1032.
 
 ## Current status
 
-Implementation is complete through M13.2g. SeaCad opens bounded lossless ASCII
+Implementation is complete through M13.2g and entity-semantic expansion is
+active at M14.1a. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -19,6 +20,9 @@ stale-evidence diagnostics, canonical-LF Cargo.lock identity, and one
 successful six-native artifact/aggregate workflow receipt are present. Private
 corpus achievement, twenty consecutive six-native nightly receipts,
 signatures, and final Core 1.0 authorization remain open M13 evidence.
+The remaining documented entity families are tracked in
+`docs/DXF_ENTITY_COMPLETION_PLAN.md`; raw preservation does not imply complete
+typed semantics for every entity.
 
 ## Workspace
 

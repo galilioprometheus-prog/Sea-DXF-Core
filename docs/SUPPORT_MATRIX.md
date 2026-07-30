@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.2g can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -194,6 +194,16 @@ terminal status. The CLI exposes `inspect` and `verify` with
 English/Vietnamese human output, JSON v1, stable exits, and path redaction.
 These M4 reports and decode views remain core APIs and are not exposed in CLI
 JSON v1 yet.
+
+M14.1a additionally recognizes exact uppercase `3DFACE`, `SOLID`, and `TRACE`
+records in complete `BLOCKS`/`ENTITIES` record ranges. It retains twelve
+source-order corner components for each family, 3DFACE group-70 invisible-edge
+flags in their signed-16-bit wire domain, and SOLID/TRACE thickness plus
+extrusion components as exact binary64 evidence. Duplicate occurrences, raw
+spans, and typed ASCII lexical failures remain explicit with ASCII/Binary
+parity across all nine dialects. No component selection, defaults, validation,
+corner reorder, OCS/WCS transform, face geometry, edit, or write support is
+claimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
