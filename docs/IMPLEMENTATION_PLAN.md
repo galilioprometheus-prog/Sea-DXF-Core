@@ -99,7 +99,8 @@ requires closed unique targets and rejects reachable recursive expansion;
 M10.1l derives finite single-instance BLOCK-to-WCS affine transforms from
 eligible targets with typed fail-closed input and application states; M10.1m
 derives constant-space rectangular-array layouts and bounded per-index
-instance transforms
+instance transforms; M10.1n retains exact INSERT/ATTRIB/SEQEND sequence
+boundaries under zero, nonzero, and unavailable attributes-follow evidence
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -851,6 +852,16 @@ instance transforms
     array. Placement overflow remains typed. This evidence does not enumerate
     every instance, convert BLOCK units, follow ATTRIB/SEQEND, recursively
     transform member geometry, edit, write, or render.
+    M10.1n evaluates every M10.1i attributes-follow semantic while retaining
+    its exact signed-16-bit value. Zero consumes no following records.
+    Any nonzero value scans consecutive exact uppercase ATTRIB records in the
+    same complete BLOCKS/ENTITIES section and retains the exact SEQEND,
+    first interrupting record, or section-end boundary. This reconciles the
+    INSERT page's value-`1` wording with the SEQEND page's nonzero wording
+    without normalizing the flag. Invalid or duplicate flags remain
+    `FlagUnavailable` and consume nothing. This evidence does not decode
+    ATTRIB fields, associate ATTDEF definitions, validate ownership, apply
+    attribute transforms, expand geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1m can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1n can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -149,6 +149,8 @@ Each eligible INSERT additionally exposes a finite single-instance row-major
 3x4 BLOCK-to-WCS affine transform with its normalized extrusion normal.
 Usable positive array counts and finite spacing additionally expose a
 constant-space rotated rectangular layout with bounded per-index transforms.
+Attributes-follow evidence additionally retains exact consecutive
+ATTRIB/SEQEND sequence boundaries without decoding attribute payloads.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -701,6 +703,14 @@ computes only a requested in-range transform; it never allocates the expanded
 array. Invalid semantics/counts/spacing and placement overflow remain typed.
 This does not enumerate every instance, convert BLOCK units, follow
 ATTRIB/SEQEND, recursively transform member geometry, edit/write, or render.
+M10.1n retains exact INSERT/ATTRIB/SEQEND sequence topology in complete
+BLOCKS/ENTITIES sections. Zero attributes-follow consumes nothing; every
+nonzero value scans consecutive exact uppercase ATTRIB records and records a
+closed SEQEND, the first interruption, or section-end unclosed state while
+preserving the original signed-16-bit flag. Invalid/duplicate flags remain
+unavailable and consume nothing. This does not decode ATTRIB fields, associate
+ATTDEF definitions, validate ownership, apply attribute transforms, expand
+geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
