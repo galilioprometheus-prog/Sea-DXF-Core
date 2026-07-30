@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1w can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1x can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -170,6 +170,8 @@ normalized normals through the shared arbitrary-axis implementation.
 Exact uppercase ATTDEF members additionally retain their owning BLOCK
 definition, definition state, and source-order member/ATTDEF positions without
 decoding definition fields or associating ATTRIB records.
+Classic ATTDEF records additionally retain source-order defining values while
+excluding application-group and AcDbXrecord/AcDbMText extension payloads.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -799,6 +801,15 @@ owning closed/interrupted/unclosed definition, zero-based member position, and
 definition-local ATTDEF position. Outside-definition and non-exact markers are
 excluded. This does not decode ATTDEF fields, interpret flags, compare tags,
 associate ATTRIB records, transform geometry, edit/write, or render.
+M10.1x retains 24 classic ATTDEF roles from every M10.1w record in exact text,
+binary64, or signed-16-bit source order. Subclass tracking admits legacy,
+AcDbText, and AcDbAttributeDefinition values, excludes group-102 application
+content, ignores unrelated subclass contexts, and stops before AcDbXrecord so
+MText extension codes cannot impersonate classic roles. The two documented
+group-280 meanings remain neutral `VersionOrLockPosition` occurrences. This
+does not assign cardinality, select/default values, validate domains, interpret
+flags/justification, decode MText extensions, compare ATTRIB tags, associate
+inserted attributes, transform geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

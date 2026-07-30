@@ -114,7 +114,9 @@ M10.1u selects the applicable source placement tuple without coupling errors
 from the ignored tuple; M10.1v projects the selected OCS anchor into WCS with
 the shared arbitrary-axis implementation and typed finite-input failures;
 M10.1w indexes exact uppercase ATTDEF member records under their owning BLOCK
-definitions without decoding fields or associating inserted attributes
+definitions without decoding fields or associating inserted attributes;
+M10.1x retains source-order classic ATTDEF defining values without admitting
+application-group or AcDbXrecord/MText extension payloads
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -985,6 +987,21 @@ definitions without decoding fields or associating inserted attributes
     from the BLOCK topology. This evidence does not decode ATTDEF fields,
     interpret attribute flags, compare tags, associate ATTRIB records, apply
     INSERT/BLOCK transforms, edit, write, or render.
+    M10.1x layers source-order classic ATTDEF value evidence over every exact
+    definition record retained by M10.1w. It retains thickness, OCS text start,
+    height/default value, prompt/tag, attribute and text flags, field length,
+    rotation, width, oblique angle, style, justification, optional alignment
+    point, extrusion, and both source occurrences of group `280` in exact text,
+    binary64, or signed-16-bit wire domains. Because Autodesk assigns group
+    `280` both version and lock-position roles without a distinct code, M10.1x
+    keeps a neutral `VersionOrLockPosition` role rather than inferring order.
+    Subclass tracking admits legacy, `AcDbText`, and
+    `AcDbAttributeDefinition` payloads, ignores other subclass contexts, and
+    stops before `AcDbXrecord`; group `102` application content is excluded.
+    This does not assign cardinality, select values, apply defaults, validate
+    text/numeric domains, interpret flags/justification, decode the MText
+    extension, compare ATTRIB tags, associate inserted attributes, transform
+    geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
