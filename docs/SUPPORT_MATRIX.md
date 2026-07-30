@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1ae can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1af can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -186,6 +186,8 @@ Classic ATTDEF placement semantics additionally select the applicable stored
 text-start or alignment tuple without coupling failures from the ignored tuple.
 Usable ATTDEF placement anchors additionally project to finite WCS points and
 normalized normals through the shared arbitrary-axis implementation.
+Usable ATTDEF tags additionally participate in collision-safe, duplicate-
+preserving exact lookup scoped to their owning BLOCK, with unusable-tag counts.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -886,6 +888,14 @@ inputs, zero extrusion, basis failure, and transformed overflow remain typed.
 This does not apply text rotation, oblique/width/generation flags, style
 metrics, INSERT/BLOCK transforms, or ATTRIB association. It does not
 recalculate stored points, decode MText, edit/write, or render.
+M10.1af indexes usable ATTDEF tags under each exact owning BLOCK. SHA-256
+narrows lookup candidates, exact bounded raw-span comparison confirms equality,
+and duplicates remain in definition-local order. Every BLOCK exposes total,
+indexed, and unusable ATTDEF-tag counts, including empty blocks; same-document
+source spans can query without a tag-sized buffer. This does not validate tag
+syntax, uppercase/decode tags, collapse duplicates, require a closed BLOCK,
+treat missing as definitive when unusable tags exist, resolve INSERT targets,
+associate ATTRIB records, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

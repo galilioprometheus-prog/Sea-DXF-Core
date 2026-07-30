@@ -128,7 +128,9 @@ codes and exposes alignment-point applicability without selecting coordinates;
 M10.1ad selects the applicable stored ATTDEF text-start or alignment tuple
 without coupling failures from the ignored tuple; M10.1ae projects each usable
 selected ATTDEF OCS anchor into WCS through the shared arbitrary-axis basis
-with typed finite-input and extrusion failures
+with typed finite-input and extrusion failures; M10.1af builds a collision-safe
+block-local exact ATTDEF-tag index with duplicate-preserving matches and
+explicit unusable-tag summaries
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1064,6 +1066,17 @@ with typed finite-input and extrusion failures
     distinguish group-280 meanings, decode MText extensions, compare ATTRIB
     tags, associate inserted attributes, transform geometry, edit, write, or
     render.
+    M10.1ac lazily classifies usable M10.1ab horizontal justification `72` as
+    left, center, right, aligned, middle, or fit and vertical justification
+    `74` as baseline, bottom, middle, or top. Explicit/defaulted state and raw
+    provenance remain intact; unsupported signed codes and nested integer
+    failures remain typed. Alignment-point applicability is true when either
+    classified code is nonzero, false only when both are usable zero values,
+    and unavailable otherwise. This does not validate horizontal/vertical
+    combinations, require or select text-start/alignment tuples, recalculate
+    placement, measure styled text, decode MText extensions, compare ATTRIB
+    tags, associate inserted attributes, transform geometry, edit, write, or
+    render.
     M10.1ad lazily selects one placement anchor from M10.1z using M10.1ac
     applicability. Usable baseline/left justification selects text start;
     either usable nonzero code selects alignment point. The selected tuple must
@@ -1084,16 +1097,15 @@ with typed finite-input and extrusion failures
     flags, text-style metrics, INSERT/BLOCK transforms, or ATTRIB association.
     It does not recalculate stored points, decode MText extensions, edit, write,
     or render.
-    M10.1ac lazily classifies usable M10.1ab horizontal justification `72` as
-    left, center, right, aligned, middle, or fit and vertical justification
-    `74` as baseline, bottom, middle, or top. Explicit/defaulted state and raw
-    provenance remain intact; unsupported signed codes and nested integer
-    failures remain typed. Alignment-point applicability is true when either
-    classified code is nonzero, false only when both are usable zero values,
-    and unavailable otherwise. This does not validate horizontal/vertical
-    combinations, require or select text-start/alignment tuples, recalculate
-    placement, measure styled text, decode MText extensions, compare ATTRIB
-    tags, associate inserted attributes, transform geometry, edit, write, or
+    M10.1af indexes every usable M10.1aa ATTDEF tag under its exact owning
+    BLOCK. SHA-256 narrows candidates, exact bounded raw-span comparison
+    confirms collision-safe equality, and duplicate tags remain ordered by
+    definition-local ordinal. Every BLOCK publishes total, indexed, and
+    unusable ATTDEF-tag counts, including empty blocks. Same-document source
+    spans can drive lookup without a tag-sized buffer. This does not validate
+    tag syntax, uppercase or decode tags, collapse duplicates, require a closed
+    BLOCK, interpret a missing exact match as definitive when unusable tags
+    exist, resolve INSERT targets, associate ATTRIB records, edit, write, or
     render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
