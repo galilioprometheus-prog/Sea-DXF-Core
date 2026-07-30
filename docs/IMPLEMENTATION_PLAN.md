@@ -93,7 +93,8 @@ matched, conflicting, or not-comparable state; M10.1f indexes only matched
 names for exact duplicate-preserving missing/unique/ambiguous lookup; M10.1g
 retains every documented defining value from exact INSERT records; M10.1h adds
 16 fixed per-record cardinality cards with compact source-order members;
-M10.1i projects required and Autodesk-defaulted typed INSERT semantics
+M10.1i projects required and Autodesk-defaulted typed INSERT semantics;
+M10.1j resolves usable INSERT names against exact matched BLOCK names
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -803,6 +804,16 @@ M10.1i projects required and Autodesk-defaulted typed INSERT semantics
     empty names, numeric finiteness, count ranges, or attributes-follow values;
     resolve a block name; follow ATTRIB/SEQEND; form an OCS transform; edit,
     write, or render.
+    M10.1j resolves each usable M10.1i INSERT block-name source span against the
+    M10.1f exact matched-name index without allocating a name-sized query
+    buffer. Resolution preserves `UnusableName`, `Missing`, `Unique`, or
+    duplicate-preserving `Ambiguous` state and retains every exact target in
+    source-record order. Hash candidates are rechecked against same-document
+    source bytes in fixed 4-KiB chunks. Conflicting or otherwise unindexable
+    BLOCK names cannot become targets. This evidence does not require a target
+    to be a closed definition, choose among ambiguous targets, detect recursive
+    references, follow ATTRIB/SEQEND, form an OCS transform, edit, write, or
+    render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

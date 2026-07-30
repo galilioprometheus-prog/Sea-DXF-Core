@@ -188,8 +188,7 @@ impl DxfBlockNameIndexDirectory {
         self.ensure_document(document)?;
         ensure_not_cancelled(cancellation)?;
         let digest = digest_bytes(exact_name);
-        let start = self.keys.partition_point(|key| key.digest < digest);
-        let end = self.keys.partition_point(|key| key.digest <= digest);
+        let (start, end) = self.candidate_bounds(digest);
         let mut cursor = start;
         while cursor < end {
             ensure_not_cancelled(cancellation)?;
@@ -209,6 +208,52 @@ impl DxfBlockNameIndexDirectory {
                 document,
                 representative.name().value_span(),
                 exact_name,
+                cancellation,
+            )? {
+                return self
+                    .matches
+                    .get(cursor..group_end)
+                    .ok_or_else(invalid_internal_data);
+            }
+            if group_end <= cursor {
+                return Err(invalid_internal_data());
+            }
+            cursor = group_end;
+        }
+        ensure_not_cancelled(cancellation)?;
+        Ok(self.matches.get(0..0).map_or(&[], |matches| matches))
+    }
+
+    /// Matches one exact same-document source span without a name-sized buffer.
+    pub fn matches_for_exact_source_span<'a>(
+        &'a self,
+        document: DxfRawDocumentView<'_>,
+        exact_span: ByteSpan,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<&'a [DxfBlockNameIndexMatch], DxfError> {
+        self.ensure_document(document)?;
+        ensure_not_cancelled(cancellation)?;
+        let digest = digest_span(document, exact_span, cancellation)?;
+        let (start, end) = self.candidate_bounds(digest);
+        let mut cursor = start;
+        while cursor < end {
+            ensure_not_cancelled(cancellation)?;
+            let key = *self.keys.get(cursor).ok_or_else(invalid_internal_data)?;
+            let relative_end = self.keys[cursor..end].partition_point(|candidate| {
+                candidate.exact_group_ordinal == key.exact_group_ordinal
+            });
+            let group_end = cursor
+                .checked_add(relative_end)
+                .ok_or_else(invalid_internal_data)?;
+            let representative = self
+                .matches
+                .get(cursor)
+                .copied()
+                .ok_or_else(invalid_internal_data)?;
+            if raw_spans_equal(
+                document,
+                representative.name().value_span(),
+                exact_span,
                 cancellation,
             )? {
                 return self
@@ -249,6 +294,13 @@ impl DxfBlockNameIndexDirectory {
                 observed: document.source_id(),
             })
         }
+    }
+
+    fn candidate_bounds(&self, digest: NameDigest) -> (usize, usize) {
+        (
+            self.keys.partition_point(|key| key.digest < digest),
+            self.keys.partition_point(|key| key.digest <= digest),
+        )
     }
 }
 
