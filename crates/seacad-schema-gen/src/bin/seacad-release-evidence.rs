@@ -864,14 +864,63 @@ fn check_output(path: &Path, expected: &[u8]) -> Result<(), EvidenceError> {
     if observed == expected {
         Ok(())
     } else {
+        let difference = sbom_difference(&observed, expected);
         Err(EvidenceError::new(
             "RELEASE_SBOM_STALE",
             format!(
-                "run seacad-release-evidence --write: {}",
-                display_path(path)
+                "run seacad-release-evidence --write: {}; committed_sha256={}; \
+                 generated_sha256={}; {difference}",
+                display_path(path),
+                hash_bytes(&observed),
+                hash_bytes(expected),
             ),
         ))
     }
+}
+
+fn sbom_difference(observed: &[u8], expected: &[u8]) -> String {
+    let observed_edges = dependency_edges(observed);
+    let expected_edges = dependency_edges(expected);
+    match (observed_edges, expected_edges) {
+        (Ok(observed), Ok(expected)) => {
+            let missing: Vec<&String> = expected.difference(&observed).take(8).collect();
+            let unexpected: Vec<&String> = observed.difference(&expected).take(8).collect();
+            format!(
+                "missing_edges={} {missing:?}; unexpected_edges={} {unexpected:?}",
+                expected.difference(&observed).count(),
+                observed.difference(&expected).count(),
+            )
+        }
+        (Err(error), _) => format!("committed_json_error={error}"),
+        (_, Err(error)) => format!("generated_json_error={error}"),
+    }
+}
+
+fn dependency_edges(bytes: &[u8]) -> Result<BTreeSet<String>, serde_json::Error> {
+    let document: serde_json::Value = serde_json::from_slice(bytes)?;
+    let mut edges = BTreeSet::new();
+    if let Some(dependencies) = document
+        .get("dependencies")
+        .and_then(|value| value.as_array())
+    {
+        for dependency in dependencies {
+            let Some(reference) = dependency.get("ref").and_then(|value| value.as_str()) else {
+                continue;
+            };
+            let Some(depends_on) = dependency
+                .get("dependsOn")
+                .and_then(|value| value.as_array())
+            else {
+                continue;
+            };
+            for target in depends_on {
+                if let Some(target) = target.as_str() {
+                    edges.insert(format!("{reference} -> {target}"));
+                }
+            }
+        }
+    }
+    Ok(edges)
 }
 
 fn write_output(path: &Path, output: &[u8]) -> Result<(), EvidenceError> {
@@ -907,7 +956,7 @@ mod tests {
 
     use super::{
         LegalBundle, build_legal_bundle, cargo_metadata, check_legal_bundle, hash_file,
-        locked_checksums, render_bom, validate_notices, write_legal_bundle,
+        locked_checksums, render_bom, sbom_difference, validate_notices, write_legal_bundle,
     };
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -976,6 +1025,15 @@ mod tests {
             .ok_or("stale legal file passed")?;
         assert_eq!(error.code, "RELEASE_LEGAL_STALE");
         Ok(())
+    }
+
+    #[test]
+    fn stale_sbom_difference_reports_dependency_edges() {
+        let committed = br#"{"dependencies":[{"ref":"pkg:a","dependsOn":["pkg:b","pkg:c"]}]}"#;
+        let generated = br#"{"dependencies":[{"ref":"pkg:a","dependsOn":["pkg:b","pkg:d"]}]}"#;
+        let difference = sbom_difference(committed, generated);
+        assert!(difference.contains("missing_edges=1 [\"pkg:a -> pkg:d\"]"));
+        assert!(difference.contains("unexpected_edges=1 [\"pkg:a -> pkg:c\"]"));
     }
 
     struct TestDirectory {
