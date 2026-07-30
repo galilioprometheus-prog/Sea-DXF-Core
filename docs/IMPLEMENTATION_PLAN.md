@@ -1375,6 +1375,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     coordinates are typed failures. Positive zero is canonicalized. Edge-bit
     interpretation, thickness extrusion surfaces, BLOCK expansion, edit,
     write, render, and tessellation remain later work.
+    M14.1e interprets 3DFACE group-70 bits 1, 2, 4, and 8 as invisibility of
+    the edge beginning at each source-order corner. The signed source value and
+    exact 16-bit pattern remain available; helpers retain and report all
+    unknown bits rather than rejecting or erasing them. Defaulted zero means
+    all four edges are visible. Invalid or duplicate flags leave every derived
+    edge state unavailable. SOLID/TRACE edge flags, mesh topology, editing, and
+    writing remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

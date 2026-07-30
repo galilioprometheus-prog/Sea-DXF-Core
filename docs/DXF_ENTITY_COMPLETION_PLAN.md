@@ -68,6 +68,9 @@ M14.1c selects unique typed values, applies only documented defaults, and keeps
 missing, invalid, multiple, partial, and unavailable-default states explicit.
 M14.1d emits finite WCS corner geometry, preserving 3DFACE order and reordering
 the trailing SOLID/TRACE corners into perimeter order before OCS projection.
+M14.1e interprets the four documented 3DFACE invisible-edge bits in
+source-corner order while retaining the exact signed flags and every unknown
+bit.
 
 ## Milestone queue
 

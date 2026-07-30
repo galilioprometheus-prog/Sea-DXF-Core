@@ -230,6 +230,13 @@ extrusion, zero extrusion, and non-finite derived coordinates fail typed;
 positive zero is canonicalized. Edge-bit interpretation, thickness surfaces,
 BLOCK expansion, edit, write, rendering, and tessellation remain unclaimed.
 
+M14.1e interprets 3DFACE invisible-edge bits 1, 2, 4, and 8 in source-corner
+order. It retains the signed group-70 value, exposes its exact 16-bit pattern,
+and reports rather than discards unknown bits. Defaulted zero produces four
+visible edges; invalid or duplicate flags produce no derived edge state.
+SOLID/TRACE edge flags, topology assembly, editing, and writing remain
+unclaimed.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
 | DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |

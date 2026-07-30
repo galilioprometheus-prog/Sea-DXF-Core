@@ -115,6 +115,39 @@ impl DxfPlanarFaceSemantics {
     pub fn invisible_edge_flags_value(&self) -> Option<i16> {
         self.invisible_edge_flags()?.value().copied()
     }
+
+    /// Returns the exact 16 source bits without changing signed group-70
+    /// provenance.
+    #[must_use]
+    pub fn invisible_edge_flags_bits(&self) -> Option<u16> {
+        Some(self.invisible_edge_flags_value()? as u16)
+    }
+
+    /// Returns whether the edge beginning at one source-order corner is
+    /// invisible. Corner indices outside `0..4` are unavailable.
+    #[must_use]
+    pub fn invisible_edge(&self, corner_index: usize) -> Option<bool> {
+        let bit = [1_u16, 2, 4, 8].get(corner_index)?;
+        Some(self.invisible_edge_flags_bits()? & bit != 0)
+    }
+
+    /// Returns the four documented edge states in source-corner order.
+    #[must_use]
+    pub fn invisible_edges(&self) -> Option<[bool; 4]> {
+        Some([
+            self.invisible_edge(0)?,
+            self.invisible_edge(1)?,
+            self.invisible_edge(2)?,
+            self.invisible_edge(3)?,
+        ])
+    }
+
+    /// Returns all uninterpreted group-70 bits while documented edge helpers
+    /// inspect only bits 1, 2, 4, and 8.
+    #[must_use]
+    pub fn unknown_invisible_edge_flag_bits(&self) -> Option<u16> {
+        Some(self.invisible_edge_flags_bits()? & !0x000f)
+    }
 }
 
 /// Immutable lazy typed semantics retaining cards and raw evidence.
