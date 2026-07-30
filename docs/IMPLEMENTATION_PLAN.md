@@ -136,7 +136,9 @@ fail-closed target, tag, missing, indeterminate, unique, and ambiguous states;
 M11.1a introduces immutable source-bound raw-byte transaction plans with
 non-conflicting source-order patches and captured inverse bytes; M11.1b
 stream-verifies an opened post-image and materializes a source-bound executable
-inverse plan with adjacent deletion coalescing
+inverse plan with adjacent deletion coalescing; M11.2a adds a fail-closed,
+constant-space monotonic object-handle allocation policy from exact
+`$HANDSEED` and record-identity evidence
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1150,6 +1152,16 @@ inverse plan with adjacent deletion coalescing
     yields an exact redo plan. This checkpoint does not write/apply either
     plan, open unvalidated bytes, allocate handles, choose a destination,
     perform filesystem replacement, or publish a snapshot.
+    M11.2a treats Autodesk's next-available `$HANDSEED` and drawing-local
+    unique object handles as allocation preconditions. It requires one parsed,
+    nonzero seed, rejects invalid/multiple/null/duplicate object identities,
+    and requires the seed to be strictly above every occupied identity.
+    Eligible requests produce a constant-space consecutive handle range and
+    representable successor seed under the selected record limit; arithmetic
+    exhaustion remains a typed outcome. The policy does not repair stale
+    seeds, reuse gaps, reserve a proposal, validate reference topology, encode
+    handles, update `$HANDSEED`, apply a transaction, write a destination, or
+    publish a snapshot.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.

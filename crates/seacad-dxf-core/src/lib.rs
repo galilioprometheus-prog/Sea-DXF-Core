@@ -48,6 +48,7 @@ mod format_probe;
 #[allow(dead_code)]
 mod generated;
 mod handle;
+mod handle_allocation_policy;
 mod handle_context;
 mod handle_identity;
 mod handle_reference;
@@ -298,6 +299,10 @@ pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physica
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
     parse_dxf_handle_hex,
+};
+pub use handle_allocation_policy::{
+    DxfHandleAllocationOutcome, DxfHandleAllocationPolicyDirectory, DxfHandleAllocationPolicyState,
+    DxfHandleAllocationProposal,
 };
 pub use handle_context::{
     DxfContextualHandleReferenceDirectory, DxfContextualHandleReferenceEntry,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M11.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M11.2a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -922,6 +922,16 @@ mapping to one insertion offset are coalesced in original source order, and
 inverse-to-redo materialization preserves the exact post-image bytes. This does
 not write/apply plans, accept an unopenable result, allocate handles, replace a
 filesystem destination, or publish a snapshot.
+M11.2a exposes an immutable allocation-policy directory tied to the same source
+identity as its exact `$HANDSEED` and record-local group-code 5/105 identity
+evidence. Allocation is ready only for one parsed nonzero seed strictly above
+all uniquely parsed, nonzero, globally unique object identities. Missing,
+invalid, ambiguous, null, multiple, duplicate, and stale evidence remain
+distinct typed states. Bounded eligible requests return a constant-space
+consecutive range and successor seed or a typed arithmetic-exhaustion outcome.
+This does not validate pointer/owner references, repair stale evidence, reuse
+gaps, reserve handles, encode object identities, update `$HANDSEED`, build or
+apply a transaction, write a destination, or publish a snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,
