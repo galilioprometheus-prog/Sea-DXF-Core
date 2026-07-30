@@ -102,7 +102,8 @@ derives constant-space rectangular-array layouts and bounded per-index
 instance transforms; M10.1n retains exact INSERT/ATTRIB/SEQEND sequence
 boundaries under zero, nonzero, and unavailable attributes-follow evidence;
 M10.1o retains source-order classic ATTRIB defining values without conflating
-AcDbXrecord/AcDbMText extension payloads
+AcDbXrecord/AcDbMText extension payloads; M10.1p adds 23 fixed cardinality
+cards per classic ATTRIB record with compact source-order members
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -878,6 +879,17 @@ AcDbXrecord/AcDbMText extension payloads
     select values, apply defaults, validate text/numeric domains, interpret
     flags/justification, decode the MText extension, associate ATTDEF
     definitions, transform attributes, edit, write, or render.
+    M10.1p publishes 23 fixed cards per M10.1o ATTRIB record in documented
+    classic role order. Each independently reports `Absent`, `Unique`, or
+    duplicate-preserving `Multiple`, with compact members referencing every
+    source-order M10.1o occurrence. Cardinality remains independent of ASCII
+    lexical validity, sequence boundary state, and sequence-local record
+    ordinal; an empty ATTRIB still receives 23 absent cards. The neutral
+    group-280 role can therefore report two occurrences without selecting
+    version versus lock position by order. This does not select/decode a
+    canonical value, apply defaults, distinguish group-280 meanings, interpret
+    flags/justification, decode MText extensions, associate ATTDEF definitions,
+    transform attributes, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

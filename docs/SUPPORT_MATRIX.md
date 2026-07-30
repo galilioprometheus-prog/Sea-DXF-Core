@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1o can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1p can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -153,6 +153,7 @@ Attributes-follow evidence additionally retains exact consecutive
 ATTRIB/SEQEND sequence boundaries without decoding attribute payloads.
 Sequence-owned classic ATTRIB records additionally retain source-order
 defining values while excluding AcDbXrecord/AcDbMText extension payloads.
+Each classic ATTRIB additionally exposes 23 fixed per-role cardinality cards.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -722,6 +723,13 @@ group-280 meanings remain neutral `VersionOrLockPosition` occurrences. This
 does not assign cardinality, select/default values, validate domains, interpret
 flags/justification, decode MText extensions, associate ATTDEF definitions,
 transform attributes, edit/write, or render.
+M10.1p publishes 23 fixed cards per M10.1o ATTRIB record. Each card reports
+absent, unique, or duplicate-preserving multiple state and retains compact
+source-order references independently of lexical validity and sequence state.
+Empty records receive 23 absent cards, and both group-280 occurrences remain
+one neutral multiple card. This does not select values, apply defaults,
+distinguish group-280 meanings, interpret flags/justification, decode MText,
+associate ATTDEF definitions, transform attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

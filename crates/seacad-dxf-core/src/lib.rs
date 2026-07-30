@@ -56,6 +56,7 @@ mod infinite_line_geometry;
 mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
 mod insert_array;
+mod insert_attribute_card;
 mod insert_attribute_sequence;
 mod insert_attribute_value;
 mod insert_block_resolution;
@@ -274,6 +275,11 @@ pub use infinite_line_geometry_semantic::{
 pub use insert_array::{
     DxfInsertArrayApplicationIssue, DxfInsertArrayDirectory, DxfInsertArrayEntry,
     DxfInsertArrayInstance, DxfInsertArrayIssue, DxfInsertArrayLayout,
+};
+pub use insert_attribute_card::{
+    DxfInsertAttributeCardDirectory, DxfInsertAttributeCardMember,
+    DxfInsertAttributeCardMemberRange, DxfInsertAttributeValueCard,
+    DxfInsertAttributeValueCardState,
 };
 pub use insert_attribute_sequence::{
     DxfInsertAttributeRecordRange, DxfInsertAttributeSequenceDirectory,
