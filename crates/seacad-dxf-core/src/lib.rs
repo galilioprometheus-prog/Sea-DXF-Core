@@ -33,6 +33,7 @@ mod block_name_index;
 mod block_record_card;
 mod block_record_semantic;
 mod block_record_value;
+mod canonical_ascii_write;
 mod circular_geometry;
 mod circular_geometry_card;
 mod circular_geometry_semantic;
@@ -256,6 +257,7 @@ pub use block_record_value::{
     DxfBlockRecordValueDirectory, DxfBlockRecordValueEntry, DxfBlockRecordValueIssue,
     DxfBlockRecordValueRange, DxfBlockRecordValueRole,
 };
+pub use canonical_ascii_write::{DxfCanonicalAsciiEnvelopeAction, DxfCanonicalAsciiWriteReceipt};
 pub use circular_geometry::{
     DxfCircularGeometryDirectory, DxfCircularGeometryKind, DxfCircularGeometryNumericIssue,
     DxfCircularGeometryRecordEntry, DxfCircularGeometryValue, DxfCircularGeometryValueRange,

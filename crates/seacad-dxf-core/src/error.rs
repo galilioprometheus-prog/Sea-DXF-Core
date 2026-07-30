@@ -42,6 +42,8 @@ impl DxfErrorCode {
     pub const TRANSACTION_POST_IMAGE_MISMATCH: Self = Self("DXF-E1104");
     pub const TRANSACTION_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E1201");
     pub const TRANSACTION_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E1202");
+    pub const CANONICAL_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E1221");
+    pub const CANONICAL_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E1222");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -184,6 +186,14 @@ pub enum DxfError {
         expected: DxfSourceId,
         observed: DxfSourceId,
     },
+    CanonicalOutputLengthMismatch {
+        expected: u64,
+        observed: u64,
+    },
+    CanonicalOutputIdentityMismatch {
+        expected: DxfSourceId,
+        observed: DxfSourceId,
+    },
 }
 
 impl DxfError {
@@ -253,6 +263,12 @@ impl DxfError {
             }
             Self::TransactionOutputIdentityMismatch { .. } => {
                 DxfErrorCode::TRANSACTION_OUTPUT_IDENTITY_MISMATCH
+            }
+            Self::CanonicalOutputLengthMismatch { .. } => {
+                DxfErrorCode::CANONICAL_OUTPUT_LENGTH_MISMATCH
+            }
+            Self::CanonicalOutputIdentityMismatch { .. } => {
+                DxfErrorCode::CANONICAL_OUTPUT_IDENTITY_MISMATCH
             }
         }
     }
@@ -447,6 +463,16 @@ impl fmt::Display for DxfError {
             Self::TransactionOutputIdentityMismatch { expected, observed } => write!(
                 formatter,
                 "{}: transaction output identity {observed} differs from expected {expected}",
+                self.code()
+            ),
+            Self::CanonicalOutputLengthMismatch { expected, observed } => write!(
+                formatter,
+                "{}: canonical output length {observed} differs from expected {expected}",
+                self.code()
+            ),
+            Self::CanonicalOutputIdentityMismatch { expected, observed } => write!(
+                formatter,
+                "{}: canonical output identity {observed} differs from expected {expected}",
                 self.code()
             ),
         }
@@ -676,6 +702,22 @@ mod tests {
                 },
                 DxfErrorCode::TRANSACTION_OUTPUT_IDENTITY_MISMATCH,
                 "DXF-E1202",
+            ),
+            (
+                DxfError::CanonicalOutputLengthMismatch {
+                    expected: 12,
+                    observed: 13,
+                },
+                DxfErrorCode::CANONICAL_OUTPUT_LENGTH_MISMATCH,
+                "DXF-E1221",
+            ),
+            (
+                DxfError::CanonicalOutputIdentityMismatch {
+                    expected: expected_id,
+                    observed: observed_id,
+                },
+                DxfErrorCode::CANONICAL_OUTPUT_IDENTITY_MISMATCH,
+                "DXF-E1222",
             ),
         ];
 

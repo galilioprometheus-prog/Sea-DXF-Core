@@ -142,7 +142,8 @@ constant-space monotonic object-handle allocation policy from exact
 record-identity groups and the successor `$HANDSEED` as one source-bound
 transaction; M12.1a streams any immutable transaction plan to a verified
 create-new output with cleanup-on-failure; M12.1b strictly reparses that output
-and returns an executable inverse journal
+and returns an executable inverse journal; M12.2a writes canonical ASCII
+framing with strict EOF recovery closure while retaining exact value payloads
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1202,6 +1203,18 @@ and returns an executable inverse journal
     output-verification work; the internal strict reparse uses a no-op
     observer. This does not replace an existing path, provide crash-atomic
     rename, canonicalize either format, infer edits, or publish a snapshot.
+    M12.2a projects any opened ASCII raw document into minimal signed-decimal
+    group codes, one LF after each code and value, and the exact original value
+    payload bytes. The three reviewed Compatible envelope recoveries become one
+    strict terminal `0`/`EOF`: padded/BOM EOF is normalized, missing EOF is
+    appended, and opaque trailing bytes are omitted. A preflight computes exact
+    output length/group count and enforces the selected source/value/record
+    limits. Writing hashes the complete live source, verifies and syncs the
+    create-new output, then strictly reparses it before returning source/output
+    identities, counts, and envelope action. This canonicalizes ASCII physical
+    framing only; it does not normalize text, numeric, handle, binary-chunk, or
+    semantic value payloads, convert Binary input, replace a path, or publish a
+    snapshot.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 

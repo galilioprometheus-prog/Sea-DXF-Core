@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M12.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M12.2a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -963,6 +963,15 @@ original and returns the corresponding redo journal. Strict-reparse or inverse
 failure removes the new output. This does not replace paths, provide
 crash-atomic rename, canonicalize either format, infer edits, or publish a
 snapshot.
+M12.2a writes ASCII raw groups with minimal signed-decimal group codes and LF
+framing while retaining each exact value payload. Reviewed Compatible envelope
+recoveries close to one strict terminal `0`/`EOF`: BOM/padded EOF is
+normalized, missing EOF is appended, and opaque trailing bytes are omitted.
+Preflight enforces selected source/value/record limits and exact projected
+counts; streaming rehashes the complete live source, verifies and syncs the
+create-new output, then strictly reparses it. This is canonical ASCII framing,
+not numeric, text, handle, binary-chunk, or semantic value normalization. It
+does not convert Binary input, replace a path, or publish a snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,
