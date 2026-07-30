@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1e can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -133,6 +133,8 @@ components; keep xref path/description optional; expose seven flag helpers; and
 assemble the base-point tuple only from usable components without defaults.
 Usable primary/secondary BLOCK names are compared as exact bounded raw bytes
 with matched, conflicting, or not-comparable evidence.
+Matched BLOCK names participate in exact duplicate-preserving
+missing/unique/ambiguous lookup with collision-safe raw-byte confirmation.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -625,6 +627,15 @@ without decoding, case folding, normalization, or proportional allocation.
 Empty names and every definition state remain visible. This does not choose a
 canonical name, reject conflicts, build a lookup index, resolve INSERT/xrefs,
 edit/write, or render.
+M10.1f indexes only M10.1e matched BLOCK names. Bounded SHA-256 source-span
+digests group candidates, then fixed 4-KiB source reads recheck exact bytes so a
+digest collision cannot create a false match. Exact lookup preserves duplicate
+records and reports missing, unique, or ambiguous; it does not decode,
+case-fold, normalize, or retain name-sized buffers. Empty names and every
+definition state remain indexable. Conflicting and not-comparable records stay
+visible through retained consistency evidence but are not targets. This does
+not validate a legal block namespace, choose among duplicates, resolve INSERT
+or xrefs, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

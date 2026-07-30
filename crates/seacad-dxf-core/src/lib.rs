@@ -19,6 +19,7 @@ mod binary_group;
 mod binary_wire;
 mod block_definition;
 mod block_name_consistency;
+mod block_name_index;
 mod block_record_card;
 mod block_record_semantic;
 mod block_record_value;
@@ -155,6 +156,9 @@ pub use block_definition::{
 };
 pub use block_name_consistency::{
     DxfBlockNameConsistencyDirectory, DxfBlockNameConsistencyEntry, DxfBlockNameConsistencyState,
+};
+pub use block_name_index::{
+    DxfBlockNameIndexDirectory, DxfBlockNameIndexLookup, DxfBlockNameIndexMatch,
 };
 pub use block_record_card::{
     DxfBlockRecordCardDirectory, DxfBlockRecordCardMember, DxfBlockRecordCardMemberRange,

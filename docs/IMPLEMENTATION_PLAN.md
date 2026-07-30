@@ -89,7 +89,8 @@ source-order member references independent of lexical validity; M10.1d lazily
 projects required names, flags, and base point plus optional xref
 path/description without inventing undocumented defaults; M10.1e compares
 usable primary/secondary BLOCK names as exact bounded raw bytes while retaining
-matched, conflicting, or not-comparable state
+matched, conflicting, or not-comparable state; M10.1f indexes only matched
+names for exact duplicate-preserving missing/unique/ambiguous lookup
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -760,6 +761,16 @@ matched, conflicting, or not-comparable state
     M10.1a definition states remain representable. This evidence does not
     choose a canonical name, reject a conflict, build a name index, resolve
     INSERT, apply xref policy, edit, write, or render.
+    M10.1f admits only M10.1e `Matched` records to a source-anchored exact-name
+    index. SHA-256 digests group candidates without retaining untrusted name
+    bytes; every digest candidate is rechecked against exact source bytes in
+    fixed 4-KiB chunks. Lookup preserves all duplicates and returns `Missing`,
+    `Unique`, or `Ambiguous` without decoding, case folding, normalization, or
+    choosing among duplicates. Empty names and all M10.1a definition states
+    remain indexable evidence. Conflicting and not-comparable records remain
+    available through the retained consistency directory but cannot become
+    lookup targets. This evidence does not resolve INSERT, validate a legal
+    block namespace, apply xref policy, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
