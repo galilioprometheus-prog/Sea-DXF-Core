@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1ad can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1ae can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -184,6 +184,8 @@ Classic ATTDEF justification semantics additionally classify published
 horizontal/vertical codes and expose typed alignment-point applicability.
 Classic ATTDEF placement semantics additionally select the applicable stored
 text-start or alignment tuple without coupling failures from the ignored tuple.
+Usable ATTDEF placement anchors additionally project to finite WCS points and
+normalized normals through the shared arbitrary-axis implementation.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -876,6 +878,14 @@ contaminating the selected anchor. This does not recalculate stored points,
 validate justification combinations, apply extrusion, rotation, style metrics,
 or INSERT/BLOCK transforms, decode MText, compare ATTRIB tags, associate
 inserted attributes, edit/write, or render.
+M10.1ae lazily projects a usable selected ATTDEF OCS anchor through its usable
+extrusion using the shared arbitrary-axis basis. Success retains a finite WCS
+point, normalized finite normal, canonical positive zero, and the underlying
+placement evidence. Placement/extrusion unavailability, non-finite Binary
+inputs, zero extrusion, basis failure, and transformed overflow remain typed.
+This does not apply text rotation, oblique/width/generation flags, style
+metrics, INSERT/BLOCK transforms, or ATTRIB association. It does not
+recalculate stored points, decode MText, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

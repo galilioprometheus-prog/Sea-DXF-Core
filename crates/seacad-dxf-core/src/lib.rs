@@ -25,6 +25,7 @@ mod block_attribute_definition_integer_semantic;
 mod block_attribute_definition_justification;
 mod block_attribute_definition_text_semantic;
 mod block_attribute_definition_value;
+mod block_attribute_definition_wcs_anchor;
 mod block_definition;
 mod block_name_consistency;
 mod block_name_index;
@@ -216,6 +217,10 @@ pub use block_attribute_definition_value::{
     DxfBlockAttributeDefinitionValueData, DxfBlockAttributeDefinitionValueDirectory,
     DxfBlockAttributeDefinitionValueEntry, DxfBlockAttributeDefinitionValueIssue,
     DxfBlockAttributeDefinitionValueRange, DxfBlockAttributeDefinitionValueRole,
+};
+pub use block_attribute_definition_wcs_anchor::{
+    DxfBlockAttributeDefinitionWcsAnchor, DxfBlockAttributeDefinitionWcsAnchorDirectory,
+    DxfBlockAttributeDefinitionWcsAnchorEntry, DxfBlockAttributeDefinitionWcsAnchorIssue,
 };
 pub use block_definition::{
     DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,

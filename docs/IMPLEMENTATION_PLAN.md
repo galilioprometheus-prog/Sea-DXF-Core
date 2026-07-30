@@ -126,7 +126,9 @@ defaults, and exact flag-bit helpers while leaving group `280` neutral;
 M10.1ac classifies the published ATTDEF horizontal/vertical justification
 codes and exposes alignment-point applicability without selecting coordinates;
 M10.1ad selects the applicable stored ATTDEF text-start or alignment tuple
-without coupling failures from the ignored tuple
+without coupling failures from the ignored tuple; M10.1ae projects each usable
+selected ATTDEF OCS anchor into WCS through the shared arbitrary-axis basis
+with typed finite-input and extrusion failures
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1072,6 +1074,16 @@ without coupling failures from the ignored tuple
     points, validate justification combinations, apply extrusion, rotation,
     text-style metrics, or INSERT/BLOCK transforms, decode MText extensions,
     compare ATTRIB tags, associate inserted attributes, edit, write, or render.
+    M10.1ae lazily projects each usable M10.1ad OCS anchor through the usable
+    M10.1z extrusion by reusing the shared arbitrary-axis implementation.
+    Successful entries retain a finite WCS point, normalized finite normal,
+    canonical positive zero, and complete placement evidence. Placement or
+    extrusion unavailability, non-finite Binary inputs, zero-length extrusion,
+    non-finite basis derivation, and transformed overflow remain distinct
+    typed failures. This does not apply text rotation, oblique/width/generation
+    flags, text-style metrics, INSERT/BLOCK transforms, or ATTRIB association.
+    It does not recalculate stored points, decode MText extensions, edit, write,
+    or render.
     M10.1ac lazily classifies usable M10.1ab horizontal justification `72` as
     left, center, right, aligned, middle, or fit and vertical justification
     `74` as baseline, bottom, middle, or top. Explicit/defaulted state and raw
