@@ -79,7 +79,9 @@ coordinate evidence and preserves per-corner edge visibility; M9.2r assembles
 the resolved polyface coordinates into exact WCS point tuples with typed
 per-corner component failure; M9.2s assembles every proven polygon-mesh cell's
 four named VERTEX coordinates into exact WCS corner tuples; M9.2t classifies
-polygon-mesh smooth-surface type metadata while retaining exact signed densities
+polygon-mesh smooth-surface type metadata while retaining exact signed
+densities; M10.1a indexes exact BLOCK/member/ENDBLK definition topology in
+complete BLOCKS sections without decoding definition fields or member entities
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -701,6 +703,15 @@ polygon-mesh smooth-surface type metadata while retaining exact signed densities
     WCS corners, validate surface continuity, tessellate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
+    M10.1a recognizes exact uppercase `BLOCK` and `ENDBLK` markers only in
+    complete `BLOCKS` sections. Every definition retains all intervening
+    group-zero member records in source order. Exact `ENDBLK` closes the
+    definition; another exact `BLOCK` interrupts it and begins a separately
+    indexed definition; section end leaves it unclosed. Orphan/non-exact
+    markers and BLOCK/ENDBLK spelling outside `BLOCKS` do not create topology.
+    This does not decode names, flags, base points, xref paths, descriptions,
+    handles, member entities, INSERT references, transforms, edits, writes, or
+    rendering.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

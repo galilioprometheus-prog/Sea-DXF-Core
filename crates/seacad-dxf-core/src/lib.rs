@@ -17,6 +17,7 @@ mod basic_geometry_semantic;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
+mod block_definition;
 mod circular_geometry;
 mod circular_geometry_card;
 mod circular_geometry_semantic;
@@ -143,6 +144,10 @@ pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,
     decode_binary_group_code,
+};
+pub use block_definition::{
+    DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,
+    DxfBlockMemberRecordRange,
 };
 pub use circular_geometry::{
     DxfCircularGeometryDirectory, DxfCircularGeometryKind, DxfCircularGeometryNumericIssue,

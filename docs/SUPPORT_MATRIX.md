@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2t can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -120,6 +120,9 @@ Usable polyface face records resolve signed 1-based indices to those exact
 coordinates, preserve edge visibility, and retain typed per-face failures.
 Resolved polyface corners additionally expose exact WCS point tuples with
 typed per-component coordinate failures.
+Complete `BLOCKS` sections additionally expose exact uppercase
+`BLOCK`/`ENDBLK` definition topology with source-order member-record slices and
+closed, nested-BLOCK-interrupted, or section-end-unclosed state.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -129,8 +132,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK definition topology + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK definition topology + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -573,6 +576,14 @@ B-spline, or Bezier. Invalid metadata, unknown type codes, and topology failure
 remain typed; no undocumented density range is imposed. This does not fit new
 vertices/cells, change topology or WCS corners, validate continuity, tessellate,
 edit/write, or render.
+M10.1a recognizes exact uppercase `BLOCK` and `ENDBLK` records only in complete
+`BLOCKS` sections. It retains every intervening group-zero record as an exact
+source-order member slice. An exact `ENDBLK` closes a definition, another exact
+`BLOCK` interrupts the preceding definition and starts a new one, and section
+end leaves a definition unclosed. Orphan boundaries, non-exact spelling, other
+sections, and partial `BLOCKS` sections publish no false definition topology.
+This does not decode BLOCK values or member entities, resolve INSERT/xref
+references, apply transforms, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
