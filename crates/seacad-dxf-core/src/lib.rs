@@ -21,6 +21,7 @@ mod block_attribute_definition;
 mod block_attribute_definition_card;
 mod block_attribute_definition_double_semantic;
 mod block_attribute_definition_integer_semantic;
+mod block_attribute_definition_justification;
 mod block_attribute_definition_text_semantic;
 mod block_attribute_definition_value;
 mod block_definition;
@@ -189,6 +190,15 @@ pub use block_attribute_definition_integer_semantic::{
     DxfBlockAttributeDefinitionIntegerSemanticDirectory,
     DxfBlockAttributeDefinitionIntegerSemanticIssue, DxfBlockAttributeDefinitionIntegerSemantics,
     DxfBlockAttributeDefinitionSemanticInteger,
+};
+pub use block_attribute_definition_justification::{
+    DxfBlockAttributeDefinitionHorizontalJustification,
+    DxfBlockAttributeDefinitionHorizontalJustificationSemantic,
+    DxfBlockAttributeDefinitionJustificationDirectory,
+    DxfBlockAttributeDefinitionJustificationIssue,
+    DxfBlockAttributeDefinitionJustificationSemantics,
+    DxfBlockAttributeDefinitionVerticalJustification,
+    DxfBlockAttributeDefinitionVerticalJustificationSemantic,
 };
 pub use block_attribute_definition_text_semantic::{
     DxfBlockAttributeDefinitionSemanticText, DxfBlockAttributeDefinitionSemanticTextStyle,

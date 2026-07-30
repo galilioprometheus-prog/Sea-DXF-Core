@@ -122,7 +122,9 @@ projects classic ATTDEF double fields with documented required/default/optional
 states; M10.1aa projects required source-anchored default/prompt/tag text and
 the documented STANDARD style default; M10.1ab projects the five unambiguous
 classic ATTDEF signed-16-bit roles with required flags, documented zero
-defaults, and exact flag-bit helpers while leaving group `280` neutral
+defaults, and exact flag-bit helpers while leaving group `280` neutral;
+M10.1ac classifies the published ATTDEF horizontal/vertical justification
+codes and exposes alignment-point applicability without selecting coordinates
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1056,6 +1058,17 @@ defaults, and exact flag-bit helpers while leaving group `280` neutral
     intentionally not selected. This does not validate field-length or
     justification ranges, classify justification or alignment applicability,
     distinguish group-280 meanings, decode MText extensions, compare ATTRIB
+    tags, associate inserted attributes, transform geometry, edit, write, or
+    render.
+    M10.1ac lazily classifies usable M10.1ab horizontal justification `72` as
+    left, center, right, aligned, middle, or fit and vertical justification
+    `74` as baseline, bottom, middle, or top. Explicit/defaulted state and raw
+    provenance remain intact; unsupported signed codes and nested integer
+    failures remain typed. Alignment-point applicability is true when either
+    classified code is nonzero, false only when both are usable zero values,
+    and unavailable otherwise. This does not validate horizontal/vertical
+    combinations, require or select text-start/alignment tuples, recalculate
+    placement, measure styled text, decode MText extensions, compare ATTRIB
     tags, associate inserted attributes, transform geometry, edit, write, or
     render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

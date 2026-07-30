@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1ab can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1ac can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -180,6 +180,8 @@ default/prompt/tag fields and the documented `STANDARD` style default.
 Classic ATTDEF integer semantics additionally retain required attribute flags,
 documented zero defaults, and exact flag-bit helpers without selecting group
 `280`.
+Classic ATTDEF justification semantics additionally classify published
+horizontal/vertical codes and expose typed alignment-point applicability.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -854,6 +856,15 @@ This does not validate field-length or justification ranges, classify
 justification/alignment applicability, distinguish group-280 meanings, decode
 MText, compare ATTRIB tags, associate inserted attributes, transform geometry,
 edit/write, or render.
+M10.1ac lazily classifies published ATTDEF horizontal codes `0..5` and vertical
+codes `0..3` while preserving explicit/defaulted state and raw provenance.
+Unsupported signed codes and underlying integer failures remain typed.
+Alignment-point applicability is true when either usable code is nonzero,
+false only when both usable codes are zero, and unavailable otherwise. This
+does not validate code combinations, require or select text-start/alignment
+tuples, recalculate placement, measure styled text, decode MText, compare
+ATTRIB tags, associate inserted attributes, transform geometry, edit/write, or
+render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
