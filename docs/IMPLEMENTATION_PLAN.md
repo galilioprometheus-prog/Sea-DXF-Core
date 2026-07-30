@@ -1444,6 +1444,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     first. This checkpoint does not verify that the required point components
     are usable, select coordinates, transform OCS/WCS, or derive glyph
     geometry.
+    M14.2g projects the three MTEXT code domains that Autodesk enumerates
+    completely: attachment `1..=9`, drawing direction `1/3/5`, and optional
+    line-spacing style `1/2`. Unsupported explicit values retain raw
+    provenance; missing required attachment/direction values keep the M14.2d
+    failure; and an absent line-spacing style remains `Absent` without an
+    invented default. Background/column code interpretation, numeric range
+    validation, rotation/x-axis precedence, coordinate transforms, style
+    resolution, and glyph geometry remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

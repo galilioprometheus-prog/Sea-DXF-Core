@@ -102,6 +102,12 @@ unknown-bit helpers, and reports whether the first or second alignment point
 controls placement. Unsupported justification and unavailable source scalars
 remain typed with original provenance; coordinate selection and transformation
 remain later checkpoints.
+M14.2g classifies all Autodesk-enumerated MTEXT attachment, drawing-direction,
+and line-spacing-style codes. Required attachment/direction failures, optional
+line-spacing absence, unsupported codes, invalid ASCII values, and duplicates
+remain separate typed states with exact provenance. Numeric range validation,
+background/column semantics, rotation precedence, and geometry remain later
+checkpoints.
 
 ## Milestone queue
 

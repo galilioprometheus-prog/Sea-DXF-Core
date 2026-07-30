@@ -96,6 +96,7 @@ mod lightweight_polyline_segment_geometry;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
+mod mtext_layout;
 mod mtext_tolerance_scalar;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -492,6 +493,11 @@ pub use lightweight_polyline_vertex_semantic::{
     DxfLightweightPolylineVertexSemantics,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use mtext_layout::{
+    DxfMTextAttachment, DxfMTextAttachmentSemantic, DxfMTextDrawingDirection,
+    DxfMTextDrawingDirectionSemantic, DxfMTextLayoutDirectory, DxfMTextLayoutIssue,
+    DxfMTextLayoutSemantics, DxfMTextLineSpacingStyle, DxfMTextLineSpacingStyleSemantic,
+};
 pub use mtext_tolerance_scalar::{
     DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfToleranceNumericSemantics,
 };
