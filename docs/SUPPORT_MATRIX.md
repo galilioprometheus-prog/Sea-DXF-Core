@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -204,6 +204,14 @@ spans, and typed ASCII lexical failures remain explicit with ASCII/Binary
 parity across all nine dialects. No component selection, defaults, validation,
 corner reorder, OCS/WCS transform, face geometry, edit, or write support is
 claimed.
+
+M14.1b adds fixed family-specific cardinality over that evidence: thirteen
+stable role cards for every 3DFACE and sixteen for every SOLID/TRACE. Each card
+is explicitly absent, unique, or multiple and points back to all source-order
+M14.1a occurrences without copying or selecting them. Numeric lexical validity
+remains independent from cardinality; cross-family roles have no card. No
+defaults, semantic validation, corner reorder, OCS/WCS transform, face
+assembly, edit, or write support is claimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

@@ -1351,6 +1351,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     AC1032. This is occurrence evidence only: it does not select values, apply
     corner/extrusion/thickness defaults, reorder SOLID/TRACE corners, transform
     OCS to WCS, validate flags or normals, assemble faces, edit, or write.
+    M14.1b builds a fixed per-role cardinality directory over that evidence:
+    thirteen stable cards per 3DFACE record and sixteen per SOLID/TRACE record.
+    Each absent, unique, or multiple state retains source-order references to
+    the M14.1a occurrences; lexical validity remains independent, and roles
+    from the wrong family have no card. This still does not select, default,
+    validate, reorder, transform, assemble, edit, or write values.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
