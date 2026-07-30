@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -991,6 +991,14 @@ license reference. The generated-file gate runs on every CI platform. This is
 dependency/notices inventory evidence, not a distributable legal bundle,
 private-corpus evidence, six-native release closure, or a Core 1.0 release
 claim.
+M13.1b adds a deterministic distributable legal directory containing the
+three project legal/notice files and all 54 root license artifacts extracted
+byte-for-byte from the 26 locked crates.io source trees. Its manifest records
+package/version, SPDX expression, crate archive checksum, lockfile identity,
+and exact byte count/SHA-256 for every file; the gate rejects missing, changed,
+extra, symlinked, or non-regular artifacts. This closes legal-file packaging
+for the current locked graph, not native archive/signature, installer,
+private-corpus, six-native, or Core 1.0 release evidence.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

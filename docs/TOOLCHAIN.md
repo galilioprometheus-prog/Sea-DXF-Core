@@ -106,8 +106,27 @@ cargo +1.97.1 run --locked -p seacad-schema-gen \
 ```
 
 The SBOM intentionally omits timestamps, local registry paths, and host
-identifiers. Passing this gate does not package standalone license files or
-close the corpus/native release receipts.
+identifiers. The M13.1a checkpoint alone did not package standalone license
+files; M13.1b below closes that scoped gap. Neither checkpoint closes the
+corpus/native release receipts.
+
+## M13.1b legal bundle
+
+The same `seacad-release-evidence` command also generates and checks
+`release/legal/`. It copies the project `LICENSE`, `NOTICE`, and
+`THIRD_PARTY_NOTICES.md`, then preserves every regular root license artifact
+from each locked crates.io source tree. Accepted filenames begin with
+`LICENSE`, `LICENCE`, `COPYING`, `UNLICENSE`, or `NOTICE`.
+Project text is normalized to the repository's canonical LF representation;
+crate license artifacts remain byte-exact and are protected from Git text
+normalization.
+
+`release/legal/manifest.json` binds each raw file to its byte count and SHA-256,
+and binds each package directory to name, version, declared SPDX expression,
+exact crate checksum, and `Cargo.lock` identity. `--check` also walks the
+committed directory and rejects missing, changed, unexpected, symlinked, or
+non-regular entries. The M13.1a `--write` and `--check` commands therefore
+cover both SBOM and legal bundle; no additional tool is required.
 
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses

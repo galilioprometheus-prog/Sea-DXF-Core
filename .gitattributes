@@ -1,4 +1,7 @@
 * text=auto
+.gitattributes text eol=lf
+LICENSE text eol=lf
+NOTICE text eol=lf
 *.rs text eol=lf
 *.toml text eol=lf
 *.md text eol=lf
@@ -7,6 +10,7 @@
 *.csv text eol=lf
 *.json text eol=lf
 *.ps1 text eol=lf
+release/legal/** -text -whitespace
 crates/seacad-dxf-core/src/johab_decode_le.bin binary
 *.dxf -text
 *.dxb -text

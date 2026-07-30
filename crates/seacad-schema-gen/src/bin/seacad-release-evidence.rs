@@ -9,7 +9,7 @@ use std::{
     fmt,
     fs::{self, OpenOptions},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, ExitCode},
 };
 
@@ -17,6 +17,8 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 const OUTPUT_PATH: &str = "release/sbom.cdx.json";
+const LEGAL_ROOT: &str = "release/legal";
+const LEGAL_MANIFEST_PATH: &str = "release/legal/manifest.json";
 const NOTICES_PATH: &str = "THIRD_PARTY_NOTICES.md";
 const LOCK_PATH: &str = "Cargo.lock";
 const WORKSPACE_BOM_REF: &str = "urn:seacad:workspace";
@@ -65,6 +67,7 @@ struct CargoPackage {
     license: Option<String>,
     license_file: Option<String>,
     source: Option<String>,
+    manifest_path: PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -138,6 +141,36 @@ struct BomDependency {
     depends_on: Vec<String>,
 }
 
+#[derive(Eq, PartialEq)]
+struct LegalBundle {
+    files: BTreeMap<String, Vec<u8>>,
+    manifest: Vec<u8>,
+}
+
+#[derive(Serialize)]
+struct LegalManifest {
+    contract: &'static str,
+    cargo_lock_sha256: String,
+    root_files: Vec<LegalFileReceipt>,
+    packages: Vec<LegalPackageReceipt>,
+}
+
+#[derive(Serialize)]
+struct LegalPackageReceipt {
+    name: String,
+    version: String,
+    license_expression: String,
+    crate_sha256: String,
+    files: Vec<LegalFileReceipt>,
+}
+
+#[derive(Serialize)]
+struct LegalFileReceipt {
+    path: String,
+    bytes: u64,
+    sha256: String,
+}
+
 fn main() -> ExitCode {
     match parse_mode().and_then(run) {
         Ok(()) => ExitCode::SUCCESS,
@@ -174,11 +207,18 @@ fn run(mode: Mode) -> Result<(), EvidenceError> {
     validate_notices(&root, &metadata)?;
     let checksums = locked_checksums(&root.join(LOCK_PATH))?;
     let lock_hash = hash_file(&root.join(LOCK_PATH))?;
-    let output = render_bom(&metadata, &checksums, lock_hash)?;
+    let output = render_bom(&metadata, &checksums, lock_hash.clone())?;
+    let legal = build_legal_bundle(&root, &metadata, &checksums, lock_hash)?;
     let target = root.join(OUTPUT_PATH);
     match mode {
-        Mode::Check => check_output(&target, &output),
-        Mode::Write => write_output(&target, &output),
+        Mode::Check => {
+            check_output(&target, &output)?;
+            check_legal_bundle(&root, &legal)
+        }
+        Mode::Write => {
+            write_output(&target, &output)?;
+            write_legal_bundle(&root, &legal)
+        }
     }
 }
 
@@ -405,6 +445,199 @@ fn render_bom(
     Ok(output)
 }
 
+fn build_legal_bundle(
+    root: &Path,
+    metadata: &CargoMetadata,
+    checksums: &BTreeMap<(String, String), String>,
+    lock_hash: String,
+) -> Result<LegalBundle, EvidenceError> {
+    let workspace: BTreeSet<&str> = metadata
+        .workspace_members
+        .iter()
+        .map(String::as_str)
+        .collect();
+    let mut files = BTreeMap::new();
+    let mut root_files = Vec::new();
+    for relative in ["LICENSE", "NOTICE", NOTICES_PATH] {
+        let bytes = fs::read(root.join(relative))
+            .map_err(|error| EvidenceError::new("RELEASE_LEGAL_ROOT_IO", error.to_string()))?;
+        let bytes = canonical_project_text(bytes)?;
+        insert_legal_file(&mut files, relative.to_owned(), bytes)?;
+        let stored = files
+            .get(relative)
+            .ok_or_else(|| EvidenceError::new("RELEASE_LEGAL_ROOT", relative))?;
+        root_files.push(legal_file_receipt(relative, stored)?);
+    }
+
+    let mut packages: Vec<&CargoPackage> = metadata
+        .packages
+        .iter()
+        .filter(|package| !workspace.contains(package.id.as_str()))
+        .collect();
+    packages.sort_by(|left, right| {
+        left.name
+            .cmp(&right.name)
+            .then_with(|| left.version.cmp(&right.version))
+    });
+    let mut package_receipts = Vec::new();
+    package_receipts
+        .try_reserve(packages.len())
+        .map_err(|error| EvidenceError::new("RELEASE_MEMORY", error.to_string()))?;
+    for package in packages {
+        if !valid_path_token(&package.name) || !valid_path_token(&package.version) {
+            return Err(EvidenceError::new(
+                "RELEASE_LEGAL_PACKAGE_PATH",
+                format!("{} {}", package.name, package.version),
+            ));
+        }
+        let crate_root = package.manifest_path.parent().ok_or_else(|| {
+            EvidenceError::new(
+                "RELEASE_LEGAL_MANIFEST_PATH",
+                package.manifest_path.to_string_lossy(),
+            )
+        })?;
+        let mut source_files = license_source_files(crate_root)?;
+        if source_files.is_empty() {
+            return Err(EvidenceError::new(
+                "RELEASE_LEGAL_FILES_MISSING",
+                format!("{} {}", package.name, package.version),
+            ));
+        }
+        source_files.sort_by(|left, right| left.0.cmp(&right.0));
+        let mut file_receipts = Vec::new();
+        file_receipts
+            .try_reserve(source_files.len())
+            .map_err(|error| EvidenceError::new("RELEASE_MEMORY", error.to_string()))?;
+        for (filename, source_path) in source_files {
+            let destination = format!("packages/{}-{}/{}", package.name, package.version, filename);
+            let bytes = fs::read(&source_path).map_err(|error| {
+                EvidenceError::new(
+                    "RELEASE_LEGAL_SOURCE_IO",
+                    format!("{}: {error}", source_path.to_string_lossy()),
+                )
+            })?;
+            insert_legal_file(&mut files, destination.clone(), bytes)?;
+            let stored = files
+                .get(&destination)
+                .ok_or_else(|| EvidenceError::new("RELEASE_LEGAL_FILE", &destination))?;
+            file_receipts.push(legal_file_receipt(&destination, stored)?);
+        }
+        let crate_sha256 = checksums
+            .get(&(package.name.clone(), package.version.clone()))
+            .cloned()
+            .ok_or_else(|| {
+                EvidenceError::new(
+                    "RELEASE_CHECKSUM_MISSING",
+                    format!("{} {}", package.name, package.version),
+                )
+            })?;
+        package_receipts.push(LegalPackageReceipt {
+            name: package.name.clone(),
+            version: package.version.clone(),
+            license_expression: package.license.clone().ok_or_else(|| {
+                EvidenceError::new("RELEASE_LICENSE_MISSING", package.name.clone())
+            })?,
+            crate_sha256,
+            files: file_receipts,
+        });
+    }
+
+    let manifest = LegalManifest {
+        contract: "seacad-release-legal-bundle/v1",
+        cargo_lock_sha256: lock_hash,
+        root_files,
+        packages: package_receipts,
+    };
+    let mut manifest = serde_json::to_vec_pretty(&manifest)
+        .map_err(|error| EvidenceError::new("RELEASE_LEGAL_SERIALIZE", error.to_string()))?;
+    manifest.push(b'\n');
+    Ok(LegalBundle { files, manifest })
+}
+
+fn canonical_project_text(bytes: Vec<u8>) -> Result<Vec<u8>, EvidenceError> {
+    let mut output = Vec::new();
+    output
+        .try_reserve(bytes.len())
+        .map_err(|error| EvidenceError::new("RELEASE_MEMORY", error.to_string()))?;
+    let mut index = 0;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        if byte == b'\r' {
+            if bytes.get(index + 1) != Some(&b'\n') {
+                return Err(EvidenceError::new(
+                    "RELEASE_LEGAL_LINE_ENDING",
+                    "project legal text contains a lone carriage return",
+                ));
+            }
+            index += 1;
+        }
+        output.push(bytes[index]);
+        index += 1;
+    }
+    Ok(output)
+}
+
+fn license_source_files(crate_root: &Path) -> Result<Vec<(String, PathBuf)>, EvidenceError> {
+    let entries = fs::read_dir(crate_root).map_err(|error| {
+        EvidenceError::new(
+            "RELEASE_LEGAL_DIRECTORY",
+            format!("{}: {error}", crate_root.to_string_lossy()),
+        )
+    })?;
+    let mut files = Vec::new();
+    for entry in entries {
+        let entry =
+            entry.map_err(|error| EvidenceError::new("RELEASE_LEGAL_ENTRY", error.to_string()))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|error| EvidenceError::new("RELEASE_LEGAL_TYPE", error.to_string()))?;
+        if !file_type.is_file() {
+            continue;
+        }
+        let filename = entry.file_name().into_string().map_err(|_| {
+            EvidenceError::new("RELEASE_LEGAL_FILENAME", crate_root.to_string_lossy())
+        })?;
+        if is_license_filename(&filename) {
+            files.push((filename, entry.path()));
+        }
+    }
+    Ok(files)
+}
+
+fn is_license_filename(filename: &str) -> bool {
+    ["LICENSE", "LICENCE", "COPYING", "UNLICENSE", "NOTICE"]
+        .iter()
+        .any(|prefix| filename.starts_with(prefix))
+}
+
+fn valid_path_token(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'+'))
+}
+
+fn insert_legal_file(
+    files: &mut BTreeMap<String, Vec<u8>>,
+    path: String,
+    bytes: Vec<u8>,
+) -> Result<(), EvidenceError> {
+    if files.insert(path.clone(), bytes).is_some() {
+        Err(EvidenceError::new("RELEASE_LEGAL_DUPLICATE", path))
+    } else {
+        Ok(())
+    }
+}
+
+fn legal_file_receipt(path: &str, bytes: &[u8]) -> Result<LegalFileReceipt, EvidenceError> {
+    Ok(LegalFileReceipt {
+        path: path.to_owned(),
+        bytes: u64::try_from(bytes.len())
+            .map_err(|error| EvidenceError::new("RELEASE_LEGAL_SIZE", error.to_string()))?,
+        sha256: hash_bytes(bytes),
+    })
+}
+
 fn package_reference(package: &CargoPackage, workspace: bool) -> String {
     if workspace {
         format!(
@@ -457,6 +690,10 @@ fn quoted_value<'a>(line: &'a str, prefix: &str) -> Option<&'a str> {
 fn hash_file(path: &Path) -> Result<String, EvidenceError> {
     let bytes =
         fs::read(path).map_err(|error| EvidenceError::new("RELEASE_LOCK_IO", error.to_string()))?;
+    Ok(hash_bytes(&bytes))
+}
+
+fn hash_bytes(bytes: &[u8]) -> String {
     let digest = Sha256::digest(bytes);
     let mut output = String::with_capacity(digest.len() * 2);
     const HEX: &[u8; 16] = b"0123456789abcdef";
@@ -464,7 +701,95 @@ fn hash_file(path: &Path) -> Result<String, EvidenceError> {
         output.push(char::from(HEX[usize::from(byte >> 4)]));
         output.push(char::from(HEX[usize::from(byte & 0x0f)]));
     }
-    Ok(output)
+    output
+}
+
+fn check_legal_bundle(root: &Path, legal: &LegalBundle) -> Result<(), EvidenceError> {
+    let legal_root = root.join(LEGAL_ROOT);
+    let mut expected: BTreeSet<String> = legal.files.keys().cloned().collect();
+    expected.insert("manifest.json".to_owned());
+    let observed = legal_bundle_paths(&legal_root)?;
+    if observed != expected {
+        let missing: Vec<&String> = expected.difference(&observed).collect();
+        let unexpected: Vec<&String> = observed.difference(&expected).collect();
+        return Err(EvidenceError::new(
+            "RELEASE_LEGAL_FILE_SET",
+            format!("missing={missing:?}, unexpected={unexpected:?}"),
+        ));
+    }
+    for (relative, bytes) in &legal.files {
+        check_legal_file(&legal_root.join(relative), bytes)?;
+    }
+    check_legal_file(&root.join(LEGAL_MANIFEST_PATH), &legal.manifest)
+}
+
+fn legal_bundle_paths(root: &Path) -> Result<BTreeSet<String>, EvidenceError> {
+    let metadata = fs::symlink_metadata(root)
+        .map_err(|error| EvidenceError::new("RELEASE_LEGAL_ROOT_IO", error.to_string()))?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err(EvidenceError::new(
+            "RELEASE_LEGAL_ROOT_TYPE",
+            display_path(root),
+        ));
+    }
+    let mut pending = vec![root.to_path_buf()];
+    let mut files = BTreeSet::new();
+    while let Some(directory) = pending.pop() {
+        let entries = fs::read_dir(&directory)
+            .map_err(|error| EvidenceError::new("RELEASE_LEGAL_DIRECTORY", error.to_string()))?;
+        for entry in entries {
+            let entry = entry
+                .map_err(|error| EvidenceError::new("RELEASE_LEGAL_ENTRY", error.to_string()))?;
+            let file_type = entry
+                .file_type()
+                .map_err(|error| EvidenceError::new("RELEASE_LEGAL_TYPE", error.to_string()))?;
+            if file_type.is_symlink() {
+                return Err(EvidenceError::new(
+                    "RELEASE_LEGAL_SYMLINK",
+                    display_path(&entry.path()),
+                ));
+            }
+            if file_type.is_dir() {
+                pending.push(entry.path());
+            } else if file_type.is_file() {
+                let entry_path = entry.path();
+                let relative = entry_path.strip_prefix(root).map_err(|error| {
+                    EvidenceError::new("RELEASE_LEGAL_RELATIVE", error.to_string())
+                })?;
+                let relative = display_path(relative);
+                if !files.insert(relative.clone()) {
+                    return Err(EvidenceError::new("RELEASE_LEGAL_DUPLICATE", relative));
+                }
+            } else {
+                return Err(EvidenceError::new(
+                    "RELEASE_LEGAL_ENTRY_TYPE",
+                    display_path(&entry.path()),
+                ));
+            }
+        }
+    }
+    Ok(files)
+}
+
+fn check_legal_file(path: &Path, expected: &[u8]) -> Result<(), EvidenceError> {
+    let observed = fs::read(path)
+        .map_err(|error| EvidenceError::new("RELEASE_LEGAL_FILE_IO", error.to_string()))?;
+    if observed == expected {
+        Ok(())
+    } else {
+        Err(EvidenceError::new(
+            "RELEASE_LEGAL_STALE",
+            display_path(path),
+        ))
+    }
+}
+
+fn write_legal_bundle(root: &Path, legal: &LegalBundle) -> Result<(), EvidenceError> {
+    let legal_root = root.join(LEGAL_ROOT);
+    for (relative, bytes) in &legal.files {
+        write_output(&legal_root.join(relative), bytes)?;
+    }
+    write_output(&root.join(LEGAL_MANIFEST_PATH), &legal.manifest)
 }
 
 fn check_output(path: &Path, expected: &[u8]) -> Result<(), EvidenceError> {
@@ -507,9 +832,19 @@ fn display_path(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::error::Error;
+    use std::{
+        error::Error,
+        fs,
+        path::{Path, PathBuf},
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
-    use super::{cargo_metadata, hash_file, locked_checksums, render_bom, validate_notices};
+    use super::{
+        LegalBundle, build_legal_bundle, cargo_metadata, check_legal_bundle, hash_file,
+        locked_checksums, render_bom, validate_notices, write_legal_bundle,
+    };
+
+    static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
 
     #[test]
     fn complete_locked_graph_has_notices_and_deterministic_bom() -> Result<(), Box<dyn Error>> {
@@ -529,5 +864,77 @@ mod tests {
             Some(metadata.packages.len())
         );
         Ok(())
+    }
+
+    #[test]
+    fn legal_bundle_covers_every_registry_package_deterministically() -> Result<(), Box<dyn Error>>
+    {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let metadata = cargo_metadata(&root)?;
+        let checksums = locked_checksums(&root.join("Cargo.lock"))?;
+        let lock_hash = hash_file(&root.join("Cargo.lock"))?;
+        let first = build_legal_bundle(&root, &metadata, &checksums, lock_hash.clone())?;
+        let second = build_legal_bundle(&root, &metadata, &checksums, lock_hash)?;
+        assert_eq!(first.files, second.files);
+        assert_eq!(first.manifest, second.manifest);
+        let manifest: serde_json::Value = serde_json::from_slice(&first.manifest)?;
+        assert_eq!(manifest["contract"], "seacad-release-legal-bundle/v1");
+        assert_eq!(manifest["packages"].as_array().map(Vec::len), Some(26));
+        assert!(first.files.len() > 26);
+        Ok(())
+    }
+
+    #[test]
+    fn legal_bundle_check_rejects_stale_and_unexpected_files() -> Result<(), Box<dyn Error>> {
+        let directory = TestDirectory::new()?;
+        let legal = LegalBundle {
+            files: [("LICENSE".to_owned(), b"license".to_vec())]
+                .into_iter()
+                .collect(),
+            manifest: b"{}\n".to_vec(),
+        };
+        write_legal_bundle(directory.path(), &legal)?;
+        check_legal_bundle(directory.path(), &legal)?;
+
+        let extra = directory.path().join("release/legal/extra");
+        fs::write(&extra, b"extra")?;
+        let error = check_legal_bundle(directory.path(), &legal)
+            .err()
+            .ok_or("unexpected legal file passed")?;
+        assert_eq!(error.code, "RELEASE_LEGAL_FILE_SET");
+        fs::remove_file(extra)?;
+
+        fs::write(directory.path().join("release/legal/LICENSE"), b"changed")?;
+        let error = check_legal_bundle(directory.path(), &legal)
+            .err()
+            .ok_or("stale legal file passed")?;
+        assert_eq!(error.code, "RELEASE_LEGAL_STALE");
+        Ok(())
+    }
+
+    struct TestDirectory {
+        path: PathBuf,
+    }
+
+    impl TestDirectory {
+        fn new() -> Result<Self, std::io::Error> {
+            let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "seacad-release-evidence-{}-{id}",
+                std::process::id()
+            ));
+            fs::create_dir(&path)?;
+            Ok(Self { path })
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
     }
 }

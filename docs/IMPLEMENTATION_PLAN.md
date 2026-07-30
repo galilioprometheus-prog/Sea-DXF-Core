@@ -147,7 +147,9 @@ framing with strict EOF recovery closure while retaining exact value payloads;
 M12.2b writes canonical Binary sentinel/group-code framing for the declared
 dialect with the same strict EOF closure and exact non-EOF value wire bytes;
 M13.1a locks a deterministic CycloneDX 1.6 inventory to the complete Cargo
-resolution, lockfile checksums, dependency edges, and third-party notice rows
+resolution, lockfile checksums, dependency edges, and third-party notice rows;
+M13.1b packages canonical-LF project/legal notices and every byte-exact root
+license artifact from the 26 reviewed crates with a deterministic hash manifest
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1245,6 +1247,18 @@ resolution, lockfile checksums, dependency edges, and third-party notice rows
     does not yet package standalone license texts, prove a distributable
     archive, satisfy the private corpus threshold, advance the current 2/20
     consecutive six-native nightly receipts, or authorize Core 1.0 release.
+    M13.1b derives a distributable legal directory from the same locked Cargo
+    resolution. It retains canonical-LF project `LICENSE`, `NOTICE`, and
+    `THIRD_PARTY_NOTICES.md` plus every byte-exact regular root file beginning with
+    LICENSE, LICENCE, COPYING, UNLICENSE, or NOTICE from each of the 26
+    crates.io source trees. A deterministic manifest binds all 54 package
+    license artifacts to package/version, declared SPDX expression, exact
+    crate archive checksum, per-file byte count/SHA-256, and the lockfile
+    identity. The freshness gate rejects missing, changed, unexpected,
+    non-regular, or symlinked committed legal artifacts. This closes legal-file
+    packaging for the locked graph only; it does not construct/sign native
+    archives, validate an installer, satisfy corpus/native receipts, or
+    authorize Core 1.0 release.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
