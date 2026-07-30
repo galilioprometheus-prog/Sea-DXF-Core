@@ -69,7 +69,9 @@ rejecting unavailable, contradictory, degenerate, or non-finite inputs; M9.2m
 projects classic 2D segment geometry into WCS with the documented arbitrary-axis
 algorithm while preserving native 3D WCS lines; M9.2n selects effective classic
 2D segment widths with explicit VERTEX values taking precedence over parent
-POLYLINE defaults independently for start and end
+POLYLINE defaults independently for start and end; M9.2o builds fail-closed
+row-major quadrilateral topology for complete, count-consistent classic polygon
+meshes with independent M/N closure
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -638,6 +640,16 @@ POLYLINE defaults independently for start and end
     segments remain typed without cross-component fallback. This does not
     validate nonnegative widths, construct wide outlines or joins, tessellate,
     edit, write, or render.
+    M9.2o builds row-major quadrilateral cells for complete classic polygon-
+    mesh sequences whose parent/vertex family evidence matches and whose
+    positive M/N counts multiply to the observed VERTEX count. Each cell
+    retains named `(m0,n0)`, `(m0,n1)`, `(m1,n1)`, and `(m1,n0)` VERTEX
+    evidence plus independent M/N wrap state from parent flag bits `1` and
+    `32`. Incomplete sequences, other/indeterminate families, inconsistent
+    vertices, unavailable/nonpositive counts, and count mismatch emit zero
+    cells with typed record state. This does not assign face winding or normals,
+    project vertex coordinates, apply smoothing metadata, edit, write, or
+    render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

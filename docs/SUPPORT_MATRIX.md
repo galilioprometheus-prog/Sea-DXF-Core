@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2n can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2o can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -106,6 +106,9 @@ failures; native 3D WCS lines remain unchanged.
 Classic 2D segments also expose independently selected effective start/end
 widths, preserving whether each came from an explicit VERTEX field or its
 parent POLYLINE default; explicit zero remains an override.
+Complete count-consistent classic polygon meshes expose row-major
+quadrilateral cell topology with independent M/N closure and exact VERTEX
+references; invalid mesh records retain typed zero-cell states.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -520,6 +523,12 @@ only the corresponding parent POLYLINE default. Origin and typed vertex/parent
 failure remain visible, while classic 3D widths are explicitly unsupported.
 This does not validate width sign/range, construct wide geometry or joins,
 tessellate, edit/write, or render.
+M9.2o maps complete family-consistent classic polygon meshes into row-major
+quadrilateral cells when positive M/N counts exactly match the retained VERTEX
+count. Cells retain named grid-corner evidence and independent M/N wrap state.
+Incomplete sequences, family inconsistency, unusable counts, or count mismatch
+emit no cells with typed record state. This does not assign winding/normals,
+project coordinates, interpret smoothing, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

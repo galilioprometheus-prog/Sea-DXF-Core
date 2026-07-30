@@ -62,6 +62,7 @@ mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod polyline_family_semantic;
+mod polyline_polygon_mesh;
 mod polyline_record_card;
 mod polyline_record_semantic;
 mod polyline_record_value;
@@ -285,6 +286,11 @@ pub use polyline_family_semantic::{
     DxfPolylineFamily, DxfPolylineFamilySemanticDirectory, DxfPolylineFamilySemantics,
     DxfPolylineFamilyState, DxfPolylineVertexFamily, DxfPolylineVertexFamilyComparison,
     DxfPolylineVertexFamilySemantics,
+};
+pub use polyline_polygon_mesh::{
+    DxfPolylinePolygonMeshCellEntry, DxfPolylinePolygonMeshCellRange,
+    DxfPolylinePolygonMeshDirectory, DxfPolylinePolygonMeshRecordEntry,
+    DxfPolylinePolygonMeshRecordState,
 };
 pub use polyline_record_card::{
     DxfPolylineRecordCardDirectory, DxfPolylineRecordCardMember, DxfPolylineRecordCardMemberRange,
