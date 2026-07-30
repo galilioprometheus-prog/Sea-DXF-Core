@@ -154,6 +154,8 @@ ATTRIB/SEQEND sequence boundaries without decoding attribute payloads.
 Sequence-owned classic ATTRIB records additionally retain source-order
 defining values while excluding AcDbXrecord/AcDbMText extension payloads.
 Each classic ATTRIB additionally exposes 23 fixed per-role cardinality cards.
+Classic ATTRIB double semantics additionally distinguish required text-start
+and height fields, documented defaults, and optional alignment components.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -729,6 +731,14 @@ source-order references independently of lexical validity and sequence state.
 Empty records receive 23 absent cards, and both group-280 occurrences remain
 one neutral multiple card. This does not select values, apply defaults,
 distinguish group-280 meanings, interpret flags/justification, decode MText,
+associate ATTDEF definitions, transform attributes, edit/write, or render.
+M10.1q lazily projects the 14 classic ATTRIB double roles. Text-start X/Y/Z
+and text height are required; absent thickness, rotation, relative X scale,
+oblique angle, and extrusion receive only documented defaults. Alignment-point
+components remain independently optional. Invalid ASCII and duplicate values
+remain typed with raw provenance and never fall back to defaults; tuple helpers
+require every component to be usable. This does not validate numeric domains,
+interpret justification, project remaining text/integer fields, decode MText,
 associate ATTDEF definitions, transform attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.

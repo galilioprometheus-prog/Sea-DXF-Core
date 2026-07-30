@@ -103,7 +103,9 @@ instance transforms; M10.1n retains exact INSERT/ATTRIB/SEQEND sequence
 boundaries under zero, nonzero, and unavailable attributes-follow evidence;
 M10.1o retains source-order classic ATTRIB defining values without conflating
 AcDbXrecord/AcDbMText extension payloads; M10.1p adds 23 fixed cardinality
-cards per classic ATTRIB record with compact source-order members
+cards per classic ATTRIB record with compact source-order members; M10.1q
+lazily projects classic ATTRIB double fields with documented defaults and
+typed required/optional component states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -890,6 +892,19 @@ cards per classic ATTRIB record with compact source-order members
     canonical value, apply defaults, distinguish group-280 meanings, interpret
     flags/justification, decode MText extensions, associate ATTDEF definitions,
     transform attributes, edit, write, or render.
+    M10.1q lazily projects the 14 classic ATTRIB double roles from M10.1p.
+    Text-start X/Y/Z and text height are required. Thickness, rotation,
+    relative X scale, oblique angle, and extrusion receive only their
+    documented `0`, `0`, `1`, `0`, and `(0,0,1)` defaults. Alignment-point
+    X/Y/Z remain independently optional because their applicability depends on
+    justification semantics not yet interpreted. Unique values preserve exact
+    binary64 bits; invalid ASCII, missing required values, and duplicates stay
+    typed with raw provenance when available. Tuple helpers fail closed unless
+    all three components are usable. This does not validate finiteness,
+    positivity, angles, justification-dependent alignment requirements, or
+    extrusion length; project text/flags/integers; decode MText extensions;
+    associate ATTDEF definitions; transform attributes; edit, write, or
+    render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
