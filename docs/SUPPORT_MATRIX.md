@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.2b can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.2c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1017,6 +1017,15 @@ and uploads the directories with exact checkout/upload action pins. This is a
 packaging contract and workflow definition, not evidence that those workflow
 jobs ran successfully, not a signed or reproducible archive, not an installer
 or published release, and not Core 1.0 authorization.
+M13.2c adds a same-run six-artifact verifier. It requires the exact target set,
+binds package/version/Rust/source commit, re-hashes every downloaded payload,
+rejects missing/extra/symlinked/non-regular or out-of-bound entries, and
+compares README, SBOM, and the entire legal path/hash set with the checkout
+rather than trusting artifact receipts alone. Its aggregate receipt records
+the SHA-256 of all six per-target receipts and their payload totals. This
+defines six-target evidence aggregation but does not claim that the manual
+workflow has run successfully, publish or sign artifacts, satisfy corpus or
+twenty-night gates, or authorize Core 1.0.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

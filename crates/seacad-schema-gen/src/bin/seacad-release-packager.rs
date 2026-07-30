@@ -61,6 +61,7 @@ struct Arguments {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 struct ArtifactReceipt {
     contract: String,
     schema_version: u32,
@@ -73,6 +74,7 @@ struct ArtifactReceipt {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 struct FileReceipt {
     path: String,
     bytes: u64,

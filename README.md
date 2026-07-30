@@ -6,17 +6,17 @@ through AC1032.
 
 ## Current status
 
-Implementation is complete through M13.2b. SeaCad opens bounded lossless ASCII
+Implementation is complete through M13.2c. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
 emits strictly reparsed canonical ASCII or Binary framing. Dependency policy,
 deterministic CycloneDX inventory, distributable legal files, six-native CI
 staging, a redacted 1,000-file/10-GiB corpus release gate, and a manual
-six-target native artifact assembly workflow are present. Private corpus
-achievement, twenty consecutive six-native nightly receipts, successful
-native artifact workflow receipts, signatures, and final Core 1.0
-authorization remain open M13 evidence.
+six-target native artifact assembly workflow, and exact six-artifact receipt
+aggregation are present. Private corpus achievement, twenty consecutive
+six-native nightly receipts, a successful native artifact workflow receipt,
+signatures, and final Core 1.0 authorization remain open M13 evidence.
 
 ## Workspace
 
@@ -28,7 +28,8 @@ authorization remain open M13 evidence.
   `seacad-corpus-receipt` offline evidence harness.
 - `seacad-schema-gen`: deterministic provenance-backed schema generation,
   CycloneDX inventory, legal-bundle generation, cross-platform freshness
-  verification, and fail-closed native artifact assembly.
+  verification, fail-closed native artifact assembly, and six-target receipt
+  verification.
 
 The previous CAD workspaces under `D:\Backups` are immutable research inputs.
 Production code is not copied from them. Tests, fixtures, and knowledge may be

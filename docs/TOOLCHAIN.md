@@ -178,6 +178,29 @@ retains it for 14 days using `actions/upload-artifact` v4.6.2 pinned to commit
 `ea165f8d65b6e75b540449e92b4886f43607fa02`. It does not create a tag,
 GitHub Release, signature, or permanent archive.
 
+## M13.2c six-native receipt aggregation
+
+After all package jobs succeed, the same workflow downloads artifacts with
+`actions/download-artifact` v4.3.0 pinned to commit
+`d3f86a106a0bac45b974a628896c90dbdf5c8093`. The download action creates one
+directory per artifact under `matrix/`.
+
+The `seacad-release-receipts` binary requires exactly those six package
+directories and writes one create-new aggregate:
+
+```text
+cargo +1.97.1 run --locked -p seacad-schema-gen \
+  --bin seacad-release-receipts -- \
+  --root matrix \
+  --output matrix/SIX_NATIVE_RECEIPT.json \
+  --commit 0123456789abcdef0123456789abcdef01234567
+```
+
+It validates every per-target receipt and payload hash, compares all
+non-executable payloads with the current checkout, and binds the six receipt
+hashes plus total files/bytes to the commit. The aggregate is uploaded for 14
+days. The workflow remains manual and read-only and does not publish a release.
+
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
 `actions/checkout` v6.0.2 pinned to commit

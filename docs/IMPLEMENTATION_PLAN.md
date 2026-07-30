@@ -153,7 +153,9 @@ license artifact from the 26 reviewed crates with a deterministic hash manifest;
 M13.2a adds a distinct redacted corpus receipt v2 whose verified state requires
 at least 1,000 strictly verified files and 10 GiB with zero invalid inputs;
 M13.2b adds fail-closed native artifact assembly and a manual pinned workflow
-for all six reviewed host targets without publishing a release
+for all six reviewed host targets without publishing a release; M13.2c
+downloads the same-run artifacts, re-verifies every payload against its
+receipt and committed evidence, and emits one exact six-target matrix receipt
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1288,6 +1290,20 @@ for all six reviewed host targets without publishing a release
     archive/service digest is treated as the payload receipt, no signing or
     reproducible-build claim is made, and corpus/nightly/final authorization
     remain open.
+    M13.2c adds a bounded verifier after all six native package jobs. It
+    requires exactly one package for every reviewed target and rejects target,
+    package, version, Rust, or source-commit disagreement. Every downloaded
+    regular payload is matched to the strictly sorted per-artifact receipt and
+    streamed through SHA-256; symlinks, special entries, missing/extra paths,
+    excessive depth/count/bytes, and altered payloads fail closed. README,
+    SBOM, and the complete legal path/hash set are additionally compared with
+    the checkout at the same commit rather than trusted from the artifact
+    receipt alone. One aggregate receipt binds the six per-artifact receipt
+    hashes and payload totals. The same manually dispatched read-only workflow
+    uploads that aggregate for 14 days using exact action pins. This closes the
+    local verification process definition, not evidence that the workflow ran,
+    permanent retention, signing, reproducibility, corpus/nightly closure, or
+    Core 1.0 authorization.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

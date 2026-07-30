@@ -22,6 +22,10 @@ path = "src/bin/seacad-release-evidence.rs"
 name = "seacad-release-packager"
 path = "src/bin/seacad-release-packager.rs"
 
+[[bin]]
+name = "seacad-release-receipts"
+path = "src/bin/seacad-release-receipts.rs"
+
 [dependencies]
 serde = { version = "=1.0.229", default-features = false, features = ["derive", "std"] }
 serde_json = { version = "=1.0.151", default-features = false, features = ["std"] }
