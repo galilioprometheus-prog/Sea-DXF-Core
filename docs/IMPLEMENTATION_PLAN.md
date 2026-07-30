@@ -94,7 +94,8 @@ names for exact duplicate-preserving missing/unique/ambiguous lookup; M10.1g
 retains every documented defining value from exact INSERT records; M10.1h adds
 16 fixed per-record cardinality cards with compact source-order members;
 M10.1i projects required and Autodesk-defaulted typed INSERT semantics;
-M10.1j resolves usable INSERT names against exact matched BLOCK names
+M10.1j resolves usable INSERT names against exact matched BLOCK names; M10.1k
+requires closed unique targets and rejects reachable recursive expansion
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -814,6 +815,15 @@ M10.1j resolves usable INSERT names against exact matched BLOCK names
     to be a closed definition, choose among ambiguous targets, detect recursive
     references, follow ATTRIB/SEQEND, form an OCS transform, edit, write, or
     render.
+    M10.1k derives a BLOCK expansion graph from uniquely resolved INSERT member
+    records and classifies every M10.1j entry as not uniquely resolved,
+    target-definition-not-closed, recursive expansion, or eligible. Only
+    `Closed` unique targets are traversable. Iterative three-color graph
+    traversal detects direct self-reference, indirect cycles, and cycles
+    reachable below an ENTITIES INSERT with cancellation and memory bounded by
+    indexed definitions. This evidence does not validate numeric/count domains,
+    follow ATTRIB/SEQEND, calculate OCS axes or a transform matrix, expand
+    geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

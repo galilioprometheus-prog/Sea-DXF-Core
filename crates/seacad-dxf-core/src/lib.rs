@@ -59,6 +59,7 @@ mod insert_block_resolution;
 mod insert_record_card;
 mod insert_record_semantic;
 mod insert_record_value;
+mod insert_target_eligibility;
 mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
@@ -283,6 +284,10 @@ pub use insert_record_value::{
     DxfInsertRecordTextValue, DxfInsertRecordValue, DxfInsertRecordValueData,
     DxfInsertRecordValueDirectory, DxfInsertRecordValueEntry, DxfInsertRecordValueIssue,
     DxfInsertRecordValueRange, DxfInsertRecordValueRole,
+};
+pub use insert_target_eligibility::{
+    DxfBlockExpansionEdge, DxfInsertTargetEligibilityDirectory, DxfInsertTargetEligibilityEntry,
+    DxfInsertTargetEligibilityState,
 };
 pub use lightweight_polyline::{
     DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
