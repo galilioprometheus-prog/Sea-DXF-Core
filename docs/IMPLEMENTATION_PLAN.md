@@ -73,7 +73,9 @@ POLYLINE defaults independently for start and end; M9.2o builds fail-closed
 row-major quadrilateral topology for complete, count-consistent classic polygon
 meshes with independent M/N closure; M9.2p tolerantly partitions complete,
 family-consistent classic polyface meshes into exact coordinate and face
-VERTEX evidence while retaining reported-versus-observed counts and odd ordering
+VERTEX evidence while retaining reported-versus-observed counts and odd
+ordering; M9.2q resolves valid signed 1-based polyface face indices to exact
+coordinate evidence and preserves per-corner edge visibility
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -662,6 +664,16 @@ VERTEX evidence while retaining reported-versus-observed counts and odd ordering
     rejection, because readers must tolerate incorrect counts. This does not
     interpret groups `71`-`74` on face records, resolve indices or edge
     visibility, assemble face geometry, edit, write, or render.
+    M9.2q resolves each usable face index in groups `71`-`74` against the
+    record-local M9.2p coordinate order, including coordinates retained after
+    oddly ordered faces. The first explicit zero or omitted slot terminates the
+    face; positive/negative indices select the same 1-based coordinate while
+    retaining visible/invisible state for the edge beginning at that corner.
+    Invalid values, nonzero values after termination, `i16::MIN`, and indices
+    outside the retained coordinate range emit typed zero-corner face states.
+    Empty, point, line, triangle, and quadrilateral face cardinalities remain
+    representable. This does not validate geometric degeneracy or winding,
+    assemble coordinate tuples, triangulate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

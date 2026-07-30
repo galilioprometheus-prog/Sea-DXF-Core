@@ -62,6 +62,7 @@ mod limits;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod polyline_family_semantic;
+mod polyline_polyface_face;
 mod polyline_polyface_topology;
 mod polyline_polygon_mesh;
 mod polyline_record_card;
@@ -287,6 +288,11 @@ pub use polyline_family_semantic::{
     DxfPolylineFamily, DxfPolylineFamilySemanticDirectory, DxfPolylineFamilySemantics,
     DxfPolylineFamilyState, DxfPolylineVertexFamily, DxfPolylineVertexFamilyComparison,
     DxfPolylineVertexFamilySemantics,
+};
+pub use polyline_polyface_face::{
+    DxfPolylinePolyfaceCornerRange, DxfPolylinePolyfaceFaceResolutionDirectory,
+    DxfPolylinePolyfaceFaceResolutionState, DxfPolylinePolyfaceResolvedCornerEntry,
+    DxfPolylinePolyfaceResolvedFaceEntry,
 };
 pub use polyline_polyface_topology::{
     DxfPolylinePolyfaceCoordinateEntry, DxfPolylinePolyfaceFaceEntry,

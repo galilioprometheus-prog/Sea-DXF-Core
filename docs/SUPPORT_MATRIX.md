@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2p can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2q can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -112,6 +112,8 @@ references; invalid mesh records retain typed zero-cell states.
 Complete family-consistent classic polyface meshes expose separate exact
 coordinate and face-definition VERTEX ranges, reported and observed counts,
 and tolerant odd-ordering evidence without trusting parent count fields.
+Usable polyface face records resolve signed 1-based indices to those exact
+coordinates, preserve edge visibility, and retain typed per-face failures.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -539,6 +541,13 @@ counts; mismatch does not reject the partition, and coordinates after faces
 are retained with `Odd` ordering evidence. Incomplete sequences and family
 failures emit typed zero-member states. This does not interpret face indices,
 resolve edge visibility, assemble face geometry, edit/write, or render.
+M9.2q resolves usable groups `71`-`74` on each retained polyface face against
+record-local coordinate order, including coordinates after oddly ordered
+faces. The first zero or absent slot terminates the face; the sign preserves
+visibility for the edge beginning at that corner. Invalid, post-terminator,
+overflowing, and out-of-range indices emit typed zero-corner states. This does
+not validate degeneracy/winding, assemble coordinate tuples, triangulate,
+edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
