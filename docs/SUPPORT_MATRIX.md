@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M12.2a can open an immutable raw ASCII framing document, enforce
+SeaCad through M12.2b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -972,6 +972,16 @@ counts; streaming rehashes the complete live source, verifies and syncs the
 create-new output, then strictly reparses it. This is canonical ASCII framing,
 not numeric, text, handle, binary-chunk, or semantic value normalization. It
 does not convert Binary input, replace a path, or publish a snapshot.
+M12.2b writes Binary raw groups after the exact canonical 22-byte sentinel with
+the group-code encoding required by the declared dialect: one byte plus the
+reviewed XDATA escape for AC1009, or signed 16-bit little-endian for AC1012+.
+Every non-EOF value wire span remains byte-exact, including string terminators,
+binary-chunk length prefixes, and fixed-width numeric bits. Missing EOF is
+appended, opaque trailing bytes are omitted, and the result passes the same
+bounded create-new hash/length verification, sync, and strict-reparse contract
+as M12.2a. This is Binary physical framing canonicalization only; it does not
+reinterpret payloads, convert ASCII input, replace a path, or publish a
+snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

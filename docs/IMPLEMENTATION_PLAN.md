@@ -143,7 +143,9 @@ record-identity groups and the successor `$HANDSEED` as one source-bound
 transaction; M12.1a streams any immutable transaction plan to a verified
 create-new output with cleanup-on-failure; M12.1b strictly reparses that output
 and returns an executable inverse journal; M12.2a writes canonical ASCII
-framing with strict EOF recovery closure while retaining exact value payloads
+framing with strict EOF recovery closure while retaining exact value payloads;
+M12.2b writes canonical Binary sentinel/group-code framing for the declared
+dialect with the same strict EOF closure and exact non-EOF value wire bytes
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1215,6 +1217,18 @@ framing with strict EOF recovery closure while retaining exact value payloads
     framing only; it does not normalize text, numeric, handle, binary-chunk, or
     semantic value payloads, convert Binary input, replace a path, or publish a
     snapshot.
+    M12.2b projects any opened Binary raw document into the exact 22-byte
+    sentinel followed by canonical dialect-specific group codes: AC1009 uses
+    one byte with the reviewed three-byte XDATA escape and AC1012+ uses signed
+    16-bit little-endian codes. Exact non-EOF value wire bytes remain
+    authoritative, including string terminators, binary-chunk length prefixes,
+    and fixed-width numeric bits. Compatible missing EOF appends the canonical
+    group-code `0` plus `EOF\0`; opaque trailing bytes are omitted. Preflight,
+    complete live-source hashing, create-new output verification/sync, strict
+    reparse, cleanup-on-failure, and the typed receipt match M12.2a while also
+    retaining the selected group-code encoding. This canonicalizes Binary
+    physical framing only; it does not normalize value semantics, convert
+    ASCII input, replace a path, or publish a snapshot.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 
