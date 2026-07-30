@@ -6,6 +6,23 @@ Development uses the Rust toolchain and GitHub Actions under their respective
 licenses. Runtime and tooling dependencies added by later milestones must be
 recorded here after license and supply-chain review.
 
+## Project-scoped agent skill
+
+SeaCad includes the instruction-only `karpathy-guidelines` skill under
+`.agents/skills`. It is not linked into SeaCad binaries, executed by the DXF
+core, added to the Cargo dependency graph, or recorded in `Cargo.lock`.
+
+| Skill | Upstream commit | Declared license |
+| --- | --- | --- |
+| `multica-ai/andrej-karpathy-skills` | `2c606141936f1eeef17fa3043a72095b4765b9c2` | MIT |
+
+Upstream: <https://github.com/multica-ai/andrej-karpathy-skills>
+
+The exact source path and local artifact hash are recorded in
+`.agents/skills/karpathy-guidelines/SOURCE.md`. Upstream declares MIT in the
+skill frontmatter and README but does not expose a standalone root `LICENSE`
+file at the recorded revision.
+
 ## Q1 dependency-policy tooling
 
 Q1 uses the following development-only tooling. Neither tool is linked into
