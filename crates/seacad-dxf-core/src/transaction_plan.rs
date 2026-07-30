@@ -326,6 +326,134 @@ impl<'a> DxfTransactionPlanBuilder<'a> {
         Ok(())
     }
 
+    pub(crate) fn replace_raw_span_fragments(
+        &mut self,
+        source_span: ByteSpan,
+        fragments: &[&[u8]],
+        cancellation: &DxfCancellationToken,
+    ) -> Result<(), DxfError> {
+        ensure_not_cancelled(cancellation)?;
+        if source_span.end() > self.document.source_len() {
+            return Err(DxfError::TransactionSpanOutOfBounds {
+                span: source_span,
+                source_len: self.document.source_len(),
+            });
+        }
+        let mut replacement_len = 0_usize;
+        for fragment in fragments {
+            replacement_len =
+                replacement_len
+                    .checked_add(fragment.len())
+                    .ok_or(DxfError::OffsetOverflow {
+                        offset: 0,
+                        requested: u64::MAX,
+                    })?;
+        }
+        if source_span.is_empty() && replacement_len == 0 {
+            return Ok(());
+        }
+        let replacement_len_u64 =
+            u64::try_from(replacement_len).map_err(|_| DxfError::OffsetOverflow {
+                offset: 0,
+                requested: u64::MAX,
+            })?;
+        for observed in [source_span.len(), replacement_len_u64] {
+            enforce_limit(
+                DxfResource::SourceBytes,
+                self.limits.max_source_bytes(),
+                observed,
+            )?;
+        }
+        let next_count = self
+            .patch_count()
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        enforce_limit(DxfResource::Records, self.limits.max_records(), next_count)?;
+
+        let insert_at = self.pending.partition_point(|patch| {
+            (patch.source_span.start(), patch.source_span.end())
+                < (source_span.start(), source_span.end())
+        });
+        for existing in [
+            insert_at
+                .checked_sub(1)
+                .and_then(|index| self.pending.get(index)),
+            self.pending.get(insert_at),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            if spans_conflict(existing.source_span, source_span) {
+                return Err(DxfError::TransactionPatchConflict {
+                    existing: existing.source_span,
+                    proposed: source_span,
+                });
+            }
+        }
+
+        let projected_len = self
+            .projected_len
+            .checked_sub(source_span.len())
+            .and_then(|len| len.checked_add(replacement_len_u64))
+            .ok_or(DxfError::OffsetOverflow {
+                offset: self.projected_len,
+                requested: replacement_len_u64,
+            })?;
+        enforce_limit(
+            DxfResource::SourceBytes,
+            self.limits.max_source_bytes(),
+            projected_len,
+        )?;
+        let replacement_start = vec_len_u64(&self.replacement_bytes)?;
+        let inverse_start = vec_len_u64(&self.inverse_bytes)?;
+        let replacement_range =
+            DxfTransactionByteRange::from_start_and_len(replacement_start, replacement_len_u64)?;
+        let inverse_range =
+            DxfTransactionByteRange::from_start_and_len(inverse_start, source_span.len())?;
+        for observed in [replacement_range.end(), inverse_range.end()] {
+            enforce_limit(
+                DxfResource::SourceBytes,
+                self.limits.max_source_bytes(),
+                observed,
+            )?;
+        }
+
+        let inverse_len =
+            usize::try_from(source_span.len()).map_err(|_| DxfError::OffsetOverflow {
+                offset: source_span.start(),
+                requested: source_span.len(),
+            })?;
+        let mut inverse = Vec::new();
+        inverse
+            .try_reserve_exact(inverse_len)
+            .map_err(|_| out_of_memory())?;
+        inverse.resize(inverse_len, 0);
+        self.document.read_span(source_span, &mut inverse)?;
+        ensure_not_cancelled(cancellation)?;
+
+        self.pending.try_reserve(1).map_err(|_| out_of_memory())?;
+        self.replacement_bytes
+            .try_reserve(replacement_len)
+            .map_err(|_| out_of_memory())?;
+        self.inverse_bytes
+            .try_reserve(inverse.len())
+            .map_err(|_| out_of_memory())?;
+        for fragment in fragments {
+            self.replacement_bytes.extend_from_slice(fragment);
+        }
+        self.inverse_bytes.extend_from_slice(&inverse);
+        self.pending.insert(
+            insert_at,
+            PendingPatch {
+                source_span,
+                replacement_range,
+                inverse_range,
+            },
+        );
+        self.projected_len = projected_len;
+        Ok(())
+    }
+
     pub fn finish(
         self,
         cancellation: &DxfCancellationToken,

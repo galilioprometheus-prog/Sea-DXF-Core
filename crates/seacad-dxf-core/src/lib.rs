@@ -129,6 +129,7 @@ mod text_control;
 mod text_decoder;
 mod text_escape;
 mod text_view;
+mod transaction_inverse;
 mod transaction_plan;
 mod verbatim;
 

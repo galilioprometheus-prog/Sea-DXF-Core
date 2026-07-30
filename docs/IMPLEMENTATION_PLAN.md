@@ -134,7 +134,9 @@ explicit unusable-tag summaries; M10.1ag resolves each retained ATTRIB against
 the exact ATTDEF tags of a uniquely targeted BLOCK while preserving
 fail-closed target, tag, missing, indeterminate, unique, and ambiguous states;
 M11.1a introduces immutable source-bound raw-byte transaction plans with
-non-conflicting source-order patches and captured inverse bytes
+non-conflicting source-order patches and captured inverse bytes; M11.1b
+stream-verifies an opened post-image and materializes a source-bound executable
+inverse plan with adjacent deletion coalescing
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1135,6 +1137,19 @@ non-conflicting source-order patches and captured inverse bytes
     does not apply a plan, calculate post-image source identity, materialize a
     directly executable inverse plan, validate DXF syntax or semantics, assign
     handles, write a destination, or publish a new snapshot.
+    M11.1b accepts the original raw document plus an independently opened
+    same-format post-image. It first enforces the M11.1a source precondition and
+    exact projected length, then streams unchanged source ranges and owned
+    replacement bytes against the post-image in fixed 4-KiB chunks. Stable
+    typed errors retain length mismatch or the first differing post-image byte
+    without exposing payloads. Exact post-image spans are mapped back to the
+    captured original bytes to produce another immutable M11.1a plan bound to
+    the post-image identity. Adjacent forward deletions that map to one inverse
+    insertion offset are coalesced in original source order. Applying that
+    inverse later projects the original length, and materializing its inverse
+    yields an exact redo plan. This checkpoint does not write/apply either
+    plan, open unvalidated bytes, allocate handles, choose a destination,
+    perform filesystem replacement, or publish a snapshot.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.

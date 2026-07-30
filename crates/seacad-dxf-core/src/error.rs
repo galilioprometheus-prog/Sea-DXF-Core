@@ -38,6 +38,8 @@ impl DxfErrorCode {
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
     pub const TRANSACTION_SPAN_OUT_OF_BOUNDS: Self = Self("DXF-E1101");
     pub const TRANSACTION_PATCH_CONFLICT: Self = Self("DXF-E1102");
+    pub const TRANSACTION_POST_IMAGE_LENGTH_MISMATCH: Self = Self("DXF-E1103");
+    pub const TRANSACTION_POST_IMAGE_MISMATCH: Self = Self("DXF-E1104");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -165,6 +167,13 @@ pub enum DxfError {
         existing: ByteSpan,
         proposed: ByteSpan,
     },
+    TransactionPostImageLengthMismatch {
+        expected: u64,
+        observed: u64,
+    },
+    TransactionPostImageMismatch {
+        span: ByteSpan,
+    },
 }
 
 impl DxfError {
@@ -223,6 +232,12 @@ impl DxfError {
             }
             Self::TransactionSpanOutOfBounds { .. } => DxfErrorCode::TRANSACTION_SPAN_OUT_OF_BOUNDS,
             Self::TransactionPatchConflict { .. } => DxfErrorCode::TRANSACTION_PATCH_CONFLICT,
+            Self::TransactionPostImageLengthMismatch { .. } => {
+                DxfErrorCode::TRANSACTION_POST_IMAGE_LENGTH_MISMATCH
+            }
+            Self::TransactionPostImageMismatch { .. } => {
+                DxfErrorCode::TRANSACTION_POST_IMAGE_MISMATCH
+            }
         }
     }
 }
@@ -395,6 +410,18 @@ impl fmt::Display for DxfError {
                 proposed.end(),
                 existing.start(),
                 existing.end()
+            ),
+            Self::TransactionPostImageLengthMismatch { expected, observed } => write!(
+                formatter,
+                "{}: transaction post-image length {observed} differs from expected {expected}",
+                self.code()
+            ),
+            Self::TransactionPostImageMismatch { span } => write!(
+                formatter,
+                "{}: transaction post-image differs at byte span [{}, {})",
+                self.code(),
+                span.start(),
+                span.end()
             ),
         }
     }
@@ -592,6 +619,21 @@ mod tests {
                 },
                 DxfErrorCode::TRANSACTION_PATCH_CONFLICT,
                 "DXF-E1102",
+            ),
+            (
+                DxfError::TransactionPostImageLengthMismatch {
+                    expected: 12,
+                    observed: 13,
+                },
+                DxfErrorCode::TRANSACTION_POST_IMAGE_LENGTH_MISMATCH,
+                "DXF-E1103",
+            ),
+            (
+                DxfError::TransactionPostImageMismatch {
+                    span: ByteSpan::new(4, 5).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::TRANSACTION_POST_IMAGE_MISMATCH,
+                "DXF-E1104",
             ),
         ];
 

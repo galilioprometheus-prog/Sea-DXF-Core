@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M11.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M11.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -913,6 +913,15 @@ limits fail before mutating builder state. Plans redact payload bytes from
 `Debug`. This does not apply patches, calculate a post-image identity,
 materialize an executable inverse transaction, validate resulting DXF,
 allocate handles, write a destination, or publish a snapshot.
+M11.1b stream-verifies that an independently opened same-format post-image is
+the exact result of a transaction plan. Fixed 4-KiB comparisons cover unchanged
+source ranges and owned replacement bytes; length mismatch and the first
+different post-image byte remain stable typed errors. Exact matches materialize
+an immutable inverse plan bound to the post-image identity. Adjacent deletions
+mapping to one insertion offset are coalesced in original source order, and
+inverse-to-redo materialization preserves the exact post-image bytes. This does
+not write/apply plans, accept an unopenable result, allocate handles, replace a
+filesystem destination, or publish a snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,
