@@ -157,7 +157,9 @@ for all six reviewed host targets without publishing a release; M13.2c
 downloads the same-run artifacts, re-verifies every payload against its
 receipt and committed evidence, and emits one exact six-target matrix receipt;
 M13.2d makes SBOM dependency resolution host-independent by unioning explicit
-Cargo metadata for all six reviewed target triples
+Cargo metadata for all six reviewed target triples; M13.2e exposes bounded
+semantic edge and hash differences for stale SBOM failures; M13.2f
+canonicalizes Cargo.lock identity to LF and pins its checkout line endings
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1306,16 +1308,20 @@ Cargo metadata for all six reviewed target triples
     local verification process definition, not evidence that the workflow ran,
     permanent retention, signing, reproducibility, corpus/nightly closure, or
     Core 1.0 authorization.
-    M13.2d fixes a remote Windows ARM64 finding in the M13.1a freshness gate.
-    An unfiltered `cargo metadata` resolve graph inherited the runner host and
-    therefore did not reproduce the committed SBOM on all six architectures.
-    The generator now invokes locked metadata with an explicit platform filter
-    for every reviewed Linux, Windows, and macOS x64/ARM64 triple, verifies one
-    workspace-member set, unions package identities and resolved dependency
-    edges, and sorts the resulting graph before serialization. The SBOM remains
-    one complete union for the reviewed release matrix rather than six partial
-    files. This closes cross-host generation semantics, subject to fresh remote
-    six-native evidence; it does not broaden platform support or close the
+    The M13.2c push exposed a remote Windows ARM64 finding in the M13.1a
+    freshness gate. M13.2d hardened the graph by invoking locked metadata with
+    an explicit platform filter for every reviewed Linux, Windows, and macOS
+    x64/ARM64 triple, verifying one workspace-member set, unioning package
+    identities and resolved dependency edges, and sorting the result. CI run
+    `30556204169` showed that this graph hardening alone did not close the
+    finding. M13.2e added bounded stale-SBOM hashes and semantic edge deltas;
+    run `30556646352` proved both edge sets identical. Replacing only the
+    committed LF Cargo.lock hash with the checkout's CRLF hash reproduced the
+    remote generated SBOM hash exactly. M13.2f therefore canonicalizes
+    Cargo.lock bytes to LF before hashing, rejects lone carriage returns, and
+    pins `Cargo.lock text eol=lf` in `.gitattributes`. These checkpoints close
+    the diagnosed cross-checkout generation semantics subject to a fresh
+    remote run; they do not broaden platform support or close the
     corpus/nightly/final release gates.
 
 Every item is split into reviewable micro-milestones and stops after its own

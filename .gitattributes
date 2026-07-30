@@ -4,6 +4,7 @@ LICENSE text eol=lf
 NOTICE text eol=lf
 *.rs text eol=lf
 *.toml text eol=lf
+Cargo.lock text eol=lf
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf

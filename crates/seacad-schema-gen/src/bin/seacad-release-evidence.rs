@@ -621,6 +621,13 @@ fn build_legal_bundle(
 }
 
 fn canonical_project_text(bytes: Vec<u8>) -> Result<Vec<u8>, EvidenceError> {
+    canonical_text(bytes, "RELEASE_LEGAL_LINE_ENDING")
+}
+
+fn canonical_text(
+    bytes: Vec<u8>,
+    line_ending_code: &'static str,
+) -> Result<Vec<u8>, EvidenceError> {
     let mut output = Vec::new();
     output
         .try_reserve(bytes.len())
@@ -631,8 +638,8 @@ fn canonical_project_text(bytes: Vec<u8>) -> Result<Vec<u8>, EvidenceError> {
         if byte == b'\r' {
             if bytes.get(index + 1) != Some(&b'\n') {
                 return Err(EvidenceError::new(
-                    "RELEASE_LEGAL_LINE_ENDING",
-                    "project legal text contains a lone carriage return",
+                    line_ending_code,
+                    "canonical text contains a lone carriage return",
                 ));
             }
             index += 1;
@@ -756,7 +763,10 @@ fn quoted_value<'a>(line: &'a str, prefix: &str) -> Option<&'a str> {
 fn hash_file(path: &Path) -> Result<String, EvidenceError> {
     let bytes =
         fs::read(path).map_err(|error| EvidenceError::new("RELEASE_LOCK_IO", error.to_string()))?;
-    Ok(hash_bytes(&bytes))
+    Ok(hash_bytes(&canonical_text(
+        bytes,
+        "RELEASE_LOCK_LINE_ENDING",
+    )?))
 }
 
 fn hash_bytes(bytes: &[u8]) -> String {
@@ -955,8 +965,9 @@ mod tests {
     };
 
     use super::{
-        LegalBundle, build_legal_bundle, cargo_metadata, check_legal_bundle, hash_file,
-        locked_checksums, render_bom, sbom_difference, validate_notices, write_legal_bundle,
+        LegalBundle, build_legal_bundle, canonical_text, cargo_metadata, check_legal_bundle,
+        hash_bytes, hash_file, locked_checksums, render_bom, sbom_difference, validate_notices,
+        write_legal_bundle,
     };
 
     static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -1034,6 +1045,23 @@ mod tests {
         let difference = sbom_difference(committed, generated);
         assert!(difference.contains("missing_edges=1 [\"pkg:a -> pkg:d\"]"));
         assert!(difference.contains("unexpected_edges=1 [\"pkg:a -> pkg:c\"]"));
+    }
+
+    #[test]
+    fn cargo_lock_identity_normalizes_crlf_and_rejects_lone_cr() -> Result<(), Box<dyn Error>> {
+        let lf = canonical_text(b"version = 4\nname = \"sample\"\n".to_vec(), "LOCK_ENDING")?;
+        let crlf = canonical_text(
+            b"version = 4\r\nname = \"sample\"\r\n".to_vec(),
+            "LOCK_ENDING",
+        )?;
+        assert_eq!(lf, crlf);
+        assert_eq!(hash_bytes(&lf), hash_bytes(&crlf));
+
+        let error = canonical_text(b"version = 4\rname = \"sample\"\n".to_vec(), "LOCK_ENDING")
+            .err()
+            .ok_or("lone carriage return passed")?;
+        assert_eq!(error.code, "LOCK_ENDING");
+        Ok(())
     }
 
     struct TestDirectory {

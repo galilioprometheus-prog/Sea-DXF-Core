@@ -4,9 +4,10 @@
 
 The M13.2c push triggered GitHub Actions CI run `30555367665`. Its Windows
 ARM64 smoke job rejected the committed SBOM with `RELEASE_SBOM_STALE`.
-Inspection showed that the generator's unfiltered `cargo metadata` invocation
-inherited host-specific dependency resolution, so one host could commit a
-graph that another reviewed host would not reproduce.
+M13.2d treated the previously unfiltered Cargo resolve graph as the first
+cross-host variable to remove. Later M13.2e diagnostics showed that the remote
+edge set was identical; M13.2f records and corrects the actual Cargo.lock line
+ending cause.
 
 ## Correction
 
@@ -42,8 +43,9 @@ Local gates passed on Windows x64 with Rust/Cargo 1.97.1:
 - `cargo +1.97.1 clippy --workspace --all-targets -- -D warnings`; and
 - `cargo +1.97.1 test --workspace --quiet` (600 passed).
 
-Remote CI and release-artifact receipts are tracked separately because this
-checkpoint is the correction that must first be pushed for native verification.
+Remote CI run `30556204169` showed that the graph hardening was deterministic
+but insufficient by itself. The follow-up root-cause evidence is recorded in
+the M13.2f audit.
 
 ## Artifact receipt
 

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.2d can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.2f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1029,10 +1029,12 @@ twenty-night gates, or authorize Core 1.0.
 M13.2d generates the locked CycloneDX dependency graph as the deterministic
 union of explicit Cargo metadata for the six reviewed native target triples.
 Package identities and resolved edges are merged and sorted after verifying a
-single workspace-member set, so the committed SBOM no longer inherits the
-runner host architecture. This changes release-evidence generation only; it
-does not add dependencies, DXF behavior, target support, or a successful
-six-native workflow claim.
+single workspace-member set. M13.2e adds bounded committed/generated hashes and
+semantic edge deltas to a stale-SBOM failure. M13.2f normalizes Cargo.lock
+identity to LF, rejects lone carriage returns, and pins lockfile checkout line
+endings. These change release-evidence reproducibility only; they do not add
+dependencies, DXF behavior, target support, or a successful six-native
+workflow claim.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

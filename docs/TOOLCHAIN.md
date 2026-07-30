@@ -204,9 +204,8 @@ days. The workflow remains manual and read-only and does not publish a release.
 
 ## M13.2d host-independent SBOM union
 
-The M13.2c push exposed a Windows ARM64 stale-SBOM failure because an
-unfiltered `cargo metadata` graph inherited host-specific dependency
-resolution. M13.2d runs locked metadata separately for
+The M13.2c push exposed a Windows ARM64 stale-SBOM failure. As the first
+hardening step, M13.2d runs locked metadata separately for
 `aarch64-apple-darwin`, `aarch64-pc-windows-msvc`,
 `aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`,
 `x86_64-pc-windows-msvc`, and `x86_64-unknown-linux-gnu`.
@@ -216,6 +215,21 @@ then deterministically unions exact Cargo package identities and each resolved
 dependency edge. Package and edge output is sorted before rendering one
 complete six-platform SBOM. Metadata filtering does not install targets or
 cross-compile code, and the `--write` and `--check` commands remain unchanged.
+
+## M13.2e-f stale diagnostics and canonical lock identity
+
+M13.2e reports both committed/generated SBOM hashes and bounded semantic
+dependency-edge differences when freshness fails. Windows ARM64 CI run
+`30556646352` reported zero missing and zero unexpected edges. Replacing only
+the committed LF Cargo.lock hash with the CRLF checkout hash reproduced the
+runner's generated SBOM SHA-256 exactly.
+
+M13.2f therefore hashes Cargo.lock after deterministic CRLF-to-LF
+normalization and rejects lone carriage returns. `.gitattributes` also pins
+`Cargo.lock text eol=lf`, preventing checkout conversion when supported while
+the generator remains robust to an already-converted worktree. Package
+checksums continue to come from the parsed locked records; no dependency or
+tool is added.
 
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
