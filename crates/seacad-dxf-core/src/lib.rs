@@ -20,6 +20,7 @@ mod binary_wire;
 mod block_attribute_definition;
 mod block_attribute_definition_card;
 mod block_attribute_definition_double_semantic;
+mod block_attribute_definition_text_semantic;
 mod block_attribute_definition_value;
 mod block_definition;
 mod block_name_consistency;
@@ -182,6 +183,11 @@ pub use block_attribute_definition_double_semantic::{
     DxfBlockAttributeDefinitionDoubleSemanticDirectory,
     DxfBlockAttributeDefinitionDoubleSemanticIssue, DxfBlockAttributeDefinitionDoubleSemantics,
     DxfBlockAttributeDefinitionSemanticDouble,
+};
+pub use block_attribute_definition_text_semantic::{
+    DxfBlockAttributeDefinitionSemanticText, DxfBlockAttributeDefinitionSemanticTextStyle,
+    DxfBlockAttributeDefinitionTextSemanticDirectory, DxfBlockAttributeDefinitionTextSemanticIssue,
+    DxfBlockAttributeDefinitionTextSemantics, DxfBlockAttributeDefinitionTextStyleName,
 };
 pub use block_attribute_definition_value::{
     DxfBlockAttributeDefinitionTextValue, DxfBlockAttributeDefinitionValue,

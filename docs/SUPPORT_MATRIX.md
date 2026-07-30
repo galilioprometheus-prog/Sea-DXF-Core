@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1z can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1aa can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -175,6 +175,8 @@ excluding application-group and AcDbXrecord/AcDbMText extension payloads.
 Each classic ATTDEF additionally exposes 24 fixed per-role cardinality cards.
 Classic ATTDEF double semantics additionally distinguish required text-start
 and height fields, documented defaults, and optional alignment components.
+Classic ATTDEF text semantics additionally retain required source-anchored
+default/prompt/tag fields and the documented `STANDARD` style default.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -830,6 +832,14 @@ require every component to be usable. This does not validate numeric domains,
 interpret justification, project remaining text/integer fields, decode MText,
 compare ATTRIB tags, associate inserted attributes, transform geometry,
 edit/write, or render.
+M10.1aa lazily projects the four classic ATTDEF text roles. Default value,
+prompt, and tag are required source-anchored values; an absent style name
+receives the documented `STANDARD` default without invented raw provenance.
+Invalid cardinality remains typed, and explicit text decoding stays bounded,
+same-document, and replacement-free. This does not validate empty text or tag
+spaces, resolve style-table names, interpret formatting/escapes, project
+integer fields, decode MText, compare ATTRIB tags, associate inserted
+attributes, transform geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

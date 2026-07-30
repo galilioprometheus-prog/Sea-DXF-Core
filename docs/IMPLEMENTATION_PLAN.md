@@ -119,7 +119,8 @@ M10.1x retains source-order classic ATTDEF defining values without admitting
 application-group or AcDbXrecord/MText extension payloads; M10.1y adds 24
 fixed cardinality cards per ATTDEF with compact source-order members; M10.1z
 projects classic ATTDEF double fields with documented required/default/optional
-states
+states; M10.1aa projects required source-anchored default/prompt/tag text and
+the documented STANDARD style default
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1029,6 +1030,18 @@ states
     extrusion length; project ATTDEF text/flags/integers; decode MText
     extensions; compare ATTRIB tags; associate inserted attributes; transform
     geometry; edit, write, or render.
+    M10.1aa lazily projects the four classic ATTDEF text roles from M10.1y.
+    Default value `1`, prompt `3`, and attribute tag `2` are required
+    source-anchored values. An absent text-style name `7` receives the
+    documented `STANDARD` default as typed semantic data without inventing raw
+    provenance; an explicit style remains source-anchored. Missing required
+    roles and duplicates fail typed with raw provenance when available.
+    Decoding remains explicit, bounded, tied to the same document, and
+    replacement-free through the M10.1x text view. This does not reject empty
+    text or spaces in tags, compare style-table names, interpret formatting/
+    escapes, project ATTDEF integer fields, decode MText extensions, compare
+    ATTRIB tags, associate inserted attributes, transform geometry, edit,
+    write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
