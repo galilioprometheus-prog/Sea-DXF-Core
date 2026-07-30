@@ -91,7 +91,8 @@ path/description without inventing undocumented defaults; M10.1e compares
 usable primary/secondary BLOCK names as exact bounded raw bytes while retaining
 matched, conflicting, or not-comparable state; M10.1f indexes only matched
 names for exact duplicate-preserving missing/unique/ambiguous lookup; M10.1g
-retains every documented defining value from exact INSERT records
+retains every documented defining value from exact INSERT records; M10.1h adds
+16 fixed per-record cardinality cards with compact source-order members
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -783,6 +784,14 @@ retains every documented defining value from exact INSERT records
     defaults, select duplicate values, assemble typed INSERT semantics, bind a
     block name, follow ATTRIB/SEQEND, transform geometry, edit, write, or
     render.
+    M10.1h publishes 16 fixed cards per exact M10.1g INSERT record in documented
+    role order. Each card independently reports `Absent`, `Unique`, or
+    duplicate-preserving `Multiple`, and compact members reference every
+    source-order M10.1g value occurrence. Cardinality remains independent of
+    ASCII lexical validity and record-local across BLOCKS/ENTITIES. This
+    evidence does not apply defaults, select a duplicate, assemble typed
+    semantics, resolve a block name, follow ATTRIB/SEQEND, transform geometry,
+    edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
