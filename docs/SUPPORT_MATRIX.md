@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2e can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -277,10 +277,18 @@ group 3 values after a terminal as typed structural evidence. Text decoding,
 table-reference resolution, inline formatting, chunk-length validation,
 coordinate transforms, and glyph geometry remain unclaimed.
 
+M14.2f classifies every documented TEXT horizontal/vertical justification code
+and derives whether the first or second alignment point controls placement.
+Generation flags preserve their exact signed 16-bit pattern and expose
+backward, upside-down, and unknown bits without normalization. Unsupported
+justification codes and unavailable scalar inputs remain typed with raw
+provenance. Coordinate availability/selection, OCS/WCS transformation, numeric
+range checks, style resolution, and glyph geometry remain unclaimed.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric and text-field semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric and text-field semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/TEXT-layout semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/TEXT-layout semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 

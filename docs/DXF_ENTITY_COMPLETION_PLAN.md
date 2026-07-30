@@ -96,6 +96,12 @@ separate, ordered source evidence; missing or repeated terminals and group 3
 values after a terminal are retained with typed structural accounting. String
 decoding, style-table resolution, inline-format interpretation, and glyph
 geometry remain later checkpoints.
+M14.2f classifies all documented TEXT horizontal and vertical justification
+codes, preserves exact signed generation flags with backward/upside-down and
+unknown-bit helpers, and reports whether the first or second alignment point
+controls placement. Unsupported justification and unavailable source scalars
+remain typed with original provenance; coordinate selection and transformation
+remain later checkpoints.
 
 ## Milestone queue
 

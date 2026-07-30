@@ -138,6 +138,7 @@ mod source_scan;
 mod text_control;
 mod text_decoder;
 mod text_escape;
+mod text_layout;
 mod text_shape_scalar;
 mod text_symbol_card;
 mod text_symbol_evidence;
@@ -636,6 +637,11 @@ pub use text_decoder::{
 pub use text_escape::{
     DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
     decode_dxf_text_escapes_to_utf8_without_replacement,
+};
+pub use text_layout::{
+    DxfTextGenerationFlags, DxfTextGenerationFlagsSemantic, DxfTextHorizontalJustification,
+    DxfTextHorizontalJustificationSemantic, DxfTextLayoutDirectory, DxfTextLayoutIssue,
+    DxfTextLayoutSemantics, DxfTextVerticalJustification, DxfTextVerticalJustificationSemantic,
 };
 pub use text_shape_scalar::{
     DxfShapeNumericSemantics, DxfTextNumericSemantics, DxfTextShapeDoubleValue,

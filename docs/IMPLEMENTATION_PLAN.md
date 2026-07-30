@@ -1434,6 +1434,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     does not concatenate or decode text, resolve STYLE/DIMSTYLE tables,
     interpret MTEXT inline formatting, validate chunk byte lengths, derive
     glyph geometry, edit, or write.
+    M14.2f projects TEXT generation flags and justification from M14.2c scalar
+    states. Horizontal codes `0..=5` and vertical codes `0..=3` become typed
+    enums; unsupported codes retain exact raw provenance and make alignment
+    applicability unavailable. Generation values preserve the complete signed
+    16-bit source pattern while exposing Autodesk's backward/upside-down bits
+    and every unknown bit. A valid nonzero horizontal or vertical
+    justification requires the second alignment point; left/baseline uses the
+    first. This checkpoint does not verify that the required point components
+    are usable, select coordinates, transform OCS/WCS, or derive glyph
+    geometry.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
