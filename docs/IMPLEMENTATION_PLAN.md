@@ -1423,6 +1423,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     evidence-only until M14.11 owns subclass-aware common properties. No enum
     or range validation, chunk ordering, text decoding, coordinate transform,
     style resolution, glyph geometry, editing, or writing is claimed.
+    M14.2e selects the unambiguous source-backed text/name surface. Required
+    TEXT content, SHAPE name, and TOLERANCE dimension-style/content fields fail
+    typed when absent; unique values stay explicit with exact raw provenance;
+    duplicates retain first-occurrence diagnostic provenance. TEXT and MTEXT
+    alone receive Autodesk's `STANDARD` style default. MTEXT group 3 chunks
+    followed by the terminal group 1 value remain individually addressable and
+    in source order; zero or multiple terminals and any group 3 after a
+    terminal remain preserved with typed structural counts. This checkpoint
+    does not concatenate or decode text, resolve STYLE/DIMSTYLE tables,
+    interpret MTEXT inline formatting, validate chunk byte lengths, derive
+    glyph geometry, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

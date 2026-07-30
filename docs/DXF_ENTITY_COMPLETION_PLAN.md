@@ -89,6 +89,13 @@ TOLERANCE numeric fields. MTEXT group 50 and group 420/430 remain evidence-only
 because rotation/column precedence and common-entity color ownership are not
 yet resolved. Optional/read-only/layout fields remain `Absent` without
 invented defaults; only the documented extrusion default is applied.
+M14.2e selects source-anchored TEXT content, SHAPE name, and TOLERANCE
+dimension-style/content fields, and applies Autodesk's `STANDARD` style default
+only to TEXT and MTEXT. MTEXT group 3 chunks and terminal group 1 values remain
+separate, ordered source evidence; missing or repeated terminals and group 3
+values after a terminal are retained with typed structural accounting. String
+decoding, style-table resolution, inline-format interpretation, and glyph
+geometry remain later checkpoints.
 
 ## Milestone queue
 

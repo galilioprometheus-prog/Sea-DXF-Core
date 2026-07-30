@@ -143,6 +143,7 @@ mod text_symbol_card;
 mod text_symbol_evidence;
 mod text_symbol_role;
 mod text_symbol_scalar_value;
+mod text_symbol_text;
 mod text_view;
 mod transaction_inverse;
 mod transaction_plan;
@@ -649,6 +650,12 @@ pub use text_symbol_card::{
 pub use text_symbol_evidence::{
     DxfTextSymbolDirectory, DxfTextSymbolKind, DxfTextSymbolNumericIssue, DxfTextSymbolRecordEntry,
     DxfTextSymbolValue, DxfTextSymbolValueData, DxfTextSymbolValueRange, DxfTextSymbolValueRole,
+};
+pub use text_symbol_text::{
+    DxfMTextChunkEntry, DxfMTextChunkKind, DxfMTextChunkRange, DxfMTextChunkSequence,
+    DxfMTextFieldSemantics, DxfShapeFieldSemantics, DxfTextFieldSemantics,
+    DxfTextSymbolSemanticStyle, DxfTextSymbolSemanticText, DxfTextSymbolStyleName,
+    DxfTextSymbolTextDirectory, DxfTextSymbolTextIssue, DxfToleranceFieldSemantics,
 };
 pub use text_view::DxfTextValueDecodeReceipt;
 pub use transaction_plan::{
