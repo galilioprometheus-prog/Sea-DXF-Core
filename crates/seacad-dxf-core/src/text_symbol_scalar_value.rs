@@ -4,10 +4,9 @@ use std::io;
 
 use crate::{
     DxfDouble, DxfError, DxfIoOperation, DxfRawValueProvenance, DxfSemanticFieldProvenance,
-    DxfSemanticValue, DxfTextShapeScalarIssue, DxfTextSymbolCardDirectory,
-    DxfTextSymbolNumericIssue, DxfTextSymbolRecordEntry, DxfTextSymbolValue,
-    DxfTextSymbolValueCard, DxfTextSymbolValueCardState, DxfTextSymbolValueData,
-    DxfTextSymbolValueRole,
+    DxfSemanticValue, DxfTextSymbolCardDirectory, DxfTextSymbolNumericIssue,
+    DxfTextSymbolRecordEntry, DxfTextSymbolScalarIssue, DxfTextSymbolValue, DxfTextSymbolValueCard,
+    DxfTextSymbolValueCardState, DxfTextSymbolValueData, DxfTextSymbolValueRole,
 };
 
 #[derive(Clone, Copy)]
@@ -24,7 +23,7 @@ pub(crate) fn semantic_double(
     namespace: &'static str,
     field_id: &'static str,
     rule: DxfScalarRule<DxfDouble>,
-) -> Result<DxfSemanticValue<DxfDouble, DxfTextShapeScalarIssue>, DxfError> {
+) -> Result<DxfSemanticValue<DxfDouble, DxfTextSymbolScalarIssue>, DxfError> {
     semantic_value(
         cards,
         record,
@@ -46,7 +45,7 @@ pub(crate) fn semantic_i16(
     namespace: &'static str,
     field_id: &'static str,
     rule: DxfScalarRule<i16>,
-) -> Result<DxfSemanticValue<i16, DxfTextShapeScalarIssue>, DxfError> {
+) -> Result<DxfSemanticValue<i16, DxfTextSymbolScalarIssue>, DxfError> {
     semantic_value(
         cards,
         record,
@@ -61,6 +60,28 @@ pub(crate) fn semantic_i16(
     )
 }
 
+pub(crate) fn semantic_i32(
+    cards: &DxfTextSymbolCardDirectory,
+    record: DxfTextSymbolRecordEntry,
+    role: DxfTextSymbolValueRole,
+    namespace: &'static str,
+    field_id: &'static str,
+    rule: DxfScalarRule<i32>,
+) -> Result<DxfSemanticValue<i32, DxfTextSymbolScalarIssue>, DxfError> {
+    semantic_value(
+        cards,
+        record,
+        role,
+        namespace,
+        field_id,
+        rule,
+        |data| match data {
+            DxfTextSymbolValueData::Int32(value) => Some(value),
+            _ => None,
+        },
+    )
+}
+
 fn semantic_value<T: Copy>(
     cards: &DxfTextSymbolCardDirectory,
     record: DxfTextSymbolRecordEntry,
@@ -69,7 +90,7 @@ fn semantic_value<T: Copy>(
     field_id: &'static str,
     rule: DxfScalarRule<T>,
     wire_value: impl FnOnce(DxfTextSymbolValueData) -> Option<Result<T, DxfTextSymbolNumericIssue>>,
-) -> Result<DxfSemanticValue<T, DxfTextShapeScalarIssue>, DxfError> {
+) -> Result<DxfSemanticValue<T, DxfTextSymbolScalarIssue>, DxfError> {
     let field = DxfSemanticFieldProvenance::new(cards.source_id(), namespace, field_id);
     let card = cards
         .card_for_role(record.record().ordinal(), role)
@@ -77,7 +98,7 @@ fn semantic_value<T: Copy>(
     match card.state() {
         DxfTextSymbolValueCardState::Absent => Ok(match rule {
             DxfScalarRule::Required => DxfSemanticValue::invalid(
-                DxfTextShapeScalarIssue::MissingRequiredValue,
+                DxfTextSymbolScalarIssue::MissingRequiredValue,
                 field,
                 None,
             ),
@@ -92,7 +113,7 @@ fn semantic_value<T: Copy>(
                 Ok(value) => DxfSemanticValue::explicit(value, field, raw),
                 Err(DxfTextSymbolNumericIssue::InvalidAsciiNumber(issue)) => {
                     DxfSemanticValue::invalid(
-                        DxfTextShapeScalarIssue::InvalidAsciiNumber(issue),
+                        DxfTextSymbolScalarIssue::InvalidAsciiNumber(issue),
                         field,
                         Some(raw),
                     )
@@ -102,7 +123,7 @@ fn semantic_value<T: Copy>(
         DxfTextSymbolValueCardState::Multiple { occurrence_count } => {
             let primary = first_value(cards, card)?;
             Ok(DxfSemanticValue::invalid(
-                DxfTextShapeScalarIssue::MultipleValues { occurrence_count },
+                DxfTextSymbolScalarIssue::MultipleValues { occurrence_count },
                 field,
                 Some(value_provenance(primary)?),
             ))

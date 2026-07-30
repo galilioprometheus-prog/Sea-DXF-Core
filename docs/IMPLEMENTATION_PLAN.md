@@ -1411,6 +1411,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     content/style/shape names, validate enum or numeric ranges, choose the
     applicable TEXT alignment point, transform coordinates, derive glyph
     geometry, or select MTEXT/TOLERANCE values.
+    M14.2d selects unambiguous numeric MTEXT and TOLERANCE values through the
+    same required/defaulted/absent/invalid provenance contract. Required MTEXT
+    insertion, nominal height, reference width, attachment, and drawing
+    direction fields and required TOLERANCE insertion/x-axis fields fail typed
+    when absent. MTEXT optional x-axis components, read-only extents, line
+    spacing, background controls, and column controls remain independently
+    `Absent` or `Explicit`; MTEXT and TOLERANCE extrusion alone receives the
+    documented `(0, 0, 1)` default. Group 50 is not selected until
+    rotation/x-axis/column precedence is modeled, and group 420/430 stays
+    evidence-only until M14.11 owns subclass-aware common properties. No enum
+    or range validation, chunk ordering, text decoding, coordinate transform,
+    style resolution, glyph geometry, editing, or writing is claimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

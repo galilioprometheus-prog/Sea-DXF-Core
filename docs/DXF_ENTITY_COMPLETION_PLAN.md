@@ -84,6 +84,11 @@ Autodesk-documented defaults, preserves optional second-alignment absence, and
 keeps missing required values, invalid ASCII numbers, and duplicates typed
 with exact field/raw provenance. Text decoding, enum/range validation, layout,
 coordinates, glyphs, and MTEXT/TOLERANCE semantics remain later checkpoints.
+M14.2d extends the same four-state scalar contract to unambiguous MTEXT and
+TOLERANCE numeric fields. MTEXT group 50 and group 420/430 remain evidence-only
+because rotation/column precedence and common-entity color ownership are not
+yet resolved. Optional/read-only/layout fields remain `Absent` without
+invented defaults; only the documented extrusion default is applied.
 
 ## Milestone queue
 

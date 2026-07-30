@@ -7,7 +7,7 @@ use super::{
 use crate::{
     DxfDouble, DxfError, DxfTextSymbolCardDirectory, DxfTextSymbolRecordEntry,
     DxfTextSymbolValueRole,
-    text_shape_scalar_value::{DxfScalarRule, semantic_double, semantic_i16},
+    text_symbol_scalar_value::{DxfScalarRule, semantic_double, semantic_i16},
 };
 
 pub(super) fn text_semantics(

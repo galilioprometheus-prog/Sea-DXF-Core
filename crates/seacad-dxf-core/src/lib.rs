@@ -96,6 +96,7 @@ mod lightweight_polyline_segment_geometry;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
+mod mtext_tolerance_scalar;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod planar_face_geometry;
@@ -138,10 +139,10 @@ mod text_control;
 mod text_decoder;
 mod text_escape;
 mod text_shape_scalar;
-mod text_shape_scalar_value;
 mod text_symbol_card;
 mod text_symbol_evidence;
 mod text_symbol_role;
+mod text_symbol_scalar_value;
 mod text_view;
 mod transaction_inverse;
 mod transaction_plan;
@@ -489,6 +490,9 @@ pub use lightweight_polyline_vertex_semantic::{
     DxfLightweightPolylineVertexSemantics,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use mtext_tolerance_scalar::{
+    DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfToleranceNumericSemantics,
+};
 pub use owner_evidence_comparison::{
     DxfOwnerEvidenceComparisonDirectory, DxfOwnerEvidenceComparisonEntry,
     DxfOwnerEvidenceComparisonState,
@@ -635,6 +639,8 @@ pub use text_escape::{
 pub use text_shape_scalar::{
     DxfShapeNumericSemantics, DxfTextNumericSemantics, DxfTextShapeDoubleValue,
     DxfTextShapeInt16Value, DxfTextShapeScalarDirectory, DxfTextShapeScalarIssue,
+    DxfTextSymbolDoubleValue, DxfTextSymbolInt16Value, DxfTextSymbolInt32Value,
+    DxfTextSymbolScalarIssue,
 };
 pub use text_symbol_card::{
     DxfTextSymbolCardDirectory, DxfTextSymbolCardMember, DxfTextSymbolCardMemberRange,

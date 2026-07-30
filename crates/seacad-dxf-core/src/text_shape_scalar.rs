@@ -18,14 +18,18 @@ const ONE: DxfDouble = DxfDouble::from_bits(1.0_f64.to_bits());
 /// Why one reviewed TEXT or SHAPE scalar has no usable semantic value.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
-pub enum DxfTextShapeScalarIssue {
+pub enum DxfTextSymbolScalarIssue {
     MissingRequiredValue,
     InvalidAsciiNumber(DxfAsciiNumericIssue),
     MultipleValues { occurrence_count: u32 },
 }
 
-pub type DxfTextShapeDoubleValue = DxfSemanticValue<DxfDouble, DxfTextShapeScalarIssue>;
-pub type DxfTextShapeInt16Value = DxfSemanticValue<i16, DxfTextShapeScalarIssue>;
+pub type DxfTextSymbolDoubleValue = DxfSemanticValue<DxfDouble, DxfTextSymbolScalarIssue>;
+pub type DxfTextSymbolInt16Value = DxfSemanticValue<i16, DxfTextSymbolScalarIssue>;
+pub type DxfTextSymbolInt32Value = DxfSemanticValue<i32, DxfTextSymbolScalarIssue>;
+pub type DxfTextShapeScalarIssue = DxfTextSymbolScalarIssue;
+pub type DxfTextShapeDoubleValue = DxfTextSymbolDoubleValue;
+pub type DxfTextShapeInt16Value = DxfTextSymbolInt16Value;
 
 /// Selected and documented-defaulted numeric values for one TEXT record.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
