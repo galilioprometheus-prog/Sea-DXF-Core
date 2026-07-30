@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1aa can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1ab can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -177,6 +177,9 @@ Classic ATTDEF double semantics additionally distinguish required text-start
 and height fields, documented defaults, and optional alignment components.
 Classic ATTDEF text semantics additionally retain required source-anchored
 default/prompt/tag fields and the documented `STANDARD` style default.
+Classic ATTDEF integer semantics additionally retain required attribute flags,
+documented zero defaults, and exact flag-bit helpers without selecting group
+`280`.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -840,6 +843,17 @@ same-document, and replacement-free. This does not validate empty text or tag
 spaces, resolve style-table names, interpret formatting/escapes, project
 integer fields, decode MText, compare ATTRIB tags, associate inserted
 attributes, transform geometry, edit/write, or render.
+M10.1ab lazily projects the five unambiguous classic ATTDEF signed-16-bit
+roles. Attribute flags are required; absent field length, text-generation
+flags, and horizontal/vertical justification receive their documented zero
+defaults. Exact values preserve unknown bits while helpers test only the four
+published attribute bits and two published text-generation bits. Invalid
+ASCII, missing required flags, and duplicates remain typed with raw provenance.
+The overloaded group `280` remains neutral card evidence and is not selected.
+This does not validate field-length or justification ranges, classify
+justification/alignment applicability, distinguish group-280 meanings, decode
+MText, compare ATTRIB tags, associate inserted attributes, transform geometry,
+edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
