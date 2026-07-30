@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1c can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -128,6 +128,9 @@ roles as source-anchored exact text, double, or signed-16-bit evidence while
 excluding group-102 application payloads and definition-member records.
 Eight fixed per-role BLOCK cards separately retain absent, unique, or multiple
 cardinality and compact references to every source-order value occurrence.
+Lazy BLOCK semantics require both names, flags, and all three base-point
+components; keep xref path/description optional; expose seven flag helpers; and
+assemble the base-point tuple only from usable components without defaults.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -137,8 +140,8 @@ JSON v1 yet.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/value cards + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/value cards + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 
@@ -605,6 +608,14 @@ validity does not change cardinality; empty records and all M10.1a definition
 states keep the same eight-card shape. This does not select or decode canonical
 values, reconcile names, apply defaults, interpret flags, assemble points,
 resolve xrefs, bind INSERT, transform geometry, edit/write, or render.
+M10.1d lazily projects required primary/secondary names, flags, and base-point
+X/Y/Z plus optional xref path and description. Missing required fields,
+duplicates, and invalid ASCII numbers fail typed; optional omission remains
+absent and no undocumented default is invented. Seven helpers expose the
+documented flag bits independently, while a base-point tuple requires all three
+usable components. This does not enforce path presence from xref flags,
+reconcile names, validate empty text/finiteness, resolve xrefs, bind INSERT,
+transform member geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

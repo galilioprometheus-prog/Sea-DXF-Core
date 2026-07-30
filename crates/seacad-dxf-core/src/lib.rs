@@ -19,6 +19,7 @@ mod binary_group;
 mod binary_wire;
 mod block_definition;
 mod block_record_card;
+mod block_record_semantic;
 mod block_record_value;
 mod circular_geometry;
 mod circular_geometry_card;
@@ -154,6 +155,10 @@ pub use block_definition::{
 pub use block_record_card::{
     DxfBlockRecordCardDirectory, DxfBlockRecordCardMember, DxfBlockRecordCardMemberRange,
     DxfBlockRecordValueCard, DxfBlockRecordValueCardState,
+};
+pub use block_record_semantic::{
+    DxfBlockRecordSemanticDirectory, DxfBlockRecordSemanticDouble, DxfBlockRecordSemanticInteger,
+    DxfBlockRecordSemanticIssue, DxfBlockRecordSemanticText, DxfBlockRecordSemantics,
 };
 pub use block_record_value::{
     DxfBlockRecordTextValue, DxfBlockRecordValue, DxfBlockRecordValueData,

@@ -85,7 +85,9 @@ complete BLOCKS sections without decoding definition fields or member entities;
 M10.1b retains all eight documented BLOCK defining-value roles as exact text,
 double, or signed-16-bit evidence without selecting occurrences or applying
 defaults; M10.1c adds eight fixed cardinality cards per BLOCK with compact
-source-order member references independent of lexical validity
+source-order member references independent of lexical validity; M10.1d lazily
+projects required names, flags, and base point plus optional xref
+path/description without inventing undocumented defaults
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -736,6 +738,17 @@ source-order member references independent of lexical validity
     decode a canonical value, reconcile names, apply defaults, interpret flags,
     assemble points, resolve xrefs, bind INSERT, transform geometry, edit,
     write, or render.
+    M10.1d lazily projects all eight M10.1c cards. Primary/secondary names,
+    flags, and base-point X/Y/Z are required; xref path and description remain
+    explicitly absent when omitted. Unique text remains source-anchored and
+    unique numeric values preserve exact double/i16 domains. Invalid ASCII,
+    missing required fields, and duplicates fail typed with raw provenance when
+    available. Helpers expose all seven documented flag bits independently,
+    including the two bits Autodesk says are ignored on input, and assemble a
+    base-point tuple only when all three components are usable. This does not
+    require an xref path from flag bit `4`, reconcile names, validate empty
+    text or numeric finiteness, resolve xrefs, bind INSERT, transform member
+    geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
