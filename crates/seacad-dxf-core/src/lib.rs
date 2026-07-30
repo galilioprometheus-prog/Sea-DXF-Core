@@ -18,6 +18,7 @@ mod binary_document;
 mod binary_group;
 mod binary_wire;
 mod block_definition;
+mod block_name_consistency;
 mod block_record_card;
 mod block_record_semantic;
 mod block_record_value;
@@ -151,6 +152,9 @@ pub use binary_wire::{
 pub use block_definition::{
     DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,
     DxfBlockMemberRecordRange,
+};
+pub use block_name_consistency::{
+    DxfBlockNameConsistencyDirectory, DxfBlockNameConsistencyEntry, DxfBlockNameConsistencyState,
 };
 pub use block_record_card::{
     DxfBlockRecordCardDirectory, DxfBlockRecordCardMember, DxfBlockRecordCardMemberRange,

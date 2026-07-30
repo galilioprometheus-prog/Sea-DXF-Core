@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1d can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1e can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -131,6 +131,8 @@ cardinality and compact references to every source-order value occurrence.
 Lazy BLOCK semantics require both names, flags, and all three base-point
 components; keep xref path/description optional; expose seven flag helpers; and
 assemble the base-point tuple only from usable components without defaults.
+Usable primary/secondary BLOCK names are compared as exact bounded raw bytes
+with matched, conflicting, or not-comparable evidence.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -616,6 +618,13 @@ documented flag bits independently, while a base-point tuple requires all three
 usable components. This does not enforce path presence from xref flags,
 reconcile names, validate empty text/finiteness, resolve xrefs, bind INSERT,
 transform member geometry, edit/write, or render.
+M10.1e compares usable primary and secondary BLOCK names as exact same-document
+raw bytes. Equal bytes match, unequal bytes conflict, and unusable name
+semantics remain not comparable. Fixed 4-KiB comparison chunks bound memory
+without decoding, case folding, normalization, or proportional allocation.
+Empty names and every definition state remain visible. This does not choose a
+canonical name, reject conflicts, build a lookup index, resolve INSERT/xrefs,
+edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
