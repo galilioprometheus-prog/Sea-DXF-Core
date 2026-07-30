@@ -604,7 +604,7 @@ pub use text_view::DxfTextValueDecodeReceipt;
 pub use transaction_plan::{
     DxfTransactionByteRange, DxfTransactionPatch, DxfTransactionPlan, DxfTransactionPlanBuilder,
 };
-pub use transaction_write::DxfTransactionWriteReceipt;
+pub use transaction_write::{DxfTransactionWriteJournal, DxfTransactionWriteReceipt};
 pub use verbatim::DxfVerbatimWriteReceipt;
 
 /// Returns the SeaCad DXF core package version.

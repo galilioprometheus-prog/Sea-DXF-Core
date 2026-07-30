@@ -141,7 +141,8 @@ constant-space monotonic object-handle allocation policy from exact
 `$HANDSEED` and record-identity evidence; M11.2b atomically plans new
 record-identity groups and the successor `$HANDSEED` as one source-bound
 transaction; M12.1a streams any immutable transaction plan to a verified
-create-new output with cleanup-on-failure
+create-new output with cleanup-on-failure; M12.1b strictly reparses that output
+and returns an executable inverse journal
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1190,6 +1191,17 @@ create-new output with cleanup-on-failure
     count. This does not replace an existing path, calculate or return an
     executable inverse from the reopened output, select edit intent, perform
     canonical serialization, or publish a snapshot.
+    M12.1b composes M12.1a with an internal strict reopen using the plan's exact
+    ASCII/Binary physical format and the caller-selected resource profile. The
+    reparsed identity must equal the verified write receipt before M11.1b
+    stream-verifies the post-image and materializes an executable inverse plan.
+    The returned journal owns that inverse plus the M12.1a receipt; applying
+    the inverse through the same API restores a strictly reparsed original and
+    yields an exact redo journal. Reparse and inverse failures remove the new
+    output. The writer's progress interval remains the M12.1a source-apply plus
+    output-verification work; the internal strict reparse uses a no-op
+    observer. This does not replace an existing path, provide crash-atomic
+    rename, canonicalize either format, infer edits, or publish a snapshot.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 

@@ -9,8 +9,10 @@ use std::{
 use sha2::{Digest, Sha256};
 
 use crate::{
-    ByteSpan, DxfCancellationToken, DxfError, DxfIoOperation, DxfRawDocumentView, DxfReadControl,
-    DxfReadObserver, DxfReadProgress, DxfSourceId, DxfTransactionPlan,
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError,
+    DxfFileSource, DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadControl,
+    DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfResourceProfile, DxfSourceId,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const WRITE_CHUNK_BYTES: usize = 64 * 1024;
@@ -44,6 +46,30 @@ impl DxfTransactionWriteReceipt {
     #[must_use]
     pub const fn patch_count(self) -> u64 {
         self.patch_count
+    }
+}
+
+/// Verified create-new write receipt paired with an executable inverse plan.
+#[derive(Debug)]
+pub struct DxfTransactionWriteJournal {
+    receipt: DxfTransactionWriteReceipt,
+    inverse: DxfTransactionPlan,
+}
+
+impl DxfTransactionWriteJournal {
+    #[must_use]
+    pub const fn receipt(&self) -> DxfTransactionWriteReceipt {
+        self.receipt
+    }
+
+    #[must_use]
+    pub const fn inverse_plan(&self) -> &DxfTransactionPlan {
+        &self.inverse
+    }
+
+    #[must_use]
+    pub fn into_parts(self) -> (DxfTransactionWriteReceipt, DxfTransactionPlan) {
+        (self.receipt, self.inverse)
     }
 }
 
@@ -143,6 +169,86 @@ impl DxfTransactionPlan {
             output_id: verified_id,
             bytes_written: stream.bytes_written,
             patch_count: self.patches().len() as u64,
+        })
+    }
+
+    /// Writes, strictly reparses, and returns an executable inverse journal.
+    ///
+    /// Reparse and inverse failures remove the newly created output.
+    pub fn write_reparse_and_journal_to_new_file(
+        &self,
+        document: DxfRawDocumentView<'_>,
+        destination: impl AsRef<Path>,
+        profile: DxfResourceProfile,
+        cancellation: &DxfCancellationToken,
+        observer: &mut dyn DxfReadObserver,
+    ) -> Result<DxfTransactionWriteJournal, DxfError> {
+        let destination = destination.as_ref();
+        let receipt = self.write_to_new_file(document, destination, cancellation, observer)?;
+        let journal = reparse_and_materialize_inverse(
+            self,
+            document,
+            destination,
+            receipt,
+            profile,
+            cancellation,
+        );
+        match journal {
+            Ok(journal) => Ok(journal),
+            Err(error) => Err(remove_incomplete(destination, error)),
+        }
+    }
+}
+
+fn reparse_and_materialize_inverse(
+    plan: &DxfTransactionPlan,
+    source_document: DxfRawDocumentView<'_>,
+    destination: &Path,
+    receipt: DxfTransactionWriteReceipt,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfTransactionWriteJournal, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let output_source = DxfFileSource::open(destination, profile)?;
+    let options = DxfReadOptions::new(crate::DxfReadMode::Strict, profile);
+    let mut observer = NoopDxfReadObserver;
+    let inverse = match plan.format() {
+        DxfRawDocumentFormat::Ascii => {
+            let post_image =
+                DxfAsciiRawDocument::open(&output_source, options, cancellation, &mut observer)?;
+            validate_reparsed_identity(receipt, post_image.source_id())?;
+            plan.materialize_inverse_plan(
+                source_document,
+                DxfRawDocumentView::from(&post_image),
+                profile,
+                cancellation,
+            )?
+        }
+        DxfRawDocumentFormat::Binary => {
+            let post_image =
+                DxfBinaryRawDocument::open(&output_source, options, cancellation, &mut observer)?;
+            validate_reparsed_identity(receipt, post_image.source_id())?;
+            plan.materialize_inverse_plan(
+                source_document,
+                DxfRawDocumentView::from(&post_image),
+                profile,
+                cancellation,
+            )?
+        }
+    };
+    Ok(DxfTransactionWriteJournal { receipt, inverse })
+}
+
+fn validate_reparsed_identity(
+    receipt: DxfTransactionWriteReceipt,
+    reparsed_id: DxfSourceId,
+) -> Result<(), DxfError> {
+    if reparsed_id == receipt.output_id() {
+        Ok(())
+    } else {
+        Err(DxfError::TransactionOutputIdentityMismatch {
+            expected: receipt.output_id(),
+            observed: reparsed_id,
         })
     }
 }

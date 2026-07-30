@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M12.1a can open an immutable raw ASCII framing document, enforce
+SeaCad through M12.1b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -954,6 +954,15 @@ creation attempts to remove the incomplete output, while an existing
 destination is never modified. This does not replace paths, automatically
 materialize an inverse from the output, canonicalize either physical format,
 infer edits, or publish a snapshot.
+M12.1b adds a stronger create-new path that strictly reparses the verified
+M12.1a output using its exact ASCII/Binary format and selected resource
+profile. The reparsed identity must match the write receipt, then M11.1b
+verifies the complete post-image and returns an executable inverse plan paired
+with that receipt. Applying the inverse through the same API restores a strict
+original and returns the corresponding redo journal. Strict-reparse or inverse
+failure removes the new output. This does not replace paths, provide
+crash-atomic rename, canonicalize either format, infer edits, or publish a
+snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

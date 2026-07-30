@@ -6,10 +6,10 @@ use std::{
 };
 
 use seacad_dxf_core::{
-    DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfError, DxfHandleAssignmentPlanOutcome, DxfIoOperation,
+    ByteSpan, DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument,
+    DxfByteSource, DxfCancellationToken, DxfError, DxfHandleAssignmentPlanOutcome, DxfIoOperation,
     DxfMemorySource, DxfRawDocumentView, DxfReadControl, DxfReadOptions, DxfResourceProfile,
-    DxfTransactionPlan, DxfTransactionWriteReceipt, NoopDxfReadObserver,
+    DxfTransactionPlan, DxfTransactionWriteJournal, NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -31,16 +31,21 @@ fn every_supported_version_writes_verified_ascii_binary_handle_plans() -> Result
             ascii_progress.push((progress.processed_bytes(), progress.total_bytes()));
             DxfReadControl::Continue
         };
-        let ascii_receipt = ascii_plan.write_to_new_file(
+        let ascii_journal = ascii_plan.write_reparse_and_journal_to_new_file(
             DxfRawDocumentView::from(&ascii),
             &ascii_output,
+            DxfResourceProfile::Safe,
             &DxfCancellationToken::default(),
             &mut ascii_observer,
         )?;
-        assert_written(
+        assert_journal_round_trip(
             &ascii_output,
+            &directory
+                .path()
+                .join(format!("{}-ascii-restored.dxf", version.code())),
+            DxfRawDocumentView::from(&ascii),
             &ascii_plan,
-            ascii_receipt,
+            ascii_journal,
             &ascii_progress,
             false,
         )?;
@@ -57,16 +62,21 @@ fn every_supported_version_writes_verified_ascii_binary_handle_plans() -> Result
             binary_progress.push((progress.processed_bytes(), progress.total_bytes()));
             DxfReadControl::Continue
         };
-        let binary_receipt = binary_plan.write_to_new_file(
+        let binary_journal = binary_plan.write_reparse_and_journal_to_new_file(
             DxfRawDocumentView::from(&binary),
             &binary_output,
+            DxfResourceProfile::Safe,
             &DxfCancellationToken::default(),
             &mut binary_observer,
         )?;
-        assert_written(
+        assert_journal_round_trip(
             &binary_output,
+            &directory
+                .path()
+                .join(format!("{}-binary-restored.dxf", version.code())),
+            DxfRawDocumentView::from(&binary),
             &binary_plan,
-            binary_receipt,
+            binary_journal,
             &binary_progress,
             true,
         )?;
@@ -172,6 +182,39 @@ fn chunked_write_cancellation_removes_the_incomplete_output() -> Result<(), Box<
     Ok(())
 }
 
+#[test]
+fn strict_reparse_failure_removes_the_verified_raw_output() -> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfTransactionWriteJournal>();
+
+    let directory = TestDirectory::new()?;
+    let bytes = ascii_fixture("AC1032", b"PAYLOAD");
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let eof = view
+        .group(view.group_count() - 1)
+        .ok_or_else(invalid_test_data)?
+        .value_payload_span();
+    let mut builder = view.transaction_plan_builder(DxfResourceProfile::Safe)?;
+    builder.replace_raw_span(eof, b"EOG", &DxfCancellationToken::default())?;
+    let plan = builder.finish(&DxfCancellationToken::default())?;
+    let output = directory.path().join("invalid-post-image.dxf");
+    let mut noop = NoopDxfReadObserver;
+
+    assert!(matches!(
+        plan.write_reparse_and_journal_to_new_file(
+            view,
+            &output,
+            DxfResourceProfile::Safe,
+            &DxfCancellationToken::default(),
+            &mut noop,
+        ),
+        Err(DxfError::MissingAsciiEof { .. })
+    ));
+    assert!(!output.exists());
+    Ok(())
+}
+
 fn handle_plan(view: DxfRawDocumentView<'_>) -> Result<DxfTransactionPlan, DxfError> {
     let policy = view.handle_allocation_policy_directory(&DxfCancellationToken::default())?;
     match view.plan_handle_assignments(
@@ -185,13 +228,16 @@ fn handle_plan(view: DxfRawDocumentView<'_>) -> Result<DxfTransactionPlan, DxfEr
     }
 }
 
-fn assert_written(
+fn assert_journal_round_trip(
     output: &Path,
+    restored_output: &Path,
+    source_view: DxfRawDocumentView<'_>,
     plan: &DxfTransactionPlan,
-    receipt: DxfTransactionWriteReceipt,
+    journal: DxfTransactionWriteJournal,
     progress: &[(u64, u64)],
     binary: bool,
 ) -> Result<(), Box<dyn Error>> {
+    let receipt = journal.receipt();
     let bytes = fs::read(output)?;
     assert_eq!(bytes.len() as u64, plan.projected_len());
     assert_eq!(receipt.source_id(), plan.source_id());
@@ -204,6 +250,11 @@ fn assert_written(
         open_ascii(&source)?.source_id()
     };
     assert_eq!(receipt.output_id(), output_id);
+    assert_eq!(journal.inverse_plan().source_id(), receipt.output_id());
+    assert_eq!(
+        journal.inverse_plan().projected_len(),
+        source_view.source_len()
+    );
     assert_eq!(
         progress.first().copied(),
         Some((0, plan.source_len() + plan.projected_len()))
@@ -216,6 +267,48 @@ fn assert_written(
         ))
     );
     assert!(progress.windows(2).all(|pair| pair[0].0 < pair[1].0));
+
+    let (_, inverse) = journal.into_parts();
+    let post_source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let mut noop = NoopDxfReadObserver;
+    let restored_journal = if binary {
+        let post_image = open_binary(&post_source)?;
+        inverse.write_reparse_and_journal_to_new_file(
+            DxfRawDocumentView::from(&post_image),
+            restored_output,
+            DxfResourceProfile::Safe,
+            &DxfCancellationToken::default(),
+            &mut noop,
+        )?
+    } else {
+        let post_image = open_ascii(&post_source)?;
+        inverse.write_reparse_and_journal_to_new_file(
+            DxfRawDocumentView::from(&post_image),
+            restored_output,
+            DxfResourceProfile::Safe,
+            &DxfCancellationToken::default(),
+            &mut noop,
+        )?
+    };
+    let source_len =
+        usize::try_from(source_view.source_len()).map_err(|_| io::Error::other("source length"))?;
+    let mut expected_source = vec![0_u8; source_len];
+    let source_span = ByteSpan::new(0, source_view.source_len())
+        .ok_or_else(|| io::Error::other("source span"))?;
+    source_view.read_span(source_span, &mut expected_source)?;
+    assert_eq!(fs::read(restored_output)?, expected_source);
+    assert_eq!(
+        restored_journal.receipt().output_id(),
+        source_view.source_id()
+    );
+    assert_eq!(
+        restored_journal.inverse_plan().source_id(),
+        source_view.source_id()
+    );
+    assert_eq!(
+        restored_journal.inverse_plan().projected_len(),
+        plan.projected_len()
+    );
     Ok(())
 }
 
@@ -321,3 +414,5 @@ impl Drop for TestDirectory {
         let _ = fs::remove_dir_all(&self.path);
     }
 }
+
+fn assert_send_sync<T: Send + Sync>() {}
