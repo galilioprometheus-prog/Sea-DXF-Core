@@ -18,6 +18,7 @@ mod binary_document;
 mod binary_group;
 mod binary_wire;
 mod block_definition;
+mod block_record_value;
 mod circular_geometry;
 mod circular_geometry_card;
 mod circular_geometry_semantic;
@@ -148,6 +149,11 @@ pub use binary_wire::{
 pub use block_definition::{
     DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,
     DxfBlockMemberRecordRange,
+};
+pub use block_record_value::{
+    DxfBlockRecordTextValue, DxfBlockRecordValue, DxfBlockRecordValueData,
+    DxfBlockRecordValueDirectory, DxfBlockRecordValueEntry, DxfBlockRecordValueIssue,
+    DxfBlockRecordValueRange, DxfBlockRecordValueRole,
 };
 pub use circular_geometry::{
     DxfCircularGeometryDirectory, DxfCircularGeometryKind, DxfCircularGeometryNumericIssue,

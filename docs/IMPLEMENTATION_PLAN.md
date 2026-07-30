@@ -81,7 +81,10 @@ per-corner component failure; M9.2s assembles every proven polygon-mesh cell's
 four named VERTEX coordinates into exact WCS corner tuples; M9.2t classifies
 polygon-mesh smooth-surface type metadata while retaining exact signed
 densities; M10.1a indexes exact BLOCK/member/ENDBLK definition topology in
-complete BLOCKS sections without decoding definition fields or member entities
+complete BLOCKS sections without decoding definition fields or member entities;
+M10.1b retains all eight documented BLOCK defining-value roles as exact text,
+double, or signed-16-bit evidence without selecting occurrences or applying
+defaults
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -712,6 +715,17 @@ complete BLOCKS sections without decoding definition fields or member entities
     This does not decode names, flags, base points, xref paths, descriptions,
     handles, member entities, INSERT references, transforms, edits, writes, or
     rendering.
+    M10.1b layers source-order defining-value evidence over every M10.1a BLOCK
+    record. It retains primary/secondary names `2/3`, flags `70`, base point
+    `10/20/30`, xref path `1`, and optional description `4` in their exact text,
+    double, or signed-16-bit wire domains. Text stays source-anchored with the
+    document encoding resolution and decodes only on explicit request without
+    replacement. Duplicates, empty text, ASCII numeric failures, exact Binary
+    values, raw spans, and every definition state remain explicit. Values inside
+    group-102 application-control payloads, member entities, and ENDBLK cannot
+    enter the BLOCK slice. This does not select names, reconcile groups `2/3`,
+    apply defaults, interpret flags, assemble the base point, resolve paths,
+    inspect members, bind INSERT, transform geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
