@@ -66,6 +66,8 @@ M14.1a retains numeric occurrence evidence for `3DFACE`, `SOLID`, and `TRACE`;
 M14.1b adds fixed family-specific cardinality without selecting values; and
 M14.1c selects unique typed values, applies only documented defaults, and keeps
 missing, invalid, multiple, partial, and unavailable-default states explicit.
+M14.1d emits finite WCS corner geometry, preserving 3DFACE order and reordering
+the trailing SOLID/TRACE corners into perimeter order before OCS projection.
 
 ## Milestone queue
 

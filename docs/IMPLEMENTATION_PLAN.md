@@ -1366,6 +1366,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     has no fourth-corner default. This milestone does not interpret edge bits,
     validate finite geometry/normals, reorder corners, transform OCS to WCS,
     assemble faces, edit, or write.
+    M14.1d derives finite WCS corner geometry. 3DFACE corners remain in their
+    documented WCS/source order. SOLID/TRACE corners are reordered from stored
+    order to perimeter order (first, second, fourth, third), then transformed
+    through the shared arbitrary-axis OCS basis; normalized WCS normal and
+    finite thickness remain attached. Missing semantic corners/thickness/
+    extrusion, non-finite inputs, zero extrusion, and non-finite derived
+    coordinates are typed failures. Positive zero is canonicalized. Edge-bit
+    interpretation, thickness extrusion surfaces, BLOCK expansion, edit,
+    write, render, and tessellation remain later work.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

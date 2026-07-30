@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.1c can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.1d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -221,6 +221,14 @@ SOLID/TRACE zero thickness and (0,0,1) extrusion defaults, and the documented
 tuple is absent. TRACE receives no undocumented corner fallback. Edge-bit
 interpretation, finite geometry/normal validation, SOLID/TRACE corner reorder,
 OCS/WCS transforms, face assembly, edit, and write remain unclaimed.
+
+M14.1d emits finite WCS corner geometry: native WCS/source order for 3DFACE,
+and perimeter order (first, second, fourth, third) after shared arbitrary-axis
+OCS projection for SOLID/TRACE. The latter retains a normalized WCS normal and
+finite thickness. Missing semantic inputs, non-finite corners/thickness/
+extrusion, zero extrusion, and non-finite derived coordinates fail typed;
+positive zero is canonicalized. Edge-bit interpretation, thickness surfaces,
+BLOCK expansion, edit, write, rendering, and tessellation remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
