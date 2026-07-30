@@ -149,6 +149,35 @@ files, 20 GiB, 20,000 entries, and depth 32. Exit `0` and
 completed scan below either minimum emits a redacted `failed` receipt and exits
 `1`; it does not add a failure code because no individual file failed.
 
+## M13.2b six-native artifact staging
+
+The `seacad-release-packager` binary assembles one create-new directory for an
+exact reviewed target. It accepts an already-built native CLI, an empty output
+path whose parent exists, and a 40-character lowercase commit SHA. Example:
+
+```text
+mkdir dist
+cargo +1.97.1 run --locked -p seacad-schema-gen \
+  --bin seacad-release-packager -- \
+  --target x86_64-pc-windows-msvc \
+  --binary target/x86_64-pc-windows-msvc/release/seacad.exe \
+  --output dist/seacad-dxf-core-0.0.0-x86_64-pc-windows-msvc \
+  --commit 0123456789abcdef0123456789abcdef01234567
+```
+
+The output includes the executable, `README.md`, `sbom.cdx.json`, the complete
+`legal/` tree, and `RELEASE_RECEIPT.json`. The receipt binds every payload
+file—not itself—to exact bytes and SHA-256. The packager removes only the newly
+created output directory if assembly fails and never overwrites an existing
+destination.
+
+`.github/workflows/release-artifacts.yml` is manual-dispatch only and grants
+`contents: read`. It builds on the same six native runner/target pairs, runs
+the workspace tests and release-evidence checks, assembles the directory, and
+retains it for 14 days using `actions/upload-artifact` v4.6.2 pinned to commit
+`ea165f8d65b6e75b540449e92b4886f43607fa02`. It does not create a tag,
+GitHub Release, signature, or permanent archive.
+
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
 `actions/checkout` v6.0.2 pinned to commit

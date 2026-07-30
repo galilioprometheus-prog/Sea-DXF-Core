@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.1b can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.2b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1007,6 +1007,16 @@ The receipt reports file, byte, and zero-invalid threshold states separately;
 shortfall is a redacted failed receipt, not a fabricated parse error. This
 implements the corpus release gate but is not evidence that a private corpus
 has passed it, a corpus commitment, or Core 1.0 authorization.
+M13.2b adds a fail-closed artifact directory assembler for the six reviewed
+Linux, Windows, and macOS x64/ARM64 targets. Each staged directory contains one
+native `seacad` CLI, README, deterministic SBOM, complete legal bundle, and a
+sorted receipt binding all 61 payload files by relative path, byte count, and
+SHA-256 to the target, source commit, package version, and Rust 1.97.1. A
+manual, contents-read-only workflow builds on the six native hosted runners
+and uploads the directories with exact checkout/upload action pins. This is a
+packaging contract and workflow definition, not evidence that those workflow
+jobs ran successfully, not a signed or reproducible archive, not an installer
+or published release, and not Core 1.0 authorization.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

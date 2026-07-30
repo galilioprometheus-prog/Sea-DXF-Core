@@ -151,7 +151,9 @@ resolution, lockfile checksums, dependency edges, and third-party notice rows;
 M13.1b packages canonical-LF project/legal notices and every byte-exact root
 license artifact from the 26 reviewed crates with a deterministic hash manifest;
 M13.2a adds a distinct redacted corpus receipt v2 whose verified state requires
-at least 1,000 strictly verified files and 10 GiB with zero invalid inputs
+at least 1,000 strictly verified files and 10 GiB with zero invalid inputs;
+M13.2b adds fail-closed native artifact assembly and a manual pinned workflow
+for all six reviewed host targets without publishing a release
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1273,6 +1275,19 @@ at least 1,000 strictly verified files and 10 GiB with zero invalid inputs
     creates the real release gate but does not claim that a private corpus has
     met it, identify corpus contents, provide a cryptographic corpus
     commitment, close six-native receipts, or authorize Core 1.0 release.
+    M13.2b adds one native artifact directory contract for each reviewed
+    Linux, Windows, and macOS x64/ARM64 target. A bounded Rust packager rejects
+    unreviewed targets, invalid commit identities, existing destinations,
+    symlinked/non-regular inputs, and non-portable paths; it copies the native
+    CLI, README, deterministic SBOM, and complete legal bundle, then records
+    every payload byte count and SHA-256 in a sorted receipt bound to target,
+    commit, version, and Rust 1.97.1. A manually dispatched, read-only GitHub
+    workflow builds natively on the same six hosted runners and uploads each
+    directory with exact action pins. This implements artifact staging only:
+    no workflow run is claimed, no GitHub Release or tag is created, no
+    archive/service digest is treated as the payload receipt, no signing or
+    reproducible-build claim is made, and corpus/nightly/final authorization
+    remain open.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
