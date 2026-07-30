@@ -79,6 +79,11 @@ color fields until M14.11 adds subclass-aware common-property ownership.
 M14.2b adds fixed per-record cardinality cards: 19 for TEXT, 33 for MTEXT, 12
 for SHAPE, and 11 for TOLERANCE. Repeated MTEXT chunks and group 50 values
 remain neutral `Multiple` evidence rather than being prematurely rejected.
+M14.2c selects every unambiguous numeric TEXT and SHAPE scalar, applies only
+Autodesk-documented defaults, preserves optional second-alignment absence, and
+keeps missing required values, invalid ASCII numbers, and duplicates typed
+with exact field/raw provenance. Text decoding, enum/range validation, layout,
+coordinates, glyphs, and MTEXT/TOLERANCE semantics remain later checkpoints.
 
 ## Milestone queue
 

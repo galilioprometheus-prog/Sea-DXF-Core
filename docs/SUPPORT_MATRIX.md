@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2a can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -254,10 +254,17 @@ of lexical validity. Multiple MTEXT chunks and group 50 values are not rejected
 before later structural semantics. Selection, defaults, decoding, validation,
 style resolution, and geometry remain unclaimed.
 
+M14.2c selects all unambiguous numeric TEXT/SHAPE scalars. Required values,
+documented defaults, optional TEXT second-alignment absence, invalid ASCII
+numbers, and duplicate values retain distinct typed states and exact
+provenance. It does not yet decode text/name/style fields, validate numeric or
+layout codes, choose TEXT alignment applicability, transform coordinates,
+derive glyph geometry, or provide MTEXT/TOLERANCE value semantics.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/SHAPE numeric semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/SHAPE numeric semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 

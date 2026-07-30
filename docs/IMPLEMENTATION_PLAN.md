@@ -1400,6 +1400,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     50 occurrences remain neutral cardinality evidence for later ordered-chunk
     and column semantics. No value is selected, copied, defaulted, decoded, or
     validated.
+    M14.2c selects the unambiguous numeric scalar surface for `TEXT` and
+    `SHAPE`. Required alignment/insertion coordinates, TEXT height, and SHAPE
+    size fail typed when absent; unique valid numbers remain explicit with
+    exact raw provenance; and duplicates retain the first raw occurrence only
+    as diagnostic provenance. Autodesk defaults are applied for thickness,
+    rotation, width factor, oblique angle, generation flags, justification,
+    and extrusion. Optional TEXT second-alignment components remain `Absent`
+    instead of receiving invented coordinates. This checkpoint does not decode
+    content/style/shape names, validate enum or numeric ranges, choose the
+    applicable TEXT alignment point, transform coordinates, derive glyph
+    geometry, or select MTEXT/TOLERANCE values.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
