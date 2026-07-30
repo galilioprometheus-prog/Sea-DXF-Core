@@ -40,6 +40,8 @@ impl DxfErrorCode {
     pub const TRANSACTION_PATCH_CONFLICT: Self = Self("DXF-E1102");
     pub const TRANSACTION_POST_IMAGE_LENGTH_MISMATCH: Self = Self("DXF-E1103");
     pub const TRANSACTION_POST_IMAGE_MISMATCH: Self = Self("DXF-E1104");
+    pub const TRANSACTION_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E1201");
+    pub const TRANSACTION_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E1202");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -174,6 +176,14 @@ pub enum DxfError {
     TransactionPostImageMismatch {
         span: ByteSpan,
     },
+    TransactionOutputLengthMismatch {
+        expected: u64,
+        observed: u64,
+    },
+    TransactionOutputIdentityMismatch {
+        expected: DxfSourceId,
+        observed: DxfSourceId,
+    },
 }
 
 impl DxfError {
@@ -237,6 +247,12 @@ impl DxfError {
             }
             Self::TransactionPostImageMismatch { .. } => {
                 DxfErrorCode::TRANSACTION_POST_IMAGE_MISMATCH
+            }
+            Self::TransactionOutputLengthMismatch { .. } => {
+                DxfErrorCode::TRANSACTION_OUTPUT_LENGTH_MISMATCH
+            }
+            Self::TransactionOutputIdentityMismatch { .. } => {
+                DxfErrorCode::TRANSACTION_OUTPUT_IDENTITY_MISMATCH
             }
         }
     }
@@ -422,6 +438,16 @@ impl fmt::Display for DxfError {
                 self.code(),
                 span.start(),
                 span.end()
+            ),
+            Self::TransactionOutputLengthMismatch { expected, observed } => write!(
+                formatter,
+                "{}: transaction output length {observed} differs from expected {expected}",
+                self.code()
+            ),
+            Self::TransactionOutputIdentityMismatch { expected, observed } => write!(
+                formatter,
+                "{}: transaction output identity {observed} differs from expected {expected}",
+                self.code()
             ),
         }
     }
@@ -634,6 +660,22 @@ mod tests {
                 },
                 DxfErrorCode::TRANSACTION_POST_IMAGE_MISMATCH,
                 "DXF-E1104",
+            ),
+            (
+                DxfError::TransactionOutputLengthMismatch {
+                    expected: 12,
+                    observed: 13,
+                },
+                DxfErrorCode::TRANSACTION_OUTPUT_LENGTH_MISMATCH,
+                "DXF-E1201",
+            ),
+            (
+                DxfError::TransactionOutputIdentityMismatch {
+                    expected: expected_id,
+                    observed: observed_id,
+                },
+                DxfErrorCode::TRANSACTION_OUTPUT_IDENTITY_MISMATCH,
+                "DXF-E1202",
             ),
         ];
 

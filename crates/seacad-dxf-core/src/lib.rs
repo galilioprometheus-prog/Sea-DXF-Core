@@ -133,6 +133,7 @@ mod text_escape;
 mod text_view;
 mod transaction_inverse;
 mod transaction_plan;
+mod transaction_write;
 mod verbatim;
 
 pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
@@ -603,6 +604,7 @@ pub use text_view::DxfTextValueDecodeReceipt;
 pub use transaction_plan::{
     DxfTransactionByteRange, DxfTransactionPatch, DxfTransactionPlan, DxfTransactionPlanBuilder,
 };
+pub use transaction_write::DxfTransactionWriteReceipt;
 pub use verbatim::DxfVerbatimWriteReceipt;
 
 /// Returns the SeaCad DXF core package version.

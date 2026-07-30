@@ -140,7 +140,8 @@ inverse plan with adjacent deletion coalescing; M11.2a adds a fail-closed,
 constant-space monotonic object-handle allocation policy from exact
 `$HANDSEED` and record-identity evidence; M11.2b atomically plans new
 record-identity groups and the successor `$HANDSEED` as one source-bound
-transaction
+transaction; M12.1a streams any immutable transaction plan to a verified
+create-new output with cleanup-on-failure
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1178,6 +1179,17 @@ transaction
     to CLASSES or incomplete table records, validate reference topology, apply
     a transaction, write or replace a destination, or publish a snapshot.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
+    M12.1a validates the transaction source precondition before creating a
+    destination, then reads the complete current source in fixed 64-KiB chunks
+    while emitting unchanged ranges and owned replacements in source order.
+    The source is rehashed during application, the projected output is hashed
+    while written, and the flushed/synced create-new file is reopened to verify
+    exact length and identity. Existing destinations are never modified; any
+    cancellation or failure after creation attempts to remove the incomplete
+    output. The receipt retains source/output identities, byte count, and patch
+    count. This does not replace an existing path, calculate or return an
+    executable inverse from the reopened output, select edit intent, perform
+    canonical serialization, or publish a snapshot.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
 
