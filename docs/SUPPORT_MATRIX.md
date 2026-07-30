@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2o can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2p can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -109,6 +109,9 @@ parent POLYLINE default; explicit zero remains an override.
 Complete count-consistent classic polygon meshes expose row-major
 quadrilateral cell topology with independent M/N closure and exact VERTEX
 references; invalid mesh records retain typed zero-cell states.
+Complete family-consistent classic polyface meshes expose separate exact
+coordinate and face-definition VERTEX ranges, reported and observed counts,
+and tolerant odd-ordering evidence without trusting parent count fields.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -529,6 +532,13 @@ count. Cells retain named grid-corner evidence and independent M/N wrap state.
 Incomplete sequences, family inconsistency, unusable counts, or count mismatch
 emit no cells with typed record state. This does not assign winding/normals,
 project coordinates, interpret smoothing, edit/write, or render.
+M9.2p partitions complete family-consistent classic polyface meshes into exact
+coordinate (`128|64`) and face-definition (`128`) VERTEX ranges. Parent groups
+`71/72` remain reported coordinate/face counts beside independent observed
+counts; mismatch does not reject the partition, and coordinates after faces
+are retained with `Odd` ordering evidence. Incomplete sequences and family
+failures emit typed zero-member states. This does not interpret face indices,
+resolve edge visibility, assemble face geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

@@ -71,7 +71,9 @@ algorithm while preserving native 3D WCS lines; M9.2n selects effective classic
 2D segment widths with explicit VERTEX values taking precedence over parent
 POLYLINE defaults independently for start and end; M9.2o builds fail-closed
 row-major quadrilateral topology for complete, count-consistent classic polygon
-meshes with independent M/N closure
+meshes with independent M/N closure; M9.2p tolerantly partitions complete,
+family-consistent classic polyface meshes into exact coordinate and face
+VERTEX evidence while retaining reported-versus-observed counts and odd ordering
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -650,6 +652,16 @@ meshes with independent M/N closure
     cells with typed record state. This does not assign face winding or normals,
     project vertex coordinates, apply smoothing metadata, edit, write, or
     render.
+    M9.2p partitions every complete family-consistent classic polyface sequence
+    into exact coordinate VERTEX (`128|64`) and face-definition VERTEX (`128`)
+    ranges. It retains parent groups `71/72` as reported coordinate/face counts,
+    independently reports observed counts, and marks coordinate records that
+    appear after a face as odd ordering without rejecting them. Incomplete
+    sequences, other/indeterminate parents, and inconsistent vertices expose
+    typed zero-member states. Reported count disagreement is evidence, not a
+    rejection, because readers must tolerate incorrect counts. This does not
+    interpret groups `71`-`74` on face records, resolve indices or edge
+    visibility, assemble face geometry, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
