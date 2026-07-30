@@ -95,7 +95,9 @@ retains every documented defining value from exact INSERT records; M10.1h adds
 16 fixed per-record cardinality cards with compact source-order members;
 M10.1i projects required and Autodesk-defaulted typed INSERT semantics;
 M10.1j resolves usable INSERT names against exact matched BLOCK names; M10.1k
-requires closed unique targets and rejects reachable recursive expansion
+requires closed unique targets and rejects reachable recursive expansion;
+M10.1l derives finite single-instance BLOCK-to-WCS affine transforms from
+eligible targets with typed fail-closed input and application states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -824,6 +826,17 @@ requires closed unique targets and rejects reachable recursive expansion
     indexed definitions. This evidence does not validate numeric/count domains,
     follow ATTRIB/SEQEND, calculate OCS axes or a transform matrix, expand
     geometry, edit, write, or render.
+    M10.1l derives one finite row-major 3x4 affine matrix for each M10.1k
+    eligible INSERT. The matrix subtracts the target BLOCK base point, applies
+    documented per-axis scale and rotation in the INSERT OCS, adds the
+    insertion point, then maps OCS to WCS with Autodesk's arbitrary-axis
+    algorithm. Derived negative zero is canonicalized for stable exact
+    evidence. Unavailable typed semantics/base points, non-finite inputs,
+    zero-length extrusion, non-finite matrix results, and non-finite point
+    application remain typed failures. This evidence covers one INSERT
+    instance only: it does not expand row/column arrays, convert block units,
+    follow ATTRIB/SEQEND, transform member geometry recursively, edit, write,
+    or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

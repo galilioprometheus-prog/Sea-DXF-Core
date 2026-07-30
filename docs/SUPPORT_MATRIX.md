@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1k can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1l can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -145,6 +145,8 @@ Usable INSERT names resolve by exact bounded source bytes to missing, unique,
 or duplicate-preserving ambiguous BLOCK targets.
 Unique targets are eligible only when their definitions are closed and their
 reachable BLOCK expansion graph is acyclic.
+Each eligible INSERT additionally exposes a finite single-instance row-major
+3x4 BLOCK-to-WCS affine transform with its normalized extrusion normal.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -681,6 +683,14 @@ detects self, indirect, and deeper reachable cycles while only traversing
 closed targets. This does not validate numeric/count domains, follow
 ATTRIB/SEQEND, calculate OCS axes/transforms, expand geometry, edit/write, or
 render.
+M10.1l derives one finite row-major 3x4 affine transform for every eligible
+single INSERT. It subtracts the target BLOCK base point, applies per-axis scale
+and rotation in OCS, adds the OCS insertion point, and maps through the
+documented arbitrary-axis OCS basis to WCS. Unavailable semantics/base points,
+non-finite inputs, zero extrusion, derived overflow, and non-finite point
+application remain typed failures. This does not expand array rows/columns,
+convert block units, follow ATTRIB/SEQEND, recursively transform member
+geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

@@ -60,6 +60,7 @@ mod insert_record_card;
 mod insert_record_semantic;
 mod insert_record_value;
 mod insert_target_eligibility;
+mod insert_transform;
 mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
@@ -288,6 +289,10 @@ pub use insert_record_value::{
 pub use insert_target_eligibility::{
     DxfBlockExpansionEdge, DxfInsertTargetEligibilityDirectory, DxfInsertTargetEligibilityEntry,
     DxfInsertTargetEligibilityState,
+};
+pub use insert_transform::{
+    DxfInsertAffineTransform, DxfInsertTransformApplicationIssue, DxfInsertTransformDirectory,
+    DxfInsertTransformEntry, DxfInsertTransformInput, DxfInsertTransformIssue,
 };
 pub use lightweight_polyline::{
     DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
