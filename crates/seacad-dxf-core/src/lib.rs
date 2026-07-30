@@ -49,6 +49,7 @@ mod format_probe;
 mod generated;
 mod handle;
 mod handle_allocation_policy;
+mod handle_assignment_plan;
 mod handle_context;
 mod handle_identity;
 mod handle_reference;
@@ -303,6 +304,9 @@ pub use handle::{
 pub use handle_allocation_policy::{
     DxfHandleAllocationOutcome, DxfHandleAllocationPolicyDirectory, DxfHandleAllocationPolicyState,
     DxfHandleAllocationProposal,
+};
+pub use handle_assignment_plan::{
+    DxfHandleAssignmentPlan, DxfHandleAssignmentPlanOutcome, DxfHandleAssignmentTargetState,
 };
 pub use handle_context::{
     DxfContextualHandleReferenceDirectory, DxfContextualHandleReferenceEntry,

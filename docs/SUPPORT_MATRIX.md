@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M11.2a can open an immutable raw ASCII framing document, enforce
+SeaCad through M11.2b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -932,6 +932,18 @@ consecutive range and successor seed or a typed arithmetic-exhaustion outcome.
 This does not validate pointer/owner references, repair stale evidence, reuse
 gaps, reserve handles, encode object identities, update `$HANDSEED`, build or
 apply a transaction, write a destination, or publish a snapshot.
+M11.2b turns a caller-ordered set of identity-absent raw records into one
+immutable source-bound transaction containing every new identity plus the
+successor `$HANDSEED`. Duplicate, missing, already-identified, CLASSES,
+ENDTAB, and TABLES records without group 2 fail as typed target states before a
+plan escapes. BLOCKS/ENTITIES/OBJECTS use group 5 after group 0; table objects
+and entries use group 5 after group 2 except exact TABLES `DIMSTYLE`, which
+uses group 105. ASCII preserves the selected anchor's line ending and Binary
+uses the declared dialect's group-code width and NUL-terminated hexadecimal.
+Materialized ASCII/Binary plans re-open with the assigned identities and a
+ready successor allocation policy. This does not infer which records need
+identities, handle CLASSES or incomplete table records, validate references,
+apply the transaction, write or replace a destination, or publish a snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

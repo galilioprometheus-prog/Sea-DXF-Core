@@ -138,7 +138,9 @@ non-conflicting source-order patches and captured inverse bytes; M11.1b
 stream-verifies an opened post-image and materializes a source-bound executable
 inverse plan with adjacent deletion coalescing; M11.2a adds a fail-closed,
 constant-space monotonic object-handle allocation policy from exact
-`$HANDSEED` and record-identity evidence
+`$HANDSEED` and record-identity evidence; M11.2b atomically plans new
+record-identity groups and the successor `$HANDSEED` as one source-bound
+transaction
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1162,6 +1164,19 @@ constant-space monotonic object-handle allocation policy from exact
     seeds, reuse gaps, reserve a proposal, validate reference topology, encode
     handles, update `$HANDSEED`, apply a transaction, write a destination, or
     publish a snapshot.
+    M11.2b accepts caller-ordered raw-record ordinals only when M11.2a is ready
+    and every target has absent identity evidence. It rejects duplicate,
+    missing, already-identified, CLASSES, ENDTAB, and structurally incomplete
+    TABLES targets before a plan escapes. Group 5 is inserted after the record
+    marker for BLOCKS/ENTITIES/OBJECTS and after group 2 for table objects and
+    entries; exact TABLES `DIMSTYLE` entries alone use group 105. ASCII
+    insertion preserves the anchor's CR/LF/CRLF ending, while Binary insertion
+    uses the declared pre-R13 or R13+ group-code width and NUL-terminated
+    uppercase hexadecimal. The successor `$HANDSEED` and all identities are
+    emitted in one immutable M11.1a plan whose materialized bytes re-open with
+    M11.2a ready. This checkpoint does not discover edit intent, assign handles
+    to CLASSES or incomplete table records, validate reference topology, apply
+    a transaction, write or replace a destination, or publish a snapshot.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
