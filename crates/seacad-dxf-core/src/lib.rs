@@ -59,6 +59,7 @@ mod insert_array;
 mod insert_attribute_card;
 mod insert_attribute_double_semantic;
 mod insert_attribute_sequence;
+mod insert_attribute_text_semantic;
 mod insert_attribute_value;
 mod insert_block_resolution;
 mod insert_record_card;
@@ -289,6 +290,11 @@ pub use insert_attribute_double_semantic::{
 pub use insert_attribute_sequence::{
     DxfInsertAttributeRecordRange, DxfInsertAttributeSequenceDirectory,
     DxfInsertAttributeSequenceEntry, DxfInsertAttributeSequenceState,
+};
+pub use insert_attribute_text_semantic::{
+    DxfInsertAttributeSemanticText, DxfInsertAttributeSemanticTextStyle,
+    DxfInsertAttributeTextSemanticDirectory, DxfInsertAttributeTextSemanticIssue,
+    DxfInsertAttributeTextSemantics, DxfInsertAttributeTextStyleName,
 };
 pub use insert_attribute_value::{
     DxfInsertAttributeTextValue, DxfInsertAttributeValue, DxfInsertAttributeValueData,

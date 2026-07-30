@@ -156,6 +156,8 @@ defining values while excluding AcDbXrecord/AcDbMText extension payloads.
 Each classic ATTRIB additionally exposes 23 fixed per-role cardinality cards.
 Classic ATTRIB double semantics additionally distinguish required text-start
 and height fields, documented defaults, and optional alignment components.
+Classic ATTRIB text semantics additionally retain required source-anchored
+value/tag fields and the documented `STANDARD` style default.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -740,6 +742,14 @@ remain typed with raw provenance and never fall back to defaults; tuple helpers
 require every component to be usable. This does not validate numeric domains,
 interpret justification, project remaining text/integer fields, decode MText,
 associate ATTDEF definitions, transform attributes, edit/write, or render.
+M10.1r lazily projects the three classic ATTRIB text roles. Text/default value
+and tag are required source-anchored values; an absent style name receives the
+documented `STANDARD` default without invented raw provenance. Invalid
+cardinality remains typed, and explicit text decoding stays bounded,
+same-document, and replacement-free. This does not validate empty text or tag
+spaces, resolve style-table names, interpret formatting/escapes, project
+numeric fields, decode MText, associate ATTDEF definitions, transform
+attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
