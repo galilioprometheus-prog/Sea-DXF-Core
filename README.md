@@ -6,27 +6,28 @@ through AC1032.
 
 ## Current status
 
-Checkpoint M6.5p, the Q1 dependency-policy gate, and Q2 native evidence
-staging through Q2.2 are complete. SeaCad opens bounded lossless ASCII and
-Binary DXF AC1009 through AC1032, preserves exact source bytes under a one-pass
-SHA-256 identity, indexes section envelopes and group-zero records, resolves
-the reviewed text-storage and escape layers, and writes a separately verified
-byte-identical Verbatim copy. The shared lazy HEADER view exposes 166
-provenance-backed schema fields, including exact numeric tuples, flags, dates,
-elapsed times, and handles, without applying unreviewed defaults or enum
-meanings. Broader record semantics, entities, geometry, transactions,
-preserve-patch, and canonical writers remain future milestones.
+Implementation is complete through M13.2a. SeaCad opens bounded lossless ASCII
+and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
+evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
+plans reversible handle edits, writes verified preserve-patch outputs, and
+emits strictly reparsed canonical ASCII or Binary framing. Dependency policy,
+deterministic CycloneDX inventory, distributable legal files, six-native CI
+staging, and a redacted 1,000-file/10-GiB corpus release gate are present.
+Private corpus achievement, twenty consecutive six-native nightly receipts,
+native release archives/signatures, and final Core 1.0 authorization remain
+open M13 evidence.
 
 ## Workspace
 
-- `seacad-dxf-core`: bounded source, raw ASCII framing, source identity, typed
-  dialect/encoding policy discovery, section/group-0 indexes, and Verbatim
-  writer today; broader semantics, topology, and transactions arrive later.
+- `seacad-dxf-core`: bounded lossless ASCII/Binary framing, source identity,
+  reviewed lazy semantics/topology/geometry, reversible transaction planning,
+  and verified preserve-patch/canonical create-new writers.
 - `seacad-cli`: operational `inspect` and `verify` commands with English or
   Vietnamese human output and stable JSON v1, plus the separate aggregate-only
   `seacad-corpus-receipt` offline evidence harness.
-- `seacad-schema-gen`: deterministic provenance-backed schema generation and
-  cross-platform generated-output verification.
+- `seacad-schema-gen`: deterministic provenance-backed schema generation,
+  CycloneDX inventory, legal-bundle generation, and cross-platform freshness
+  verification.
 
 The previous CAD workspaces under `D:\Backups` are immutable research inputs.
 Production code is not copied from them. Tests, fixtures, and knowledge may be
@@ -60,6 +61,9 @@ Private corpus bytes stay outside the repository. The Q2.2 harness reads the
 public aggregate-only policy in `corpus/offline-manifest.json` and emits no
 paths, filenames, source IDs, or per-file hashes. See
 `docs/Q2_2_OFFLINE_CORPUS_RECEIPT_CONTRACT.md`.
+M13 release qualification uses the separate threshold policy in
+`corpus/release-manifest.json`; policy presence is not evidence that a private
+corpus has passed.
 
 ## License
 

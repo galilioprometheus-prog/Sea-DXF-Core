@@ -128,6 +128,27 @@ committed directory and rejects missing, changed, unexpected, symlinked, or
 non-regular entries. The M13.1a `--write` and `--check` commands therefore
 cover both SBOM and legal bundle; no additional tool is required.
 
+## M13.2a corpus release gate
+
+Q2.2's `corpus/offline-manifest.json` and v1 receipt remain available for
+bounded exploratory corpus verification. They do not assert release scale.
+
+M13.2a adds `corpus/release-manifest.json` and receipt v2. Run the same
+path-redacted harness with the release policy:
+
+```text
+cargo +1.97.1 run --locked -p seacad-cli \
+  --bin seacad-corpus-receipt -- \
+  corpus/release-manifest.json <offline-corpus-root>
+```
+
+The committed release policy requires at least 1,000 verified DXF files and
+10 GiB, with zero invalid files. Independent traversal ceilings are 2,000
+files, 20 GiB, 20,000 entries, and depth 32. Exit `0` and
+`status="verified"` require all three threshold Booleans to be true. A
+completed scan below either minimum emits a redacted `failed` receipt and exits
+`1`; it does not add a failure code because no individual file failed.
+
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
 `actions/checkout` v6.0.2 pinned to commit

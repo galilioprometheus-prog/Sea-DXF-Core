@@ -1,0 +1,20 @@
+{
+  "contract": "seacad-offline-corpus-manifest/v2",
+  "schema_version": 2,
+  "corpus_id": "seacad-offline-dxf-core",
+  "privacy": "aggregate-only",
+  "resource_profile": "safe",
+  "extensions": [
+    "dxf"
+  ],
+  "limits": {
+    "max_depth": 32,
+    "max_entries": 20000,
+    "max_files": 2000,
+    "max_total_bytes": 21474836480
+  },
+  "requirements": {
+    "min_verified_files": 1000,
+    "min_verified_bytes": 10737418240
+  }
+}

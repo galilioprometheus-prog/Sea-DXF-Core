@@ -999,6 +999,14 @@ and exact byte count/SHA-256 for every file; the gate rejects missing, changed,
 extra, symlinked, or non-regular artifacts. This closes legal-file packaging
 for the current locked graph, not native archive/signature, installer,
 private-corpus, six-native, or Core 1.0 release evidence.
+M13.2a preserves the Q2.2 ceiling-only corpus manifest/receipt v1 and adds a
+release-only aggregate receipt v2. The committed v2 policy requires at least
+1,000 strictly verified DXF files and 10 GiB with zero invalid files under
+independent hard ceilings of 2,000 files, 20 GiB, 20,000 entries, and depth 32.
+The receipt reports file, byte, and zero-invalid threshold states separately;
+shortfall is a redacted failed receipt, not a fabricated parse error. This
+implements the corpus release gate but is not evidence that a private corpus
+has passed it, a corpus commitment, or Core 1.0 authorization.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

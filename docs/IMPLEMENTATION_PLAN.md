@@ -149,7 +149,9 @@ dialect with the same strict EOF closure and exact non-EOF value wire bytes;
 M13.1a locks a deterministic CycloneDX 1.6 inventory to the complete Cargo
 resolution, lockfile checksums, dependency edges, and third-party notice rows;
 M13.1b packages canonical-LF project/legal notices and every byte-exact root
-license artifact from the 26 reviewed crates with a deterministic hash manifest
+license artifact from the 26 reviewed crates with a deterministic hash manifest;
+M13.2a adds a distinct redacted corpus receipt v2 whose verified state requires
+at least 1,000 strictly verified files and 10 GiB with zero invalid inputs
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1259,6 +1261,18 @@ license artifact from the 26 reviewed crates with a deterministic hash manifest
     packaging for the locked graph only; it does not construct/sign native
     archives, validate an installer, satisfy corpus/native receipts, or
     authorize Core 1.0 release.
+    M13.2a preserves the Q2.2 ceiling-only manifest/receipt v1 and adds a
+    release-only v2 contract. The committed v2 policy requires at least 1,000
+    strictly verified DXF files and 10 GiB of selected bytes with zero invalid
+    files, under independent hard traversal ceilings of 2,000 files, 20 GiB,
+    20,000 entries, and depth 32. Its aggregate-only receipt exposes separate
+    file-count, byte-count, and zero-invalid threshold Booleans plus their
+    conjunction. A threshold shortfall produces a completed redacted failed
+    receipt without inventing a parser failure. Requirements above configured
+    bounds or outside implementation ceilings fail before traversal. This
+    creates the real release gate but does not claim that a private corpus has
+    met it, identify corpus contents, provide a cryptographic corpus
+    commitment, close six-native receipts, or authorize Core 1.0 release.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

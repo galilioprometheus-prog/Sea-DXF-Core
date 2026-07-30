@@ -20,13 +20,18 @@ use seacad_dxf_core::{
 };
 use serde::{Deserialize, Serialize};
 
-const MANIFEST_CONTRACT: &str = "seacad-offline-corpus-manifest/v1";
-const RECEIPT_CONTRACT: &str = "seacad-offline-corpus-receipt/v1";
+const MANIFEST_CONTRACT_V1: &str = "seacad-offline-corpus-manifest/v1";
+const MANIFEST_CONTRACT_V2: &str = "seacad-offline-corpus-manifest/v2";
+const RECEIPT_CONTRACT_V1: &str = "seacad-offline-corpus-receipt/v1";
+const RECEIPT_CONTRACT_V2: &str = "seacad-offline-corpus-receipt/v2";
 const MAX_MANIFEST_BYTES: u64 = 16 * 1024;
 const MAX_DEPTH: u64 = 32;
-const MAX_ENTRIES: u64 = 10_000;
-const MAX_FILES: u64 = 1_000;
-const MAX_TOTAL_BYTES: u64 = 10 * 1024 * 1024 * 1024;
+const V1_MAX_ENTRIES: u64 = 10_000;
+const V1_MAX_FILES: u64 = 1_000;
+const V1_MAX_TOTAL_BYTES: u64 = 10 * 1024 * 1024 * 1024;
+const V2_MAX_ENTRIES: u64 = 20_000;
+const V2_MAX_FILES: u64 = 2_000;
+const V2_MAX_TOTAL_BYTES: u64 = 20 * 1024 * 1024 * 1024;
 
 fn main() -> ExitCode {
     let stdout = io::stdout();
@@ -82,6 +87,13 @@ struct CorpusLimits {
     max_total_bytes: u64,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct CorpusRequirements {
+    min_verified_files: u64,
+    min_verified_bytes: u64,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CorpusManifest {
@@ -92,13 +104,12 @@ struct CorpusManifest {
     resource_profile: String,
     extensions: Vec<String>,
     limits: CorpusLimits,
+    requirements: Option<CorpusRequirements>,
 }
 
 impl CorpusManifest {
     fn validate(&self) -> Result<(), HarnessError> {
-        if self.contract != MANIFEST_CONTRACT
-            || self.schema_version != 1
-            || self.corpus_id != "seacad-offline-dxf-core"
+        if self.corpus_id != "seacad-offline-dxf-core"
             || self.privacy != "aggregate-only"
             || self.resource_profile != "safe"
             || self.extensions.as_slice() != ["dxf"]
@@ -108,15 +119,42 @@ impl CorpusManifest {
                 "manifest contract or fixed policy fields are invalid",
             ));
         }
+        let (max_entries, max_files, max_total_bytes) = match (
+            self.contract.as_str(),
+            self.schema_version,
+            &self.requirements,
+        ) {
+            (MANIFEST_CONTRACT_V1, 1, None) => (V1_MAX_ENTRIES, V1_MAX_FILES, V1_MAX_TOTAL_BYTES),
+            (MANIFEST_CONTRACT_V2, 2, Some(requirements))
+                if requirements.min_verified_files > 0
+                    && requirements.min_verified_bytes > 0
+                    && requirements.min_verified_files <= self.limits.max_files
+                    && requirements.min_verified_bytes <= self.limits.max_total_bytes =>
+            {
+                (V2_MAX_ENTRIES, V2_MAX_FILES, V2_MAX_TOTAL_BYTES)
+            }
+            (MANIFEST_CONTRACT_V2, 2, Some(_)) => {
+                return Err(HarnessError::new(
+                    "CORPUS-E0007",
+                    "release corpus requirements are invalid",
+                ));
+            }
+            _ => {
+                return Err(HarnessError::new(
+                    "CORPUS-E0005",
+                    "manifest contract or fixed policy fields are invalid",
+                ));
+            }
+        };
         if self.limits.max_depth == 0
             || self.limits.max_entries == 0
             || self.limits.max_files == 0
             || self.limits.max_total_bytes == 0
             || self.limits.max_files > self.limits.max_entries
             || self.limits.max_depth > MAX_DEPTH
-            || self.limits.max_entries > MAX_ENTRIES
-            || self.limits.max_files > MAX_FILES
-            || self.limits.max_total_bytes > MAX_TOTAL_BYTES
+            || self.limits.max_entries > max_entries
+            || self.limits.max_files > max_files
+            || self.limits.max_total_bytes > max_total_bytes
         {
             return Err(HarnessError::new(
                 "CORPUS-E0006",
@@ -124,6 +162,22 @@ impl CorpusManifest {
             ));
         }
         Ok(())
+    }
+
+    const fn receipt_contract(&self) -> &'static str {
+        if self.schema_version == 2 {
+            RECEIPT_CONTRACT_V2
+        } else {
+            RECEIPT_CONTRACT_V1
+        }
+    }
+
+    const fn manifest_contract(&self) -> &'static str {
+        if self.schema_version == 2 {
+            MANIFEST_CONTRACT_V2
+        } else {
+            MANIFEST_CONTRACT_V1
+        }
     }
 }
 
@@ -137,8 +191,20 @@ struct CorpusReceipt {
     platform: PlatformReceipt,
     privacy: PrivacyReceipt,
     limits: CorpusLimits,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    requirements: Option<CorpusRequirements>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    thresholds: Option<ThresholdReceipt>,
     observed: ObservedReceipt,
     failure_codes: BTreeMap<String, u64>,
+}
+
+#[derive(Debug, Serialize)]
+struct ThresholdReceipt {
+    verified_files_met: bool,
+    verified_bytes_met: bool,
+    zero_invalid_files_met: bool,
+    release_gate_met: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -181,16 +247,20 @@ fn create_receipt(manifest_path: &Path, corpus_root: &Path) -> Result<CorpusRece
     let canonical_root = fs::canonicalize(corpus_root)
         .map_err(|_| HarnessError::new("CORPUS-E0012", "corpus root is inaccessible"))?;
     let (observed, failure_codes) = scan_corpus(&canonical_root, &manifest.limits)?;
-    let status = if observed.invalid_files == 0 && observed.candidate_files > 0 {
-        "verified"
-    } else {
-        "failed"
-    };
+    let thresholds = manifest
+        .requirements
+        .as_ref()
+        .map(|requirements| threshold_receipt(requirements, &observed));
+    let passed = thresholds.as_ref().map_or_else(
+        || observed.invalid_files == 0 && observed.candidate_files > 0,
+        |thresholds| thresholds.release_gate_met,
+    );
+    let status = if passed { "verified" } else { "failed" };
     Ok(CorpusReceipt {
-        contract: RECEIPT_CONTRACT,
-        schema_version: 1,
+        contract: manifest.receipt_contract(),
+        schema_version: manifest.schema_version,
         status,
-        manifest_contract: MANIFEST_CONTRACT,
+        manifest_contract: manifest.manifest_contract(),
         corpus_id: manifest.corpus_id,
         platform: PlatformReceipt {
             operating_system: env::consts::OS,
@@ -203,9 +273,26 @@ fn create_receipt(manifest_path: &Path, corpus_root: &Path) -> Result<CorpusRece
             per_file_hashes_included: false,
         },
         limits: manifest.limits,
+        requirements: manifest.requirements,
+        thresholds,
         observed,
         failure_codes,
     })
+}
+
+fn threshold_receipt(
+    requirements: &CorpusRequirements,
+    observed: &ObservedReceipt,
+) -> ThresholdReceipt {
+    let verified_files_met = observed.verified_files >= requirements.min_verified_files;
+    let verified_bytes_met = observed.total_bytes >= requirements.min_verified_bytes;
+    let zero_invalid_files_met = observed.invalid_files == 0;
+    ThresholdReceipt {
+        verified_files_met,
+        verified_bytes_met,
+        zero_invalid_files_met,
+        release_gate_met: verified_files_met && verified_bytes_met && zero_invalid_files_met,
+    }
 }
 
 fn read_manifest(path: &Path) -> Result<CorpusManifest, HarnessError> {
@@ -570,6 +657,58 @@ mod tests {
     }
 
     #[test]
+    fn release_manifest_requires_verified_file_and_byte_thresholds() -> Result<(), Box<dyn Error>> {
+        let directory = TestDirectory::new()?;
+        let root = directory.create_directory("release-private-root")?;
+        fs::write(root.join("one.dxf"), STRICT_ASCII)?;
+        fs::write(root.join("two.dxf"), STRICT_ASCII)?;
+
+        let passing = directory.write_release_manifest(10, 1024 * 1024, 2, 1)?;
+        let receipt = create_receipt(&passing, &root)?;
+        assert_eq!(receipt.contract, "seacad-offline-corpus-receipt/v2");
+        assert_eq!(receipt.status, "verified");
+        let thresholds = receipt.thresholds.ok_or("missing release thresholds")?;
+        assert!(thresholds.verified_files_met);
+        assert!(thresholds.verified_bytes_met);
+        assert!(thresholds.zero_invalid_files_met);
+        assert!(thresholds.release_gate_met);
+
+        let failing = directory.write_release_manifest(10, 1024 * 1024, 3, 100_000)?;
+        let receipt = create_receipt(&failing, &root)?;
+        assert_eq!(receipt.status, "failed");
+        assert!(receipt.failure_codes.is_empty());
+        let thresholds = receipt.thresholds.ok_or("missing release thresholds")?;
+        assert!(!thresholds.verified_files_met);
+        assert!(!thresholds.verified_bytes_met);
+        assert!(thresholds.zero_invalid_files_met);
+        assert!(!thresholds.release_gate_met);
+        Ok(())
+    }
+
+    #[test]
+    fn release_requirements_and_committed_v2_policy_fail_closed() -> Result<(), Box<dyn Error>> {
+        let manifest_path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../corpus/release-manifest.json");
+        let manifest = super::read_manifest(&manifest_path)?;
+        assert_eq!(manifest.contract, "seacad-offline-corpus-manifest/v2");
+        assert_eq!(manifest.schema_version, 2);
+        assert_eq!(manifest.limits.max_files, 2_000);
+        assert_eq!(manifest.limits.max_total_bytes, 20 * 1024 * 1024 * 1024);
+        let requirements = manifest.requirements.ok_or("missing requirements")?;
+        assert_eq!(requirements.min_verified_files, 1_000);
+        assert_eq!(requirements.min_verified_bytes, 10 * 1024 * 1024 * 1024);
+
+        let directory = TestDirectory::new()?;
+        let root = directory.create_directory("invalid-release-root")?;
+        let invalid = directory.write_release_manifest(2, 1024, 3, 1)?;
+        let error = create_receipt(&invalid, &root)
+            .err()
+            .ok_or("requirements above limits unexpectedly passed")?;
+        assert_eq!(error.code, "CORPUS-E0007");
+        Ok(())
+    }
+
+    #[test]
     fn command_output_never_echoes_argument_paths() -> Result<(), Box<dyn Error>> {
         let directory = TestDirectory::new()?;
         let root = directory.create_directory("command-secret-root")?;
@@ -671,6 +810,41 @@ mod tests {
                     "}}\n"
                 ),
                 max_depth, max_entries, max_files, max_total_bytes
+            );
+            fs::write(&path, json)?;
+            Ok(path)
+        }
+
+        fn write_release_manifest(
+            &self,
+            max_files: u64,
+            max_total_bytes: u64,
+            min_verified_files: u64,
+            min_verified_bytes: u64,
+        ) -> io::Result<PathBuf> {
+            let path = self.path.join("release-manifest.json");
+            let json = format!(
+                concat!(
+                    "{{\n",
+                    "  \"contract\": \"seacad-offline-corpus-manifest/v2\",\n",
+                    "  \"schema_version\": 2,\n",
+                    "  \"corpus_id\": \"seacad-offline-dxf-core\",\n",
+                    "  \"privacy\": \"aggregate-only\",\n",
+                    "  \"resource_profile\": \"safe\",\n",
+                    "  \"extensions\": [\"dxf\"],\n",
+                    "  \"limits\": {{\n",
+                    "    \"max_depth\": 4,\n",
+                    "    \"max_entries\": 20,\n",
+                    "    \"max_files\": {},\n",
+                    "    \"max_total_bytes\": {}\n",
+                    "  }},\n",
+                    "  \"requirements\": {{\n",
+                    "    \"min_verified_files\": {},\n",
+                    "    \"min_verified_bytes\": {}\n",
+                    "  }}\n",
+                    "}}\n"
+                ),
+                max_files, max_total_bytes, min_verified_files, min_verified_bytes
             );
             fs::write(&path, json)?;
             Ok(path)
