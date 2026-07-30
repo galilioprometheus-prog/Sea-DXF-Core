@@ -6,7 +6,7 @@ through AC1032.
 
 ## Current status
 
-Implementation is complete through M13.2f. SeaCad opens bounded lossless ASCII
+Implementation is complete through M13.2g. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -15,10 +15,10 @@ deterministic CycloneDX inventory, distributable legal files, six-native CI
 staging, a redacted 1,000-file/10-GiB corpus release gate, and a manual
 six-target native artifact assembly workflow, exact six-artifact receipt
 aggregation, a host-independent six-platform SBOM dependency union, actionable
-stale-evidence diagnostics, and canonical-LF Cargo.lock identity are present.
-Private corpus achievement, twenty consecutive six-native nightly receipts, a
-successful native artifact workflow receipt, signatures, and final Core 1.0
-authorization remain open M13 evidence.
+stale-evidence diagnostics, canonical-LF Cargo.lock identity, and one
+successful six-native artifact/aggregate workflow receipt are present. Private
+corpus achievement, twenty consecutive six-native nightly receipts,
+signatures, and final Core 1.0 authorization remain open M13 evidence.
 
 ## Workspace
 

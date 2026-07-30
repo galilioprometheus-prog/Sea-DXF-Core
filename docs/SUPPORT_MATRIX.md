@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M13.2f can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.2g can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1035,6 +1035,11 @@ identity to LF, rejects lone carriage returns, and pins lockfile checkout line
 endings. These change release-evidence reproducibility only; they do not add
 dependencies, DXF behavior, target support, or a successful six-native
 workflow claim.
+M13.2g records the first successful manual Native Release Artifacts workflow:
+run `30557566354` built all six reviewed native packages and its aggregate job
+verified every receipt and payload against commit
+`222eec2c9d9b18fbb7ff1b8d5f0120ba30633365`. The seven uploaded artifacts are
+temporary workflow evidence, not signed or permanently retained releases.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

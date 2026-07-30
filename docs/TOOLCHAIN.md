@@ -231,6 +231,16 @@ the generator remains robust to an already-converted worktree. Package
 checksums continue to come from the parsed locked records; no dependency or
 tool is added.
 
+## M13.2g first six-native artifact receipt
+
+Manual Native Release Artifacts run `30557566354` succeeded at commit
+`222eec2c9d9b18fbb7ff1b8d5f0120ba30633365`. All six matrix jobs uploaded one
+native package each; the aggregate job completed in 29 seconds and uploaded
+`seacad-dxf-core-0.0.0-six-native-receipt` with GitHub artifact digest
+`d287c406f7c12e1d0e3686f294b1f4b5cd50567b25d3565c8e6fe0ba1cf6d97d`.
+The configured retention remains 14 days. This is successful workflow
+evidence, not a GitHub Release, signature, or permanent archive.
+
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
 `actions/checkout` v6.0.2 pinned to commit

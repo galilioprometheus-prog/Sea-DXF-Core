@@ -159,7 +159,8 @@ receipt and committed evidence, and emits one exact six-target matrix receipt;
 M13.2d makes SBOM dependency resolution host-independent by unioning explicit
 Cargo metadata for all six reviewed target triples; M13.2e exposes bounded
 semantic edge and hash differences for stale SBOM failures; M13.2f
-canonicalizes Cargo.lock identity to LF and pins its checkout line endings
+canonicalizes Cargo.lock identity to LF and pins its checkout line endings;
+M13.2g records the first successful six-package and aggregate receipt workflow
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1323,6 +1324,15 @@ canonicalizes Cargo.lock identity to LF and pins its checkout line endings
     the diagnosed cross-checkout generation semantics subject to a fresh
     remote run; they do not broaden platform support or close the
     corpus/nightly/final release gates.
+    M13.2g records GitHub Actions Native Release Artifacts run `30557566354`
+    at commit `222eec2c9d9b18fbb7ff1b8d5f0120ba30633365`. All six native
+    package jobs succeeded, the aggregate verifier re-hashed and cross-checked
+    the exact matrix in 29 seconds, and the overall workflow succeeded in five
+    minutes with seven retained artifacts. The aggregate artifact digest is
+    `d287c406f7c12e1d0e3686f294b1f4b5cd50567b25d3565c8e6fe0ba1cf6d97d`.
+    This closes the first native artifact workflow receipt, not permanent
+    retention, signatures, private corpus scale, the twenty-night sequence, or
+    final Core 1.0 authorization.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
