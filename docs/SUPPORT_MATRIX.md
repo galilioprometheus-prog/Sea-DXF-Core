@@ -165,6 +165,8 @@ Classic ATTRIB justification semantics additionally classify published
 horizontal/vertical codes and expose typed alignment-point applicability.
 Classic ATTRIB placement semantics additionally select the applicable OCS
 text-start or alignment tuple without coupling the ignored tuple's failures.
+Usable ATTRIB placement anchors additionally project to finite WCS points and
+normalized normals through the shared arbitrary-axis implementation.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -781,6 +783,13 @@ anchor. Justification, text-start, and alignment unavailability remain
 distinct. This does not recalculate stored points, validate justification
 combinations, apply extrusion/rotation/style metrics/INSERT transforms, decode
 MText, associate ATTDEF definitions, edit/write, or render.
+M10.1v maps a usable selected OCS anchor through the ATTRIB extrusion with the
+shared normalized arbitrary-axis algorithm and exact `1/64` branch. Finite WCS
+points and normals use canonical positive zero. Placement/extrusion
+unavailability, non-finite Binary values, zero normals, basis failure, and
+derived overflow stay typed. This does not apply text rotation, oblique/width/
+generation flags, style metrics, INSERT/BLOCK transforms, or ATTDEF
+association; recalculate stored points; decode MText; edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

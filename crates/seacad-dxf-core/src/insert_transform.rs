@@ -325,7 +325,11 @@ impl OcsBasis {
         ]
     }
 
-    fn transform(self, point: [f64; 3]) -> [f64; 3] {
+    pub(crate) const fn normal(self) -> [f64; 3] {
+        self.z
+    }
+
+    pub(crate) fn transform(self, point: [f64; 3]) -> [f64; 3] {
         linear_transform([self.x, self.y, self.z], point)
     }
 }

@@ -111,7 +111,8 @@ M10.1s lazily projects the five unambiguous classic ATTRIB integer roles and
 their documented flag/default semantics; M10.1t classifies documented
 horizontal/vertical justification codes and alignment-point applicability;
 M10.1u selects the applicable source placement tuple without coupling errors
-from the ignored tuple
+from the ignored tuple; M10.1v projects the selected OCS anchor into WCS with
+the shared arbitrary-axis implementation and typed finite-input failures
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -960,6 +961,17 @@ from the ignored tuple
     not recalculate AutoCAD's stored points, validate horizontal/vertical
     combinations, apply extrusion, rotation, style metrics, or INSERT
     transforms, decode MText extensions, associate ATTDEF definitions, edit,
+    write, or render.
+    M10.1v projects each usable M10.1u OCS anchor into WCS using the ATTRIB's
+    usable M10.1q extrusion and the same normalized arbitrary-axis
+    implementation used by INSERT transforms, including Autodesk's exact
+    `1/64` polar-cap branch. Successful projections retain the finite WCS point,
+    normalized WCS normal, positive-zero canonicalization, and underlying
+    placement evidence. Placement/extrusion unavailability, non-finite Binary
+    inputs, zero-length extrusion, non-finite basis derivation, and transformed
+    overflow remain typed. This does not apply text rotation, oblique/width/
+    generation flags, style metrics, INSERT/BLOCK transforms, or ATTDEF
+    association; recalculate stored points; decode MText extensions; edit,
     write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
