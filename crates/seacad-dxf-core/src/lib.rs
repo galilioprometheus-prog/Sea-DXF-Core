@@ -68,6 +68,7 @@ mod infinite_line_geometry_semantic;
 mod insert_array;
 mod insert_attribute_anchor;
 mod insert_attribute_card;
+mod insert_attribute_definition_resolution;
 mod insert_attribute_double_semantic;
 mod insert_attribute_integer_semantic;
 mod insert_attribute_justification;
@@ -351,6 +352,10 @@ pub use insert_attribute_card::{
     DxfInsertAttributeCardDirectory, DxfInsertAttributeCardMember,
     DxfInsertAttributeCardMemberRange, DxfInsertAttributeValueCard,
     DxfInsertAttributeValueCardState,
+};
+pub use insert_attribute_definition_resolution::{
+    DxfInsertAttributeDefinitionRange, DxfInsertAttributeDefinitionResolutionDirectory,
+    DxfInsertAttributeDefinitionResolutionEntry, DxfInsertAttributeDefinitionResolutionState,
 };
 pub use insert_attribute_double_semantic::{
     DxfInsertAttributeDoubleSemanticDirectory, DxfInsertAttributeDoubleSemanticIssue,

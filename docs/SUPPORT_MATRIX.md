@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1af can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1ag can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -896,6 +896,14 @@ source spans can query without a tag-sized buffer. This does not validate tag
 syntax, uppercase/decode tags, collapse duplicates, require a closed BLOCK,
 treat missing as definitive when unusable tags exist, resolve INSERT targets,
 associate ATTRIB records, edit/write, or render.
+M10.1ag resolves each retained ATTRIB tag only for an INSERT with one exact
+BLOCK target, then queries that BLOCK's exact ATTDEF tag index by source span.
+It preserves target-unavailable, tag-unavailable, definitive missing,
+indeterminate missing when unusable ATTDEF tags remain, unique, and
+duplicate-preserving ambiguous outcomes. It does not normalize/decode tags,
+choose ambiguous targets/definitions, require closed sequences/definitions,
+validate ownership or attribute flags/defaults, transform placement,
+edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

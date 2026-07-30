@@ -130,7 +130,9 @@ without coupling failures from the ignored tuple; M10.1ae projects each usable
 selected ATTDEF OCS anchor into WCS through the shared arbitrary-axis basis
 with typed finite-input and extrusion failures; M10.1af builds a collision-safe
 block-local exact ATTDEF-tag index with duplicate-preserving matches and
-explicit unusable-tag summaries
+explicit unusable-tag summaries; M10.1ag resolves each retained ATTRIB against
+the exact ATTDEF tags of a uniquely targeted BLOCK while preserving
+fail-closed target, tag, missing, indeterminate, unique, and ambiguous states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1107,6 +1109,16 @@ explicit unusable-tag summaries
     BLOCK, interpret a missing exact match as definitive when unusable tags
     exist, resolve INSERT targets, associate ATTRIB records, edit, write, or
     render.
+    M10.1ag resolves each retained M10.1r ATTRIB tag only when its owning
+    INSERT has one exact M10.1j BLOCK target. Same-document source spans query
+    M10.1af without a tag-sized buffer. Results preserve target-unavailable,
+    tag-unavailable, definitive missing, indeterminate missing caused by
+    unusable ATTDEF tags, unique, or duplicate-preserving ambiguous state.
+    Exact matches remain ordered by definition-local ordinal and retain their
+    target BLOCK. This does not normalize/decode tags, choose among duplicate
+    BLOCKs or ATTDEFs, require a closed attribute sequence or BLOCK definition,
+    validate ownership, compare flags/default values, transform attribute
+    placement, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
