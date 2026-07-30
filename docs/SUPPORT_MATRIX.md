@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1y can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1z can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -173,6 +173,8 @@ decoding definition fields or associating ATTRIB records.
 Classic ATTDEF records additionally retain source-order defining values while
 excluding application-group and AcDbXrecord/AcDbMText extension payloads.
 Each classic ATTDEF additionally exposes 24 fixed per-role cardinality cards.
+Classic ATTDEF double semantics additionally distinguish required text-start
+and height fields, documented defaults, and optional alignment components.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -817,6 +819,15 @@ source-order references independently of lexical validity and owning BLOCK
 state. Empty records receive 24 absent cards, and both group-280 occurrences
 remain one neutral multiple card. This does not select values, apply defaults,
 distinguish group-280 meanings, interpret flags/justification, decode MText,
+compare ATTRIB tags, associate inserted attributes, transform geometry,
+edit/write, or render.
+M10.1z lazily projects the 14 classic ATTDEF double roles. Text-start X/Y/Z
+and text height are required; absent thickness, rotation, relative X scale,
+oblique angle, and extrusion receive only documented defaults. Alignment-point
+components remain independently optional. Invalid ASCII and duplicate values
+remain typed with raw provenance and never fall back to defaults; tuple helpers
+require every component to be usable. This does not validate numeric domains,
+interpret justification, project remaining text/integer fields, decode MText,
 compare ATTRIB tags, associate inserted attributes, transform geometry,
 edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified

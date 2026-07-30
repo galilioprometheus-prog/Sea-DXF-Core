@@ -117,7 +117,9 @@ M10.1w indexes exact uppercase ATTDEF member records under their owning BLOCK
 definitions without decoding fields or associating inserted attributes;
 M10.1x retains source-order classic ATTDEF defining values without admitting
 application-group or AcDbXrecord/MText extension payloads; M10.1y adds 24
-fixed cardinality cards per ATTDEF with compact source-order members
+fixed cardinality cards per ATTDEF with compact source-order members; M10.1z
+projects classic ATTDEF double fields with documented required/default/optional
+states
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1014,6 +1016,19 @@ fixed cardinality cards per ATTDEF with compact source-order members
     canonical value, apply defaults, distinguish group-280 meanings, interpret
     flags/justification, decode MText extensions, compare ATTRIB tags,
     associate inserted attributes, transform geometry, edit, write, or render.
+    M10.1z lazily projects the 14 classic ATTDEF double roles from M10.1y.
+    Text-start X/Y/Z and text height are required. Thickness, rotation,
+    relative X scale, oblique angle, and extrusion receive only their
+    documented `0`, `0`, `1`, `0`, and `(0,0,1)` defaults. Alignment-point
+    X/Y/Z remain independently optional because their applicability depends on
+    justification semantics not yet interpreted. Unique values preserve exact
+    binary64 bits; invalid ASCII, missing required values, and duplicates stay
+    typed with raw provenance when available. Tuple helpers fail closed unless
+    all three components are usable. This does not validate finiteness,
+    positivity, angles, justification-dependent alignment requirements, or
+    extrusion length; project ATTDEF text/flags/integers; decode MText
+    extensions; compare ATTRIB tags; associate inserted attributes; transform
+    geometry; edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
