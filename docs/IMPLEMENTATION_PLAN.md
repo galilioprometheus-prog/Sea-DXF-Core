@@ -124,7 +124,9 @@ the documented STANDARD style default; M10.1ab projects the five unambiguous
 classic ATTDEF signed-16-bit roles with required flags, documented zero
 defaults, and exact flag-bit helpers while leaving group `280` neutral;
 M10.1ac classifies the published ATTDEF horizontal/vertical justification
-codes and exposes alignment-point applicability without selecting coordinates
+codes and exposes alignment-point applicability without selecting coordinates;
+M10.1ad selects the applicable stored ATTDEF text-start or alignment tuple
+without coupling failures from the ignored tuple
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1060,6 +1062,16 @@ codes and exposes alignment-point applicability without selecting coordinates
     distinguish group-280 meanings, decode MText extensions, compare ATTRIB
     tags, associate inserted attributes, transform geometry, edit, write, or
     render.
+    M10.1ad lazily selects one placement anchor from M10.1z using M10.1ac
+    applicability. Usable baseline/left justification selects text start;
+    either usable nonzero code selects alignment point. The selected tuple must
+    have all three usable components. Unavailable justification, unavailable
+    text start, and unavailable alignment point remain distinct states;
+    invalid or missing components in the ignored tuple remain inspectable but
+    do not contaminate the selected anchor. This does not recalculate stored
+    points, validate justification combinations, apply extrusion, rotation,
+    text-style metrics, or INSERT/BLOCK transforms, decode MText extensions,
+    compare ATTRIB tags, associate inserted attributes, edit, write, or render.
     M10.1ac lazily classifies usable M10.1ab horizontal justification `72` as
     left, center, right, aligned, middle, or fit and vertical justification
     `74` as baseline, bottom, middle, or top. Explicit/defaulted state and raw

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1ac can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1ad can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -182,6 +182,8 @@ documented zero defaults, and exact flag-bit helpers without selecting group
 `280`.
 Classic ATTDEF justification semantics additionally classify published
 horizontal/vertical codes and expose typed alignment-point applicability.
+Classic ATTDEF placement semantics additionally select the applicable stored
+text-start or alignment tuple without coupling failures from the ignored tuple.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -865,6 +867,15 @@ does not validate code combinations, require or select text-start/alignment
 tuples, recalculate placement, measure styled text, decode MText, compare
 ATTRIB tags, associate inserted attributes, transform geometry, edit/write, or
 render.
+M10.1ad lazily selects the stored ATTDEF text-start tuple for usable zero/zero
+justification and the stored alignment tuple when either usable code is
+nonzero. The selected tuple must have three usable components; unavailable
+justification, text start, and alignment point remain distinct states. Invalid
+or missing components in the ignored tuple remain inspectable without
+contaminating the selected anchor. This does not recalculate stored points,
+validate justification combinations, apply extrusion, rotation, style metrics,
+or INSERT/BLOCK transforms, decode MText, compare ATTRIB tags, associate
+inserted attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

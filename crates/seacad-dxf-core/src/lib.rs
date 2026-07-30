@@ -18,6 +18,7 @@ mod binary_document;
 mod binary_group;
 mod binary_wire;
 mod block_attribute_definition;
+mod block_attribute_definition_anchor;
 mod block_attribute_definition_card;
 mod block_attribute_definition_double_semantic;
 mod block_attribute_definition_integer_semantic;
@@ -175,6 +176,11 @@ pub use binary_wire::{
 };
 pub use block_attribute_definition::{
     DxfBlockAttributeDefinitionDirectory, DxfBlockAttributeDefinitionEntry,
+};
+pub use block_attribute_definition_anchor::{
+    DxfBlockAttributeDefinitionPlacementAnchor,
+    DxfBlockAttributeDefinitionPlacementAnchorDirectory,
+    DxfBlockAttributeDefinitionPlacementAnchorState,
 };
 pub use block_attribute_definition_card::{
     DxfBlockAttributeDefinitionCardDirectory, DxfBlockAttributeDefinitionCardMember,
