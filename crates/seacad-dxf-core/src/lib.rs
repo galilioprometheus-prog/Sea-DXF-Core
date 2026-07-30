@@ -55,6 +55,7 @@ mod header_view;
 mod infinite_line_geometry;
 mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
+mod insert_record_value;
 mod johab;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
@@ -261,6 +262,11 @@ pub use infinite_line_geometry_card::{
 pub use infinite_line_geometry_semantic::{
     DxfInfiniteLineGeometrySemanticDirectory, DxfInfiniteLineGeometrySemanticIssue,
     DxfInfiniteLineGeometrySemanticValue, DxfInfiniteLineGeometrySemantics,
+};
+pub use insert_record_value::{
+    DxfInsertRecordTextValue, DxfInsertRecordValue, DxfInsertRecordValueData,
+    DxfInsertRecordValueDirectory, DxfInsertRecordValueEntry, DxfInsertRecordValueIssue,
+    DxfInsertRecordValueRange, DxfInsertRecordValueRole,
 };
 pub use lightweight_polyline::{
     DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1f can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1g can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -135,6 +135,8 @@ Usable primary/secondary BLOCK names are compared as exact bounded raw bytes
 with matched, conflicting, or not-comparable evidence.
 Matched BLOCK names participate in exact duplicate-preserving
 missing/unique/ambiguous lookup with collision-safe raw-byte confirmation.
+Exact INSERT records in BLOCKS/ENTITIES retain all documented defining groups
+as source-order text, binary64, or signed-16-bit evidence.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -636,6 +638,14 @@ definition state remain indexable. Conflicting and not-comparable records stay
 visible through retained consistency evidence but are not targets. This does
 not validate a legal block namespace, choose among duplicates, resolve INSERT
 or xrefs, edit/write, or render.
+M10.1g discovers uppercase byte-exact INSERT records in completely indexed
+BLOCKS and ENTITIES sections. It retains block name `2`, insertion point
+`10/20/30`, scale `41/42/43`, rotation `50`, column/row counts `70/71`,
+column/row spacing `44/45`, attributes-follow `66`, and extrusion
+`210/220/230` in source order. Duplicates and invalid ASCII numbers remain
+visible, and group `102` application content is excluded. This does not apply
+defaults, select duplicates, assemble typed semantics, resolve block names,
+follow ATTRIB/SEQEND, transform geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

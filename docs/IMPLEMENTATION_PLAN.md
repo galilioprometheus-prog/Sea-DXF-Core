@@ -90,7 +90,8 @@ projects required names, flags, and base point plus optional xref
 path/description without inventing undocumented defaults; M10.1e compares
 usable primary/secondary BLOCK names as exact bounded raw bytes while retaining
 matched, conflicting, or not-comparable state; M10.1f indexes only matched
-names for exact duplicate-preserving missing/unique/ambiguous lookup
+names for exact duplicate-preserving missing/unique/ambiguous lookup; M10.1g
+retains every documented defining value from exact INSERT records
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -771,6 +772,17 @@ names for exact duplicate-preserving missing/unique/ambiguous lookup
     available through the retained consistency directory but cannot become
     lookup targets. This evidence does not resolve INSERT, validate a legal
     block namespace, apply xref policy, edit, write, or render.
+    M10.1g discovers exact uppercase `INSERT` records in completely indexed
+    BLOCKS and ENTITIES sections and retains documented block name `2`,
+    insertion point `10/20/30`, scales `41/42/43`, rotation `50`, array counts
+    `70/71`, array spacing `44/45`, attributes-follow `66`, and extrusion
+    `210/220/230`. Values remain in source order with duplicate and invalid
+    ASCII-number evidence; group `102` application content cannot impersonate
+    an INSERT field. Text stays source-backed and numbers preserve exact
+    binary64 or signed-16-bit domains. This evidence does not apply documented
+    defaults, select duplicate values, assemble typed INSERT semantics, bind a
+    block name, follow ATTRIB/SEQEND, transform geometry, edit, write, or
+    render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
