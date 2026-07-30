@@ -112,7 +112,9 @@ their documented flag/default semantics; M10.1t classifies documented
 horizontal/vertical justification codes and alignment-point applicability;
 M10.1u selects the applicable source placement tuple without coupling errors
 from the ignored tuple; M10.1v projects the selected OCS anchor into WCS with
-the shared arbitrary-axis implementation and typed finite-input failures
+the shared arbitrary-axis implementation and typed finite-input failures;
+M10.1w indexes exact uppercase ATTDEF member records under their owning BLOCK
+definitions without decoding fields or associating inserted attributes
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -973,6 +975,16 @@ the shared arbitrary-axis implementation and typed finite-input failures
     generation flags, style metrics, INSERT/BLOCK transforms, or ATTDEF
     association; recalculate stored points; decode MText extensions; edit,
     write, or render.
+    M10.1w indexes exact uppercase `ATTDEF` group-zero records only when they
+    occur in the retained member range of an M10.1a BLOCK definition. Every
+    entry retains the exact raw record, owning definition and its
+    closed/interrupted/unclosed state, zero-based member position, and
+    definition-local ATTDEF position. Records outside BLOCK definitions and
+    non-exact marker spellings remain excluded. Complete-section publication,
+    cancellation, source identity, and bounded ordinal lookups are inherited
+    from the BLOCK topology. This evidence does not decode ATTDEF fields,
+    interpret attribute flags, compare tags, associate ATTRIB records, apply
+    INSERT/BLOCK transforms, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

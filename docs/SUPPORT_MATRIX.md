@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1p can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1w can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -167,6 +167,9 @@ Classic ATTRIB placement semantics additionally select the applicable OCS
 text-start or alignment tuple without coupling the ignored tuple's failures.
 Usable ATTRIB placement anchors additionally project to finite WCS points and
 normalized normals through the shared arbitrary-axis implementation.
+Exact uppercase ATTDEF members additionally retain their owning BLOCK
+definition, definition state, and source-order member/ATTDEF positions without
+decoding definition fields or associating ATTRIB records.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -790,6 +793,12 @@ unavailability, non-finite Binary values, zero normals, basis failure, and
 derived overflow stay typed. This does not apply text rotation, oblique/width/
 generation flags, style metrics, INSERT/BLOCK transforms, or ATTDEF
 association; recalculate stored points; decode MText; edit/write, or render.
+M10.1w indexes exact uppercase `ATTDEF` records only inside the retained member
+ranges of M10.1a BLOCK definitions. Each entry preserves its exact raw record,
+owning closed/interrupted/unclosed definition, zero-based member position, and
+definition-local ATTDEF position. Outside-definition and non-exact markers are
+excluded. This does not decode ATTDEF fields, interpret flags, compare tags,
+associate ATTRIB records, transform geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

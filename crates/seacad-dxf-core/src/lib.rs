@@ -17,6 +17,7 @@ mod basic_geometry_semantic;
 mod binary_document;
 mod binary_group;
 mod binary_wire;
+mod block_attribute_definition;
 mod block_definition;
 mod block_name_consistency;
 mod block_name_index;
@@ -165,6 +166,9 @@ pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
 pub use binary_wire::{
     DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,
     decode_binary_group_code,
+};
+pub use block_attribute_definition::{
+    DxfBlockAttributeDefinitionDirectory, DxfBlockAttributeDefinitionEntry,
 };
 pub use block_definition::{
     DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,
