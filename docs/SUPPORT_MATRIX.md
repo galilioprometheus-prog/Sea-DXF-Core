@@ -247,6 +247,13 @@ not yet choose cardinality, apply defaults, decode content/style strings,
 validate layout codes, resolve styles, transform coordinates, or produce glyph
 geometry.
 
+M14.2b adds fixed cardinality cards for every documented role: 19 per TEXT,
+33 per MTEXT, 12 per SHAPE, and 11 per TOLERANCE record. Members point back to
+M14.2a source occurrences, and absent/unique/multiple states remain independent
+of lexical validity. Multiple MTEXT chunks and group 50 values are not rejected
+before later structural semantics. Selection, defaults, decoding, validation,
+style resolution, and geometry remain unclaimed.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
 | DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE semantics + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |

@@ -2,6 +2,93 @@
 
 use crate::{DxfTextSymbolKind, DxfTextSymbolValueRole};
 
+const TEXT_ROLES: [DxfTextSymbolValueRole; 19] = [
+    DxfTextSymbolValueRole::Thickness,
+    DxfTextSymbolValueRole::FirstAlignmentX,
+    DxfTextSymbolValueRole::FirstAlignmentY,
+    DxfTextSymbolValueRole::FirstAlignmentZ,
+    DxfTextSymbolValueRole::TextHeight,
+    DxfTextSymbolValueRole::Content,
+    DxfTextSymbolValueRole::Rotation,
+    DxfTextSymbolValueRole::WidthFactor,
+    DxfTextSymbolValueRole::ObliqueAngle,
+    DxfTextSymbolValueRole::StyleName,
+    DxfTextSymbolValueRole::GenerationFlags,
+    DxfTextSymbolValueRole::HorizontalJustification,
+    DxfTextSymbolValueRole::SecondAlignmentX,
+    DxfTextSymbolValueRole::SecondAlignmentY,
+    DxfTextSymbolValueRole::SecondAlignmentZ,
+    DxfTextSymbolValueRole::ExtrusionX,
+    DxfTextSymbolValueRole::ExtrusionY,
+    DxfTextSymbolValueRole::ExtrusionZ,
+    DxfTextSymbolValueRole::VerticalJustification,
+];
+
+const MTEXT_ROLES: [DxfTextSymbolValueRole; 33] = [
+    DxfTextSymbolValueRole::InsertionX,
+    DxfTextSymbolValueRole::InsertionY,
+    DxfTextSymbolValueRole::InsertionZ,
+    DxfTextSymbolValueRole::NominalHeight,
+    DxfTextSymbolValueRole::ReferenceWidth,
+    DxfTextSymbolValueRole::Attachment,
+    DxfTextSymbolValueRole::DrawingDirection,
+    DxfTextSymbolValueRole::Content,
+    DxfTextSymbolValueRole::AdditionalContent,
+    DxfTextSymbolValueRole::StyleName,
+    DxfTextSymbolValueRole::ExtrusionX,
+    DxfTextSymbolValueRole::ExtrusionY,
+    DxfTextSymbolValueRole::ExtrusionZ,
+    DxfTextSymbolValueRole::XAxisX,
+    DxfTextSymbolValueRole::XAxisY,
+    DxfTextSymbolValueRole::XAxisZ,
+    DxfTextSymbolValueRole::ActualWidth,
+    DxfTextSymbolValueRole::ActualHeight,
+    DxfTextSymbolValueRole::RotationOrColumnHeight,
+    DxfTextSymbolValueRole::LineSpacingStyle,
+    DxfTextSymbolValueRole::LineSpacingFactor,
+    DxfTextSymbolValueRole::BackgroundFill,
+    DxfTextSymbolValueRole::BackgroundRgbOrEntityTrueColor,
+    DxfTextSymbolValueRole::BackgroundNameOrEntityColorName,
+    DxfTextSymbolValueRole::FillBoxScale,
+    DxfTextSymbolValueRole::BackgroundIndex,
+    DxfTextSymbolValueRole::BackgroundTransparency,
+    DxfTextSymbolValueRole::ColumnType,
+    DxfTextSymbolValueRole::ColumnCount,
+    DxfTextSymbolValueRole::ColumnFlowReversed,
+    DxfTextSymbolValueRole::ColumnAutoHeight,
+    DxfTextSymbolValueRole::ColumnWidth,
+    DxfTextSymbolValueRole::ColumnGutter,
+];
+
+const SHAPE_ROLES: [DxfTextSymbolValueRole; 12] = [
+    DxfTextSymbolValueRole::Thickness,
+    DxfTextSymbolValueRole::InsertionX,
+    DxfTextSymbolValueRole::InsertionY,
+    DxfTextSymbolValueRole::InsertionZ,
+    DxfTextSymbolValueRole::ShapeSize,
+    DxfTextSymbolValueRole::ShapeName,
+    DxfTextSymbolValueRole::Rotation,
+    DxfTextSymbolValueRole::WidthFactor,
+    DxfTextSymbolValueRole::ObliqueAngle,
+    DxfTextSymbolValueRole::ExtrusionX,
+    DxfTextSymbolValueRole::ExtrusionY,
+    DxfTextSymbolValueRole::ExtrusionZ,
+];
+
+const TOLERANCE_ROLES: [DxfTextSymbolValueRole; 11] = [
+    DxfTextSymbolValueRole::DimensionStyleName,
+    DxfTextSymbolValueRole::InsertionX,
+    DxfTextSymbolValueRole::InsertionY,
+    DxfTextSymbolValueRole::InsertionZ,
+    DxfTextSymbolValueRole::Content,
+    DxfTextSymbolValueRole::ExtrusionX,
+    DxfTextSymbolValueRole::ExtrusionY,
+    DxfTextSymbolValueRole::ExtrusionZ,
+    DxfTextSymbolValueRole::XAxisX,
+    DxfTextSymbolValueRole::XAxisY,
+    DxfTextSymbolValueRole::XAxisZ,
+];
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum DxfTextSymbolWireType {
     Text,
@@ -19,6 +106,15 @@ pub(crate) const fn value_role(
         DxfTextSymbolKind::MText => mtext_role(code),
         DxfTextSymbolKind::Shape => shape_role(code),
         DxfTextSymbolKind::Tolerance => tolerance_role(code),
+    }
+}
+
+pub(crate) const fn roles_for_kind(kind: DxfTextSymbolKind) -> &'static [DxfTextSymbolValueRole] {
+    match kind {
+        DxfTextSymbolKind::Text => &TEXT_ROLES,
+        DxfTextSymbolKind::MText => &MTEXT_ROLES,
+        DxfTextSymbolKind::Shape => &SHAPE_ROLES,
+        DxfTextSymbolKind::Tolerance => &TOLERANCE_ROLES,
     }
 }
 

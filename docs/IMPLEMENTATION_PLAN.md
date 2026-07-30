@@ -1393,6 +1393,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     M14.11 owns subclass-aware common properties. This milestone does not
     select values, apply defaults, decode text, validate layouts, resolve
     styles, or derive geometry.
+    M14.2b adds stable per-role cardinality over the M14.2a evidence: 19 TEXT,
+    33 MTEXT, 12 SHAPE, and 11 TOLERANCE cards per record. Card members refer
+    back to exact source occurrences; absent, unique, and multiple states are
+    independent of lexical validity. Multiple MTEXT group 3 chunks and group
+    50 occurrences remain neutral cardinality evidence for later ordered-chunk
+    and column semantics. No value is selected, copied, defaulted, decoded, or
+    validated.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

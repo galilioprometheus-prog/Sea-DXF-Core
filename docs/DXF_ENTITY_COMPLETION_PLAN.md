@@ -76,6 +76,9 @@ evidence, including repeated text chunks, ambiguous MTEXT group 50 values, and
 the documented text, double, signed-16-bit, and signed-32-bit wire domains.
 MTEXT group 420/430 ranges remain explicitly ambiguous with common entity
 color fields until M14.11 adds subclass-aware common-property ownership.
+M14.2b adds fixed per-record cardinality cards: 19 for TEXT, 33 for MTEXT, 12
+for SHAPE, and 11 for TOLERANCE. Repeated MTEXT chunks and group 50 values
+remain neutral `Multiple` evidence rather than being prematurely rejected.
 
 ## Milestone queue
 
