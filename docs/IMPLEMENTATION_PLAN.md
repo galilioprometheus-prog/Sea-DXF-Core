@@ -1382,6 +1382,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     all four edges are visible. Invalid or duplicate flags leave every derived
     edge state unavailable. SOLID/TRACE edge flags, mesh topology, editing, and
     writing remain unclaimed.
+    M14.2a starts text-and-symbol coverage with exact source evidence for
+    `TEXT`, `MTEXT`, `SHAPE`, and `TOLERANCE` in closed BLOCKS/ENTITIES
+    sections. Every Autodesk-documented per-entity field is assigned a typed
+    role and its text, binary64, signed-16-bit, or signed-32-bit wire domain;
+    source order, duplicates, invalid ASCII numbers, raw text spans, and
+    repeated MTEXT chunks remain intact. MTEXT group 50 remains deliberately
+    `RotationOrColumnHeight` until later column cardinality can disambiguate it;
+    group 420/430 ranges remain ambiguous with common entity color fields until
+    M14.11 owns subclass-aware common properties. This milestone does not
+    select values, apply defaults, decode text, validate layouts, resolve
+    styles, or derive geometry.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

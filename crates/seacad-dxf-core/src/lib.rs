@@ -137,6 +137,8 @@ mod source_scan;
 mod text_control;
 mod text_decoder;
 mod text_escape;
+mod text_symbol_evidence;
+mod text_symbol_role;
 mod text_view;
 mod transaction_inverse;
 mod transaction_plan;
@@ -626,6 +628,10 @@ pub use text_decoder::{
 pub use text_escape::{
     DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
     decode_dxf_text_escapes_to_utf8_without_replacement,
+};
+pub use text_symbol_evidence::{
+    DxfTextSymbolDirectory, DxfTextSymbolKind, DxfTextSymbolNumericIssue, DxfTextSymbolRecordEntry,
+    DxfTextSymbolValue, DxfTextSymbolValueData, DxfTextSymbolValueRange, DxfTextSymbolValueRole,
 };
 pub use text_view::DxfTextValueDecodeReceipt;
 pub use transaction_plan::{

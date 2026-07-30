@@ -71,6 +71,11 @@ the trailing SOLID/TRACE corners into perimeter order before OCS projection.
 M14.1e interprets the four documented 3DFACE invisible-edge bits in
 source-corner order while retaining the exact signed flags and every unknown
 bit.
+M14.2a retains exact source-order TEXT, MTEXT, SHAPE, and TOLERANCE field
+evidence, including repeated text chunks, ambiguous MTEXT group 50 values, and
+the documented text, double, signed-16-bit, and signed-32-bit wire domains.
+MTEXT group 420/430 ranges remain explicitly ambiguous with common entity
+color fields until M14.11 adds subclass-aware common-property ownership.
 
 ## Milestone queue
 

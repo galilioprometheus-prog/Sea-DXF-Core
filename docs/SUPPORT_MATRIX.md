@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.1d can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -236,6 +236,16 @@ and reports rather than discards unknown bits. Defaulted zero produces four
 visible edges; invalid or duplicate flags produce no derived edge state.
 SOLID/TRACE edge flags, topology assembly, editing, and writing remain
 unclaimed.
+
+M14.2a indexes exact source-order TEXT, MTEXT, SHAPE, and TOLERANCE fields in
+closed BLOCKS/ENTITIES sections. It labels every documented per-entity text,
+binary64, signed-16-bit, and signed-32-bit role while retaining raw spans,
+duplicates, invalid ASCII numbers, repeated MTEXT chunks, and ambiguous MTEXT
+group 50 occurrences. MTEXT group 420/430 ranges remain ambiguous with common
+entity color fields until subclass-aware common-property ownership. It does
+not yet choose cardinality, apply defaults, decode content/style strings,
+validate layout codes, resolve styles, transform coordinates, or produce glyph
+geometry.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
