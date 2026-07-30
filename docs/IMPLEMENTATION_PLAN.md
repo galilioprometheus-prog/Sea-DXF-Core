@@ -116,7 +116,8 @@ the shared arbitrary-axis implementation and typed finite-input failures;
 M10.1w indexes exact uppercase ATTDEF member records under their owning BLOCK
 definitions without decoding fields or associating inserted attributes;
 M10.1x retains source-order classic ATTDEF defining values without admitting
-application-group or AcDbXrecord/MText extension payloads
+application-group or AcDbXrecord/MText extension payloads; M10.1y adds 24
+fixed cardinality cards per ATTDEF with compact source-order members
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1002,6 +1003,17 @@ application-group or AcDbXrecord/MText extension payloads
     text/numeric domains, interpret flags/justification, decode the MText
     extension, compare ATTRIB tags, associate inserted attributes, transform
     geometry, edit, write, or render.
+    M10.1y publishes 24 fixed cards per M10.1x ATTDEF record in documented
+    classic role order. Each independently reports `Absent`, `Unique`, or
+    duplicate-preserving `Multiple`, with compact members referencing every
+    source-order M10.1x occurrence. Cardinality remains independent of ASCII
+    lexical validity, owning BLOCK boundary state, and definition-local ATTDEF
+    ordinal; an empty ATTDEF still receives 24 absent cards. The neutral
+    group-280 role can therefore report two occurrences without selecting
+    version versus lock position by order. This does not select/decode a
+    canonical value, apply defaults, distinguish group-280 meanings, interpret
+    flags/justification, decode MText extensions, compare ATTRIB tags,
+    associate inserted attributes, transform geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

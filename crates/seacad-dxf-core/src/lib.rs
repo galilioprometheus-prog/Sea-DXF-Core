@@ -18,6 +18,7 @@ mod binary_document;
 mod binary_group;
 mod binary_wire;
 mod block_attribute_definition;
+mod block_attribute_definition_card;
 mod block_attribute_definition_value;
 mod block_definition;
 mod block_name_consistency;
@@ -170,6 +171,11 @@ pub use binary_wire::{
 };
 pub use block_attribute_definition::{
     DxfBlockAttributeDefinitionDirectory, DxfBlockAttributeDefinitionEntry,
+};
+pub use block_attribute_definition_card::{
+    DxfBlockAttributeDefinitionCardDirectory, DxfBlockAttributeDefinitionCardMember,
+    DxfBlockAttributeDefinitionCardMemberRange, DxfBlockAttributeDefinitionValueCard,
+    DxfBlockAttributeDefinitionValueCardState,
 };
 pub use block_attribute_definition_value::{
     DxfBlockAttributeDefinitionTextValue, DxfBlockAttributeDefinitionValue,
