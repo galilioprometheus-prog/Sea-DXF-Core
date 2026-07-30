@@ -155,7 +155,9 @@ at least 1,000 strictly verified files and 10 GiB with zero invalid inputs;
 M13.2b adds fail-closed native artifact assembly and a manual pinned workflow
 for all six reviewed host targets without publishing a release; M13.2c
 downloads the same-run artifacts, re-verifies every payload against its
-receipt and committed evidence, and emits one exact six-target matrix receipt
+receipt and committed evidence, and emits one exact six-target matrix receipt;
+M13.2d makes SBOM dependency resolution host-independent by unioning explicit
+Cargo metadata for all six reviewed target triples
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1304,6 +1306,17 @@ receipt and committed evidence, and emits one exact six-target matrix receipt
     local verification process definition, not evidence that the workflow ran,
     permanent retention, signing, reproducibility, corpus/nightly closure, or
     Core 1.0 authorization.
+    M13.2d fixes a remote Windows ARM64 finding in the M13.1a freshness gate.
+    An unfiltered `cargo metadata` resolve graph inherited the runner host and
+    therefore did not reproduce the committed SBOM on all six architectures.
+    The generator now invokes locked metadata with an explicit platform filter
+    for every reviewed Linux, Windows, and macOS x64/ARM64 triple, verifies one
+    workspace-member set, unions package identities and resolved dependency
+    edges, and sorts the resulting graph before serialization. The SBOM remains
+    one complete union for the reviewed release matrix rather than six partial
+    files. This closes cross-host generation semantics, subject to fresh remote
+    six-native evidence; it does not broaden platform support or close the
+    corpus/nightly/final release gates.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

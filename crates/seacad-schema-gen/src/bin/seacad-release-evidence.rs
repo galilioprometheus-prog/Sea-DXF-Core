@@ -22,6 +22,14 @@ const LEGAL_MANIFEST_PATH: &str = "release/legal/manifest.json";
 const NOTICES_PATH: &str = "THIRD_PARTY_NOTICES.md";
 const LOCK_PATH: &str = "Cargo.lock";
 const WORKSPACE_BOM_REF: &str = "urn:seacad:workspace";
+const REVIEWED_PLATFORMS: [&str; 6] = [
+    "aarch64-apple-darwin",
+    "aarch64-pc-windows-msvc",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+];
 
 #[derive(Clone, Copy)]
 enum Mode {
@@ -223,9 +231,67 @@ fn run(mode: Mode) -> Result<(), EvidenceError> {
 }
 
 fn cargo_metadata(root: &Path) -> Result<CargoMetadata, EvidenceError> {
+    let mut packages = BTreeMap::new();
+    let mut workspace_members: Option<Vec<String>> = None;
+    let mut dependencies: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for platform in REVIEWED_PLATFORMS {
+        let metadata = cargo_metadata_for_platform(root, platform)?;
+        let current_workspace: BTreeSet<&str> = metadata
+            .workspace_members
+            .iter()
+            .map(String::as_str)
+            .collect();
+        if let Some(baseline) = &workspace_members {
+            let baseline_workspace: BTreeSet<&str> = baseline.iter().map(String::as_str).collect();
+            if current_workspace != baseline_workspace {
+                return Err(EvidenceError::new(
+                    "RELEASE_METADATA_WORKSPACE_SET",
+                    platform,
+                ));
+            }
+        } else {
+            workspace_members = Some(metadata.workspace_members);
+        }
+        for package in metadata.packages {
+            packages.entry(package.id.clone()).or_insert(package);
+        }
+        for node in metadata.resolve.nodes {
+            dependencies
+                .entry(node.id)
+                .or_default()
+                .extend(node.dependencies);
+        }
+    }
+    Ok(CargoMetadata {
+        packages: packages.into_values().collect(),
+        workspace_members: workspace_members
+            .ok_or_else(|| EvidenceError::new("RELEASE_METADATA_EMPTY", "no platforms"))?,
+        resolve: CargoResolve {
+            nodes: dependencies
+                .into_iter()
+                .map(|(id, dependencies)| CargoNode {
+                    id,
+                    dependencies: dependencies.into_iter().collect(),
+                })
+                .collect(),
+        },
+    })
+}
+
+fn cargo_metadata_for_platform(
+    root: &Path,
+    platform: &str,
+) -> Result<CargoMetadata, EvidenceError> {
     let cargo = env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
     let output = Command::new(cargo)
-        .args(["metadata", "--locked", "--format-version", "1"])
+        .args([
+            "metadata",
+            "--locked",
+            "--format-version",
+            "1",
+            "--filter-platform",
+            platform,
+        ])
         .current_dir(root)
         .output()
         .map_err(|error| EvidenceError::new("RELEASE_METADATA_IO", error.to_string()))?;
@@ -233,7 +299,7 @@ fn cargo_metadata(root: &Path) -> Result<CargoMetadata, EvidenceError> {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(EvidenceError::new(
             "RELEASE_METADATA",
-            stderr.trim().to_owned(),
+            format!("{platform}: {}", stderr.trim()),
         ));
     }
     serde_json::from_slice(&output.stdout)

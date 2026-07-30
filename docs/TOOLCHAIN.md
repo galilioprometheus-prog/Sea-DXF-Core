@@ -86,10 +86,11 @@ cargo deny --locked check
 ## M13.1a release evidence
 
 M13.1a adds the internal `seacad-release-evidence` binary. It invokes the
-pinned Cargo metadata command with `--locked`, joins every registry component
-to its exact `Cargo.lock` checksum, verifies that every third-party
-package/version is listed in `THIRD_PARTY_NOTICES.md`, and renders a
-host-independent CycloneDX 1.6 document at `release/sbom.cdx.json`.
+pinned Cargo metadata command with `--locked` and, as hardened by M13.2d,
+explicitly filters and unions all six reviewed target triples. It joins every
+registry component to its exact `Cargo.lock` checksum, verifies that every
+third-party package/version is listed in `THIRD_PARTY_NOTICES.md`, and renders
+a host-independent CycloneDX 1.6 document at `release/sbom.cdx.json`.
 
 Regenerate only after an intentional locked dependency review:
 
@@ -200,6 +201,21 @@ It validates every per-target receipt and payload hash, compares all
 non-executable payloads with the current checkout, and binds the six receipt
 hashes plus total files/bytes to the commit. The aggregate is uploaded for 14
 days. The workflow remains manual and read-only and does not publish a release.
+
+## M13.2d host-independent SBOM union
+
+The M13.2c push exposed a Windows ARM64 stale-SBOM failure because an
+unfiltered `cargo metadata` graph inherited host-specific dependency
+resolution. M13.2d runs locked metadata separately for
+`aarch64-apple-darwin`, `aarch64-pc-windows-msvc`,
+`aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`,
+`x86_64-pc-windows-msvc`, and `x86_64-unknown-linux-gnu`.
+
+The generator verifies that all six graphs contain the same workspace members,
+then deterministically unions exact Cargo package identities and each resolved
+dependency edge. Package and edge output is sorted before rendering one
+complete six-platform SBOM. Metadata filtering does not install targets or
+cross-compile code, and the `--write` and `--check` commands remain unchanged.
 
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses

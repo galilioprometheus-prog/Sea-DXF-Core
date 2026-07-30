@@ -823,9 +823,7 @@
     },
     {
       "ref": "pkg:cargo/serde_core@1.0.229",
-      "dependsOn": [
-        "pkg:cargo/serde_derive@1.0.229"
-      ]
+      "dependsOn": []
     },
     {
       "ref": "pkg:cargo/serde_derive@1.0.229",
@@ -840,7 +838,6 @@
       "dependsOn": [
         "pkg:cargo/itoa@1.0.18",
         "pkg:cargo/memchr@2.8.3",
-        "pkg:cargo/serde@1.0.229",
         "pkg:cargo/serde_core@1.0.229",
         "pkg:cargo/zmij@1.0.23"
       ]
