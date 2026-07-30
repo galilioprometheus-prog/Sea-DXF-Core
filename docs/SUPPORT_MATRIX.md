@@ -163,6 +163,8 @@ documented zero defaults, and exact flag-bit helpers without selecting group
 `280`.
 Classic ATTRIB justification semantics additionally classify published
 horizontal/vertical codes and expose typed alignment-point applicability.
+Classic ATTRIB placement semantics additionally select the applicable OCS
+text-start or alignment tuple without coupling the ignored tuple's failures.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -771,6 +773,14 @@ is nonzero, false when both are usable zero values, and otherwise unavailable.
 This does not validate code combinations, select coordinate tuples,
 recalculate placement, measure styled text, decode MText, associate ATTDEF
 definitions, transform attributes, edit/write, or render.
+M10.1u selects text-start `10/20/30` only for usable baseline/left
+justification and selects alignment point `11/21/31` when either usable
+justification code is nonzero. The selected tuple must be wholly usable;
+failures in the unselected tuple are retained but do not invalidate the
+anchor. Justification, text-start, and alignment unavailability remain
+distinct. This does not recalculate stored points, validate justification
+combinations, apply extrusion/rotation/style metrics/INSERT transforms, decode
+MText, associate ATTDEF definitions, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

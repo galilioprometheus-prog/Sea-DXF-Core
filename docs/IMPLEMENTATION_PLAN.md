@@ -109,7 +109,9 @@ typed required/optional component states; M10.1r lazily projects required
 source-anchored ATTRIB text/tag and the documented STANDARD style default;
 M10.1s lazily projects the five unambiguous classic ATTRIB integer roles and
 their documented flag/default semantics; M10.1t classifies documented
-horizontal/vertical justification codes and alignment-point applicability
+horizontal/vertical justification codes and alignment-point applicability;
+M10.1u selects the applicable source placement tuple without coupling errors
+from the ignored tuple
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -946,6 +948,19 @@ horizontal/vertical justification codes and alignment-point applicability
     recalculate text placement, measure styled text, decode MText extensions,
     associate ATTDEF definitions, transform attributes, edit, write, or
     render.
+    M10.1u joins M10.1t justification applicability with M10.1q double
+    semantics to select one exact OCS placement anchor per ATTRIB. Usable
+    baseline/left justification selects required text-start `10/20/30`;
+    any usable nonzero horizontal or vertical justification selects optional
+    alignment point `11/21/31`. The selected tuple must have three usable
+    components, while invalid or missing components in the unselected tuple do
+    not contaminate the result. Unavailable justification, text start, and
+    alignment point remain distinct typed states, and successful anchors retain
+    exact binary64 components plus both underlying semantic views. This does
+    not recalculate AutoCAD's stored points, validate horizontal/vertical
+    combinations, apply extrusion, rotation, style metrics, or INSERT
+    transforms, decode MText extensions, associate ATTDEF definitions, edit,
+    write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
