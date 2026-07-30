@@ -57,6 +57,7 @@ mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
 mod insert_array;
 mod insert_attribute_sequence;
+mod insert_attribute_value;
 mod insert_block_resolution;
 mod insert_record_card;
 mod insert_record_semantic;
@@ -277,6 +278,11 @@ pub use insert_array::{
 pub use insert_attribute_sequence::{
     DxfInsertAttributeRecordRange, DxfInsertAttributeSequenceDirectory,
     DxfInsertAttributeSequenceEntry, DxfInsertAttributeSequenceState,
+};
+pub use insert_attribute_value::{
+    DxfInsertAttributeTextValue, DxfInsertAttributeValue, DxfInsertAttributeValueData,
+    DxfInsertAttributeValueDirectory, DxfInsertAttributeValueEntry, DxfInsertAttributeValueIssue,
+    DxfInsertAttributeValueRange, DxfInsertAttributeValueRole,
 };
 pub use insert_block_resolution::{
     DxfInsertBlockResolutionDirectory, DxfInsertBlockResolutionEntry,
