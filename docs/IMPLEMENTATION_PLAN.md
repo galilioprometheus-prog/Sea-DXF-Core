@@ -84,7 +84,8 @@ densities; M10.1a indexes exact BLOCK/member/ENDBLK definition topology in
 complete BLOCKS sections without decoding definition fields or member entities;
 M10.1b retains all eight documented BLOCK defining-value roles as exact text,
 double, or signed-16-bit evidence without selecting occurrences or applying
-defaults
+defaults; M10.1c adds eight fixed cardinality cards per BLOCK with compact
+source-order member references independent of lexical validity
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -726,6 +727,15 @@ defaults
     enter the BLOCK slice. This does not select names, reconcile groups `2/3`,
     apply defaults, interpret flags, assemble the base point, resolve paths,
     inspect members, bind INSERT, transform geometry, edit, write, or render.
+    M10.1c assigns eight stable per-role cards to every M10.1b BLOCK record.
+    Each card reports `Absent`, `Unique`, or `Multiple` and retains compact
+    source-order member references back to the exact M10.1b value occurrences.
+    Text/numeric validity remains independent from cardinality; empty BLOCK
+    records receive eight absent cards, and closed/interrupted/unclosed
+    definition states retain the same card contract. This does not select or
+    decode a canonical value, reconcile names, apply defaults, interpret flags,
+    assemble points, resolve xrefs, bind INSERT, transform geometry, edit,
+    write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
