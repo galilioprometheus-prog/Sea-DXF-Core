@@ -77,7 +77,8 @@ VERTEX evidence while retaining reported-versus-observed counts and odd
 ordering; M9.2q resolves valid signed 1-based polyface face indices to exact
 coordinate evidence and preserves per-corner edge visibility; M9.2r assembles
 the resolved polyface coordinates into exact WCS point tuples with typed
-per-corner component failure
+per-corner component failure; M9.2s assembles every proven polygon-mesh cell's
+four named VERTEX coordinates into exact WCS corner tuples
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -684,6 +685,13 @@ per-corner component failure
     not use the irrelevant location fields on face-definition VERTEX records,
     derive edges, validate degeneracy/winding/planarity/manifoldness, calculate
     normals, triangulate, edit, write, or render.
+    M9.2s assembles each M9.2o cell's named `(m0,n0)`, `(m0,n1)`, `(m1,n1)`,
+    and `(m1,n0)` VERTEX groups `10/20/30` into exact WCS points. A missing or
+    invalid component emits a typed cell state naming the first unusable corner
+    and all three component states. Topology wrap evidence and exact VERTEX
+    identity remain attached. This does not assign winding, derive edges,
+    validate degeneracy/planarity, calculate normals, apply smoothing metadata,
+    triangulate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

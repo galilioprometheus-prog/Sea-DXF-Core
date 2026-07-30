@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2r can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2s can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -109,6 +109,8 @@ parent POLYLINE default; explicit zero remains an override.
 Complete count-consistent classic polygon meshes expose row-major
 quadrilateral cell topology with independent M/N closure and exact VERTEX
 references; invalid mesh records retain typed zero-cell states.
+Each proven polygon-mesh cell additionally exposes four exact named WCS corner
+tuples or a typed corner/component failure.
 Complete family-consistent classic polyface meshes expose separate exact
 coordinate and face-definition VERTEX ranges, reported and observed counts,
 and tolerant odd-ordering evidence without trusting parent count fields.
@@ -557,6 +559,12 @@ components emit typed zero-point face states. Odd ordering remains supported.
 This does not consult irrelevant face-record locations, derive edges, validate
 degeneracy/winding/planarity/manifoldness, calculate normals, triangulate,
 edit/write, or render.
+M9.2s assembles the four named VERTEX `10/20/30` coordinates of every M9.2o
+polygon-mesh cell into exact WCS corner tuples. Unusable coordinate components
+emit a typed state naming the first failed corner and all component states;
+topology/wrap evidence remains attached. This does not assign winding, derive
+edges, validate degeneracy/planarity, calculate normals, interpret smoothing,
+triangulate, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
