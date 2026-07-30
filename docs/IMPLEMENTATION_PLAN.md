@@ -75,7 +75,9 @@ meshes with independent M/N closure; M9.2p tolerantly partitions complete,
 family-consistent classic polyface meshes into exact coordinate and face
 VERTEX evidence while retaining reported-versus-observed counts and odd
 ordering; M9.2q resolves valid signed 1-based polyface face indices to exact
-coordinate evidence and preserves per-corner edge visibility
+coordinate evidence and preserves per-corner edge visibility; M9.2r assembles
+the resolved polyface coordinates into exact WCS point tuples with typed
+per-corner component failure
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -674,6 +676,14 @@ coordinate evidence and preserves per-corner edge visibility
     Empty, point, line, triangle, and quadrilateral face cardinalities remain
     representable. This does not validate geometric degeneracy or winding,
     assemble coordinate tuples, triangulate, edit, write, or render.
+    M9.2r assembles each M9.2q corner's referenced coordinate VERTEX groups
+    `10/20/30` into an exact WCS point while retaining the resolved signed index
+    and edge visibility. Resolution failures and unavailable X/Y/Z components
+    emit typed zero-point face states with per-component semantic status. Oddly
+    ordered coordinates remain usable through the M9.2p partition. This does
+    not use the irrelevant location fields on face-definition VERTEX records,
+    derive edges, validate degeneracy/winding/planarity/manifoldness, calculate
+    normals, triangulate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.

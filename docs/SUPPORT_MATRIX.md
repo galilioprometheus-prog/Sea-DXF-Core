@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M9.2q can open an immutable raw ASCII framing document, enforce
+SeaCad through M9.2r can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -114,6 +114,8 @@ coordinate and face-definition VERTEX ranges, reported and observed counts,
 and tolerant odd-ordering evidence without trusting parent count fields.
 Usable polyface face records resolve signed 1-based indices to those exact
 coordinates, preserve edge visibility, and retain typed per-face failures.
+Resolved polyface corners additionally expose exact WCS point tuples with
+typed per-component coordinate failures.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -547,6 +549,13 @@ faces. The first zero or absent slot terminates the face; the sign preserves
 visibility for the edge beginning at that corner. Invalid, post-terminator,
 overflowing, and out-of-range indices emit typed zero-corner states. This does
 not validate degeneracy/winding, assemble coordinate tuples, triangulate,
+edit/write, or render.
+M9.2r assembles each resolved polyface corner's referenced coordinate VERTEX
+`10/20/30` values into an exact WCS point while retaining signed-index and edge-
+visibility evidence. Face-resolution failures or unavailable coordinate
+components emit typed zero-point face states. Odd ordering remains supported.
+This does not consult irrelevant face-record locations, derive edges, validate
+degeneracy/winding/planarity/manifoldness, calculate normals, triangulate,
 edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
