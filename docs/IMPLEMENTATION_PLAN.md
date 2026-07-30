@@ -108,7 +108,8 @@ lazily projects classic ATTRIB double fields with documented defaults and
 typed required/optional component states; M10.1r lazily projects required
 source-anchored ATTRIB text/tag and the documented STANDARD style default;
 M10.1s lazily projects the five unambiguous classic ATTRIB integer roles and
-their documented flag/default semantics
+their documented flag/default semantics; M10.1t classifies documented
+horizontal/vertical justification codes and alignment-point applicability
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -933,6 +934,18 @@ their documented flag/default semantics
     determine alignment-point applicability, distinguish group-280 meanings,
     decode MText extensions, associate ATTDEF definitions, transform
     attributes, edit, write, or render.
+    M10.1t classifies usable M10.1s horizontal justification `72` as left,
+    center, right, aligned, middle, or fit and vertical justification `74` as
+    baseline, bottom, middle, or top. Exact signed codes and explicit/defaulted
+    provenance remain attached through typed semantic values. Codes outside
+    Autodesk's published domains fail typed instead of being normalized.
+    Alignment-point applicability is `true` when either classified code is
+    nonzero and `false` only when both are usable zero values; unavailable or
+    unsupported codes keep applicability unknown. This does not validate
+    horizontal/vertical combinations, require or select coordinate tuples,
+    recalculate text placement, measure styled text, decode MText extensions,
+    associate ATTDEF definitions, transform attributes, edit, write, or
+    render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

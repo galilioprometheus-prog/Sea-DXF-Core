@@ -59,6 +59,7 @@ mod insert_array;
 mod insert_attribute_card;
 mod insert_attribute_double_semantic;
 mod insert_attribute_integer_semantic;
+mod insert_attribute_justification;
 mod insert_attribute_sequence;
 mod insert_attribute_text_semantic;
 mod insert_attribute_value;
@@ -291,6 +292,12 @@ pub use insert_attribute_double_semantic::{
 pub use insert_attribute_integer_semantic::{
     DxfInsertAttributeIntegerSemanticDirectory, DxfInsertAttributeIntegerSemanticIssue,
     DxfInsertAttributeIntegerSemantics, DxfInsertAttributeSemanticInteger,
+};
+pub use insert_attribute_justification::{
+    DxfInsertAttributeHorizontalJustification, DxfInsertAttributeHorizontalJustificationSemantic,
+    DxfInsertAttributeJustificationDirectory, DxfInsertAttributeJustificationIssue,
+    DxfInsertAttributeJustificationSemantics, DxfInsertAttributeVerticalJustification,
+    DxfInsertAttributeVerticalJustificationSemantic,
 };
 pub use insert_attribute_sequence::{
     DxfInsertAttributeRecordRange, DxfInsertAttributeSequenceDirectory,

@@ -161,6 +161,8 @@ value/tag fields and the documented `STANDARD` style default.
 Classic ATTRIB integer semantics additionally retain required attribute flags,
 documented zero defaults, and exact flag-bit helpers without selecting group
 `280`.
+Classic ATTRIB justification semantics additionally classify published
+horizontal/vertical codes and expose typed alignment-point applicability.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -762,6 +764,13 @@ group `280` stays exact card evidence because version and lock-position share
 one wire code. This does not validate field length/unknown bits, classify
 justification, determine alignment-point applicability, decode MText,
 associate ATTDEF definitions, transform attributes, edit/write, or render.
+M10.1t classifies horizontal justification codes `0..5` and vertical codes
+`0..3` exactly as published by Autodesk. Unsupported or unavailable codes stay
+typed invalid. Alignment-point applicability is true when either usable code
+is nonzero, false when both are usable zero values, and otherwise unavailable.
+This does not validate code combinations, select coordinate tuples,
+recalculate placement, measure styled text, decode MText, associate ATTDEF
+definitions, transform attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
