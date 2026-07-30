@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M12.2b can open an immutable raw ASCII framing document, enforce
+SeaCad through M13.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -982,6 +982,15 @@ bounded create-new hash/length verification, sync, and strict-reparse contract
 as M12.2a. This is Binary physical framing canonicalization only; it does not
 reinterpret payloads, convert ASCII input, replace a path, or publish a
 snapshot.
+M13.1a adds a deterministic CycloneDX 1.6 inventory for all 29 packages in the
+complete locked workspace graph. All 26 registry packages carry exact
+`Cargo.lock` SHA-256 checksums, crates.io package URLs, declared SPDX license
+expressions, dependency edges, and package/version presence in
+`THIRD_PARTY_NOTICES.md`; all three workspace packages retain the proprietary
+license reference. The generated-file gate runs on every CI platform. This is
+dependency/notices inventory evidence, not a distributable legal bundle,
+private-corpus evidence, six-native release closure, or a Core 1.0 release
+claim.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

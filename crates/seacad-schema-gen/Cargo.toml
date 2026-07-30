@@ -8,10 +8,15 @@ repository.workspace = true
 license-file.workspace = true
 description = "Deterministic internal generator for reviewed SeaCad DXF schemas"
 publish = false
+default-run = "seacad-schema-gen"
 
 [[bin]]
 name = "seacad-schema-gen"
 path = "src/main.rs"
+
+[[bin]]
+name = "seacad-release-evidence"
+path = "src/bin/seacad-release-evidence.rs"
 
 [dependencies]
 serde = { version = "=1.0.229", default-features = false, features = ["derive", "std"] }

@@ -145,7 +145,9 @@ create-new output with cleanup-on-failure; M12.1b strictly reparses that output
 and returns an executable inverse journal; M12.2a writes canonical ASCII
 framing with strict EOF recovery closure while retaining exact value payloads;
 M12.2b writes canonical Binary sentinel/group-code framing for the declared
-dialect with the same strict EOF closure and exact non-EOF value wire bytes
+dialect with the same strict EOF closure and exact non-EOF value wire bytes;
+M13.1a locks a deterministic CycloneDX 1.6 inventory to the complete Cargo
+resolution, lockfile checksums, dependency edges, and third-party notice rows
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1231,6 +1233,18 @@ dialect with the same strict EOF closure and exact non-EOF value wire bytes
     ASCII input, replace a path, or publish a snapshot.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
+    M13.1a generates a deterministic CycloneDX 1.6 SBOM from the complete
+    `cargo metadata --locked` resolution. Every registry component is joined
+    to its exact `Cargo.lock` SHA-256 checksum, crates.io package URL, declared
+    SPDX license expression, dependency edges, and an exact package/version
+    row in `THIRD_PARTY_NOTICES.md`; workspace components retain the
+    proprietary license reference. The committed SBOM records the lockfile
+    identity and pinned Rust version but omits timestamps, host paths, and
+    machine-specific identifiers. `--check` is a required gate on all six CI
+    platforms. This closes deterministic locked dependency inventory only; it
+    does not yet package standalone license texts, prove a distributable
+    archive, satisfy the private corpus threshold, advance the current 2/20
+    consecutive six-native nightly receipts, or authorize Core 1.0 release.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

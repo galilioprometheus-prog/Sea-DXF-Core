@@ -83,6 +83,32 @@ Required local gate:
 cargo deny --locked check
 ```
 
+## M13.1a release evidence
+
+M13.1a adds the internal `seacad-release-evidence` binary. It invokes the
+pinned Cargo metadata command with `--locked`, joins every registry component
+to its exact `Cargo.lock` checksum, verifies that every third-party
+package/version is listed in `THIRD_PARTY_NOTICES.md`, and renders a
+host-independent CycloneDX 1.6 document at `release/sbom.cdx.json`.
+
+Regenerate only after an intentional locked dependency review:
+
+```text
+cargo +1.97.1 run --locked -p seacad-schema-gen \
+  --bin seacad-release-evidence -- --write
+```
+
+Required local and six-native CI gate:
+
+```text
+cargo +1.97.1 run --locked -p seacad-schema-gen \
+  --bin seacad-release-evidence -- --check
+```
+
+The SBOM intentionally omits timestamps, local registry paths, and host
+identifiers. Passing this gate does not package standalone license files or
+close the corpus/native release receipts.
+
 The GitHub workflow uses `EmbarkStudios/cargo-deny-action` v2.1.1 pinned to
 commit `3c6349835b2b7b196a839186cb8b78e02f7b5f25`. Its checkout step uses
 `actions/checkout` v6.0.2 pinned to commit
