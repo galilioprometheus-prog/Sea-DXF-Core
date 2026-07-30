@@ -158,6 +158,9 @@ Classic ATTRIB double semantics additionally distinguish required text-start
 and height fields, documented defaults, and optional alignment components.
 Classic ATTRIB text semantics additionally retain required source-anchored
 value/tag fields and the documented `STANDARD` style default.
+Classic ATTRIB integer semantics additionally retain required attribute flags,
+documented zero defaults, and exact flag-bit helpers without selecting group
+`280`.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -750,6 +753,15 @@ same-document, and replacement-free. This does not validate empty text or tag
 spaces, resolve style-table names, interpret formatting/escapes, project
 numeric fields, decode MText, associate ATTDEF definitions, transform
 attributes, edit/write, or render.
+M10.1s lazily projects the five unambiguous classic ATTRIB signed-16-bit roles.
+Attribute flags are required; field length, text-generation flags, and both
+justification values receive documented zero defaults. Helpers expose four
+attribute bits and two text-generation bits without discarding unknown bits.
+Invalid ASCII and duplicate values remain typed with raw provenance. Neutral
+group `280` stays exact card evidence because version and lock-position share
+one wire code. This does not validate field length/unknown bits, classify
+justification, determine alignment-point applicability, decode MText,
+associate ATTDEF definitions, transform attributes, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

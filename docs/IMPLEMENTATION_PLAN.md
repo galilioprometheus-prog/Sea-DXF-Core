@@ -106,7 +106,9 @@ AcDbXrecord/AcDbMText extension payloads; M10.1p adds 23 fixed cardinality
 cards per classic ATTRIB record with compact source-order members; M10.1q
 lazily projects classic ATTRIB double fields with documented defaults and
 typed required/optional component states; M10.1r lazily projects required
-source-anchored ATTRIB text/tag and the documented STANDARD style default
+source-anchored ATTRIB text/tag and the documented STANDARD style default;
+M10.1s lazily projects the five unambiguous classic ATTRIB integer roles and
+their documented flag/default semantics
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -916,6 +918,20 @@ source-anchored ATTRIB text/tag and the documented STANDARD style default
     the M10.1o text view. This does not reject empty values or spaces in tags,
     compare style-table names, interpret formatting/escapes, project numeric
     fields, decode MText extensions, associate ATTDEF definitions, transform
+    attributes, edit, write, or render.
+    M10.1s lazily projects the five unambiguous classic ATTRIB signed-16-bit
+    roles from M10.1p. Attribute flags `70` are required; field length `73`,
+    text-generation flags `71`, horizontal justification `72`, and vertical
+    justification `74` receive only their documented zero defaults. Helpers
+    expose the four documented attribute-flag bits and the two documented text-
+    generation bits while retaining the exact underlying signed value and any
+    unknown bits. Invalid ASCII, missing required flags, and duplicates stay
+    typed with raw provenance when available. Neutral group `280` evidence is
+    deliberately not selected because its version and lock-position meanings
+    share one wire code and record order is not authoritative. This does not
+    validate field length or unknown flag bits, classify justification codes,
+    determine alignment-point applicability, distinguish group-280 meanings,
+    decode MText extensions, associate ATTDEF definitions, transform
     attributes, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
