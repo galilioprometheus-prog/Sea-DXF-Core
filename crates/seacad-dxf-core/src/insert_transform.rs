@@ -69,6 +69,27 @@ impl DxfInsertAffineTransform {
             Err(DxfInsertTransformApplicationIssue::NonFiniteResult)
         }
     }
+
+    pub(crate) fn offset_wcs(
+        self,
+        offset: [f64; 3],
+    ) -> Result<Self, DxfInsertTransformApplicationIssue> {
+        if !finite3(offset) {
+            return Err(DxfInsertTransformApplicationIssue::NonFiniteInput);
+        }
+        let mut rows = self.rows;
+        for (row, component) in rows.iter_mut().zip(offset) {
+            let translated = row[3].to_f64() + component;
+            if !translated.is_finite() {
+                return Err(DxfInsertTransformApplicationIssue::NonFiniteResult);
+            }
+            row[3] = canonical_double(translated);
+        }
+        Ok(Self {
+            rows,
+            normal: self.normal,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -256,16 +277,10 @@ fn derive_finite_transform(
     let extrusion = finite_input(extrusion, DxfInsertTransformInput::Extrusion)?;
     let base = finite_input(base, DxfInsertTransformInput::BlockBasePoint)?;
     let basis = OcsBasis::from_extrusion(extrusion)?;
-    let (sine, cosine) = rotation.to_radians().sin_cos();
+    let axes = basis.rotated_xy(rotation.to_radians());
     let columns = [
-        scale3(
-            add(scale3(basis.x, cosine), scale3(basis.y, sine)),
-            scale[0],
-        ),
-        scale3(
-            add(scale3(basis.x, -sine), scale3(basis.y, cosine)),
-            scale[1],
-        ),
+        scale3(axes[0], scale[0]),
+        scale3(axes[1], scale[1]),
         scale3(basis.z, scale[2]),
     ];
     let translation = subtract(basis.transform(insertion), linear_transform(columns, base));
@@ -284,14 +299,14 @@ fn derive_finite_transform(
 }
 
 #[derive(Clone, Copy)]
-struct OcsBasis {
+pub(crate) struct OcsBasis {
     x: [f64; 3],
     y: [f64; 3],
     z: [f64; 3],
 }
 
 impl OcsBasis {
-    fn from_extrusion(extrusion: [f64; 3]) -> Result<Self, DxfInsertTransformIssue> {
+    pub(crate) fn from_extrusion(extrusion: [f64; 3]) -> Result<Self, DxfInsertTransformIssue> {
         let z = normalize(extrusion)?;
         let x = if z[0].abs() < 1.0 / 64.0 && z[1].abs() < 1.0 / 64.0 {
             normalize([z[2], 0.0, -z[0]])?
@@ -300,6 +315,14 @@ impl OcsBasis {
         };
         let y = normalize(cross(z, x))?;
         Ok(Self { x, y, z })
+    }
+
+    pub(crate) fn rotated_xy(self, rotation_radians: f64) -> [[f64; 3]; 2] {
+        let (sine, cosine) = rotation_radians.sin_cos();
+        [
+            add(scale3(self.x, cosine), scale3(self.y, sine)),
+            add(scale3(self.x, -sine), scale3(self.y, cosine)),
+        ]
     }
 
     fn transform(self, point: [f64; 3]) -> [f64; 3] {

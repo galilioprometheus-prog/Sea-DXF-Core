@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1l can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1m can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -147,6 +147,8 @@ Unique targets are eligible only when their definitions are closed and their
 reachable BLOCK expansion graph is acyclic.
 Each eligible INSERT additionally exposes a finite single-instance row-major
 3x4 BLOCK-to-WCS affine transform with its normalized extrusion normal.
+Usable positive array counts and finite spacing additionally expose a
+constant-space rotated rectangular layout with bounded per-index transforms.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -691,6 +693,14 @@ non-finite inputs, zero extrusion, derived overflow, and non-finite point
 application remain typed failures. This does not expand array rows/columns,
 convert block units, follow ATTRIB/SEQEND, recursively transform member
 geometry, edit/write, or render.
+M10.1m derives constant-space rectangular-array layouts from positive
+column/row counts and finite spacing. Column and row steps follow the rotated
+INSERT OCS axes without multiplying spacing by BLOCK scale. The layout retains
+counts and two WCS step vectors, reports its exact `u64` instance count, and
+computes only a requested in-range transform; it never allocates the expanded
+array. Invalid semantics/counts/spacing and placement overflow remain typed.
+This does not enumerate every instance, convert BLOCK units, follow
+ATTRIB/SEQEND, recursively transform member geometry, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is

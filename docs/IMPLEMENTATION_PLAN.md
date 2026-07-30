@@ -97,7 +97,9 @@ M10.1i projects required and Autodesk-defaulted typed INSERT semantics;
 M10.1j resolves usable INSERT names against exact matched BLOCK names; M10.1k
 requires closed unique targets and rejects reachable recursive expansion;
 M10.1l derives finite single-instance BLOCK-to-WCS affine transforms from
-eligible targets with typed fail-closed input and application states
+eligible targets with typed fail-closed input and application states; M10.1m
+derives constant-space rectangular-array layouts and bounded per-index
+instance transforms
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -837,6 +839,18 @@ eligible targets with typed fail-closed input and application states
     instance only: it does not expand row/column arrays, convert block units,
     follow ATTRIB/SEQEND, transform member geometry recursively, edit, write,
     or render.
+    M10.1m derives a constant-space rectangular-array layout from each usable
+    M10.1l transform plus the documented column/row counts and spacing.
+    Column and row step vectors follow the INSERT OCS axes after its rotation,
+    because Autodesk specifies that MINSERT rotation applies to the individual
+    insertions and the entire array. SeaCad treats the documented spacing as
+    drawing-unit array offsets independent of BLOCK scale. Counts must be
+    positive and spacing finite. The layout exposes an exact
+    `u64` instance count and computes only a requested in-range row/column
+    transform, so maximum signed-16-bit counts do not allocate an expanded
+    array. Placement overflow remains typed. This evidence does not enumerate
+    every instance, convert BLOCK units, follow ATTRIB/SEQEND, recursively
+    transform member geometry, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

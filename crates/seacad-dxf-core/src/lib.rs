@@ -55,6 +55,7 @@ mod header_view;
 mod infinite_line_geometry;
 mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
+mod insert_array;
 mod insert_block_resolution;
 mod insert_record_card;
 mod insert_record_semantic;
@@ -267,6 +268,10 @@ pub use infinite_line_geometry_card::{
 pub use infinite_line_geometry_semantic::{
     DxfInfiniteLineGeometrySemanticDirectory, DxfInfiniteLineGeometrySemanticIssue,
     DxfInfiniteLineGeometrySemanticValue, DxfInfiniteLineGeometrySemantics,
+};
+pub use insert_array::{
+    DxfInsertArrayApplicationIssue, DxfInsertArrayDirectory, DxfInsertArrayEntry,
+    DxfInsertArrayInstance, DxfInsertArrayIssue, DxfInsertArrayLayout,
 };
 pub use insert_block_resolution::{
     DxfInsertBlockResolutionDirectory, DxfInsertBlockResolutionEntry,
