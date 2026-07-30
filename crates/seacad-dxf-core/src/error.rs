@@ -36,6 +36,8 @@ impl DxfErrorCode {
     pub const SOURCE_IDENTITY_MISMATCH: Self = Self("DXF-E0301");
     pub const VERBATIM_OUTPUT_LENGTH_MISMATCH: Self = Self("DXF-E0302");
     pub const VERBATIM_OUTPUT_IDENTITY_MISMATCH: Self = Self("DXF-E0303");
+    pub const TRANSACTION_SPAN_OUT_OF_BOUNDS: Self = Self("DXF-E1101");
+    pub const TRANSACTION_PATCH_CONFLICT: Self = Self("DXF-E1102");
 
     #[must_use]
     pub const fn as_str(self) -> &'static str {
@@ -155,6 +157,14 @@ pub enum DxfError {
         expected: DxfSourceId,
         observed: DxfSourceId,
     },
+    TransactionSpanOutOfBounds {
+        span: ByteSpan,
+        source_len: u64,
+    },
+    TransactionPatchConflict {
+        existing: ByteSpan,
+        proposed: ByteSpan,
+    },
 }
 
 impl DxfError {
@@ -211,6 +221,8 @@ impl DxfError {
             Self::VerbatimOutputIdentityMismatch { .. } => {
                 DxfErrorCode::VERBATIM_OUTPUT_IDENTITY_MISMATCH
             }
+            Self::TransactionSpanOutOfBounds { .. } => DxfErrorCode::TRANSACTION_SPAN_OUT_OF_BOUNDS,
+            Self::TransactionPatchConflict { .. } => DxfErrorCode::TRANSACTION_PATCH_CONFLICT,
         }
     }
 }
@@ -367,6 +379,22 @@ impl fmt::Display for DxfError {
                 formatter,
                 "{}: verbatim output identity {observed} differs from expected {expected}",
                 self.code()
+            ),
+            Self::TransactionSpanOutOfBounds { span, source_len } => write!(
+                formatter,
+                "{}: transaction span [{}, {}) exceeds source length {source_len}",
+                self.code(),
+                span.start(),
+                span.end()
+            ),
+            Self::TransactionPatchConflict { existing, proposed } => write!(
+                formatter,
+                "{}: transaction span [{}, {}) conflicts with [{}, {})",
+                self.code(),
+                proposed.start(),
+                proposed.end(),
+                existing.start(),
+                existing.end()
             ),
         }
     }
@@ -548,6 +576,22 @@ mod tests {
                 },
                 DxfErrorCode::VERBATIM_OUTPUT_IDENTITY_MISMATCH,
                 "DXF-E0303",
+            ),
+            (
+                DxfError::TransactionSpanOutOfBounds {
+                    span: ByteSpan::new(8, 13).ok_or(io::Error::other("invalid test span"))?,
+                    source_len: 12,
+                },
+                DxfErrorCode::TRANSACTION_SPAN_OUT_OF_BOUNDS,
+                "DXF-E1101",
+            ),
+            (
+                DxfError::TransactionPatchConflict {
+                    existing: ByteSpan::new(2, 5).ok_or(io::Error::other("invalid test span"))?,
+                    proposed: ByteSpan::new(4, 7).ok_or(io::Error::other("invalid test span"))?,
+                },
+                DxfErrorCode::TRANSACTION_PATCH_CONFLICT,
+                "DXF-E1102",
             ),
         ];
 

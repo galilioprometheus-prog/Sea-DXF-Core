@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1ag can open an immutable raw ASCII framing document, enforce
+SeaCad through M11.1a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -904,8 +904,15 @@ duplicate-preserving ambiguous outcomes. It does not normalize/decode tags,
 choose ambiguous targets/definitions, require closed sequences/definitions,
 validate ownership or attribute flags/defaults, transform placement,
 edit/write, or render.
-The Binary row claims physical raw-document, envelope/index opening, verified
-unchanged replay, and CLI `inspect`/`verify` only.
+M11.1a constructs immutable raw-byte transaction plans bound to the opened
+source identity, length, and physical format. Source-order patches own their
+replacement bytes and captured inverse bytes; replace/delete and deterministic
+boundary insertion are supported. Overlaps, insertions inside replacements,
+duplicate insertion offsets, out-of-bounds spans, cancellation, and resource
+limits fail before mutating builder state. Plans redact payload bytes from
+`Debug`. This does not apply patches, calculate a post-image identity,
+materialize an executable inverse transaction, validate resulting DXF,
+allocate handles, write a destination, or publish a snapshot.
 Q2.2 adds an offline strict-verification receipt harness whose output is
 aggregate-only and path-redacted. Its 1,000-file and 10-GiB manifest values are
 hard traversal ceilings, not achieved corpus evidence, performance evidence,

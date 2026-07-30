@@ -132,7 +132,9 @@ with typed finite-input and extrusion failures; M10.1af builds a collision-safe
 block-local exact ATTDEF-tag index with duplicate-preserving matches and
 explicit unusable-tag summaries; M10.1ag resolves each retained ATTRIB against
 the exact ATTDEF tags of a uniquely targeted BLOCK while preserving
-fail-closed target, tag, missing, indeterminate, unique, and ambiguous states
+fail-closed target, tag, missing, indeterminate, unique, and ambiguous states;
+M11.1a introduces immutable source-bound raw-byte transaction plans with
+non-conflicting source-order patches and captured inverse bytes
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -1120,6 +1122,19 @@ fail-closed target, tag, missing, indeterminate, unique, and ambiguous states
     validate ownership, compare flags/default values, transform attribute
     placement, edit, write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
+    M11.1a uses a mutable builder only as a bounded construction boundary, then
+    freezes an immutable plan bound to the opened source identity, length, and
+    physical format. Each replace/delete/insertion patch retains its exact
+    source span, owned replacement bytes, and source bytes captured for a
+    future inverse journal. Patches are published in source order; overlapping
+    nonempty spans, insertions inside replaced spans, and duplicate insertions
+    at one offset fail with stable typed errors, while boundary insertions are
+    deterministic. Per-patch, patch-count, accumulated journal, and projected
+    snapshot limits reuse the selected resource profile. Cancellation before
+    or after inverse capture leaves the builder unchanged. This checkpoint
+    does not apply a plan, calculate post-image source identity, materialize a
+    directly executable inverse plan, validate DXF syntax or semantics, assign
+    handles, write a destination, or publish a new snapshot.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,
     SBOM/notices, and DXF Core 1.0 release.
