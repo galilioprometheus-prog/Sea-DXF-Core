@@ -92,7 +92,8 @@ usable primary/secondary BLOCK names as exact bounded raw bytes while retaining
 matched, conflicting, or not-comparable state; M10.1f indexes only matched
 names for exact duplicate-preserving missing/unique/ambiguous lookup; M10.1g
 retains every documented defining value from exact INSERT records; M10.1h adds
-16 fixed per-record cardinality cards with compact source-order members
+16 fixed per-record cardinality cards with compact source-order members;
+M10.1i projects required and Autodesk-defaulted typed INSERT semantics
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -792,6 +793,16 @@ retains every documented defining value from exact INSERT records; M10.1h adds
     evidence does not apply defaults, select a duplicate, assemble typed
     semantics, resolve a block name, follow ATTRIB/SEQEND, transform geometry,
     edit, write, or render.
+    M10.1i lazily projects the required block name and insertion point plus
+    Autodesk-documented optional defaults: scale `(1,1,1)`, rotation `0`,
+    column/row counts `(1,1)`, spacing `(0,0)`, attributes-follow `0`, and
+    extrusion `(0,0,1)`. Every field retains explicit/defaulted/invalid state
+    and raw/field provenance; invalid ASCII numbers and multiple values remain
+    invalid instead of falling back to defaults. Composite accessors fail
+    closed when any component is unusable. This evidence does not validate
+    empty names, numeric finiteness, count ranges, or attributes-follow values;
+    resolve a block name; follow ATTRIB/SEQEND; form an OCS transform; edit,
+    write, or render.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
 16. M12: preserve-patch and canonical ASCII/Binary writers with reparse.
 17. M13: evidence closure, 1,000-file/10-GB corpus gates, six native receipts,

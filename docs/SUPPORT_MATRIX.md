@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M10.1h can open an immutable raw ASCII framing document, enforce
+SeaCad through M10.1i can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -139,6 +139,8 @@ Exact INSERT records in BLOCKS/ENTITIES retain all documented defining groups
 as source-order text, binary64, or signed-16-bit evidence.
 Each INSERT has 16 fixed cardinality cards retaining every source-order member
 as absent, unique, or multiple evidence.
+Typed INSERT semantics require block name/insertion point and distinguish
+explicit values from Autodesk-documented optional defaults.
 Each storage decode receipt retains
 source ID, occurrence, raw span, encoding, and
 terminal status. The CLI exposes `inspect` and `verify` with
@@ -654,6 +656,13 @@ validity and retains compact references to every source-order value occurrence.
 Cards remain record-local across BLOCKS and ENTITIES. This does not apply
 defaults, select duplicates, assemble typed semantics, resolve names, follow
 ATTRIB/SEQEND, transform geometry, edit/write, or render.
+M10.1i projects required block name and insertion point plus documented scale
+`(1,1,1)`, rotation `0`, array count `(1,1)`, spacing `(0,0)`,
+attributes-follow `0`, and extrusion `(0,0,1)` defaults. Explicit, defaulted,
+and invalid states retain field/raw provenance; invalid or multiple values do
+not receive defaults, and composite accessors fail closed. This does not
+validate empty names, finiteness, count/flag ranges, resolve a block target,
+follow ATTRIB/SEQEND, form an OCS transform, edit/write, or render.
 The Binary row claims physical raw-document, envelope/index opening, verified
 unchanged replay, and CLI `inspect`/`verify` only.
 Q2.2 adds an offline strict-verification receipt harness whose output is
