@@ -67,6 +67,7 @@ mod polyline_polyface_geometry;
 mod polyline_polyface_topology;
 mod polyline_polygon_mesh;
 mod polyline_polygon_mesh_geometry;
+mod polyline_polygon_mesh_smoothing;
 mod polyline_record_card;
 mod polyline_record_semantic;
 mod polyline_record_value;
@@ -314,6 +315,10 @@ pub use polyline_polygon_mesh::{
 pub use polyline_polygon_mesh_geometry::{
     DxfPolylinePolygonMeshCellCorner, DxfPolylinePolygonMeshCellGeometryDirectory,
     DxfPolylinePolygonMeshCellGeometryEntry, DxfPolylinePolygonMeshCellGeometryState,
+};
+pub use polyline_polygon_mesh_smoothing::{
+    DxfPolylinePolygonMeshSmoothSurfaceType, DxfPolylinePolygonMeshSmoothingDirectory,
+    DxfPolylinePolygonMeshSmoothingEntry, DxfPolylinePolygonMeshSmoothingState,
 };
 pub use polyline_record_card::{
     DxfPolylineRecordCardDirectory, DxfPolylineRecordCardMember, DxfPolylineRecordCardMemberRange,

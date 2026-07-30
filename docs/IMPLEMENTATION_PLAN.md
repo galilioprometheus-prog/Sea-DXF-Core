@@ -78,7 +78,8 @@ ordering; M9.2q resolves valid signed 1-based polyface face indices to exact
 coordinate evidence and preserves per-corner edge visibility; M9.2r assembles
 the resolved polyface coordinates into exact WCS point tuples with typed
 per-corner component failure; M9.2s assembles every proven polygon-mesh cell's
-four named VERTEX coordinates into exact WCS corner tuples
+four named VERTEX coordinates into exact WCS corner tuples; M9.2t classifies
+polygon-mesh smooth-surface type metadata while retaining exact signed densities
 
 1. M0: toolchain, clean private repository, workspace, policy, and CI.
 2. M1: provenance audit of earlier tests, fixtures, documents, and code.
@@ -692,6 +693,12 @@ four named VERTEX coordinates into exact WCS corner tuples
     identity remain attached. This does not assign winding, derive edges,
     validate degeneracy/planarity, calculate normals, apply smoothing metadata,
     triangulate, edit, write, or render.
+    M9.2t retains exact signed smooth-surface M/N density semantics from groups
+    `73/74` and classifies group `75` only as none, quadratic B-spline, cubic
+    B-spline, or Bezier. Invalid metadata, unsupported type codes, and M9.2o
+    topology failures remain typed. No undocumented density range is imposed.
+    This does not generate fitted vertices/cells, alter M9.2o topology or M9.2s
+    WCS corners, validate surface continuity, tessellate, edit, write, or render.
 14. M10: blocks, text, hatch, dimensions, leaders, layouts, underlays, and
     exact-opaque ACIS/proxy/custom payloads.
 15. M11: immutable atomic transactions, inverse journals, and handle policy.
