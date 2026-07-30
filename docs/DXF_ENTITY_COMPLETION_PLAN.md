@@ -63,7 +63,9 @@ Deep typed semantics already cover `POINT`, `LINE`, `CIRCLE`, `ARC`,
 `POLYLINE`/`VERTEX`/`SEQEND`, `INSERT`, `ATTRIB`, and `ATTDEF`, plus
 `BLOCK`/`ENDBLK` topology. M14 starts the missing public entity inventory.
 M14.1a retains numeric occurrence evidence for `3DFACE`, `SOLID`, and `TRACE`;
-M14.1b adds fixed family-specific cardinality without selecting values.
+M14.1b adds fixed family-specific cardinality without selecting values; and
+M14.1c selects unique typed values, applies only documented defaults, and keeps
+missing, invalid, multiple, partial, and unavailable-default states explicit.
 
 ## Milestone queue
 

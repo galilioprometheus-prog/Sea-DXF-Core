@@ -1357,6 +1357,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     the M14.1a occurrences; lexical validity remains independent, and roles
     from the wrong family have no card. This still does not select, default,
     validate, reorder, transform, assemble, edit, or write values.
+    M14.1c lazily selects unique typed double or signed-16-bit values with exact
+    field/raw provenance. Missing required corners, invalid ASCII numbers,
+    duplicates, partial fourth corners, and unavailable default sources remain
+    typed. It applies only Autodesk-documented defaults: 3DFACE edge flags
+    zero; SOLID/TRACE thickness zero and extrusion (0,0,1); and an entirely
+    absent 3DFACE/SOLID fourth corner inherits the usable third corner. TRACE
+    has no fourth-corner default. This milestone does not interpret edge bits,
+    validate finite geometry/normals, reorder corners, transform OCS to WCS,
+    assemble faces, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

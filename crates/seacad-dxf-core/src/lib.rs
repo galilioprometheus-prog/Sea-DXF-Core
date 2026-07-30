@@ -100,6 +100,8 @@ mod owner_evidence_comparison;
 mod ownership_evidence;
 mod planar_face_geometry;
 mod planar_face_geometry_card;
+mod planar_face_geometry_semantic;
+mod planar_face_geometry_semantic_value;
 mod polyline_family_semantic;
 mod polyline_polyface_face;
 mod polyline_polyface_geometry;
@@ -496,6 +498,10 @@ pub use planar_face_geometry::{
 pub use planar_face_geometry_card::{
     DxfPlanarFaceCardDirectory, DxfPlanarFaceCardMember, DxfPlanarFaceCardMemberRange,
     DxfPlanarFaceValueCard, DxfPlanarFaceValueCardState,
+};
+pub use planar_face_geometry_semantic::{
+    DxfPlanarFaceDoubleSemanticValue, DxfPlanarFaceInt16SemanticValue,
+    DxfPlanarFaceSemanticDirectory, DxfPlanarFaceSemanticIssue, DxfPlanarFaceSemantics,
 };
 pub use polyline_family_semantic::{
     DxfPolylineFamily, DxfPolylineFamilySemanticDirectory, DxfPolylineFamilySemantics,
