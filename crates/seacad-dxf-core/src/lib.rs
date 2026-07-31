@@ -145,6 +145,7 @@ mod raw_integer;
 mod raw_record;
 mod read_options;
 mod semantic_value;
+mod shape_wcs_insertion;
 mod source;
 mod source_id;
 mod source_scan;
@@ -156,6 +157,7 @@ mod text_placement_anchor;
 mod text_shape_scalar;
 mod text_symbol_card;
 mod text_symbol_evidence;
+mod text_symbol_ocs_projection;
 mod text_symbol_role;
 mod text_symbol_scalar_value;
 mod text_symbol_text;
@@ -686,6 +688,10 @@ pub use raw_record::{
 pub use read_options::{DxfReadMode, DxfReadOptions};
 pub use semantic_value::{
     DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
+};
+pub use shape_wcs_insertion::{
+    DxfShapeInsertionComponent, DxfShapeWcsInsertion, DxfShapeWcsInsertionDirectory,
+    DxfShapeWcsInsertionIssue, DxfShapeWcsInsertionSemantic, DxfShapeWcsInsertionSemantics,
 };
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;

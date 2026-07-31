@@ -2,11 +2,13 @@
 
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
-    DxfInsertTransformIssue, DxfRawDocumentView, DxfRawValueProvenance, DxfSemanticFieldProvenance,
-    DxfSemanticValue, DxfSourceId, DxfTextOcsPlacementAnchorDirectory,
-    DxfTextOcsPlacementAnchorIssue, DxfTextOcsPlacementAnchorKind,
-    DxfTextOcsPlacementAnchorSemantics, DxfTextSymbolDoubleValue, DxfTextSymbolRecordEntry,
-    DxfTextSymbolScalarIssue, insert_transform::OcsBasis,
+    DxfRawDocumentView, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
+    DxfTextOcsPlacementAnchorDirectory, DxfTextOcsPlacementAnchorIssue,
+    DxfTextOcsPlacementAnchorKind, DxfTextOcsPlacementAnchorSemantics, DxfTextSymbolRecordEntry,
+    DxfTextSymbolScalarIssue,
+    text_symbol_ocs_projection::{
+        OcsPointProjectionIssue, OcsProjectionComponent, project_ocs_point,
+    },
 };
 
 const NAMESPACE: &str = "text_symbol.text.wcs_placement_anchor";
@@ -211,99 +213,59 @@ fn project_wcs(
             );
         }
     };
-    let point = anchor.point().map(DxfDouble::to_f64);
-    if !finite3(point) {
-        return DxfSemanticValue::invalid(
-            DxfTextWcsPlacementAnchorIssue::NonFiniteOcsAnchor,
-            field,
-            anchor_raw,
-        );
-    }
     let numeric = semantics.layout_semantics().numeric_semantics();
-    let extrusion = match extrusion_vector(numeric.extrusion()) {
-        Ok(extrusion) => extrusion,
-        Err((issue, raw)) => return DxfSemanticValue::invalid(issue, field, raw),
-    };
-    if !finite3(extrusion.0) {
-        return DxfSemanticValue::invalid(
-            DxfTextWcsPlacementAnchorIssue::NonFiniteExtrusion,
-            field,
-            extrusion.1,
-        );
-    }
-    let basis = match OcsBasis::from_extrusion(extrusion.0) {
-        Ok(basis) => basis,
-        Err(issue) => {
-            return DxfSemanticValue::invalid(map_basis_issue(issue), field, extrusion.1);
+    let projected = match project_ocs_point(anchor.point(), anchor_raw, numeric.extrusion()) {
+        Ok(projected) => projected,
+        Err((issue, raw)) => {
+            return DxfSemanticValue::invalid(map_projection_issue(issue), field, raw);
         }
     };
-    let transformed = basis.transform(point);
-    if !finite3(transformed) {
-        return DxfSemanticValue::invalid(
-            DxfTextWcsPlacementAnchorIssue::NonFiniteDerivedPoint,
-            field,
-            anchor_raw.or(extrusion.1),
-        );
-    }
     let value = DxfTextWcsPlacementAnchor {
         kind: anchor.kind(),
-        point: transformed.map(canonical_double),
-        normal: basis.normal().map(canonical_double),
+        point: projected.point(),
+        normal: projected.normal(),
     };
-    match anchor_raw.or(extrusion.1) {
+    match projected.raw() {
         Some(raw) => DxfSemanticValue::explicit(value, field, raw),
         None => DxfSemanticValue::defaulted(value, field),
     }
 }
 
-type ProjectionFailure = (
-    DxfTextWcsPlacementAnchorIssue,
-    Option<DxfRawValueProvenance>,
-);
-
-fn extrusion_vector(
-    values: &[DxfTextSymbolDoubleValue; 3],
-) -> Result<([f64; 3], Option<DxfRawValueProvenance>), ProjectionFailure> {
-    let x = extrusion_component(&values[0], DxfTextExtrusionComponent::X)?;
-    let y = extrusion_component(&values[1], DxfTextExtrusionComponent::Y)?;
-    let z = extrusion_component(&values[2], DxfTextExtrusionComponent::Z)?;
-    Ok((
-        [x.0.to_f64(), y.0.to_f64(), z.0.to_f64()],
-        x.1.or(y.1).or(z.1),
-    ))
-}
-
-fn extrusion_component(
-    value: &DxfTextSymbolDoubleValue,
-    component: DxfTextExtrusionComponent,
-) -> Result<(DxfDouble, Option<DxfRawValueProvenance>), ProjectionFailure> {
-    match *value {
-        DxfSemanticValue::Explicit { value, raw, .. } => Ok((value, Some(raw))),
-        DxfSemanticValue::Defaulted { value, .. } => Ok((value, None)),
-        DxfSemanticValue::Absent { .. } => Err((
-            DxfTextWcsPlacementAnchorIssue::ExtrusionComponentAbsent { component },
-            None,
-        )),
-        DxfSemanticValue::Invalid { issue, raw, .. } => Err((
-            DxfTextWcsPlacementAnchorIssue::ExtrusionComponentInvalid { component, issue },
-            raw,
-        )),
-    }
-}
-
-fn map_basis_issue(issue: DxfInsertTransformIssue) -> DxfTextWcsPlacementAnchorIssue {
+fn map_projection_issue(issue: OcsPointProjectionIssue) -> DxfTextWcsPlacementAnchorIssue {
     match issue {
-        DxfInsertTransformIssue::ZeroLengthExtrusion => {
+        OcsPointProjectionIssue::NonFinitePoint => {
+            DxfTextWcsPlacementAnchorIssue::NonFiniteOcsAnchor
+        }
+        OcsPointProjectionIssue::ExtrusionComponentAbsent { component } => {
+            DxfTextWcsPlacementAnchorIssue::ExtrusionComponentAbsent {
+                component: map_component(component),
+            }
+        }
+        OcsPointProjectionIssue::ExtrusionComponentInvalid { component, issue } => {
+            DxfTextWcsPlacementAnchorIssue::ExtrusionComponentInvalid {
+                component: map_component(component),
+                issue,
+            }
+        }
+        OcsPointProjectionIssue::NonFiniteExtrusion => {
+            DxfTextWcsPlacementAnchorIssue::NonFiniteExtrusion
+        }
+        OcsPointProjectionIssue::ZeroLengthExtrusion => {
             DxfTextWcsPlacementAnchorIssue::ZeroLengthExtrusion
         }
-        _ => DxfTextWcsPlacementAnchorIssue::NonFiniteDerivedBasis,
+        OcsPointProjectionIssue::NonFiniteDerivedBasis => {
+            DxfTextWcsPlacementAnchorIssue::NonFiniteDerivedBasis
+        }
+        OcsPointProjectionIssue::NonFiniteDerivedPoint => {
+            DxfTextWcsPlacementAnchorIssue::NonFiniteDerivedPoint
+        }
     }
 }
 
-fn finite3(value: [f64; 3]) -> bool {
-    value.iter().all(|component| component.is_finite())
-}
-
-fn canonical_double(value: f64) -> DxfDouble {
-    DxfDouble::from_f64(if value == 0.0 { 0.0 } else { value })
+const fn map_component(component: OcsProjectionComponent) -> DxfTextExtrusionComponent {
+    match component {
+        OcsProjectionComponent::X => DxfTextExtrusionComponent::X,
+        OcsProjectionComponent::Y => DxfTextExtrusionComponent::Y,
+        OcsProjectionComponent::Z => DxfTextExtrusionComponent::Z,
+    }
 }

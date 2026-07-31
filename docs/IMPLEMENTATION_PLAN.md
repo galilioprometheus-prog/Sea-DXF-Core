@@ -1590,6 +1590,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     non-finite Binary inputs, zero extrusion, basis failure, and transformed
     overflow remain typed. Rotation, style metrics, glyph geometry, edit, and
     write remain unclaimed.
+    M14.2z transforms the required SHAPE insertion point from OCS to WCS with
+    its documented extrusion default and the same shared arbitrary-axis
+    projection used by TEXT. It retains a finite WCS point, normalized normal,
+    canonical positive zero, scalar provenance, and typed failures for
+    insertion/extrusion evidence, non-finite Binary values, zero extrusion,
+    basis failure, and derived overflow. The checkpoint also extracts the
+    shared 129-line text-symbol projection helper and reduces the TEXT WCS
+    module from 309 to 271 lines without changing its public contract.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

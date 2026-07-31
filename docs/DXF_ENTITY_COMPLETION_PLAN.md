@@ -214,6 +214,13 @@ canonical positive zero, and typed provenance. Invalid anchor/extrusion
 evidence, non-finite Binary inputs, zero extrusion, basis failure, and derived
 overflow remain explicit. Rotation, style metrics, glyph geometry, edit, and
 write remain later work.
+M14.2z transforms the required SHAPE insertion from OCS to WCS with its
+normalized extrusion and the shared text-symbol arbitrary-axis projection.
+The result retains a finite WCS point, normalized normal, canonical positive
+zero, and typed provenance. Missing, invalid, duplicate, non-finite, zero
+extrusion, basis, and derived-overflow failures remain explicit. SHAPE
+definition resolution, rotation, metrics, glyph geometry, edit, and write
+remain later work.
 
 ## Milestone queue
 
