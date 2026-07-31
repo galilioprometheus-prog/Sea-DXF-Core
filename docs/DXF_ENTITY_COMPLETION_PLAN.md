@@ -178,6 +178,11 @@ column-info block in the same MTEXT record and reuses the generic handle
 resolution directory for every group-1005 occurrence. Target states preserve
 invalid, null, missing, ambiguous, unique MTEXT, and unique non-MTEXT outcomes.
 This does not validate graph membership or a declared-count formula.
+M14.2t adds a separate direct/flat evidence directory for Autodesk groups
+75/76/78/79/48/49 and retains every coexisting group 50 as explicitly
+rotation-or-column-height ambiguous. A lone group 50 remains orientation
+evidence, and no field after an exact embedded-object boundary leaks into the
+flat slice. Scalar unification and height disambiguation remain later work.
 
 ## Milestone queue
 

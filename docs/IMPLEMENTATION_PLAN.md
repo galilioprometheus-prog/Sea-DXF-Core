@@ -1548,6 +1548,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     This is target-resolution evidence, not validation of graph membership or
     the undocumented declared-count relationship. Direct flat group-50
     framing remains a later checkpoint.
+    M14.2t isolates Autodesk's direct MTEXT column groups
+    75/76/78/79/48/49 before the exact embedded-object boundary. If at least
+    one unambiguous direct column field exists, every coexisting group 50 is
+    retained in source order as `RotationOrColumnHeight`; group 50 alone
+    remains orientation evidence and cannot create a column entry. Scalar
+    unification and group-50 height disambiguation remain later checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

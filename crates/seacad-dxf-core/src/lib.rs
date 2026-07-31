@@ -100,6 +100,7 @@ mod mtext_column_relation;
 mod mtext_column_semantic;
 mod mtext_column_semantic_project;
 mod mtext_embedded_column_evidence;
+mod mtext_flat_column_evidence;
 mod mtext_layout;
 mod mtext_numeric_domain;
 mod mtext_orientation;
@@ -515,6 +516,10 @@ pub use mtext_column_semantic::{
 pub use mtext_embedded_column_evidence::{
     DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole,
     DxfMTextEmbeddedColumnValue,
+};
+pub use mtext_flat_column_evidence::{
+    DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry, DxfMTextFlatColumnRole,
+    DxfMTextFlatColumnValue,
 };
 pub use mtext_layout::{
     DxfMTextAttachment, DxfMTextAttachmentSemantic, DxfMTextDrawingDirection,
