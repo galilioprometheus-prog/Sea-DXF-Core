@@ -1643,6 +1643,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     cannot represent them. No field value is selected, defaulted, normalized,
     range-validated, or resolved to another table record. Tolerance-string
     interpretation, glyph geometry, edit, and write remain unclaimed.
+    M14.2ag lazily selects any requested DIMSTYLE-specific field only when its
+    M14.2af card is unique. Explicit, absent, invalid-number, invalid-handle,
+    and duplicate states retain stable field/raw provenance; no absent value
+    receives an invented default. Group-70 standard flags additionally expose
+    the documented externally-dependent, resolved, and referenced bits while
+    preserving every unknown bit. Domain/range validation, handle target
+    resolution, tolerance-string interpretation, glyph geometry, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

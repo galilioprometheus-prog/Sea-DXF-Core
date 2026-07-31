@@ -3,10 +3,11 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
     DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDimStyleField,
-    DxfDimStyleFieldCardDirectory, DxfDimStyleFieldCardState, DxfDimStyleValueData,
+    DxfDimStyleFieldCardDirectory, DxfDimStyleFieldCardState, DxfDimStyleSemanticDirectory,
+    DxfDimStyleSemanticIssue, DxfDimStyleStandardFlags, DxfDimStyleValueData,
     DxfDimStyleValueDirectory, DxfDimStyleValueIssue, DxfDimStyleWireKind, DxfError,
     DxfHandleParseIssue, DxfMemorySource, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    NoopDxfReadObserver, dxf_dimstyle_fields,
+    DxfSemanticValueState, NoopDxfReadObserver, dxf_dimstyle_fields,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -45,6 +46,12 @@ fn registry_is_complete_sorted_and_wire_typed() {
         Some("STANDARD_FLAGS")
     );
     assert_eq!(field(344).map(DxfDimStyleField::name), Some("DIMBLK2"));
+
+    let flags = DxfDimStyleStandardFlags::from_raw(i16::MIN | 16 | 32 | 64 | 1);
+    assert!(flags.is_externally_dependent());
+    assert!(flags.is_resolved_external_reference_or_dependent());
+    assert!(flags.is_referenced_external_reference());
+    assert_eq!(flags.unknown_bits(), 0x8001);
 }
 
 #[test]
@@ -112,6 +119,25 @@ fn malformed_values_are_typed_without_losing_source_evidence() -> Result<(), Box
         );
     }
     assert_eq!(directory.value_for_group(u64::MAX), None);
+
+    let semantics = document.dimstyle_semantic_directory(&DxfCancellationToken::default())?;
+    let raw = semantics.records()[0].table_entry().record().ordinal();
+    assert!(matches!(
+        semantics
+            .semantic_for_raw_ordinal(raw, field(40).ok_or_else(invalid_test_data)?)?
+            .and_then(|value| value.invalid_issue().copied()),
+        Some(DxfDimStyleSemanticIssue::InvalidAsciiNumber(
+            DxfAsciiNumericIssue::InvalidSyntax { .. }
+        ))
+    ));
+    assert_eq!(
+        semantics
+            .semantic_for_raw_ordinal(raw, field(340).ok_or_else(invalid_test_data)?)?
+            .and_then(|value| value.invalid_issue().copied()),
+        Some(DxfDimStyleSemanticIssue::InvalidHandle(
+            DxfHandleParseIssue::InvalidDigit { offset: 1 }
+        ))
+    );
     Ok(())
 }
 
@@ -120,6 +146,7 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
     assert_copy::<DxfDimStyleField>();
     assert_send_sync::<DxfDimStyleValueDirectory>();
     assert_send_sync::<DxfDimStyleFieldCardDirectory>();
+    assert_send_sync::<DxfDimStyleSemanticDirectory>();
 
     let bytes = ascii_fixture(DxfAcadVersion::Ac1032);
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -134,6 +161,10 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
         document.dimstyle_field_card_directory(&cancellation),
         Err(DxfError::Cancelled)
     ));
+    assert!(matches!(
+        document.dimstyle_semantic_directory(&cancellation),
+        Err(DxfError::Cancelled)
+    ));
 
     let directory = document.dimstyle_field_card_directory(&DxfCancellationToken::default())?;
     assert_eq!(
@@ -143,6 +174,12 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
     assert_eq!(directory.card(u64::MAX), None);
     assert_eq!(directory.cards_for_raw_ordinal(u64::MAX), None);
     assert_eq!(directory.members_for_card(u64::MAX), None);
+    let semantics = document.dimstyle_semantic_directory(&DxfCancellationToken::default())?;
+    assert_eq!(
+        semantics.semantic_for_raw_ordinal(u64::MAX, field(3).ok_or_else(invalid_test_data)?)?,
+        None
+    );
+    assert_eq!(semantics.standard_flags_for_raw_ordinal(u64::MAX)?, None);
     Ok(())
 }
 
@@ -193,6 +230,51 @@ fn assert_document(
             .ok_or_else(invalid_test_data)?
             .iter()
             .all(|card| card.state() == DxfDimStyleFieldCardState::Absent)
+    );
+
+    let semantics = document.dimstyle_semantic_directory(&cancellation)?;
+    assert_eq!(
+        semantics.source_id(),
+        semantics.card_directory().source_id()
+    );
+    let text = semantics
+        .semantic_for_entry(first, field(3).ok_or_else(invalid_test_data)?)?
+        .ok_or_else(invalid_test_data)?;
+    assert_eq!(text.state(), DxfSemanticValueState::Explicit);
+    assert!(matches!(text.value(), Some(DxfDimStyleValueData::Text(_))));
+    let duplicate = semantics
+        .semantic_for_raw_ordinal(raw, field(40).ok_or_else(invalid_test_data)?)?
+        .ok_or_else(invalid_test_data)?;
+    assert_eq!(duplicate.state(), DxfSemanticValueState::Invalid);
+    assert_eq!(
+        duplicate.invalid_issue(),
+        Some(&DxfDimStyleSemanticIssue::MultipleValues {
+            occurrence_count: 2
+        })
+    );
+    assert!(duplicate.raw_provenance().is_some());
+    let absent = semantics
+        .semantic_for_raw_ordinal(raw, field(41).ok_or_else(invalid_test_data)?)?
+        .ok_or_else(invalid_test_data)?;
+    assert_eq!(absent.state(), DxfSemanticValueState::Absent);
+    let flags = semantics
+        .standard_flags_for_raw_ordinal(raw)?
+        .ok_or_else(invalid_test_data)?;
+    assert_eq!(flags.value().map(|value| value.raw()), Some(64));
+    assert_eq!(
+        flags.value().map(|value| (
+            value.is_externally_dependent(),
+            value.is_resolved_external_reference_or_dependent(),
+            value.is_referenced_external_reference(),
+            value.unknown_bits(),
+        )),
+        Some((false, false, true, 0))
+    );
+    assert_eq!(
+        semantics
+            .standard_flags_for_raw_ordinal(minimal_raw)?
+            .map(|value| value.state()),
+        Some(DxfSemanticValueState::Absent)
     );
     Ok(())
 }

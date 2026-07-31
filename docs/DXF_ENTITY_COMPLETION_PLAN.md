@@ -257,6 +257,13 @@ excluding application-group decoys. No occurrence is selected and no default,
 domain rule, name normalization, handle resolution, or downstream text/glyph
 meaning is inferred. AC1009 Binary coverage leaves codes above 255 absent
 because that dialect's one-byte group-code header cannot encode them.
+M14.2ag adds lazy unique-occurrence semantics for every registered DIMSTYLE
+field. Explicit values, absence, lexical failure, and duplicates retain typed
+state plus field/raw provenance; absence is never converted into an
+undocumented default. Group-70 helpers expose documented bits 16, 32, and 64
+without discarding unknown bits. Field domains, handle target resolution,
+tolerance-string interpretation, glyph geometry, edit, and write remain later
+work.
 
 ## Milestone queue
 
