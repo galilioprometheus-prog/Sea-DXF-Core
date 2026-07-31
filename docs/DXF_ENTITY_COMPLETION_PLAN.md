@@ -292,6 +292,12 @@ and retains compact references to the original M14.3a values independently of
 lexical validity. It does not select values, apply defaults, interpret flags or
 counts, group points, validate or construct a curve, process HELIX, edit, or
 write.
+M14.3c adds unique-occurrence semantics for SPLINE group-70 flags. It exposes
+the five documented closed, periodic, rational, planar, and linear bits while
+retaining the original signed value and every unknown bit. Absence, lexical
+failure, and duplicates remain distinct. Other scalar semantics, count
+relations, point grouping, curve validation/geometry, HELIX, edit, and write
+remain later work.
 
 ## Milestone queue
 

@@ -4,9 +4,9 @@ use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DXF_SPLINE_ROLES, DxfAcadVersion, DxfAsciiNumericIssue,
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble,
     DxfError, DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfSplineCardDirectory,
-    DxfSplineCardMember, DxfSplineCardState, DxfSplineDirectory, DxfSplineNumber,
-    DxfSplineNumericIssue, DxfSplineRecordEntry, DxfSplineValue, DxfSplineValueCard,
-    DxfSplineValueRole, NoopDxfReadObserver,
+    DxfSplineCardMember, DxfSplineCardState, DxfSplineDirectory, DxfSplineFlags,
+    DxfSplineFlagsSemantic, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
+    DxfSplineValue, DxfSplineValueCard, DxfSplineValueRole, NoopDxfReadObserver,
 };
 
 type Evidence = (DxfSplineValueRole, DxfSplineNumber);
@@ -42,7 +42,7 @@ fn every_dialect_has_ascii_binary_spline_evidence_parity() -> Result<(), Box<dyn
 fn duplicates_invalid_numbers_and_application_decoys_remain_exact() -> Result<(), Box<dyn Error>> {
     let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n\
 0\nSECTION\n2\nENTITIES\n0\nSPLINE\n70\n.\n42\n1e-9999\n71\n2\n71\n3\n\
-102\n{APP\n40\n99\n102\n}\n40\n1\n0\nSPLINE\n8\nLayer\n0\nENDSEC\n0\nEOF\n";
+102\n{APP\n40\n99\n102\n}\n40\n1\n0\nSPLINE\n70\n1064\n0\nENDSEC\n0\nEOF\n";
     let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
     let directory = document.spline_directory(&DxfCancellationToken::default())?;
@@ -67,11 +67,6 @@ fn duplicates_invalid_numbers_and_application_decoys_remain_exact() -> Result<()
     assert_eq!(values[2].value(), Ok(DxfSplineNumber::Int16(2)));
     assert_eq!(values[3].value(), Ok(DxfSplineNumber::Int16(3)));
     assert_eq!(values[4].role(), DxfSplineValueRole::KnotValue);
-    assert_eq!(
-        directory.values_for_raw_record(directory.records()[1].record().ordinal()),
-        Some([].as_slice())
-    );
-
     let cards = document.spline_card_directory(&DxfCancellationToken::default())?;
     let raw = cards.evidence_directory().records()[0].record().ordinal();
     assert_eq!(
@@ -97,6 +92,25 @@ fn duplicates_invalid_numbers_and_application_decoys_remain_exact() -> Result<()
             .state(),
         DxfSplineCardState::Absent
     );
+    assert_eq!(
+        cards.flags_for_raw_record(raw)?,
+        Some(DxfSplineFlagsSemantic::Invalid(
+            DxfAsciiNumericIssue::InvalidSyntax { token_offset: 0 }
+        ))
+    );
+    let extended_raw = cards.evidence_directory().records()[1].record().ordinal();
+    let Some(DxfSplineFlagsSemantic::Explicit(extended)) =
+        cards.flags_for_raw_record(extended_raw)?
+    else {
+        return Err(io::Error::other("extended flags").into());
+    };
+    assert_eq!(extended.raw(), 1064);
+    assert!(extended.is_planar());
+    assert!(!extended.is_closed());
+    assert!(!extended.is_periodic());
+    assert!(!extended.is_rational());
+    assert!(!extended.is_linear());
+    assert_eq!(extended.unknown_bits(), 1056);
     Ok(())
 }
 
@@ -140,6 +154,8 @@ fn cancellation_lookup_and_public_traits_hold() -> Result<(), Box<dyn Error>> {
     assert_copy::<DxfSplineRecordEntry>();
     assert_copy::<DxfSplineValueCard>();
     assert_copy::<DxfSplineCardMember>();
+    assert_copy::<DxfSplineFlags>();
+    assert_copy::<DxfSplineFlagsSemantic>();
     assert_send_sync::<DxfSplineDirectory>();
     assert_send_sync::<DxfSplineCardDirectory>();
     Ok(())
@@ -153,6 +169,18 @@ fn assert_card_directory(directory: &DxfSplineCardDirectory) -> Result<(), Box<d
         directory.evidence_directory().source_id()
     );
     let record = directory.evidence_directory().records()[0];
+    let Some(DxfSplineFlagsSemantic::Explicit(flags)) =
+        directory.flags_for_raw_record(record.record().ordinal())?
+    else {
+        return Err(io::Error::other("explicit flags").into());
+    };
+    assert_eq!(flags.raw(), 13);
+    assert!(flags.is_closed());
+    assert!(!flags.is_periodic());
+    assert!(flags.is_rational());
+    assert!(flags.is_planar());
+    assert!(!flags.is_linear());
+    assert_eq!(flags.unknown_bits(), 0);
     let cards = directory
         .cards_for_raw_record(record.record().ordinal())
         .ok_or(io::Error::other("spline cards"))?;

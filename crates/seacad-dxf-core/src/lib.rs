@@ -742,7 +742,7 @@ pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
 pub use spline_card::{
     DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,
-    DxfSplineCardState, DxfSplineValueCard,
+    DxfSplineCardState, DxfSplineFlags, DxfSplineFlagsSemantic, DxfSplineValueCard,
 };
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,

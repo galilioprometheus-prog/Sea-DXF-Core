@@ -1683,6 +1683,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     evidence without copying or selecting values. Defaults, flag/count
     semantics, point grouping, curve validity, geometry, HELIX, edit, and write
     remain unclaimed.
+    M14.3c lazily selects SPLINE group-70 flags only when its M14.3b card is
+    unique. Absent, invalid, and duplicate states remain explicit; documented
+    closed, periodic, rational, planar, and linear helpers preserve every
+    unknown bit rather than rejecting real extended flags. Degree/count/
+    tolerance semantics, point grouping, validity, geometry, HELIX, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

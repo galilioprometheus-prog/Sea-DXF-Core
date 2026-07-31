@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3b can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -354,6 +354,12 @@ Absent, unique, and duplicate-preserving multiple states remain independent of
 numeric lexical validity, with compact members resolving back to exact M14.3a
 evidence. Value selection, defaults, flags/count semantics, point grouping,
 curve validity, geometry, HELIX, edit, and write remain unclaimed.
+
+M14.3c selects group-70 SPLINE flags only for a unique valid occurrence.
+Closed, periodic, rational, planar, and linear helpers preserve the exact
+signed value and all unknown bits; absent, invalid, and duplicate states stay
+typed. Other scalar semantics, count relations, point grouping, curve
+validity/geometry, HELIX, edit, and write remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

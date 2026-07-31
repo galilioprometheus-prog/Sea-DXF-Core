@@ -3,9 +3,9 @@
 use std::io;
 
 use crate::{
-    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError, DxfIoOperation,
-    DxfRawDocumentView, DxfSourceId, DxfSplineDirectory, DxfSplineRecordEntry, DxfSplineValue,
-    DxfSplineValueRole,
+    DxfAsciiNumericIssue, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
+    DxfError, DxfIoOperation, DxfRawDocumentView, DxfSourceId, DxfSplineDirectory, DxfSplineNumber,
+    DxfSplineNumericIssue, DxfSplineRecordEntry, DxfSplineValue, DxfSplineValueRole,
 };
 
 pub const DXF_SPLINE_ROLES: [DxfSplineValueRole; 24] = [
@@ -41,6 +41,66 @@ pub enum DxfSplineCardState {
     Absent,
     Unique,
     Multiple { occurrence_count: u32 },
+}
+
+/// Exact SPLINE group-70 bits with documented helpers and unknown-bit retention.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfSplineFlags {
+    raw: i16,
+}
+
+impl DxfSplineFlags {
+    const KNOWN_BITS: u16 = 1 | 2 | 4 | 8 | 16;
+
+    #[must_use]
+    pub const fn raw(self) -> i16 {
+        self.raw
+    }
+
+    #[must_use]
+    pub const fn bits(self) -> u16 {
+        self.raw as u16
+    }
+
+    #[must_use]
+    pub const fn is_closed(self) -> bool {
+        self.bits() & 1 != 0
+    }
+
+    #[must_use]
+    pub const fn is_periodic(self) -> bool {
+        self.bits() & 2 != 0
+    }
+
+    #[must_use]
+    pub const fn is_rational(self) -> bool {
+        self.bits() & 4 != 0
+    }
+
+    #[must_use]
+    pub const fn is_planar(self) -> bool {
+        self.bits() & 8 != 0
+    }
+
+    #[must_use]
+    pub const fn is_linear(self) -> bool {
+        self.bits() & 16 != 0
+    }
+
+    #[must_use]
+    pub const fn unknown_bits(self) -> u16 {
+        self.bits() & !Self::KNOWN_BITS
+    }
+}
+
+/// Unique-occurrence semantic state for SPLINE group 70.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfSplineFlagsSemantic {
+    Absent,
+    Multiple { occurrence_count: u32 },
+    Invalid(DxfAsciiNumericIssue),
+    Explicit(DxfSplineFlags),
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -238,6 +298,43 @@ impl DxfSplineCardDirectory {
             .values()
             .get(usize::try_from(member.value_ordinal()).ok()?)
             .copied()
+    }
+
+    pub fn flags_for_raw_record(
+        &self,
+        raw_ordinal: u64,
+    ) -> Result<Option<DxfSplineFlagsSemantic>, DxfError> {
+        let Some(card) = self.card_for_role(raw_ordinal, DxfSplineValueRole::Flags) else {
+            return Ok(None);
+        };
+        let semantic = match card.state() {
+            DxfSplineCardState::Absent => DxfSplineFlagsSemantic::Absent,
+            DxfSplineCardState::Multiple { occurrence_count } => {
+                DxfSplineFlagsSemantic::Multiple { occurrence_count }
+            }
+            DxfSplineCardState::Unique => {
+                let [member] = self
+                    .members_for_card(card.ordinal())
+                    .ok_or_else(invalid_internal_data)?
+                else {
+                    return Err(invalid_internal_data());
+                };
+                match self
+                    .value_for_member(*member)
+                    .ok_or_else(invalid_internal_data)?
+                    .value()
+                {
+                    Ok(DxfSplineNumber::Int16(raw)) => {
+                        DxfSplineFlagsSemantic::Explicit(DxfSplineFlags { raw })
+                    }
+                    Err(DxfSplineNumericIssue::InvalidAsciiNumber(issue)) => {
+                        DxfSplineFlagsSemantic::Invalid(issue)
+                    }
+                    Ok(DxfSplineNumber::Double(_)) => return Err(invalid_internal_data()),
+                }
+            }
+        };
+        Ok(Some(semantic))
     }
 }
 
