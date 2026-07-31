@@ -222,6 +222,13 @@ WCS normal. Missing, invalid, duplicate, non-finite, zero-extrusion, and basis
 failures remain explicit; maximum finite WCS coordinates are not rejected by
 an inapplicable transform. SHAPE definition resolution, rotation, metrics,
 glyph geometry, edit, and write remain later work.
+M14.2ab projects optional SHAPE group 50 rotation, in degrees, onto the
+normalized extrusion plane and exposes finite orthonormal WCS x/y axes plus
+the normal. Zero degrees preserves the arbitrary-axis basis and the exact WCS
+insertion remains untouched. Invalid or duplicate rotation/extrusion evidence,
+non-finite Binary values, zero extrusion, and basis failure remain explicit.
+SHAPE definition resolution, metrics, glyph geometry, edit, and write remain
+later work.
 
 ## Milestone queue
 

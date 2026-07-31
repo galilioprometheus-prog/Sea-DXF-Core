@@ -53,6 +53,12 @@ impl ExtrusionProjection {
         self.basis.normal().map(canonical_double)
     }
 
+    pub(crate) fn rotated_axes(self, rotation_radians: f64) -> [[DxfDouble; 3]; 2] {
+        self.basis
+            .rotated_xy(rotation_radians)
+            .map(|axis| axis.map(canonical_double))
+    }
+
     pub(crate) const fn raw(self) -> Option<DxfRawValueProvenance> {
         self.raw
     }

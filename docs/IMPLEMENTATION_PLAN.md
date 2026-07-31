@@ -1600,6 +1600,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     invalid, duplicate, non-finite, zero-extrusion, and basis failures remain
     typed. TEXT continues to use the helper's OCS-to-WCS point transform with
     unchanged regression evidence.
+    M14.2ab projects SHAPE group 50 rotation onto the normalized extrusion
+    plane and exposes finite orthonormal WCS x/y axes plus the normal. The
+    default zero-degree rotation preserves the arbitrary-axis basis; positive
+    angles rotate its x/y axes in degrees. The exact SHAPE WCS insertion point
+    remains untouched. Invalid or duplicate rotation/extrusion evidence,
+    non-finite Binary values, zero extrusion, and basis failure remain typed.
+    Shape-definition resolution, style metrics, glyph geometry, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

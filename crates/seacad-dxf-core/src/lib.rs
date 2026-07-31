@@ -146,6 +146,7 @@ mod raw_record;
 mod read_options;
 mod semantic_value;
 mod shape_wcs_insertion;
+mod shape_wcs_orientation;
 mod source;
 mod source_id;
 mod source_scan;
@@ -692,6 +693,10 @@ pub use semantic_value::{
 pub use shape_wcs_insertion::{
     DxfShapeInsertionComponent, DxfShapeWcsInsertion, DxfShapeWcsInsertionDirectory,
     DxfShapeWcsInsertionIssue, DxfShapeWcsInsertionSemantic, DxfShapeWcsInsertionSemantics,
+};
+pub use shape_wcs_orientation::{
+    DxfShapeWcsOrientation, DxfShapeWcsOrientationDirectory, DxfShapeWcsOrientationIssue,
+    DxfShapeWcsOrientationSemantic, DxfShapeWcsOrientationSemantics,
 };
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;

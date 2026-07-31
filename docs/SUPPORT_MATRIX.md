@@ -429,6 +429,14 @@ typed; a finite maximum-magnitude WCS point remains usable. SHAPE definition
 resolution, rotation, style metrics, glyph geometry, edit, and write remain
 unclaimed.
 
+M14.2ab projects optional SHAPE group 50 rotation, in degrees, onto the
+normalized extrusion plane and exposes finite orthonormal WCS x/y axes plus
+the normal. Zero degrees preserves the arbitrary-axis basis, while the exact
+WCS insertion remains unchanged. Invalid or duplicate rotation/extrusion
+evidence, non-finite Binary values, zero extrusion, and basis failure remain
+typed. SHAPE definition resolution, style metrics, glyph geometry, edit, and
+write remain unclaimed.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
 | DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT anchor and SHAPE insertion OCS/WCS + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
