@@ -195,6 +195,12 @@ and first-value provenance. Static and dynamic-manual flat modes report a
 dedicated unsupported ambiguity rather than a generic missing-height result.
 No source-order heuristic claims rotation, shared height, or individual
 heights without a reproducible normative or behavioral discriminator.
+M14.2w constructs the effective MTEXT WCS X-axis direction selected by
+M14.2k. Rotation input maps to cosine/sine/zero; explicit group 11/21/31 input
+retains its exact vector and exposes a separately normalized unit direction.
+Partial, invalid, zero-length, non-finite-length, and group-50-ambiguous inputs
+remain typed. This does not yet combine insertion, extrusion, or text metrics
+into placement or glyph geometry.
 
 ## Milestone queue
 

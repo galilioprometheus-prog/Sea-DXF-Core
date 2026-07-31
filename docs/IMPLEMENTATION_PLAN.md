@@ -1569,6 +1569,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Autodesk's dual assignment and the legacy behavioral notes do not provide
     enough evidence to classify direct group 50 as rotation versus shared or
     individual height, so no height value is fabricated.
+    M14.2w projects the M14.2k effective orientation input into one WCS X-axis
+    direction. A selected rotation becomes the documented cosine/sine vector;
+    a selected 11/21/31 vector retains its exact components and separately
+    exposes a normalized unit direction. Partial, invalid, zero-length, and
+    non-finite-length vectors remain typed, and M14.2v group-50 ambiguity
+    propagates unchanged instead of becoming geometry.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -105,6 +105,7 @@ mod mtext_layout;
 mod mtext_numeric_domain;
 mod mtext_orientation;
 mod mtext_tolerance_scalar;
+mod mtext_x_axis_direction;
 mod mtext_xdata_column_evidence;
 mod mtext_xdata_defined_height;
 mod mtext_xdata_linked_column;
@@ -539,6 +540,10 @@ pub use mtext_orientation::{
 };
 pub use mtext_tolerance_scalar::{
     DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfToleranceNumericSemantics,
+};
+pub use mtext_x_axis_direction::{
+    DxfMTextXAxisComponent, DxfMTextXAxisDirection, DxfMTextXAxisDirectionDirectory,
+    DxfMTextXAxisDirectionIssue, DxfMTextXAxisDirectionSemantic, DxfMTextXAxisDirectionSemantics,
 };
 pub use mtext_xdata_column_evidence::{
     DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfMTextXDataColumnRole,

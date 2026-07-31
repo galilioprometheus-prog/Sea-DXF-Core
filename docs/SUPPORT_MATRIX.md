@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2v can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2w can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -395,6 +395,13 @@ count and first raw provenance. Static and dynamic-manual flat modes surface a
 dedicated unsupported-ambiguity issue, while dynamic-auto remains usable
 without consuming group 50. Direct group-50 disambiguation, geometry, edit,
 and write remain unclaimed.
+
+M14.2w constructs the effective MTEXT WCS X-axis direction from M14.2k's
+source-order winner. Rotation becomes a cosine/sine/zero vector; group
+11/21/31 retains its exact vector and also exposes a normalized unit vector.
+Partial, invalid, zero-length, non-finite-length, absent, and ambiguous
+orientation inputs remain distinct typed states. Placement, extrusion-basis
+composition, text metrics, glyph geometry, edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
