@@ -344,6 +344,11 @@ M13.2g records the first successful six-package and aggregate receipt workflow
    bind all six native packages and the aggregate receipt to one exact commit.
    This policy changes execution cost, not existing native evidence or support
    claims.
+   Q2.1c-d select the provisioned Windows PowerShell 5.1 shell and scope its
+   execution-policy bypass to each Actions-generated process without changing
+   machine policy. Q2.1e records the first successful end-to-end self-hosted
+   manual quality run at commit `9e7c47a2af2a80f79c59f51ef151f62090572c91`.
+   This operational Windows x64 receipt is not six-native release evidence.
 10. M6 closure: complete the documented HEADER inventory before topology.
     M6.5q appends `$DIMASSOC`, `$DIMATFIT`, `$DIMCLRD`, `$DIMCLRE`, `$DIMCLRT`,
     `$DIMJUST`, `$DIMLWD`, `$DIMLWE`, `$DIMTAD`, `$DIMTMOVE`, `$DIMTOLJ`,

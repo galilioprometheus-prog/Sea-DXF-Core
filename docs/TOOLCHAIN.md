@@ -66,6 +66,15 @@ six native targets and aggregates their exact receipts. The manual standalone
 dependency workflow remains available for diagnosis. No automatic workflow or
 schedule consumes GitHub Actions minutes.
 
+The first two self-hosted dispatches exposed missing `pwsh` and Windows
+PowerShell's restricted script policy before any project gate ran. Q2.1c-d
+therefore select Windows PowerShell 5.1 and apply `ExecutionPolicy Bypass` only
+to each workflow shell process. Q2.1e run `30640753470` then completed every
+manual quality step successfully at commit
+`9e7c47a2af2a80f79c59f51ef151f62090572c91` in 3 minutes 48 seconds. The runner
+returned online and idle after completion. This is operational self-hosted
+Windows x64 evidence, not a six-native receipt.
+
 ## Q2.2 offline corpus receipt harness
 
 Q2.2 adds the workspace binary `seacad-corpus-receipt`. It uses the existing
