@@ -20,77 +20,63 @@ pub(super) fn render_text(
     report: &CliReport,
     language: CliLanguage,
 ) -> io::Result<()> {
+    let text = language.catalog();
     writeln!(writer, "SeaCad {}", report.command)?;
     writeln!(
         writer,
         "{}: {}",
-        language.pick("Status", "Trạng thái"),
+        text.status_label,
         status_text(language, report.status)
     )?;
     writeln!(
         writer,
         "{}: {}",
-        language.pick("Read mode", "Chế độ đọc"),
+        text.read_mode_label,
         read_mode_text(language, report.options.read_mode)
     )?;
     writeln!(
         writer,
         "{}: {}",
-        language.pick("Resource profile", "Hồ sơ tài nguyên"),
+        text.resource_profile_label,
         profile_text(language, report.options.resource_profile)
     )?;
     writeln!(
         writer,
         "{}: {}",
-        language.pick("Physical format", "Định dạng vật lý"),
+        text.physical_format_label,
         physical_text(language, report.format.physical)
     )?;
     if let Some(path) = &report.source.path {
-        writeln!(writer, "{}: {path}", language.pick("Path", "Đường dẫn"))?;
+        writeln!(writer, "{}: {path}", text.path_label)?;
     }
     if let Some(bytes) = report.source.bytes {
-        writeln!(writer, "{}: {bytes}", language.pick("Bytes", "Số byte"))?;
+        writeln!(writer, "{}: {bytes}", text.bytes_label)?;
     }
     if let Some(source_id) = &report.source.id {
-        writeln!(
-            writer,
-            "{}: {source_id}",
-            language.pick("Source ID", "ID nguồn")
-        )?;
+        writeln!(writer, "{}: {source_id}", text.source_id_label)?;
     }
     if let Some(document) = &report.document {
         writeln!(
             writer,
             "{}: {}",
-            language.pick("Conformance", "Mức tuân thủ"),
+            text.conformance_label,
             conformance_text(language, document.conformance)
         )?;
+        writeln!(writer, "{}: {}", text.groups_label, document.groups)?;
+        let eof = document
+            .eof_occurrence
+            .map_or_else(|| text.absent.to_owned(), |value| value.to_string());
+        writeln!(writer, "{}: {eof}", text.eof_occurrence_label)?;
         writeln!(
             writer,
             "{}: {}",
-            language.pick("Groups", "Số group"),
-            document.groups
-        )?;
-        let eof = document.eof_occurrence.map_or_else(
-            || language.pick("absent", "không có").to_owned(),
-            |value| value.to_string(),
-        );
-        writeln!(
-            writer,
-            "{}: {eof}",
-            language.pick("EOF occurrence", "Vị trí EOF")
-        )?;
-        writeln!(
-            writer,
-            "{}: {}",
-            language.pick("Trailing bytes", "Byte phía sau EOF"),
-            document.trailing_bytes
+            text.trailing_bytes_label, document.trailing_bytes
         )?;
     }
     writeln!(
         writer,
         "{}: {}",
-        language.pick("Diagnostics", "Chẩn đoán"),
+        text.diagnostics_label,
         report.diagnostics.len()
     )?;
     for diagnostic in &report.diagnostics {
@@ -116,7 +102,7 @@ pub(super) fn render_text(
         writeln!(
             writer,
             "{} {}: {}",
-            language.pick("Error", "Lỗi"),
+            text.error_label,
             error.code,
             error_text(language, &error.code, &error.message)
         )?;

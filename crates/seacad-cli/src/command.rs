@@ -80,17 +80,15 @@ impl CliOptions {
 }
 
 pub(super) fn cli_command(language: CliLanguage) -> Command {
-    let options_heading = language.pick("Options", "Tùy chọn");
+    let text = language.catalog();
+    let options_heading = text.options_heading;
     Command::new("seacad")
         .version(seacad_dxf_core::core_version())
-        .about(language.pick(
-            "Lossless DXF inspection and verification",
-            "Kiểm tra và xác minh DXF không làm mất dữ liệu",
-        ))
-        .override_usage(language.pick("seacad [OPTIONS] <COMMAND>", "seacad [TÙY_CHỌN] <LỆNH>"))
+        .about(text.application_about)
+        .override_usage(text.root_usage)
         .help_template(language.help_template())
-        .subcommand_help_heading(language.pick("Commands", "Lệnh"))
-        .subcommand_value_name(language.pick("COMMAND", "LỆNH"))
+        .subcommand_help_heading(text.commands_heading)
+        .subcommand_value_name(text.command_value_name)
         .subcommand_required(true)
         .arg_required_else_help(true)
         .disable_help_subcommand(true)
@@ -102,7 +100,7 @@ pub(super) fn cli_command(language: CliLanguage) -> Command {
                 .action(ArgAction::SetTrue)
                 .global(true)
                 .help_heading(options_heading)
-                .help(language.pick("Emit stable JSON schema v1", "Xuất JSON schema v1 ổn định")),
+                .help(text.emit_json_help),
         )
         .arg(
             Arg::new("large")
@@ -110,10 +108,7 @@ pub(super) fn cli_command(language: CliLanguage) -> Command {
                 .action(ArgAction::SetTrue)
                 .global(true)
                 .help_heading(options_heading)
-                .help(language.pick(
-                    "Opt in to the Large resource profile",
-                    "Chủ động dùng hồ sơ tài nguyên Large",
-                )),
+                .help(text.large_profile_help),
         )
         .arg(
             Arg::new("show-path")
@@ -121,44 +116,32 @@ pub(super) fn cli_command(language: CliLanguage) -> Command {
                 .action(ArgAction::SetTrue)
                 .global(true)
                 .help_heading(options_heading)
-                .help(language.pick(
-                    "Include the input path in output",
-                    "Hiện đường dẫn đầu vào trong kết quả",
-                )),
+                .help(text.show_path_help),
         )
         .arg(
             Arg::new("language")
                 .long("lang")
-                .value_name(language.pick("LANG", "NGÔN_NGỮ"))
+                .value_name(text.language_value_name)
                 .value_parser(["en", "vi"])
                 .default_value("en")
                 .hide_default_value(true)
                 .hide_possible_values(true)
                 .global(true)
                 .help_heading(options_heading)
-                .help(language.pick(
-                    "Human output language: en (default) or vi",
-                    "Ngôn ngữ hiển thị: en (mặc định) hoặc vi",
-                )),
+                .help(text.language_help),
         )
         .arg(localized_help_arg(language, options_heading))
         .arg(localized_version_arg(language, options_heading))
         .subcommand(file_command(
             language,
             "inspect",
-            language.pick(
-                "Inspect raw ASCII/Binary DXF framing; Compatible mode is the default",
-                "Kiểm tra framing DXF ASCII/Binary thô; mặc định là Compatible",
-            ),
+            text.inspect_about,
             "compatible",
         ))
         .subcommand(file_command(
             language,
             "verify",
-            language.pick(
-                "Verify strict raw ASCII/Binary DXF framing; Strict mode is the default",
-                "Xác minh framing DXF ASCII/Binary nghiêm ngặt; mặc định là Strict",
-            ),
+            text.verify_about,
             "strict",
         ))
 }
@@ -169,13 +152,12 @@ fn file_command(
     about: &'static str,
     default_mode: &'static str,
 ) -> Command {
-    let options_heading = language.pick("Options", "Tùy chọn");
-    let usage = match (language, name) {
-        (CliLanguage::Vietnamese, "inspect") => "seacad inspect [TÙY_CHỌN] <TỆP>",
-        (CliLanguage::Vietnamese, "verify") => "seacad verify [TÙY_CHỌN] <TỆP>",
-        (CliLanguage::English, "inspect") => "seacad inspect [OPTIONS] <FILE>",
-        (CliLanguage::English, "verify") => "seacad verify [OPTIONS] <FILE>",
-        _ => "seacad [OPTIONS] <FILE>",
+    let text = language.catalog();
+    let options_heading = text.options_heading;
+    let usage = match name {
+        "inspect" => text.inspect_usage,
+        "verify" => text.verify_usage,
+        _ => text.generic_file_usage,
     };
     Command::new(name)
         .about(about)
@@ -184,22 +166,22 @@ fn file_command(
         .disable_help_flag(true)
         .arg(
             Arg::new("input")
-                .value_name(language.pick("FILE", "TỆP"))
+                .value_name(text.file_value_name)
                 .required(true)
                 .value_parser(value_parser!(PathBuf))
-                .help_heading(language.pick("Arguments", "Đối số"))
-                .help(language.pick("DXF file to read", "Tệp DXF cần đọc")),
+                .help_heading(text.arguments_heading)
+                .help(text.file_help),
         )
         .arg(
             Arg::new("mode")
                 .long("mode")
-                .value_name(language.pick("MODE", "CHẾ_ĐỘ"))
+                .value_name(text.mode_value_name)
                 .value_parser(["strict", "compatible"])
                 .default_value(default_mode)
                 .hide_default_value(true)
                 .hide_possible_values(true)
                 .help_heading(options_heading)
-                .help(language.pick("Framing read mode", "Chế độ đọc framing")),
+                .help(text.mode_help),
         )
         .arg(localized_help_arg(language, options_heading))
 }
@@ -210,7 +192,7 @@ fn localized_help_arg(language: CliLanguage, heading: &'static str) -> Arg {
         .long("help")
         .action(ArgAction::Help)
         .help_heading(heading)
-        .help(language.pick("Print help", "In trợ giúp"))
+        .help(language.catalog().print_help)
 }
 
 fn localized_version_arg(language: CliLanguage, heading: &'static str) -> Arg {
@@ -219,7 +201,7 @@ fn localized_version_arg(language: CliLanguage, heading: &'static str) -> Arg {
         .long("version")
         .action(ArgAction::Version)
         .help_heading(heading)
-        .help(language.pick("Print version", "In phiên bản"))
+        .help(language.catalog().print_version)
 }
 
 #[cfg(test)]

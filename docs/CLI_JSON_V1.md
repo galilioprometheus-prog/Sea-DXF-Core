@@ -27,6 +27,13 @@ severity labels, and all currently known CLI/core error codes have Vietnamese
 human text. A future unknown error code falls back to its English technical
 message rather than hiding detail.
 
+Static per-locale catalogs own reusable help and report labels. Command
+construction, execution, and report rendering select catalog fields rather
+than embedding parallel language pairs. Adding a future language therefore
+does not require bilingual branches in those business modules. Catalogs are
+compiled into the executable; there is no runtime filesystem lookup, host
+locale dependency, or new package dependency.
+
 Paths are redacted by default in both text and JSON. `--show-path` is the only
 way to request the input path. Source IDs are SHA-256 identities of the bytes,
 not filenames.

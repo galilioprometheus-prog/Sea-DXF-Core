@@ -302,6 +302,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
    test locks root help plus inspect/verify usage in English and Vietnamese.
    Argument names, defaults, validation, exit behavior, execution, rendering,
    DXF core behavior, dependencies, and support claims remain unchanged.
+   M6.5o-r7 moves reusable human help/report text out of command construction,
+   execution, and rendering into complete compile-time English and Vietnamese
+   catalogs. Adding another language no longer expands those business modules;
+   JSON v1 remains language-neutral, explicit language selection and English
+   fallback behavior remain unchanged, and no dependency or support claim is
+   added. The accompanying architecture audit separates handwritten
+   production, inline/integration tests, and generated code before identifying
+   any size-driven follow-up.
    M6.5p appends `$DIMALT`, `$DIMASO`, `$DIMLIM`, `$DIMSAH`, `$DIMSD1`,
    `$DIMSD2`, `$DIMSE1`, `$DIMSE2`, `$DIMSHO`, `$DIMSOXD`, `$DIMTIH`,
    `$DIMTIX`, `$DIMTOFL`, `$DIMTOH`, `$DIMTOL`, and `$DIMUPT` as exact

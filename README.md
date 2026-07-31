@@ -30,8 +30,9 @@ typed semantics for every entity.
   reviewed lazy semantics/topology/geometry, reversible transaction planning,
   and verified preserve-patch/canonical create-new writers.
 - `seacad-cli`: operational `inspect` and `verify` commands with English or
-  Vietnamese human output and stable JSON v1, plus the separate aggregate-only
-  `seacad-corpus-receipt` offline evidence harness.
+  Vietnamese human output sourced from per-locale compile-time catalogs and
+  stable JSON v1, plus the separate aggregate-only `seacad-corpus-receipt`
+  offline evidence harness.
 - `seacad-schema-gen`: deterministic provenance-backed schema generation,
   CycloneDX inventory, legal-bundle generation, cross-platform freshness
   verification, fail-closed native artifact assembly, and six-target receipt

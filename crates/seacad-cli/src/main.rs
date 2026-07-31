@@ -76,7 +76,7 @@ fn run(args: Vec<OsString>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u
     let options = match CliOptions::from_matches(&matches) {
         Ok(options) => options,
         Err(message) => {
-            let label = language.pick("Internal CLI error", "Lỗi nội bộ CLI");
+            let label = language.catalog().internal_cli_error;
             let _ignored = writeln!(stderr, "{CLI_INTERNAL_ERROR}: {label}: {message}");
             return 1;
         }
@@ -90,9 +90,7 @@ fn run(args: Vec<OsString>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u
         render_text(stderr, &outcome.report, options.language)
     };
     if let Err(error) = write_result {
-        let message = options
-            .language
-            .pick("failed to write CLI output", "không thể ghi đầu ra CLI");
+        let message = options.language.catalog().failed_to_write_output;
         let _ignored = writeln!(stderr, "{CLI_OUTPUT_ERROR}: {message} ({:?})", error.kind());
         1
     } else {

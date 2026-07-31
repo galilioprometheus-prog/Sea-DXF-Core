@@ -1,5 +1,9 @@
 //! Explicit, platform-independent localization for human CLI output.
 
+mod catalog;
+mod en;
+mod vi;
+
 use std::{
     ffi::{OsStr, OsString},
     io::{self, Write},
@@ -10,10 +14,7 @@ use clap::{
     error::{ContextKind, ErrorKind},
 };
 
-const HELP_TEMPLATE_EN: &str =
-    "{before-help}{name}\n{about-with-newline}\nUsage: {usage}\n\n{all-args}{after-help}";
-const HELP_TEMPLATE_VI: &str =
-    "{before-help}{name}\n{about-with-newline}\nCách dùng: {usage}\n\n{all-args}{after-help}";
+pub(crate) use catalog::CliCatalog;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(crate) enum CliLanguage {
@@ -23,6 +24,9 @@ pub(crate) enum CliLanguage {
 }
 
 impl CliLanguage {
+    #[cfg(test)]
+    pub(crate) const SUPPORTED: [Self; 2] = [Self::English, Self::Vietnamese];
+
     pub(crate) fn detect(args: &[OsString]) -> Self {
         let mut language = Self::English;
         let mut index = 1;
@@ -63,15 +67,15 @@ impl CliLanguage {
         }
     }
 
-    pub(crate) const fn pick<'a>(self, english: &'a str, vietnamese: &'a str) -> &'a str {
+    pub(crate) const fn catalog(self) -> &'static CliCatalog {
         match self {
-            Self::English => english,
-            Self::Vietnamese => vietnamese,
+            Self::English => &en::CATALOG,
+            Self::Vietnamese => &vi::CATALOG,
         }
     }
 
     pub(crate) const fn help_template(self) -> &'static str {
-        self.pick(HELP_TEMPLATE_EN, HELP_TEMPLATE_VI)
+        self.catalog().help_template
     }
 }
 
@@ -165,6 +169,15 @@ mod tests {
             CliLanguage::detect(&arguments(&["seacad", "inspect", "--", "--lang", "vi"])),
             CliLanguage::English
         );
+    }
+
+    #[test]
+    fn every_supported_language_has_a_complete_catalog() {
+        for language in CliLanguage::SUPPORTED {
+            for entry in language.catalog().entries() {
+                assert!(!entry.is_empty());
+            }
+        }
     }
 
     fn arguments(values: &[&str]) -> Vec<OsString> {
