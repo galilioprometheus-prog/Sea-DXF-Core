@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2ag can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2ah can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -321,6 +321,14 @@ individual heights, column type/count/width/gutter, automatic-height, and
 flow-reversal groups with exact source identity and raw provenance. The
 boundary and ASCII/Binary parity are verified for AC1009 through AC1032.
 Semantic column validation, legacy flat/R2007 XDATA unification, geometry,
+edit, and write remain unclaimed.
+
+M14.2ah composes the five DIMSTYLE handle roles with exact generic
+document-local handle resolution. Absent and duplicate fields remain distinct
+from invalid, null, missing, unique, and ambiguous targets; all generic
+identity matches remain reachable without choosing a duplicate. AC1009 Binary
+keeps these group codes above 255 absent. Expected STYLE/BLOCK_RECORD target
+validation, name resolution, tolerance-string interpretation, glyph geometry,
 edit, and write remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,

@@ -45,6 +45,7 @@ mod dimstyle_field;
 mod dimstyle_field_card;
 mod dimstyle_field_evidence;
 mod dimstyle_field_semantic;
+mod dimstyle_handle_resolution;
 mod dimstyle_table;
 mod ellipse_geometry;
 mod ellipse_geometry_card;
@@ -337,6 +338,10 @@ pub use dimstyle_field_evidence::{
 pub use dimstyle_field_semantic::{
     DxfDimStyleSemanticDirectory, DxfDimStyleSemanticIssue, DxfDimStyleSemanticValue,
     DxfDimStyleStandardFlags, DxfDimStyleStandardFlagsSemantic,
+};
+pub use dimstyle_handle_resolution::{
+    DxfDimStyleHandleResolutionDirectory, DxfDimStyleHandleResolutionEntry, DxfDimStyleHandleRole,
+    DxfDimStyleHandleTargetState,
 };
 pub use dimstyle_table::{DxfDimStyleTableDirectory, DxfDimStyleTableEntry};
 pub use ellipse_geometry::{

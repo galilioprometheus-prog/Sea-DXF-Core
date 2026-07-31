@@ -1651,6 +1651,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     preserving every unknown bit. Domain/range validation, handle target
     resolution, tolerance-string interpretation, glyph geometry, edit, and
     write remain unclaimed.
+    M14.2ah composes the five DIMSTYLE handle-field cards with the shared
+    document-local handle resolver. Each text-style, leader-arrow, common-
+    arrow, first-arrow, and second-arrow role retains absent, duplicate-field,
+    invalid, null, missing, unique, or ambiguous target state and exposes every
+    generic identity match without selecting a duplicate. AC1009 Binary keeps
+    these above-255 groups absent. Target record-type validation, name
+    resolution, tolerance-string interpretation, glyph geometry, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

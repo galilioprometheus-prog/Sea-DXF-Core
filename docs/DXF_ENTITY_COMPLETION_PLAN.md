@@ -264,6 +264,13 @@ undocumented default. Group-70 helpers expose documented bits 16, 32, and 64
 without discarding unknown bits. Field domains, handle target resolution,
 tolerance-string interpretation, glyph geometry, edit, and write remain later
 work.
+M14.2ah resolves the five DIMSTYLE handle roles through the existing exact
+document-local identity graph. Absent or duplicate field occurrences remain
+separate from invalid, null, missing, unique, and ambiguous handle targets;
+generic duplicate targets preserve source order and no target is selected.
+This does not yet validate that a unique record has the expected STYLE or
+BLOCK_RECORD table type, resolve names, interpret tolerance strings, construct
+glyphs, edit, or write.
 
 ## Milestone queue
 
