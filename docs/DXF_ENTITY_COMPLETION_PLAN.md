@@ -229,6 +229,13 @@ insertion remains untouched. Invalid or duplicate rotation/extrusion evidence,
 non-finite Binary values, zero extrusion, and basis failure remain explicit.
 SHAPE definition resolution, metrics, glyph geometry, edit, and write remain
 later work.
+M14.2ac projects TEXT group 50 rotation and documented group 71 backward and
+upside-down bits into WCS glyph axes on the normalized extrusion plane. Unknown
+generation bits remain preserved, and the selected WCS placement plus all lower
+evidence remains reachable. Invalid or duplicate rotation/flags/extrusion,
+non-finite Binary values, zero extrusion, and basis failure remain explicit.
+Style metrics, oblique/width/height geometry, glyph outlines, edit, and write
+remain later work.
 
 ## Milestone queue
 

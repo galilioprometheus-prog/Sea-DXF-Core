@@ -217,7 +217,7 @@ fn project_orientation(
             return DxfSemanticValue::invalid(map_projection_issue(issue), field, raw);
         }
     };
-    let axes = extrusion.rotated_axes(rotation.to_radians());
+    let axes = extrusion.oriented_axes(rotation.to_radians(), false, false);
     if !axes
         .iter()
         .flatten()

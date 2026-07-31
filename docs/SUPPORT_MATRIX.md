@@ -437,10 +437,18 @@ evidence, non-finite Binary values, zero extrusion, and basis failure remain
 typed. SHAPE definition resolution, style metrics, glyph geometry, edit, and
 write remain unclaimed.
 
+M14.2ac projects TEXT group 50 rotation and the documented group 71 backward
+and upside-down bits into WCS glyph axes on the normalized extrusion plane.
+Unknown generation bits remain preserved, and the selected WCS placement plus
+all lower evidence remains reachable. Invalid or duplicate
+rotation/flags/extrusion, non-finite Binary values, zero extrusion, and basis
+failure remain typed. Style metrics, oblique/width/height geometry, glyph
+outlines, edit, and write remain unclaimed.
+
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT anchor and SHAPE insertion OCS/WCS + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT anchor and SHAPE insertion OCS/WCS + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT and SHAPE WCS placement/orientation + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT and SHAPE WCS placement/orientation + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 

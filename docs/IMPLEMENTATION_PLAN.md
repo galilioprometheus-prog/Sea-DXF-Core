@@ -1608,6 +1608,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     non-finite Binary values, zero extrusion, and basis failure remain typed.
     Shape-definition resolution, style metrics, glyph geometry, edit, and
     write remain unclaimed.
+    M14.2ac projects TEXT group 50 rotation and the documented group 71
+    backward/upside-down bits into WCS glyph axes on the normalized extrusion
+    plane. Unknown generation bits remain preserved without changing the known
+    axis effects. The selected OCS-to-WCS placement anchor and all lower
+    evidence remain reachable. Invalid or duplicate rotation/flags/extrusion,
+    non-finite Binary values, zero extrusion, and basis failure remain typed.
+    Style metrics, oblique/width/height geometry, glyph outlines, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
