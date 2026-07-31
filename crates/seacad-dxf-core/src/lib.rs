@@ -161,6 +161,7 @@ mod source_scan;
 mod source_span;
 mod spline_card;
 mod spline_evidence;
+mod spline_scalar_semantic;
 mod text_control;
 mod text_decoder;
 mod text_escape;
@@ -747,6 +748,9 @@ pub use spline_card::{
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
     DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,
+};
+pub use spline_scalar_semantic::{
+    DXF_SPLINE_SCALAR_ROLES, DxfSplineScalarDirectory, DxfSplineScalarEntry, DxfSplineScalarState,
 };
 pub use text_control::{
     DxfDecodedTextSpan, DxfTextControlContext, DxfTextControlCursor, DxfTextControlError,

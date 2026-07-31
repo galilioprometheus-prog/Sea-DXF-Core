@@ -1689,6 +1689,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     unknown bit rather than rejecting real extended flags. Degree/count/
     tolerance semantics, point grouping, validity, geometry, HELIX, edit, and
     write remain unclaimed.
+    M14.3d selects the unique degree, three declared counts, and three
+    tolerance scalars through M14.3b cards. Missing counts remain absent;
+    missing knot/control/fit tolerances receive only Autodesk's documented
+    `1e-7`, `1e-7`, and `1e-10` defaults. Explicit, defaulted, absent, invalid,
+    and duplicate states retain evidence without range validation. Count
+    reconciliation, point grouping, curve validity/geometry, HELIX, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

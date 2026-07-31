@@ -298,6 +298,12 @@ retaining the original signed value and every unknown bit. Absence, lexical
 failure, and duplicates remain distinct. Other scalar semantics, count
 relations, point grouping, curve validation/geometry, HELIX, edit, and write
 remain later work.
+M14.3d selects unique degree, knot/control/fit counts, and tolerance scalars.
+Absent counts remain absent, while only the three documented tolerance
+defaults are materialized. Explicit/defaulted/absent/invalid/duplicate states
+retain their evidence without domain or range guesses. Count reconciliation,
+point grouping, curve validity/geometry, HELIX, edit, and write remain later
+work.
 
 ## Milestone queue
 
