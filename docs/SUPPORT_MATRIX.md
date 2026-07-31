@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2aa can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2ac can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover

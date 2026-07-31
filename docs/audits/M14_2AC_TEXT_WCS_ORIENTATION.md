@@ -75,4 +75,4 @@ The audit file omits its own hash so that the receipt is not self-referential.
 | `crates/seacad-dxf-core/tests/text_wcs_orientation_tests.rs` | 429 | `4c102b07ccc70e23ab54d9fdf1bf25c5440740a2027314e95a7bce48ef3053f4` |
 | `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 267 | `50dac4ec9c58ba246cfd70d446a0bfcd91216585b919b8ef98d5796b8c8e9f4d` |
 | `docs/IMPLEMENTATION_PLAN.md` | 1,621 | `dd82c23ad744026fb3a602593388f35bfb0a0cad54f176c010214e17f93f6b94` |
-| `docs/SUPPORT_MATRIX.md` | 1,317 | `4f1ed781adc20b3439325dca034bea070f13bc504219c2665add00a7362c3ec0` |
+| `docs/SUPPORT_MATRIX.md` | 1,317 | `2c09451b4814c5c840694e50f7d2c462b35b88fd6491669d73779aa7c5de78f1` |
