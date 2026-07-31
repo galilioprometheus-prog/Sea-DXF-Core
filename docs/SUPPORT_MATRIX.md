@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2r can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2s can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -364,6 +364,14 @@ selector 47, its typed 1070 declared count, and the contiguous source-order
 soft-pointer parsing, including lexical failures and original spelling.
 Inexact or interrupted envelopes publish no entry or partial handle slice.
 Association with column-info, count relationships, target resolution, direct
+flat group-50 framing, geometry, edit, and write remain unclaimed.
+
+M14.2s associates a linked-column block only with the latest complete
+column-info block that ends before it in the same MTEXT record. Its group-1005
+handles reuse document-local generic resolution and distinguish invalid,
+null, missing, ambiguous, unique-MTEXT, and unique-other-record targets while
+retaining the unique target record. This is resolution evidence, not a claim
+that the link graph or declared count is valid. Count relationships, direct
 flat group-50 framing, geometry, edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |

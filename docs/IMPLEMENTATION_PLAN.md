@@ -1540,6 +1540,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     wrong-wire blocks publish no entry or partial handle slice. Column-info
     association, count relationships, target resolution, and direct flat
     group-50 framing remain later checkpoints.
+    M14.2s associates a linked-column block only with the latest complete
+    column-info block that ends before it in the same MTEXT record. Each
+    group-1005 handle reuses the document-local generic resolver and retains
+    distinct invalid, null, missing, ambiguous, unique-MTEXT, and
+    unique-other-record outcomes plus the unique target record where present.
+    This is target-resolution evidence, not validation of graph membership or
+    the undocumented declared-count relationship. Direct flat group-50
+    framing remains a later checkpoint.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

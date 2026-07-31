@@ -173,6 +173,11 @@ handle evidence. It reuses the format-neutral raw-handle parser, so invalid
 hex remains typed and no second handle implementation is introduced. Linking
 the envelope to column-info, validating the declared-count relationship, and
 resolving targets remain separate from this evidence checkpoint.
+M14.2s associates that envelope with only the latest complete preceding
+column-info block in the same MTEXT record and reuses the generic handle
+resolution directory for every group-1005 occurrence. Target states preserve
+invalid, null, missing, ambiguous, unique MTEXT, and unique non-MTEXT outcomes.
+This does not validate graph membership or a declared-count formula.
 
 ## Milestone queue
 
