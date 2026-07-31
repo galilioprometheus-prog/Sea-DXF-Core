@@ -304,6 +304,12 @@ defaults are materialized. Explicit/defaulted/absent/invalid/duplicate states
 retain their evidence without domain or range guesses. Count reconciliation,
 point grouping, curve validity/geometry, HELIX, edit, and write remain later
 work.
+M14.3e compares unique nonnegative declared knot/control/fit counts with
+retained group-40/10/11 anchor occurrences. It distinguishes matched,
+mismatched, negative, absent, invalid, and duplicate declarations without
+inventing values or discarding source evidence. Coordinate tuple grouping,
+member validity, knots/topology, geometry, HELIX, edit, and write remain later
+work.
 
 ## Milestone queue
 

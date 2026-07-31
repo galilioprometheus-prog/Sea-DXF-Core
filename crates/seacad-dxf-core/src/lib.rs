@@ -160,6 +160,7 @@ mod source_id;
 mod source_scan;
 mod source_span;
 mod spline_card;
+mod spline_count_relation;
 mod spline_evidence;
 mod spline_scalar_semantic;
 mod text_control;
@@ -744,6 +745,10 @@ pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
 pub use spline_card::{
     DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,
     DxfSplineCardState, DxfSplineFlags, DxfSplineFlagsSemantic, DxfSplineValueCard,
+};
+pub use spline_count_relation::{
+    DxfSplineCountDirectory, DxfSplineCountDisposition, DxfSplineCountEntry, DxfSplineCountKind,
+    DxfSplineCountState,
 };
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,

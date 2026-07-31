@@ -368,6 +368,13 @@ defaults. Explicit, defaulted, absent, invalid, and duplicate states remain
 distinct. Count reconciliation, point grouping, validity/geometry, HELIX,
 edit, and write remain unclaimed.
 
+M14.3e reconciles each unique nonnegative declared SPLINE knot, control-point,
+and fit-point count with retained group-40, group-10, or group-11 anchor
+occurrences. Matched, mismatched, negative, absent, invalid, and duplicate
+states remain distinct and source-anchored. Coordinate completeness, numeric
+member validity, curve validity/geometry, HELIX, edit, and write remain
+unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

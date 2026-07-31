@@ -1696,6 +1696,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and duplicate states retain evidence without range validation. Count
     reconciliation, point grouping, curve validity/geometry, HELIX, edit, and
     write remain unclaimed.
+    M14.3e compares each unique nonnegative declared knot, control-point, and
+    fit-point count with the number of retained group-40, group-10, or group-11
+    anchor occurrences. Matched and mismatched counts remain explicit; absent,
+    duplicate, invalid, and negative declarations remain typed and retain the
+    lower-layer evidence. This occurrence relation does not infer complete
+    coordinate tuples, validate numeric members, knots/topology, or geometry,
+    process HELIX, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
