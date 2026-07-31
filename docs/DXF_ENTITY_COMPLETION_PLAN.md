@@ -207,6 +207,13 @@ justification uses group 11/21/31. Missing required components, absent optional
 components, invalid numerics, duplicates, and unavailable justification remain
 typed with exact provenance. OCS-to-WCS transformation, style resolution,
 metrics, glyph geometry, edit, and write remain later work.
+M14.2y transforms that selected TEXT OCS point into WCS with its normalized
+extrusion and the shared Autodesk arbitrary-axis basis. It retains the
+first/second anchor kind, finite transformed point, normalized normal,
+canonical positive zero, and typed provenance. Invalid anchor/extrusion
+evidence, non-finite Binary inputs, zero extrusion, basis failure, and derived
+overflow remain explicit. Rotation, style metrics, glyph geometry, edit, and
+write remain later work.
 
 ## Milestone queue
 

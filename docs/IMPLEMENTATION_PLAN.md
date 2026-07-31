@@ -1582,6 +1582,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     unavailable justification remain distinct typed failures with source
     provenance. This checkpoint does not transform the selected point to WCS,
     resolve styles, measure text, or derive glyph geometry.
+    M14.2y transforms the selected M14.2x TEXT OCS anchor into WCS with the
+    normalized extrusion direction and the shared Autodesk arbitrary-axis
+    basis. The result retains the first/second selection, finite WCS point,
+    normalized normal, canonical positive zero, underlying scalar/layout
+    evidence, and typed provenance. Invalid anchors or extrusion components,
+    non-finite Binary inputs, zero extrusion, basis failure, and transformed
+    overflow remain typed. Rotation, style metrics, glyph geometry, edit, and
+    write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

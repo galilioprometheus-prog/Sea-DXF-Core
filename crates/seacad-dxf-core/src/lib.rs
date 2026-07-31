@@ -160,6 +160,7 @@ mod text_symbol_role;
 mod text_symbol_scalar_value;
 mod text_symbol_text;
 mod text_view;
+mod text_wcs_anchor;
 mod transaction_inverse;
 mod transaction_plan;
 mod transaction_write;
@@ -732,6 +733,11 @@ pub use text_symbol_text::{
     DxfTextSymbolTextDirectory, DxfTextSymbolTextIssue, DxfToleranceFieldSemantics,
 };
 pub use text_view::DxfTextValueDecodeReceipt;
+pub use text_wcs_anchor::{
+    DxfTextExtrusionComponent, DxfTextWcsPlacementAnchor, DxfTextWcsPlacementAnchorDirectory,
+    DxfTextWcsPlacementAnchorIssue, DxfTextWcsPlacementAnchorSemantic,
+    DxfTextWcsPlacementAnchorSemantics,
+};
 pub use transaction_plan::{
     DxfTransactionByteRange, DxfTransactionPatch, DxfTransactionPlan, DxfTransactionPlanBuilder,
 };
