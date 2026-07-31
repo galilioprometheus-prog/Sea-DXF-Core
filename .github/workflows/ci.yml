@@ -12,7 +12,7 @@ concurrency:
 
 defaults:
   run:
-    shell: powershell
+    shell: powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ". '{0}'"
 
 env:
   CARGO_TERM_COLOR: always

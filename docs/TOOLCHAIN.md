@@ -58,12 +58,13 @@ gate against the final commit, and pushes once. `.github/workflows/ci.yml` is a
 manual Windows x64 diagnostic routed to the repository's `seacad` self-hosted
 runner with eight Cargo build jobs and a persistent target directory outside
 the checkout. Run steps explicitly use the provisioned Windows PowerShell 5.1
-shell, avoiding an unreviewed PowerShell 7 installation. Six-platform hosted
-execution is reserved for the separate manual Native Release Artifacts
-workflow, which builds and tests all six native targets and aggregates their
-exact receipts. The manual standalone dependency workflow remains available
-for diagnosis. No automatic workflow or schedule consumes GitHub Actions
-minutes.
+shell with a process-local execution-policy bypass for Actions-generated
+temporary scripts, avoiding both a machine policy change and an unreviewed
+PowerShell 7 installation. Six-platform hosted execution is reserved for the
+separate manual Native Release Artifacts workflow, which builds and tests all
+six native targets and aggregates their exact receipts. The manual standalone
+dependency workflow remains available for diagnosis. No automatic workflow or
+schedule consumes GitHub Actions minutes.
 
 ## Q2.2 offline corpus receipt harness
 
