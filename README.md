@@ -20,8 +20,10 @@ stale-evidence diagnostics, canonical-LF Cargo.lock identity, and one
 successful six-native artifact/aggregate workflow receipt are present. Private
 corpus achievement, twenty consecutive six-native nightly receipts,
 signatures, and final Core 1.0 authorization remain open M13 evidence.
-Budget-aware CI runs one complete Linux quality/dependency job for non-document
-pushes and reserves the other five native platforms for deliberate manual runs.
+Budget-aware development runs required quality/dependency gates locally and
+does not allocate hosted runners for pushes or pull requests. GitHub Actions
+retains a manual Windows x64 self-hosted diagnostic and the manual six-native
+hosted release-artifact workflow only.
 The remaining documented entity families are tracked in
 `docs/DXF_ENTITY_COMPLETION_PLAN.md`; raw preservation does not imply complete
 typed semantics for every entity.

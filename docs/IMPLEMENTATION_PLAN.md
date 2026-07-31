@@ -335,6 +335,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
    collected through deliberate runs or a later approved schedule. Q2.2 adds
    the redacted offline corpus manifest and receipt harness without placing
    private DXF bytes, paths, or per-file hashes in the repository.
+   Q2.1b makes development local-first after hosted billing exhaustion. Push
+   and pull-request events allocate no GitHub-hosted runner; the ordinary CI
+   workflow is a manual Windows x64 diagnostic routed to the repository's
+   `seacad` self-hosted runner. Required gates run locally on the final batch
+   commit before one deliberate push. The separate manual Native Release
+   Artifacts workflow remains the only six-hosted-runner path and continues to
+   bind all six native packages and the aggregate receipt to one exact commit.
+   This policy changes execution cost, not existing native evidence or support
+   claims.
 10. M6 closure: complete the documented HEADER inventory before topology.
     M6.5q appends `$DIMASSOC`, `$DIMATFIT`, `$DIMCLRD`, `$DIMCLRE`, `$DIMCLRT`,
     `$DIMJUST`, `$DIMLWD`, `$DIMLWE`, `$DIMTAD`, `$DIMTMOVE`, `$DIMTOLJ`,

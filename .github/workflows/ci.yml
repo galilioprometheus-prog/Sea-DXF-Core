@@ -1,13 +1,6 @@
-name: CI
+name: CI (self-hosted manual)
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-  pull_request:
-    paths-ignore:
-      - "**/*.md"
   workflow_dispatch:
 
 permissions:
@@ -20,62 +13,30 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  CARGO_BUILD_JOBS: 8
+  CARGO_TARGET_DIR: D:\SeaCad\actions-runner-cache\target
 
 jobs:
   quality:
-    name: Linux x64
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    name: Windows x64 local quality
+    runs-on: [self-hosted, Windows, X64, seacad]
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+      - name: Verify provisioned toolchain
+        shell: pwsh
+        run: |
+          $rustVersion = rustc +1.97.1 --version
+          if ($LASTEXITCODE -ne 0 -or -not $rustVersion.StartsWith("rustc 1.97.1 ")) {
+            throw "Expected provisioned Rust 1.97.1, observed: $rustVersion"
+          }
+          cargo +1.97.1 --version
+          cargo deny --version
       - name: Check dependency policy
-        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1, cargo-deny 0.20.2
-        with:
-          rust-version: "1.97.1"
-          command: check
-          arguments: --locked
-      - name: Check formatting
-        run: cargo +1.97.1 fmt --all -- --check
-      - name: Verify generated schemas
-        run: cargo +1.97.1 run --locked -p seacad-schema-gen -- --check
-      - name: Verify release evidence
-        run: cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence -- --check
-      - name: Lint
-        run: cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
-      - name: Test
-        run: cargo +1.97.1 test --workspace --quiet
-
-  additional-native-quality:
-    # Supplemental runners use the Node20 checkout runtime for compatibility.
-    name: ${{ matrix.name }}
-    if: github.event_name == 'workflow_dispatch'
-    strategy:
-      matrix:
-        include:
-          - name: Windows x64
-            os: windows-2025
-          - name: macOS ARM64
-            os: macos-15
-          - name: Linux ARM64
-            os: ubuntu-24.04-arm
-          - name: Windows ARM64
-            os: windows-11-arm
-          - name: macOS x64
-            os: macos-15-intel
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy
+        run: cargo deny --locked check
       - name: Check formatting
         run: cargo +1.97.1 fmt --all -- --check
       - name: Verify generated schemas

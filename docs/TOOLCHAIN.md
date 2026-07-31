@@ -19,7 +19,7 @@ M0 baseline recorded on 2026-07-26:
 OpenSpace, ODA File Converter, GUI frameworks, scripting runtimes, Wasmtime,
 and extra Cargo QA tools are intentionally not installed by M0.
 
-## Q2.1/Q2.1a native CI matrix
+## Q2.1/Q2.1a/Q2.1b native CI matrix
 
 Q2.1 originally staged push/pull-request checks across all six hosts. Q2.1a
 adopts a budget-aware execution policy. Every non-Markdown push or pull request
@@ -51,6 +51,17 @@ only when explicitly dispatched. Twenty consecutive six-platform receipts
 remain open release evidence. A runner outage or preview-runner failure is
 recorded as failed evidence and is never converted into a passing Core 1.0
 receipt.
+
+Q2.1b removes hosted execution from ordinary pushes and pull requests. Local
+development batches any number of reviewed commits, runs the complete required
+gate against the final commit, and pushes once. `.github/workflows/ci.yml` is a
+manual Windows x64 diagnostic routed to the repository's `seacad` self-hosted
+runner with eight Cargo build jobs and a persistent target directory outside
+the checkout. Six-platform hosted execution is reserved for the separate
+manual Native Release Artifacts workflow, which builds and tests all six
+native targets and aggregates their exact receipts. The manual standalone
+dependency workflow remains available for diagnosis. No automatic workflow or
+schedule consumes GitHub Actions minutes.
 
 ## Q2.2 offline corpus receipt harness
 
