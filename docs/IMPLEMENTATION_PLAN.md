@@ -1511,6 +1511,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     exactly one source-order height per column. The observed terminal zero in a
     valid-looking R2018 dynamic-manual height sequence is retained. Legacy
     storage unification, geometry, edit, and write remain separate checkpoints.
+    M14.2o adds exact source evidence for R2007-era MTEXT columns stored in
+    `ACAD` XDATA. It recognizes only the complete
+    `ACAD_MTEXT_COLUMN_INFO_BEGIN`/`END` envelope, retains the 1070 field IDs
+    75/79/76/78/48/49, and models field 50 as a declared 1070 height count
+    followed by its source-order 1040 values. Inexact apps/markers and
+    incomplete blocks cannot publish partial evidence. Semantic unification
+    with modern embedded storage remains separate.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -148,6 +148,12 @@ count plus either a positive shared height or exactly one source-order height
 per column. A zero terminal individual height observed in R2018 behavioral
 evidence remains usable rather than being silently rewritten. Legacy-storage
 unification, geometry, edit, and write remain later checkpoints.
+M14.2o recognizes the R2007-era `ACAD` XDATA column-info envelope with exact
+begin/end matching. It retains source-order field identifiers 75/79/76/78/48/49
+and the field-50 declared height count plus its 1040 height sequence, including
+ASCII/Binary extended XDATA group codes. Incomplete, wrong-app, or inexact
+blocks produce no partial evidence. Mapping this evidence into the M14.2m/n
+semantics remains the next checkpoint.
 
 ## Milestone queue
 
