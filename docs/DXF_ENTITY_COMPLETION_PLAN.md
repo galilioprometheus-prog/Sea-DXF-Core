@@ -105,7 +105,11 @@ remain later checkpoints.
 M14.2g classifies all Autodesk-enumerated MTEXT attachment, drawing-direction,
 and line-spacing-style codes. Required attachment/direction failures, optional
 line-spacing absence, unsupported codes, invalid ASCII values, and duplicates
-remain separate typed states with exact provenance. Numeric range validation,
+remain separate typed states with exact provenance.
+M14.2h validates the independently documented optional MTEXT line-spacing
+factor over the inclusive `0.25..=4.00` domain. Exact boundary values remain
+explicit, out-of-range values retain their IEEE-754 payload and raw provenance,
+and absence remains `Absent` without an invented default. Other numeric ranges,
 background/column semantics, rotation precedence, and geometry remain later
 checkpoints.
 

@@ -1,0 +1,192 @@
+//! Typed MTEXT numeric domains documented independently of layout codes.
+
+use crate::{
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
+    DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfRawDocumentView,
+    DxfSemanticValue, DxfSourceId, DxfTextSymbolDoubleValue, DxfTextSymbolRecordEntry,
+    DxfTextSymbolScalarIssue,
+};
+
+/// Autodesk MTEXT line-spacing factor in the inclusive `0.25..=4.00` domain.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfMTextLineSpacingFactor(DxfDouble);
+
+impl DxfMTextLineSpacingFactor {
+    pub const MINIMUM: f64 = 0.25;
+    pub const MAXIMUM: f64 = 4.0;
+
+    #[must_use]
+    pub const fn raw(self) -> DxfDouble {
+        self.0
+    }
+
+    #[must_use]
+    pub fn to_f64(self) -> f64 {
+        self.0.to_f64()
+    }
+}
+
+/// Why a documented MTEXT numeric domain is unavailable.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfMTextNumericDomainIssue {
+    Scalar(DxfTextSymbolScalarIssue),
+    LineSpacingFactorOutOfRange { value: DxfDouble },
+}
+
+pub type DxfMTextLineSpacingFactorSemantic =
+    DxfSemanticValue<DxfMTextLineSpacingFactor, DxfMTextNumericDomainIssue>;
+
+/// MTEXT scalars projected into independently documented numeric domains.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfMTextNumericDomainSemantics {
+    numeric: DxfMTextNumericSemantics,
+    line_spacing_factor: DxfMTextLineSpacingFactorSemantic,
+}
+
+impl DxfMTextNumericDomainSemantics {
+    #[must_use]
+    pub const fn record(self) -> DxfTextSymbolRecordEntry {
+        self.numeric.record()
+    }
+
+    #[must_use]
+    pub const fn numeric_semantics(self) -> DxfMTextNumericSemantics {
+        self.numeric
+    }
+
+    #[must_use]
+    pub const fn line_spacing_factor(&self) -> &DxfMTextLineSpacingFactorSemantic {
+        &self.line_spacing_factor
+    }
+}
+
+/// Lazy MTEXT numeric-domain projection retaining the complete scalar directory.
+#[derive(Debug)]
+pub struct DxfMTextNumericDomainDirectory {
+    source_id: DxfSourceId,
+    scalars: DxfMTextToleranceScalarDirectory,
+}
+
+impl DxfMTextNumericDomainDirectory {
+    fn from_document(
+        document: DxfRawDocumentView<'_>,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<Self, DxfError> {
+        let scalars = document.mtext_tolerance_scalar_directory(cancellation)?;
+        if scalars.source_id() != document.source_id() {
+            return Err(DxfError::SourceIdentityMismatch {
+                expected: document.source_id(),
+                observed: scalars.source_id(),
+            });
+        }
+        Ok(Self {
+            source_id: document.source_id(),
+            scalars,
+        })
+    }
+
+    #[must_use]
+    pub const fn source_id(&self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn scalar_directory(&self) -> &DxfMTextToleranceScalarDirectory {
+        &self.scalars
+    }
+
+    #[must_use]
+    pub fn records(&self) -> &[DxfTextSymbolRecordEntry] {
+        self.scalars.records()
+    }
+
+    pub fn semantics_for_record(
+        &self,
+        record: DxfTextSymbolRecordEntry,
+    ) -> Result<Option<DxfMTextNumericDomainSemantics>, DxfError> {
+        Ok(self
+            .scalars
+            .mtext_semantics_for_record(record)?
+            .map(numeric_domain_semantics))
+    }
+
+    pub fn semantics_for_raw_record(
+        &self,
+        raw_record_ordinal: u64,
+    ) -> Result<Option<DxfMTextNumericDomainSemantics>, DxfError> {
+        Ok(self
+            .scalars
+            .mtext_semantics_for_raw_record(raw_record_ordinal)?
+            .map(numeric_domain_semantics))
+    }
+}
+
+impl DxfRawDocumentView<'_> {
+    pub fn mtext_numeric_domain_directory(
+        self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfMTextNumericDomainDirectory, DxfError> {
+        DxfMTextNumericDomainDirectory::from_document(self, cancellation)
+    }
+}
+
+impl DxfAsciiRawDocument<'_> {
+    pub fn mtext_numeric_domain_directory(
+        &self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfMTextNumericDomainDirectory, DxfError> {
+        DxfRawDocumentView::from(self).mtext_numeric_domain_directory(cancellation)
+    }
+}
+
+impl DxfBinaryRawDocument<'_> {
+    pub fn mtext_numeric_domain_directory(
+        &self,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfMTextNumericDomainDirectory, DxfError> {
+        DxfRawDocumentView::from(self).mtext_numeric_domain_directory(cancellation)
+    }
+}
+
+fn numeric_domain_semantics(numeric: DxfMTextNumericSemantics) -> DxfMTextNumericDomainSemantics {
+    DxfMTextNumericDomainSemantics {
+        line_spacing_factor: project_line_spacing_factor(*numeric.line_spacing_factor()),
+        numeric,
+    }
+}
+
+fn project_line_spacing_factor(
+    source: DxfTextSymbolDoubleValue,
+) -> DxfMTextLineSpacingFactorSemantic {
+    project_double(source, |value| {
+        let number = value.to_f64();
+        if (DxfMTextLineSpacingFactor::MINIMUM..=DxfMTextLineSpacingFactor::MAXIMUM)
+            .contains(&number)
+        {
+            Ok(DxfMTextLineSpacingFactor(value))
+        } else {
+            Err(DxfMTextNumericDomainIssue::LineSpacingFactorOutOfRange { value })
+        }
+    })
+}
+
+fn project_double<T: Copy>(
+    source: DxfTextSymbolDoubleValue,
+    classify: impl FnOnce(DxfDouble) -> Result<T, DxfMTextNumericDomainIssue>,
+) -> DxfSemanticValue<T, DxfMTextNumericDomainIssue> {
+    match source {
+        DxfSemanticValue::Explicit { value, field, raw } => match classify(value) {
+            Ok(value) => DxfSemanticValue::explicit(value, field, raw),
+            Err(issue) => DxfSemanticValue::invalid(issue, field, Some(raw)),
+        },
+        DxfSemanticValue::Defaulted { value, field } => match classify(value) {
+            Ok(value) => DxfSemanticValue::defaulted(value, field),
+            Err(issue) => DxfSemanticValue::invalid(issue, field, None),
+        },
+        DxfSemanticValue::Absent { field } => DxfSemanticValue::absent(field),
+        DxfSemanticValue::Invalid { issue, field, raw } => {
+            DxfSemanticValue::invalid(DxfMTextNumericDomainIssue::Scalar(issue), field, raw)
+        }
+    }
+}

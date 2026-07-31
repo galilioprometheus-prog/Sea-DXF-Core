@@ -1452,6 +1452,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     invented default. Background/column code interpretation, numeric range
     validation, rotation/x-axis precedence, coordinate transforms, style
     resolution, and glyph geometry remain separate checkpoints.
+    M14.2h validates the optional MTEXT group-44 line-spacing factor against
+    Autodesk's inclusive `0.25..=4.00` domain. Accepted values preserve their
+    exact IEEE-754 payload; out-of-range values remain typed with raw
+    provenance; and absence remains `Absent` without an invented default.
+    Other numeric ranges, background/column interpretation, rotation
+    precedence, transforms, styles, and glyph geometry remain separate
+    checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
