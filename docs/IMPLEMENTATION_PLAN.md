@@ -1670,6 +1670,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     record; non-unique lower-layer states pass through unchanged. This does
     not resolve target names, validate block/style contents, apply defaults,
     interpret tolerance strings, construct glyphs, edit, or write.
+    M14.3a retains every documented SPLINE signed-16-bit and binary64 defining
+    value in source order from exact records in complete BLOCKS or ENTITIES
+    sections. All 24 roles preserve duplicates, lexical failures, raw spans,
+    integer domains, and float bits while group-102 application content is
+    excluded. No values are selected, no defaults or version applicability
+    are applied, and counts, flags, point grouping, curve validity, geometry,
+    HELIX subclass data, edit, and write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

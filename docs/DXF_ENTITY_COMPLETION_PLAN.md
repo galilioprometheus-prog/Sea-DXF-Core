@@ -279,6 +279,13 @@ reviewed named-symbol kind, or another raw record; all absent, duplicate,
 invalid, null, missing, and ambiguous states remain unchanged. Target-name
 resolution, record-content semantics, defaults, glyphs, edit, and write remain
 later work.
+M14.3a begins the curve family with exact SPLINE numeric evidence. It retains
+five signed-16-bit roles and nineteen binary64 roles from exact records in
+complete BLOCKS or ENTITIES sections, including repeated knot/control/fit
+values, duplicate singleton candidates, invalid ASCII numbers, raw spans, and
+group-102 exclusion. It does not select values, apply documented defaults,
+interpret flags, reconcile counts, group coordinates, validate a curve, admit
+HELIX subclass fields, construct geometry, edit, or write.
 
 ## Milestone queue
 
