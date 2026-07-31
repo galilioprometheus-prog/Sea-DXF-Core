@@ -322,6 +322,12 @@ fn append_values(
         let group = document
             .group(occurrence)
             .ok_or_else(invalid_internal_data)?;
+        if kind == DxfTextSymbolKind::MText
+            && group.group_code().value() == 101
+            && document.raw_span_equals_exact(group.value_payload_span(), b"Embedded Object")?
+        {
+            break;
+        }
         let Some((role, wire_type)) = value_role(kind, group.group_code().value()) else {
             continue;
         };

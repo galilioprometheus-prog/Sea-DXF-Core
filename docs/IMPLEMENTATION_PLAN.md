@@ -1489,6 +1489,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     column-height structure validation. Axis-vector assembly, normalization,
     transforms, column heights, styles, and glyph geometry remain separate
     checkpoints.
+    M14.2l isolates modern MTEXT embedded-column evidence at the exact
+    group-101 `Embedded Object` boundary. Main MTEXT cards no longer consume
+    groups owned by that embedded object, and a separate source-order directory
+    retains observed groups 70, 41, 46, 71, 72, 44, 45, 73, and 74 with typed
+    numeric results and raw group provenance. ASCII and Binary parity covers
+    AC1009 through AC1032. Column-domain validation, relationships among count
+    and heights, legacy flat/R2007 XDATA unification, geometry, edit, and write
+    remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

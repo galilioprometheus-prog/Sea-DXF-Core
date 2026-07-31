@@ -128,6 +128,13 @@ input remains selectable. Any coexistence of group 50 with column fields stays
 fail-closed as an ambiguous rotation-or-column-height role until column
 structure is validated. Vector assembly, normalization, coordinate
 transforms, and column-height interpretation remain later checkpoints.
+M14.2l recognizes the exact group-101 `Embedded Object` boundary used by modern
+MTEXT column storage. The main MTEXT evidence directory stops at that boundary,
+while a separate immutable directory retains the observed embedded version,
+shared/individual heights, type, count, width, gutter, automatic-height, and
+flow-reversal values in source order with raw provenance. This checkpoint does
+not validate column relationships, merge legacy flat or R2007 XDATA storage,
+or claim geometry, edit, or write support.
 
 ## Milestone queue
 

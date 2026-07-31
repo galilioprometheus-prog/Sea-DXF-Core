@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2k can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2l can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -313,6 +313,15 @@ wins. Invalid and duplicate rotation evidence remains typed, and any group 50
 coexisting with column fields remains fail-closed as
 rotation-or-column-height ambiguity. Axis-vector assembly, normalization,
 column-height interpretation, transforms, styles, and glyphs remain unclaimed.
+
+M14.2l separates modern MTEXT embedded-column evidence at the exact group-101
+`Embedded Object` marker. Main MTEXT cards stop before the marker; a dedicated
+immutable directory retains the observed embedded version, common and
+individual heights, column type/count/width/gutter, automatic-height, and
+flow-reversal groups with exact source identity and raw provenance. The
+boundary and ASCII/Binary parity are verified for AC1009 through AC1032.
+Semantic column validation, legacy flat/R2007 XDATA unification, geometry,
+edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
