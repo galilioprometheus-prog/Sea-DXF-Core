@@ -159,8 +159,14 @@ scalar/mode implementation. Public source entries identify their physical
 storage, while type/count/width/gutter/flags/heights use the same issues,
 provenance, source-order height slices, and relation checks. XDATA
 dynamic-manual columns now reach the same usable mode as their modern
-equivalent. Separate R2007 defined-height and linked-column-handle blocks remain
-later checkpoints.
+equivalent.
+M14.2q imports the separate exact R2007
+`ACAD_MTEXT_DEFINED_HEIGHT_BEGIN`/`END` block only when selector 46, its 1040
+value, the closing marker, and a preceding complete same-record column-info
+entry are all present. The result reuses the shared-height scalar and completes
+static and dynamic-automatic mode evidence without a parallel semantic path.
+Linked-column handles and direct flat group-50 framing remain later
+checkpoints.
 
 ## Milestone queue
 

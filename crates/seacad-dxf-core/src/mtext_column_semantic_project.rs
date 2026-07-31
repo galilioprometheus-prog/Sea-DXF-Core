@@ -314,6 +314,7 @@ impl ColumnEvidenceValue for DxfMTextXDataColumnValue {
             DxfMTextXDataColumnRole::ColumnWidth => R::ColumnWidth,
             DxfMTextXDataColumnRole::ColumnGutter => R::ColumnGutter,
             DxfMTextXDataColumnRole::ColumnHeight => R::ColumnHeight,
+            DxfMTextXDataColumnRole::DefinedHeight => R::SharedHeight,
             DxfMTextXDataColumnRole::ColumnHeightCount => return None,
         })
     }

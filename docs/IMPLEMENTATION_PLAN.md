@@ -1523,8 +1523,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     identical type/count/dimension/flag/height issues and feed the existing
     mode-relation directory in marker source order. R2007 dynamic-manual XDATA
     with a declared height array reaches the same usable mode as modern
-    embedded storage. The separate defined-height and linked-column-handle
-    XDATA blocks remain later checkpoints.
+    embedded storage.
+    M14.2q recognizes the separate exact
+    `ACAD_MTEXT_DEFINED_HEIGHT_BEGIN`/`END` block only when it contains selector
+    46, one 1040 value, and follows a complete same-record column-info envelope.
+    It appends source-anchored defined-height evidence to that envelope and maps
+    it through the existing shared-height scalar. R2007 static and
+    dynamic-automatic modes now use the same cross-field relation path as
+    modern storage. Linked-column handles and direct flat group-50 framing
+    remain later checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

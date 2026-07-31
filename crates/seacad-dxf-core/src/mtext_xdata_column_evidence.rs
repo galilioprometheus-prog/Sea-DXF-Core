@@ -5,15 +5,17 @@ use std::io;
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError, DxfIoOperation,
     DxfRawDocumentView, DxfRawGroup, DxfRawRecord, DxfSourceId, DxfTextSymbolKind,
-    DxfTextSymbolNumericIssue, DxfTextSymbolValueData, raw_double::decode_raw_double,
+    DxfTextSymbolNumericIssue, DxfTextSymbolValueData,
+    mtext_xdata_defined_height::append_defined_height, raw_double::decode_raw_double,
     raw_integer::decode_raw_i16,
 };
 
 const APP_NAME: &[u8] = b"ACAD";
 const BEGIN: &[u8] = b"ACAD_MTEXT_COLUMN_INFO_BEGIN";
 const END: &[u8] = b"ACAD_MTEXT_COLUMN_INFO_END";
+const DEFINED_HEIGHT_BEGIN: &[u8] = b"ACAD_MTEXT_DEFINED_HEIGHT_BEGIN";
 
-/// Role encoded by a field identifier inside MTEXT column-info XDATA.
+/// Role encoded by a field identifier inside exact ACAD MTEXT column XDATA.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfMTextXDataColumnRole {
@@ -25,15 +27,16 @@ pub enum DxfMTextXDataColumnRole {
     ColumnGutter,
     ColumnHeightCount,
     ColumnHeight,
+    DefinedHeight,
 }
 
-/// One source-order value decoded from an ACAD MTEXT column-info block.
+/// One source-order value decoded from exact ACAD MTEXT column XDATA.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfMTextXDataColumnValue {
-    field_id_group: DxfRawGroup,
-    value_group: DxfRawGroup,
-    role: DxfMTextXDataColumnRole,
-    data: DxfTextSymbolValueData,
+    pub(super) field_id_group: DxfRawGroup,
+    pub(super) value_group: DxfRawGroup,
+    pub(super) role: DxfMTextXDataColumnRole,
+    pub(super) data: DxfTextSymbolValueData,
 }
 
 impl DxfMTextXDataColumnValue {
@@ -58,14 +61,14 @@ impl DxfMTextXDataColumnValue {
     }
 }
 
-/// One complete exact ACAD MTEXT column-info XDATA block.
+/// One complete exact column-info block and its associated column XDATA values.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfMTextXDataColumnEntry {
     record: DxfRawRecord,
     begin: DxfRawGroup,
     end: DxfRawGroup,
     value_start: u32,
-    value_end: u32,
+    pub(super) value_end: u32,
 }
 
 impl DxfMTextXDataColumnEntry {
@@ -214,6 +217,16 @@ fn append_record(
                 document,
                 record,
                 group,
+                occurrence.saturating_add(1),
+                cancellation,
+                entries,
+                values,
+            )?;
+            continue;
+        } else if acad_scope && exact_text(document, group, 1000, DEFINED_HEIGHT_BEGIN)? {
+            occurrence = append_defined_height(
+                document,
+                record,
                 occurrence.saturating_add(1),
                 cancellation,
                 entries,

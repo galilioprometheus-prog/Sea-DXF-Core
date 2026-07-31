@@ -28,6 +28,7 @@ fn every_dialect_has_ascii_binary_xdata_column_parity() -> Result<(), Box<dyn Er
         double(DxfMTextXDataColumnRole::ColumnHeight, 20.0),
         double(DxfMTextXDataColumnRole::ColumnHeight, 30.0),
         double(DxfMTextXDataColumnRole::ColumnHeight, 0.0),
+        double(DxfMTextXDataColumnRole::DefinedHeight, 0.0),
     ];
     for version in DxfAcadVersion::SUPPORTED {
         let ascii_bytes = ascii_document(version.code(), APP, BEGIN, true);
@@ -62,6 +63,24 @@ fn app_markers_are_exact_and_incomplete_blocks_leave_no_partial_values()
         let directory = document.mtext_xdata_column_directory(&DxfCancellationToken::default())?;
         assert!(directory.entries().is_empty());
         assert!(directory.values().is_empty());
+    }
+    for bytes in [
+        ascii_document_with_defined("NOT_DEFINED_HEIGHT_BEGIN", 46, 1040, DEFINED_HEIGHT_END),
+        ascii_document_with_defined(DEFINED_HEIGHT_BEGIN, 45, 1040, DEFINED_HEIGHT_END),
+        ascii_document_with_defined(DEFINED_HEIGHT_BEGIN, 46, 1041, DEFINED_HEIGHT_END),
+        ascii_document_with_defined(DEFINED_HEIGHT_BEGIN, 46, 1040, "NOT_DEFINED_HEIGHT_END"),
+    ] {
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source)?;
+        let directory = document.mtext_xdata_column_directory(&DxfCancellationToken::default())?;
+        assert_eq!(directory.entries().len(), 1);
+        assert_eq!(directory.values().len(), 10);
+        assert!(
+            directory
+                .values()
+                .iter()
+                .all(|value| value.role() != DxfMTextXDataColumnRole::DefinedHeight)
+        );
     }
     Ok(())
 }
@@ -132,9 +151,46 @@ fn xdata_reuses_the_unified_scalar_and_mode_projection() -> Result<(), Box<dyn E
     Ok(())
 }
 
+#[test]
+fn defined_height_completes_static_and_dynamic_automatic_xdata_modes() -> Result<(), Box<dyn Error>>
+{
+    for (column_type, automatic, count, height, expected) in [
+        (1, 0, 3, 100.0, DxfMTextColumnMode::Static),
+        (2, 1, 0, 50.0, DxfMTextColumnMode::DynamicAutomatic),
+    ] {
+        let bytes = ascii_mode_document(column_type, automatic, count, height);
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source)?;
+        let scalars = document.mtext_column_semantic_directory(&DxfCancellationToken::default())?;
+        let scalar = scalars.semantics().first().ok_or_else(invalid_test_data)?;
+        assert_eq!(
+            scalar
+                .shared_height()
+                .value()
+                .ok_or_else(invalid_test_data)?
+                .to_f64(),
+            height
+        );
+        let relations =
+            document.mtext_column_relation_directory(&DxfCancellationToken::default())?;
+        assert_eq!(
+            relations
+                .semantics()
+                .first()
+                .ok_or_else(invalid_test_data)?
+                .mode()
+                .value(),
+            Some(&expected)
+        );
+    }
+    Ok(())
+}
+
 const APP: &str = "ACAD";
 const BEGIN: &str = "ACAD_MTEXT_COLUMN_INFO_BEGIN";
 const END: &str = "ACAD_MTEXT_COLUMN_INFO_END";
+const DEFINED_HEIGHT_BEGIN: &str = "ACAD_MTEXT_DEFINED_HEIGHT_BEGIN";
+const DEFINED_HEIGHT_END: &str = "ACAD_MTEXT_DEFINED_HEIGHT_END";
 
 fn signatures(directory: &DxfMTextXDataColumnDirectory) -> Result<Vec<Signature>, Box<dyn Error>> {
     directory
@@ -203,7 +259,10 @@ fn double(role: DxfMTextXDataColumnRole, value: f64) -> Signature {
 
 fn ascii_document(version: &str, app: &str, begin: &str, complete: bool) -> Vec<u8> {
     let end = if complete {
-        format!("1000\n{END}\n")
+        format!(
+            "1000\n{END}\n1000\n{DEFINED_HEIGHT_BEGIN}\n\
+1070\n46\n1040\n0\n1000\n{DEFINED_HEIGHT_END}\n"
+        )
     } else {
         String::new()
     };
@@ -215,6 +274,37 @@ fn ascii_document(version: &str, app: &str, begin: &str, complete: bool) -> Vec<
 1070\n78\n1070\n0\n1070\n48\n1040\n20\n1070\n49\n1040\n1\n\
 1070\n50\n1070\n3\n1040\n20\n1040\n30\n1040\n0\n{end}\
 0\nTEXT\n40\n1\n0\nENDSEC\n0\nEOF\n"
+    )
+    .into_bytes()
+}
+
+fn ascii_document_with_defined(
+    defined_begin: &str,
+    selector: i16,
+    value_code: i16,
+    defined_end: &str,
+) -> Vec<u8> {
+    format!(
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1021\n0\nENDSEC\n\
+0\nSECTION\n2\nENTITIES\n0\nMTEXT\n1001\n{APP}\n1000\n{BEGIN}\n\
+1070\n75\n1070\n2\n1070\n79\n1070\n0\n1070\n76\n1070\n3\n\
+1070\n78\n1070\n0\n1070\n48\n1040\n20\n1070\n49\n1040\n1\n\
+1070\n50\n1070\n3\n1040\n20\n1040\n30\n1040\n0\n1000\n{END}\n\
+1000\n{defined_begin}\n1070\n{selector}\n{value_code}\n0\n1000\n{defined_end}\n\
+0\nENDSEC\n0\nEOF\n"
+    )
+    .into_bytes()
+}
+
+fn ascii_mode_document(column_type: i16, automatic: i16, count: i16, height: f64) -> Vec<u8> {
+    format!(
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1021\n0\nENDSEC\n\
+0\nSECTION\n2\nENTITIES\n0\nMTEXT\n1001\n{APP}\n1000\n{BEGIN}\n\
+1070\n75\n1070\n{column_type}\n1070\n79\n1070\n{automatic}\n\
+1070\n76\n1070\n{count}\n1070\n78\n1070\n0\n\
+1070\n48\n1040\n20\n1070\n49\n1040\n1\n1000\n{END}\n\
+1000\n{DEFINED_HEIGHT_BEGIN}\n1070\n46\n1040\n{height}\n\
+1000\n{DEFINED_HEIGHT_END}\n0\nENDSEC\n0\nEOF\n"
     )
     .into_bytes()
 }
@@ -251,6 +341,10 @@ fn binary_document(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
         push_double(&mut bytes, version, 1040, height)?;
     }
     push_string(&mut bytes, version, 1000, END.as_bytes())?;
+    push_string(&mut bytes, version, 1000, DEFINED_HEIGHT_BEGIN.as_bytes())?;
+    push_i16(&mut bytes, version, 1070, 46)?;
+    push_double(&mut bytes, version, 1040, 0.0)?;
+    push_string(&mut bytes, version, 1000, DEFINED_HEIGHT_END.as_bytes())?;
     push_string(&mut bytes, version, 0, b"ENDSEC")?;
     push_string(&mut bytes, version, 0, b"EOF")?;
     Ok(bytes)

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2p can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2q can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -348,9 +348,15 @@ M14.2p projects Embedded and `ACAD` XDATA evidence through the same typed
 scalar and mode-relation implementation. Each result identifies its physical
 source envelope; shared fields and source-order individual heights have
 identical semantics and provenance across storage forms. R2007
-dynamic-manual height arrays are usable. Separate defined-height and
-linked-column-handle XDATA blocks, direct flat group-50 framing, geometry,
-edit, and write remain unclaimed.
+dynamic-manual height arrays are usable.
+
+M14.2q recognizes only a complete exact
+`ACAD_MTEXT_DEFINED_HEIGHT_BEGIN`/`END` block containing selector 46 and one
+1040 value after a complete same-record column-info envelope. Its value maps
+to the shared-height scalar, so R2007 static, dynamic-automatic, and
+dynamic-manual storage can use the common mode semantics. Inexact or
+incomplete blocks publish no partial value. Linked-column-handle XDATA,
+direct flat group-50 framing, geometry, edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
