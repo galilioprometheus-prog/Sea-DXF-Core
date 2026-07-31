@@ -324,14 +324,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
    commit SHA. This checkpoint changes packaging and quality gates only; it
    does not change the Rust API, DXF behavior, CLI output, or `Cargo.lock`.
 9. Q2: stage six-native-platform evidence before semantic expansion. Q2.1
-   retains full required quality checks on Linux x64, Windows x64, and macOS
-   ARM64 for every push and pull request; adds native schema, workspace build,
-   and core smoke coverage on Linux ARM64, Windows ARM64, and macOS x64; and
-   runs the full workspace gate on all six platforms nightly and on manual
-   dispatch. Supplemental runners remain staged until twenty consecutive
-   nightly runs pass. Q2.2 adds the redacted offline corpus manifest and
-   receipt harness without placing private DXF bytes, paths, or per-file hashes
-   in the repository.
+   staged full or smoke checks across all six reviewed platforms. Q2.1a makes
+   that staging budget-aware: non-document pushes and pull requests run one
+   complete Linux x64 gate including dependency policy, Markdown-only changes
+   do not start runners, and manual dispatch runs the complete gate on all six
+   platforms. Automatic schedules and the redundant standalone dependency job
+   are removed; concurrency still cancels superseded runs. The standalone
+   dependency workflow remains available manually. Twenty consecutive
+   six-platform receipts therefore remain explicitly unachieved and must be
+   collected through deliberate runs or a later approved schedule. Q2.2 adds
+   the redacted offline corpus manifest and receipt harness without placing
+   private DXF bytes, paths, or per-file hashes in the repository.
 10. M6 closure: complete the documented HEADER inventory before topology.
     M6.5q appends `$DIMASSOC`, `$DIMATFIT`, `$DIMCLRD`, `$DIMCLRE`, `$DIMCLRT`,
     `$DIMJUST`, `$DIMLWD`, `$DIMLWE`, `$DIMTAD`, `$DIMTMOVE`, `$DIMTOLJ`,

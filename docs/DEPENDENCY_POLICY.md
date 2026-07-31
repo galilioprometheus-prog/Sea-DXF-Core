@@ -29,9 +29,10 @@
 - `cargo-fuzz` runs as a separately installed tool on supported CI hosts.
 - Q1 approves `cargo-deny 0.20.2` as a separately installed quality tool.
   `cargo deny --locked check` is required locally and the
-  `dependency-policy` workflow enforces advisories, licenses, duplicate and
+  Linux x64 CI quality job enforces advisories, licenses, duplicate and
   wildcard dependencies, exact reviewed features, audited build scripts, and
-  approved package sources.
+  approved package sources. A standalone dependency-policy workflow remains
+  available for deliberate manual runs without duplicating every push.
 - Every policy exception must name the exact crate, version, path or feature,
   and review reason. Broad exceptions are prohibited. Q1's only content bypass
   is `libc 0.2.189` file `etc/libc-util.py`, locked to SHA-256

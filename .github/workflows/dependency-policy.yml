@@ -1,11 +1,6 @@
-name: Dependency Policy
+name: Dependency Policy (manual standalone)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-  schedule:
-    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:
