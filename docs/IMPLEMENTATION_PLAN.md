@@ -1497,6 +1497,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     AC1009 through AC1032. Column-domain validation, relationships among count
     and heights, legacy flat/R2007 XDATA unification, geometry, edit, and write
     remain separate checkpoints.
+    M14.2m adds a bounded scalar-semantic projection over the modern embedded
+    evidence. Column type is one of no/static/dynamic; count is a nonnegative
+    integer; width and usable height measurements are positive; gutter is
+    nonnegative; and automatic-height/flow-reversed accept only Boolean 0/1.
+    Missing type, duplicate singleton fields, invalid numerics, and
+    out-of-domain inputs stay typed and source-anchored. Individual heights
+    retain source order in a separate bounded slice. Type-dependent field
+    requirements, count/height cardinality, legacy storage unification,
+    geometry, edit, and write remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

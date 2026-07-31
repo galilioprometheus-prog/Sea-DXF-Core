@@ -135,6 +135,13 @@ shared/individual heights, type, count, width, gutter, automatic-height, and
 flow-reversal values in source order with raw provenance. This checkpoint does
 not validate column relationships, merge legacy flat or R2007 XDATA storage,
 or claim geometry, edit, or write support.
+M14.2m projects that embedded evidence into typed scalar semantics. It
+classifies no/static/dynamic column types, retains a nonnegative count,
+requires positive usable width and height measurements, permits a zero gutter,
+and accepts only exact Boolean 0/1 flags. Missing required type, duplicate
+singletons, invalid numbers, and out-of-domain values remain typed with raw
+provenance. Cross-field mode/count/height relationships and legacy-storage
+unification remain later checkpoints.
 
 ## Milestone queue
 

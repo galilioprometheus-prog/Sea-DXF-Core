@@ -96,6 +96,8 @@ mod lightweight_polyline_segment_geometry;
 mod lightweight_polyline_vertex;
 mod lightweight_polyline_vertex_semantic;
 mod limits;
+mod mtext_column_semantic;
+mod mtext_column_semantic_project;
 mod mtext_embedded_column_evidence;
 mod mtext_layout;
 mod mtext_numeric_domain;
@@ -496,6 +498,11 @@ pub use lightweight_polyline_vertex_semantic::{
     DxfLightweightPolylineVertexSemantics,
 };
 pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use mtext_column_semantic::{
+    DxfMTextColumnBooleanSemantic, DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic,
+    DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory, DxfMTextColumnSemantics,
+    DxfMTextColumnType, DxfMTextColumnTypeSemantic,
+};
 pub use mtext_embedded_column_evidence::{
     DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole,
     DxfMTextEmbeddedColumnValue,
