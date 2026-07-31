@@ -41,6 +41,7 @@ mod circular_geometry_semantic;
 mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
+mod dimstyle_table;
 mod ellipse_geometry;
 mod ellipse_geometry_card;
 mod ellipse_geometry_semantic;
@@ -150,6 +151,7 @@ mod shape_wcs_orientation;
 mod source;
 mod source_id;
 mod source_scan;
+mod source_span;
 mod text_control;
 mod text_decoder;
 mod text_escape;
@@ -165,6 +167,7 @@ mod text_symbol_text;
 mod text_view;
 mod text_wcs_anchor;
 mod text_wcs_orientation;
+mod tolerance_dimstyle_resolution;
 mod tolerance_wcs_placement;
 mod transaction_inverse;
 mod transaction_plan;
@@ -318,6 +321,7 @@ pub use dialect::{
     DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
     DxfAcadVersionValue,
 };
+pub use dimstyle_table::{DxfDimStyleTableDirectory, DxfDimStyleTableEntry};
 pub use ellipse_geometry::{
     DxfEllipseGeometryDirectory, DxfEllipseGeometryNumericIssue, DxfEllipseGeometryRecordEntry,
     DxfEllipseGeometryValue, DxfEllipseGeometryValueRange, DxfEllipseGeometryValueRole,
@@ -754,6 +758,10 @@ pub use text_wcs_anchor::{
 pub use text_wcs_orientation::{
     DxfTextWcsOrientation, DxfTextWcsOrientationDirectory, DxfTextWcsOrientationIssue,
     DxfTextWcsOrientationSemantic, DxfTextWcsOrientationSemantics,
+};
+pub use tolerance_dimstyle_resolution::{
+    DxfToleranceDimStyleResolutionDirectory, DxfToleranceDimStyleResolutionEntry,
+    DxfToleranceDimStyleResolutionState, DxfToleranceDimStyleTargetRange,
 };
 pub use tolerance_wcs_placement::{
     DxfToleranceWcsComponent, DxfToleranceWcsPlacement, DxfToleranceWcsPlacementDirectory,

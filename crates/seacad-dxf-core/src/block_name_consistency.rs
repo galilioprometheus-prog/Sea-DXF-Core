@@ -3,12 +3,10 @@
 use std::io;
 
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfBlockRecordSemanticDirectory,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfBlockRecordSemanticDirectory,
     DxfBlockRecordSemantics, DxfBlockRecordValueEntry, DxfCancellationToken, DxfError,
-    DxfIoOperation, DxfRawDocumentView, DxfSourceId,
+    DxfIoOperation, DxfRawDocumentView, DxfSourceId, source_span::spans_equal,
 };
-
-const NAME_COMPARE_CHUNK_BYTES: usize = 4 * 1024;
 
 /// Exact relationship between one BLOCK record's groups `2` and `3`.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -153,7 +151,7 @@ fn compare_names(
             });
         }
     }
-    if raw_spans_equal(
+    if spans_equal(
         document,
         primary.value_span(),
         secondary.value_span(),
@@ -163,50 +161,6 @@ fn compare_names(
     } else {
         Ok(DxfBlockNameConsistencyState::Conflicting)
     }
-}
-
-fn raw_spans_equal(
-    document: DxfRawDocumentView<'_>,
-    left: ByteSpan,
-    right: ByteSpan,
-    cancellation: &DxfCancellationToken,
-) -> Result<bool, DxfError> {
-    if left.len() != right.len() {
-        return Ok(false);
-    }
-    let mut left_bytes = [0_u8; NAME_COMPARE_CHUNK_BYTES];
-    let mut right_bytes = [0_u8; NAME_COMPARE_CHUNK_BYTES];
-    let mut compared = 0_u64;
-    while compared < left.len() {
-        ensure_not_cancelled(cancellation)?;
-        let chunk_len_u64 = (left.len() - compared).min(NAME_COMPARE_CHUNK_BYTES as u64);
-        let chunk_len = usize::try_from(chunk_len_u64).map_err(|_| invalid_internal_data())?;
-        let left_span = chunk_span(left, compared, chunk_len_u64)?;
-        let right_span = chunk_span(right, compared, chunk_len_u64)?;
-        document.read_span(left_span, &mut left_bytes[..chunk_len])?;
-        document.read_span(right_span, &mut right_bytes[..chunk_len])?;
-        if left_bytes[..chunk_len] != right_bytes[..chunk_len] {
-            return Ok(false);
-        }
-        compared = compared
-            .checked_add(chunk_len_u64)
-            .ok_or_else(invalid_internal_data)?;
-    }
-    ensure_not_cancelled(cancellation)?;
-    Ok(true)
-}
-
-fn chunk_span(base: ByteSpan, offset: u64, len: u64) -> Result<ByteSpan, DxfError> {
-    let start = base
-        .start()
-        .checked_add(offset)
-        .ok_or_else(invalid_internal_data)?;
-    let end = start.checked_add(len).ok_or_else(invalid_internal_data)?;
-    let span = ByteSpan::new(start, end).ok_or_else(invalid_internal_data)?;
-    if span.end() > base.end() {
-        return Err(invalid_internal_data());
-    }
-    Ok(span)
 }
 
 fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {

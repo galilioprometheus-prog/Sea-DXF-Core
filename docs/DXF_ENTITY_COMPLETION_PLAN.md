@@ -242,6 +242,13 @@ OCS transform, x-axis normalization, or invented y-axis is applied. Missing,
 invalid, duplicate, non-finite, zero x-axis/extrusion, and basis failures
 remain explicit. Dimension-style resolution, tolerance-string interpretation,
 glyph geometry, edit, and write remain later work.
+M14.2ae indexes exact group-2 names only from DIMSTYLE records inside complete
+exact table envelopes and resolves TOLERANCE group-3 names through bounded
+byte-exact source comparison. Missing, unique, ambiguous, and unusable names
+remain distinct; duplicate targets preserve source order. Interrupted,
+unclosed, wrong-case, malformed, and application-group-decoy evidence is not
+admitted. DIMSTYLE field semantics, tolerance-string interpretation, glyph
+geometry, edit, and write remain later work.
 
 ## Milestone queue
 

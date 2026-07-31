@@ -9,9 +9,8 @@ use crate::{
     DxfBlockAttributeDefinitionTextSemanticDirectory, DxfBlockAttributeDefinitionTextValue,
     DxfBlockAttributeDefinitionValueEntry, DxfBlockDefinitionEntry, DxfCancellationToken, DxfError,
     DxfIoOperation, DxfRawDocumentView, DxfSourceId,
+    source_span::{sha256_span, span_equals_bytes, spans_equal},
 };
-
-const TAG_IO_CHUNK_BYTES: usize = 4 * 1024;
 type TagDigest = [u8; 32];
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -148,7 +147,7 @@ impl DxfBlockAttributeDefinitionTagIndexDirectory {
                 }
                 pending.try_reserve(1).map_err(|_| out_of_memory())?;
                 pending.push(PendingTag {
-                    digest: digest_span(document, tag.value_span(), cancellation)?,
+                    digest: sha256_span(document, tag.value_span(), cancellation)?,
                     exact_group_ordinal: 0,
                     indexed: DxfBlockAttributeDefinitionTagIndexMatch {
                         record: projected.record(),
@@ -280,9 +279,9 @@ impl DxfBlockAttributeDefinitionTagIndexDirectory {
         self.matches_for_digest(
             document,
             block_raw_ordinal,
-            digest_span(document, exact_span, cancellation)?,
+            sha256_span(document, exact_span, cancellation)?,
             cancellation,
-            |span, cancellation| raw_spans_equal(document, span, exact_span, cancellation),
+            |span, cancellation| spans_equal(document, span, exact_span, cancellation),
         )
     }
 
@@ -424,7 +423,7 @@ fn classify_exact_groups(
             let span = candidate.indexed.tag().value_span();
             let mut exact_group_ordinal = None;
             for representative in representatives.iter().copied() {
-                if raw_spans_equal(document, representative.span, span, cancellation)? {
+                if spans_equal(document, representative.span, span, cancellation)? {
                     exact_group_ordinal = Some(representative.ordinal);
                     break;
                 }
@@ -449,111 +448,8 @@ fn classify_exact_groups(
     Ok(())
 }
 
-fn digest_span(
-    document: DxfRawDocumentView<'_>,
-    span: ByteSpan,
-    cancellation: &DxfCancellationToken,
-) -> Result<TagDigest, DxfError> {
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; TAG_IO_CHUNK_BYTES];
-    let mut consumed = 0_u64;
-    while consumed < span.len() {
-        ensure_not_cancelled(cancellation)?;
-        let chunk_len_u64 = (span.len() - consumed).min(TAG_IO_CHUNK_BYTES as u64);
-        let chunk_len = usize::try_from(chunk_len_u64).map_err(|_| invalid_internal_data())?;
-        document.read_span(
-            chunk_span(span, consumed, chunk_len_u64)?,
-            &mut buffer[..chunk_len],
-        )?;
-        hasher.update(&buffer[..chunk_len]);
-        consumed = consumed
-            .checked_add(chunk_len_u64)
-            .ok_or_else(invalid_internal_data)?;
-    }
-    ensure_not_cancelled(cancellation)?;
-    Ok(hasher.finalize().into())
-}
-
 fn digest_bytes(bytes: &[u8]) -> TagDigest {
     Sha256::digest(bytes).into()
-}
-
-fn raw_spans_equal(
-    document: DxfRawDocumentView<'_>,
-    left: ByteSpan,
-    right: ByteSpan,
-    cancellation: &DxfCancellationToken,
-) -> Result<bool, DxfError> {
-    if left.len() != right.len() {
-        return Ok(false);
-    }
-    let mut left_bytes = [0_u8; TAG_IO_CHUNK_BYTES];
-    let mut right_bytes = [0_u8; TAG_IO_CHUNK_BYTES];
-    let mut consumed = 0_u64;
-    while consumed < left.len() {
-        ensure_not_cancelled(cancellation)?;
-        let chunk_len_u64 = (left.len() - consumed).min(TAG_IO_CHUNK_BYTES as u64);
-        let chunk_len = usize::try_from(chunk_len_u64).map_err(|_| invalid_internal_data())?;
-        document.read_span(
-            chunk_span(left, consumed, chunk_len_u64)?,
-            &mut left_bytes[..chunk_len],
-        )?;
-        document.read_span(
-            chunk_span(right, consumed, chunk_len_u64)?,
-            &mut right_bytes[..chunk_len],
-        )?;
-        if left_bytes[..chunk_len] != right_bytes[..chunk_len] {
-            return Ok(false);
-        }
-        consumed = consumed
-            .checked_add(chunk_len_u64)
-            .ok_or_else(invalid_internal_data)?;
-    }
-    ensure_not_cancelled(cancellation)?;
-    Ok(true)
-}
-
-fn span_equals_bytes(
-    document: DxfRawDocumentView<'_>,
-    span: ByteSpan,
-    expected: &[u8],
-    cancellation: &DxfCancellationToken,
-) -> Result<bool, DxfError> {
-    if span.len() != expected.len() as u64 {
-        return Ok(false);
-    }
-    let mut buffer = [0_u8; TAG_IO_CHUNK_BYTES];
-    let mut consumed = 0_usize;
-    while consumed < expected.len() {
-        ensure_not_cancelled(cancellation)?;
-        let chunk_len = (expected.len() - consumed).min(TAG_IO_CHUNK_BYTES);
-        let chunk_len_u64 = u64::try_from(chunk_len).map_err(|_| invalid_internal_data())?;
-        document.read_span(
-            chunk_span(span, consumed as u64, chunk_len_u64)?,
-            &mut buffer[..chunk_len],
-        )?;
-        let end = consumed
-            .checked_add(chunk_len)
-            .ok_or_else(invalid_internal_data)?;
-        if buffer[..chunk_len] != expected[consumed..end] {
-            return Ok(false);
-        }
-        consumed = end;
-    }
-    ensure_not_cancelled(cancellation)?;
-    Ok(true)
-}
-
-fn chunk_span(base: ByteSpan, offset: u64, len: u64) -> Result<ByteSpan, DxfError> {
-    let start = base
-        .start()
-        .checked_add(offset)
-        .ok_or_else(invalid_internal_data)?;
-    let span = ByteSpan::from_start_and_len(start, len).ok_or_else(invalid_internal_data)?;
-    if span.end() > base.end() {
-        return Err(invalid_internal_data());
-    }
-    Ok(span)
 }
 
 fn compact_len(len: usize) -> Result<u32, DxfError> {

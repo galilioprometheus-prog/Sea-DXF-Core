@@ -1623,6 +1623,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and basis failures remain typed with complete scalar evidence. Dimension
     style resolution, tolerance-string interpretation, glyph geometry, edit,
     and write remain unclaimed.
+    M14.2ae indexes exact group-2 names only from DIMSTYLE records inside
+    completely closed exact `TABLE`/`DIMSTYLE`/`ENDTAB` envelopes, then resolves
+    TOLERANCE group-3 names by bounded byte-exact source-span comparison.
+    Missing, unique, ambiguous, and unusable names remain distinct; duplicate
+    targets are preserved in source order. Interrupted/unclosed/wrong-case
+    tables, malformed names, and application-group decoys are not admitted.
+    A shared bounded span hash/comparator replaces three duplicated BLOCK and
+    ATTDEF implementations without changing their public behavior. DIMSTYLE
+    field semantics, tolerance-string interpretation, glyph geometry, edit,
+    and write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
