@@ -1532,6 +1532,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dynamic-automatic modes now use the same cross-field relation path as
     modern storage. Linked-column handles and direct flat group-50 framing
     remain later checkpoints.
+    M14.2r recognizes complete exact
+    `ACAD_MTEXT_COLUMNS_BEGIN`/`END` blocks containing selector 47, one typed
+    1070 declared count, and a contiguous source-order sequence of group-1005
+    handles. The evidence reuses the existing raw-handle parser and preserves
+    invalid hexadecimal spelling as a typed result. Inexact, interrupted, or
+    wrong-wire blocks publish no entry or partial handle slice. Column-info
+    association, count relationships, target resolution, and direct flat
+    group-50 framing remain later checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

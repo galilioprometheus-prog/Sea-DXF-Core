@@ -106,6 +106,7 @@ mod mtext_orientation;
 mod mtext_tolerance_scalar;
 mod mtext_xdata_column_evidence;
 mod mtext_xdata_defined_height;
+mod mtext_xdata_linked_column;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod planar_face_geometry;
@@ -535,6 +536,9 @@ pub use mtext_tolerance_scalar::{
 pub use mtext_xdata_column_evidence::{
     DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfMTextXDataColumnRole,
     DxfMTextXDataColumnValue,
+};
+pub use mtext_xdata_linked_column::{
+    DxfMTextXDataLinkedColumnDirectory, DxfMTextXDataLinkedColumnEntry,
 };
 pub use owner_evidence_comparison::{
     DxfOwnerEvidenceComparisonDirectory, DxfOwnerEvidenceComparisonEntry,

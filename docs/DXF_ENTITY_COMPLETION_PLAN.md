@@ -167,6 +167,12 @@ entry are all present. The result reuses the shared-height scalar and completes
 static and dynamic-automatic mode evidence without a parallel semantic path.
 Linked-column handles and direct flat group-50 framing remain later
 checkpoints.
+M14.2r isolates the exact R2007 `ACAD_MTEXT_COLUMNS_BEGIN`/`END` envelope,
+selector 47, typed declared count, and contiguous source-order group-1005
+handle evidence. It reuses the format-neutral raw-handle parser, so invalid
+hex remains typed and no second handle implementation is introduced. Linking
+the envelope to column-info, validating the declared-count relationship, and
+resolving targets remain separate from this evidence checkpoint.
 
 ## Milestone queue
 
