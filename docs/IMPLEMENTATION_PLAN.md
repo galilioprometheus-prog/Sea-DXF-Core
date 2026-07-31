@@ -1560,6 +1560,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     `RotationOrColumnHeight` intentionally maps to no scalar role: flat
     dynamic-auto mode can become usable, while static/manual height modes
     remain fail-closed pending unambiguous group-50 framing.
+    M14.2v closes the published direct group-50 boundary without inventing a
+    record-order discriminator. Each unified source now exposes whether height
+    framing is unambiguous, absent, or an ambiguous direct group-50 set with
+    exact count and first-value provenance. Static and dynamic-manual flat
+    modes return a dedicated unsupported-ambiguity relation issue; dynamic
+    automatic mode remains usable because it does not consume height evidence.
+    Autodesk's dual assignment and the legacy behavioral notes do not provide
+    enough evidence to classify direct group 50 as rotation versus shared or
+    individual height, so no height value is fabricated.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

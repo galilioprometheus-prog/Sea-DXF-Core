@@ -510,8 +510,9 @@ pub use mtext_column_relation::{
 };
 pub use mtext_column_semantic::{
     DxfMTextColumnBooleanSemantic, DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic,
-    DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory, DxfMTextColumnSemantics,
-    DxfMTextColumnSourceEntry, DxfMTextColumnType, DxfMTextColumnTypeSemantic,
+    DxfMTextColumnHeightDisposition, DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory,
+    DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextColumnTypeSemantic,
 };
 pub use mtext_embedded_column_evidence::{
     DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole,

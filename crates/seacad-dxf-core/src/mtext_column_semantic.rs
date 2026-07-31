@@ -7,7 +7,7 @@ use crate::{
     DxfIoOperation, DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry,
     DxfMTextEmbeddedColumnRole, DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry,
     DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfRawDocumentView, DxfRawGroup,
-    DxfRawRecord, DxfSemanticValue, DxfSourceId, DxfTextSymbolNumericIssue,
+    DxfRawRecord, DxfRawValueProvenance, DxfSemanticValue, DxfSourceId, DxfTextSymbolNumericIssue,
     mtext_column_semantic_project::project_entry,
 };
 
@@ -66,6 +66,21 @@ pub type DxfMTextColumnCountSemantic = DxfSemanticValue<u16, DxfMTextColumnIssue
 pub type DxfMTextColumnBooleanSemantic = DxfSemanticValue<bool, DxfMTextColumnIssue>;
 pub type DxfMTextColumnDoubleSemantic = DxfSemanticValue<DxfDouble, DxfMTextColumnIssue>;
 
+/// Whether one source envelope frames MTEXT height values unambiguously.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfMTextColumnHeightDisposition {
+    /// Embedded/XDATA framing assigns any height values an exact role.
+    Unambiguous,
+    /// Direct/flat storage contains no group-50 height candidate.
+    NoHeightEvidence,
+    /// Direct group 50 may be rotation, shared height, or an individual height.
+    AmbiguousDirectGroup50 {
+        occurrence_count: u64,
+        first_raw: DxfRawValueProvenance,
+    },
+}
+
 /// Physical source envelope behind one unified MTEXT column projection.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
@@ -106,6 +121,7 @@ pub struct DxfMTextColumnSemantics {
     pub(super) auto_height: DxfMTextColumnBooleanSemantic,
     pub(super) flow_reversed: DxfMTextColumnBooleanSemantic,
     pub(super) shared_height: DxfMTextColumnDoubleSemantic,
+    pub(super) height_disposition: DxfMTextColumnHeightDisposition,
     pub(super) height_start: u32,
     pub(super) height_end: u32,
 }
@@ -149,6 +165,11 @@ impl DxfMTextColumnSemantics {
     #[must_use]
     pub const fn shared_height(&self) -> &DxfMTextColumnDoubleSemantic {
         &self.shared_height
+    }
+
+    #[must_use]
+    pub const fn height_disposition(self) -> DxfMTextColumnHeightDisposition {
+        self.height_disposition
     }
 
     #[must_use]
@@ -226,20 +247,25 @@ impl DxfMTextColumnSemanticDirectory {
             ensure_not_cancelled(cancellation)?;
             semantics.try_reserve(1).map_err(|_| out_of_memory())?;
             semantics.push(match entry {
-                DxfMTextColumnSourceEntry::Flat(source) => project_entry(
-                    document.source_id(),
-                    entry,
-                    flat_evidence
+                DxfMTextColumnSourceEntry::Flat(source) => {
+                    let values = flat_evidence
                         .values_for_entry(source)
-                        .ok_or_else(invalid_internal_data)?,
-                    &mut individual_heights,
-                )?,
+                        .ok_or_else(invalid_internal_data)?;
+                    project_entry(
+                        document.source_id(),
+                        entry,
+                        values,
+                        flat_height_disposition(values)?,
+                        &mut individual_heights,
+                    )?
+                }
                 DxfMTextColumnSourceEntry::Embedded(source) => project_entry(
                     document.source_id(),
                     entry,
                     embedded_evidence
                         .values_for_entry(source)
                         .ok_or_else(invalid_internal_data)?,
+                    DxfMTextColumnHeightDisposition::Unambiguous,
                     &mut individual_heights,
                 )?,
                 DxfMTextColumnSourceEntry::AcadXData(source) => project_entry(
@@ -248,6 +274,7 @@ impl DxfMTextColumnSemanticDirectory {
                     xdata_evidence
                         .values_for_entry(source)
                         .ok_or_else(invalid_internal_data)?,
+                    DxfMTextColumnHeightDisposition::Unambiguous,
                     &mut individual_heights,
                 )?,
             });
@@ -336,6 +363,27 @@ impl DxfBinaryRawDocument<'_> {
     ) -> Result<DxfMTextColumnSemanticDirectory, DxfError> {
         DxfRawDocumentView::from(self).mtext_column_semantic_directory(cancellation)
     }
+}
+
+fn flat_height_disposition(
+    values: &[crate::DxfMTextFlatColumnValue],
+) -> Result<DxfMTextColumnHeightDisposition, DxfError> {
+    let mut matching = values
+        .iter()
+        .copied()
+        .filter(|value| value.role() == crate::DxfMTextFlatColumnRole::RotationOrColumnHeight);
+    let Some(first) = matching.next() else {
+        return Ok(DxfMTextColumnHeightDisposition::NoHeightEvidence);
+    };
+    let first_raw = DxfRawValueProvenance::new(
+        first.group().occurrence(),
+        first.group().value_payload_span(),
+    )
+    .ok_or_else(invalid_internal_data)?;
+    Ok(DxfMTextColumnHeightDisposition::AmbiguousDirectGroup50 {
+        occurrence_count: 1 + matching.count() as u64,
+        first_raw,
+    })
 }
 
 fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {

@@ -188,6 +188,13 @@ unambiguous fields use identical domains, provenance, diagnostics, and
 cross-field relationships as Embedded/XDATA storage. Ambiguous group 50 maps
 to no scalar role, so flat dynamic-auto mode is usable while height-bearing
 modes remain fail-closed pending stronger framing evidence.
+M14.2v makes that fail-closed boundary a public typed contract. Unified column
+semantics distinguish unambiguous Embedded/XDATA height framing, flat storage
+with no height evidence, and ambiguous direct group-50 sets with exact count
+and first-value provenance. Static and dynamic-manual flat modes report a
+dedicated unsupported ambiguity rather than a generic missing-height result.
+No source-order heuristic claims rotation, shared height, or individual
+heights without a reproducible normative or behavioral discriminator.
 
 ## Milestone queue
 

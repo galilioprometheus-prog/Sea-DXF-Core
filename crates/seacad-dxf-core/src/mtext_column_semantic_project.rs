@@ -4,8 +4,8 @@ use std::io;
 
 use crate::{
     DxfDouble, DxfError, DxfIoOperation, DxfMTextColumnBooleanSemantic,
-    DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic, DxfMTextColumnIssue,
-    DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic, DxfMTextColumnHeightDisposition,
+    DxfMTextColumnIssue, DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
     DxfMTextColumnTypeSemantic, DxfMTextEmbeddedColumnRole, DxfMTextEmbeddedColumnValue,
     DxfMTextFlatColumnRole, DxfMTextFlatColumnValue, DxfMTextXDataColumnRole,
     DxfMTextXDataColumnValue, DxfRawGroup, DxfRawValueProvenance, DxfSemanticFieldProvenance,
@@ -18,6 +18,7 @@ pub(super) fn project_entry<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
     entry: DxfMTextColumnSourceEntry,
     values: &[V],
+    height_disposition: DxfMTextColumnHeightDisposition,
     heights: &mut Vec<DxfMTextColumnDoubleSemantic>,
 ) -> Result<DxfMTextColumnSemantics, DxfError> {
     let height_start = compact_len(heights.len())?;
@@ -61,6 +62,7 @@ pub(super) fn project_entry<V: ColumnEvidenceValue>(
             DxfMTextEmbeddedColumnRole::SharedHeight,
             false,
         )?,
+        height_disposition,
         height_start,
         height_end: compact_len(heights.len())?,
     })

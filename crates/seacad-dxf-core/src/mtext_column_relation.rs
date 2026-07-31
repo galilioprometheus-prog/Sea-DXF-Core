@@ -4,9 +4,10 @@ use std::io;
 
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfError, DxfIoOperation,
-    DxfMTextColumnDoubleSemantic, DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory,
-    DxfMTextColumnSemantics, DxfMTextColumnType, DxfMTextEmbeddedColumnRole, DxfRawDocumentView,
-    DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
+    DxfMTextColumnDoubleSemantic, DxfMTextColumnHeightDisposition, DxfMTextColumnIssue,
+    DxfMTextColumnSemanticDirectory, DxfMTextColumnSemantics, DxfMTextColumnType,
+    DxfMTextEmbeddedColumnRole, DxfRawDocumentView, DxfRawValueProvenance,
+    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
 };
 
 const NAMESPACE: &str = "entity.mtext.embedded_column_relation";
@@ -40,6 +41,9 @@ pub enum DxfMTextColumnRelationIssue {
     IndividualHeightCountMismatch {
         column_count: u16,
         height_count: u64,
+    },
+    UnsupportedAmbiguousDirectGroup50Height {
+        occurrence_count: u64,
     },
 }
 
@@ -213,6 +217,7 @@ fn validate_static(
             scalars.column_count().raw_provenance(),
         ));
     }
+    require_unambiguous_height(scalars)?;
     let height = usable(
         scalars.shared_height(),
         DxfMTextEmbeddedColumnRole::SharedHeight,
@@ -270,6 +275,7 @@ fn validate_dynamic(
             scalars.column_count().raw_provenance(),
         ));
     }
+    require_unambiguous_height(scalars)?;
     for height in heights {
         usable(height, DxfMTextEmbeddedColumnRole::ColumnHeight)?;
     }
@@ -296,6 +302,22 @@ fn validate_dynamic(
         ));
     }
     Ok(DxfMTextColumnMode::DynamicManual)
+}
+
+fn require_unambiguous_height(scalars: DxfMTextColumnSemantics) -> Result<(), ProjectionFailure> {
+    match scalars.height_disposition() {
+        DxfMTextColumnHeightDisposition::AmbiguousDirectGroup50 {
+            occurrence_count,
+            first_raw,
+        } => Err((
+            DxfMTextColumnRelationIssue::UnsupportedAmbiguousDirectGroup50Height {
+                occurrence_count,
+            },
+            Some(first_raw),
+        )),
+        DxfMTextColumnHeightDisposition::Unambiguous
+        | DxfMTextColumnHeightDisposition::NoHeightEvidence => Ok(()),
+    }
 }
 
 fn require_dimensions(scalars: DxfMTextColumnSemantics) -> Result<(), ProjectionFailure> {

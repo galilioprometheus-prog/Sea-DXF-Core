@@ -2,11 +2,11 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfError, DxfMTextColumnMode, DxfMTextColumnRelationDirectory,
-    DxfMTextColumnSemanticDirectory, DxfMTextColumnSourceEntry, DxfMTextColumnType,
-    DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry, DxfMTextFlatColumnRole, DxfMemorySource,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValue, DxfTextSymbolValueData,
-    NoopDxfReadObserver,
+    DxfCancellationToken, DxfError, DxfMTextColumnHeightDisposition, DxfMTextColumnMode,
+    DxfMTextColumnRelationDirectory, DxfMTextColumnRelationIssue, DxfMTextColumnSemanticDirectory,
+    DxfMTextColumnSourceEntry, DxfMTextColumnType, DxfMTextFlatColumnDirectory,
+    DxfMTextFlatColumnEntry, DxfMTextFlatColumnRole, DxfMemorySource, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValue, DxfTextSymbolValueData, NoopDxfReadObserver,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -118,6 +118,43 @@ fn invalid_numeric_cancellation_lookup_identity_and_traits_remain_typed()
     Ok(())
 }
 
+#[test]
+fn flat_height_modes_report_unsupported_group_50_framing() -> Result<(), Box<dyn Error>> {
+    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n\
+0\nSECTION\n2\nENTITIES\n0\nMTEXT\n75\n1\n76\n2\n78\n0\n79\n0\n\
+48\n20\n49\n1\n50\n30\n50\n40\n\
+0\nMTEXT\n75\n2\n76\n2\n78\n0\n79\n0\n48\n20\n49\n1\n50\n30\n50\n40\n\
+0\nENDSEC\n0\nEOF\n";
+    let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let cancellation = DxfCancellationToken::default();
+    let scalars = document.mtext_column_semantic_directory(&cancellation)?;
+    assert_eq!(scalars.semantics().len(), 2);
+    let relations = document.mtext_column_relation_directory(&cancellation)?;
+    assert_eq!(relations.semantics().len(), 2);
+    for (scalar, relation) in scalars.semantics().iter().zip(relations.semantics()) {
+        let first_raw = match scalar.height_disposition() {
+            DxfMTextColumnHeightDisposition::AmbiguousDirectGroup50 {
+                occurrence_count: 2,
+                first_raw,
+            } => first_raw,
+            _ => return Err(invalid_test_data().into()),
+        };
+        assert!(matches!(
+            relation.mode(),
+            DxfSemanticValue::Invalid {
+                issue:
+                    DxfMTextColumnRelationIssue::UnsupportedAmbiguousDirectGroup50Height {
+                        occurrence_count: 2
+                    },
+                raw: Some(raw),
+                ..
+            } if *raw == first_raw
+        ));
+    }
+    Ok(())
+}
+
 fn signatures(directory: &DxfMTextFlatColumnDirectory) -> Result<Vec<Signature>, Box<dyn Error>> {
     assert_eq!(directory.entries().len(), 1);
     directory
@@ -152,6 +189,13 @@ fn assert_unified(
     assert_eq!(scalar.column_count().value(), Some(&0));
     assert_eq!(scalar.auto_height().value(), Some(&true));
     assert_eq!(scalar.individual_height_count(), 0);
+    assert!(matches!(
+        scalar.height_disposition(),
+        DxfMTextColumnHeightDisposition::AmbiguousDirectGroup50 {
+            occurrence_count: 2,
+            ..
+        }
+    ));
     assert!(matches!(
         scalar.shared_height(),
         DxfSemanticValue::Absent { .. }
