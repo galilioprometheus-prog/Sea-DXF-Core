@@ -5,25 +5,25 @@ use std::io;
 use crate::{
     DxfDouble, DxfError, DxfIoOperation, DxfMTextColumnBooleanSemantic,
     DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic, DxfMTextColumnIssue,
-    DxfMTextColumnSemantics, DxfMTextColumnType, DxfMTextColumnTypeSemantic,
-    DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole, DxfMTextEmbeddedColumnValue,
-    DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId,
-    DxfTextSymbolValueData,
+    DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextColumnTypeSemantic, DxfMTextEmbeddedColumnRole, DxfMTextEmbeddedColumnValue,
+    DxfMTextXDataColumnRole, DxfMTextXDataColumnValue, DxfRawGroup, DxfRawValueProvenance,
+    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId, DxfTextSymbolValueData,
 };
 
 const NAMESPACE: &str = "entity.mtext.embedded_columns";
 
-pub(super) fn project_entry(
+pub(super) fn project_entry<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    entry: DxfMTextEmbeddedColumnEntry,
-    values: &[DxfMTextEmbeddedColumnValue],
+    entry: DxfMTextColumnSourceEntry,
+    values: &[V],
     heights: &mut Vec<DxfMTextColumnDoubleSemantic>,
 ) -> Result<DxfMTextColumnSemantics, DxfError> {
     let height_start = compact_len(heights.len())?;
     for value in values
         .iter()
         .copied()
-        .filter(|value| value.role() == DxfMTextEmbeddedColumnRole::ColumnHeight)
+        .filter(|value| value.role() == Some(DxfMTextEmbeddedColumnRole::ColumnHeight))
     {
         heights.try_reserve(1).map_err(|_| out_of_memory())?;
         heights.push(project_nonnegative_double(source_id, value)?);
@@ -65,9 +65,9 @@ pub(super) fn project_entry(
     })
 }
 
-fn project_column_type(
+fn project_column_type<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    values: &[DxfMTextEmbeddedColumnValue],
+    values: &[V],
 ) -> Result<DxfMTextColumnTypeSemantic, DxfError> {
     let role = DxfMTextEmbeddedColumnRole::ColumnType;
     let field = field(source_id, role);
@@ -89,9 +89,9 @@ fn project_column_type(
     }
 }
 
-fn project_count(
+fn project_count<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    values: &[DxfMTextEmbeddedColumnValue],
+    values: &[V],
 ) -> Result<DxfMTextColumnCountSemantic, DxfError> {
     project_unique_i16(
         source_id,
@@ -101,9 +101,9 @@ fn project_count(
     )
 }
 
-fn project_boolean(
+fn project_boolean<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    values: &[DxfMTextEmbeddedColumnValue],
+    values: &[V],
     role: DxfMTextEmbeddedColumnRole,
 ) -> Result<DxfMTextColumnBooleanSemantic, DxfError> {
     project_unique_i16(source_id, values, role, |code| match code {
@@ -113,9 +113,9 @@ fn project_boolean(
     })
 }
 
-fn project_unique_i16<T: Copy>(
+fn project_unique_i16<T: Copy, V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    values: &[DxfMTextEmbeddedColumnValue],
+    values: &[V],
     role: DxfMTextEmbeddedColumnRole,
     classify: impl FnOnce(i16) -> Result<T, DxfMTextColumnIssue>,
 ) -> Result<DxfSemanticValue<T, DxfMTextColumnIssue>, DxfError> {
@@ -127,9 +127,9 @@ fn project_unique_i16<T: Copy>(
     }
 }
 
-fn project_unique_double(
+fn project_unique_double<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    values: &[DxfMTextEmbeddedColumnValue],
+    values: &[V],
     role: DxfMTextEmbeddedColumnRole,
     positive: bool,
 ) -> Result<DxfMTextColumnDoubleSemantic, DxfError> {
@@ -151,11 +151,11 @@ fn project_unique_double(
     }
 }
 
-fn project_positive_double(
+fn project_positive_double<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    value: DxfMTextEmbeddedColumnValue,
+    value: V,
 ) -> Result<DxfMTextColumnDoubleSemantic, DxfError> {
-    let role = value.role();
+    let role = value.role().ok_or_else(invalid_internal_data)?;
     project_double(field(source_id, role), value, |number| {
         if number.to_f64() > 0.0 {
             Ok(number)
@@ -168,11 +168,11 @@ fn project_positive_double(
     })
 }
 
-fn project_nonnegative_double(
+fn project_nonnegative_double<V: ColumnEvidenceValue>(
     source_id: DxfSourceId,
-    value: DxfMTextEmbeddedColumnValue,
+    value: V,
 ) -> Result<DxfMTextColumnDoubleSemantic, DxfError> {
-    let role = value.role();
+    let role = value.role().ok_or_else(invalid_internal_data)?;
     project_double(field(source_id, role), value, |number| {
         if number.to_f64() >= 0.0 {
             Ok(number)
@@ -185,9 +185,9 @@ fn project_nonnegative_double(
     })
 }
 
-fn project_i16<T: Copy>(
+fn project_i16<T: Copy, V: ColumnEvidenceValue>(
     field: DxfSemanticFieldProvenance,
-    value: DxfMTextEmbeddedColumnValue,
+    value: V,
     classify: impl FnOnce(i16) -> Result<T, DxfMTextColumnIssue>,
 ) -> Result<DxfSemanticValue<T, DxfMTextColumnIssue>, DxfError> {
     let raw = raw(value)?;
@@ -205,9 +205,9 @@ fn project_i16<T: Copy>(
     }
 }
 
-fn project_double<T: Copy>(
+fn project_double<T: Copy, V: ColumnEvidenceValue>(
     field: DxfSemanticFieldProvenance,
-    value: DxfMTextEmbeddedColumnValue,
+    value: V,
     classify: impl FnOnce(DxfDouble) -> Result<T, DxfMTextColumnIssue>,
 ) -> Result<DxfSemanticValue<T, DxfMTextColumnIssue>, DxfError> {
     let raw = raw(value)?;
@@ -225,14 +225,14 @@ fn project_double<T: Copy>(
     }
 }
 
-fn invalid_multiple<T>(
+fn invalid_multiple<T, V: ColumnEvidenceValue>(
     field: DxfSemanticFieldProvenance,
-    first: DxfMTextEmbeddedColumnValue,
+    first: V,
     occurrence_count: u64,
 ) -> Result<DxfSemanticValue<T, DxfMTextColumnIssue>, DxfError> {
     Ok(DxfSemanticValue::invalid(
         DxfMTextColumnIssue::MultipleValues {
-            role: first.role(),
+            role: first.role().ok_or_else(invalid_internal_data)?,
             occurrence_count,
         },
         field,
@@ -240,14 +240,17 @@ fn invalid_multiple<T>(
     ))
 }
 
-enum Unique {
+enum Unique<V> {
     Absent,
-    One(DxfMTextEmbeddedColumnValue),
-    Multiple(DxfMTextEmbeddedColumnValue, u64),
+    One(V),
+    Multiple(V, u64),
 }
 
-fn unique(values: &[DxfMTextEmbeddedColumnValue], role: DxfMTextEmbeddedColumnRole) -> Unique {
-    let mut matching = values.iter().copied().filter(|value| value.role() == role);
+fn unique<V: ColumnEvidenceValue>(values: &[V], role: DxfMTextEmbeddedColumnRole) -> Unique<V> {
+    let mut matching = values
+        .iter()
+        .copied()
+        .filter(|value| value.role() == Some(role));
     let Some(first) = matching.next() else {
         return Unique::Absent;
     };
@@ -274,12 +277,54 @@ fn field(source_id: DxfSourceId, role: DxfMTextEmbeddedColumnRole) -> DxfSemanti
     DxfSemanticFieldProvenance::new(source_id, NAMESPACE, field_id)
 }
 
-fn raw(value: DxfMTextEmbeddedColumnValue) -> Result<DxfRawValueProvenance, DxfError> {
-    DxfRawValueProvenance::new(
-        value.group().occurrence(),
-        value.group().value_payload_span(),
-    )
-    .ok_or_else(invalid_internal_data)
+fn raw(value: impl ColumnEvidenceValue) -> Result<DxfRawValueProvenance, DxfError> {
+    let group = value.group();
+    DxfRawValueProvenance::new(group.occurrence(), group.value_payload_span())
+        .ok_or_else(invalid_internal_data)
+}
+
+pub(super) trait ColumnEvidenceValue: Copy {
+    fn role(self) -> Option<DxfMTextEmbeddedColumnRole>;
+    fn data(self) -> DxfTextSymbolValueData;
+    fn group(self) -> DxfRawGroup;
+}
+
+impl ColumnEvidenceValue for DxfMTextEmbeddedColumnValue {
+    fn role(self) -> Option<DxfMTextEmbeddedColumnRole> {
+        Some(self.role())
+    }
+
+    fn data(self) -> DxfTextSymbolValueData {
+        self.data()
+    }
+
+    fn group(self) -> DxfRawGroup {
+        self.group()
+    }
+}
+
+impl ColumnEvidenceValue for DxfMTextXDataColumnValue {
+    fn role(self) -> Option<DxfMTextEmbeddedColumnRole> {
+        use DxfMTextEmbeddedColumnRole as R;
+        Some(match self.role() {
+            DxfMTextXDataColumnRole::ColumnType => R::ColumnType,
+            DxfMTextXDataColumnRole::ColumnAutoHeight => R::ColumnAutoHeight,
+            DxfMTextXDataColumnRole::ColumnCount => R::ColumnCount,
+            DxfMTextXDataColumnRole::ColumnFlowReversed => R::ColumnFlowReversed,
+            DxfMTextXDataColumnRole::ColumnWidth => R::ColumnWidth,
+            DxfMTextXDataColumnRole::ColumnGutter => R::ColumnGutter,
+            DxfMTextXDataColumnRole::ColumnHeight => R::ColumnHeight,
+            DxfMTextXDataColumnRole::ColumnHeightCount => return None,
+        })
+    }
+
+    fn data(self) -> DxfTextSymbolValueData {
+        self.data()
+    }
+
+    fn group(self) -> DxfRawGroup {
+        self.value_group()
+    }
 }
 
 fn compact_len(len: usize) -> Result<u32, DxfError> {

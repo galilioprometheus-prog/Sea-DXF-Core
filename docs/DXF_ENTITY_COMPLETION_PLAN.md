@@ -154,6 +154,13 @@ and the field-50 declared height count plus its 1040 height sequence, including
 ASCII/Binary extended XDATA group codes. Incomplete, wrong-app, or inexact
 blocks produce no partial evidence. Mapping this evidence into the M14.2m/n
 semantics remains the next checkpoint.
+M14.2p maps modern Embedded and R2007 `ACAD` XDATA values through one shared
+scalar/mode implementation. Public source entries identify their physical
+storage, while type/count/width/gutter/flags/heights use the same issues,
+provenance, source-order height slices, and relation checks. XDATA
+dynamic-manual columns now reach the same usable mode as their modern
+equivalent. Separate R2007 defined-height and linked-column-handle blocks remain
+later checkpoints.
 
 ## Milestone queue
 

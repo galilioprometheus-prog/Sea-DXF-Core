@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2o can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2p can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -343,6 +343,14 @@ count, reversed flow, width, gutter, declared height count, and repeated
 heights with source identity. AC1009 extended Binary XDATA codes and all later
 dialects have ASCII/Binary parity. Semantic unification with the modern
 embedded representation, layout geometry, edit, and write remain unclaimed.
+
+M14.2p projects Embedded and `ACAD` XDATA evidence through the same typed
+scalar and mode-relation implementation. Each result identifies its physical
+source envelope; shared fields and source-order individual heights have
+identical semantics and provenance across storage forms. R2007
+dynamic-manual height arrays are usable. Separate defined-height and
+linked-column-handle XDATA blocks, direct flat group-50 framing, geometry,
+edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

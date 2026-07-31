@@ -2,9 +2,11 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfError, DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry,
-    DxfMTextXDataColumnRole, DxfMemorySource, DxfReadOptions, DxfResourceProfile,
-    DxfTextSymbolValueData, NoopDxfReadObserver,
+    DxfCancellationToken, DxfError, DxfMTextColumnMode, DxfMTextColumnRelationDirectory,
+    DxfMTextColumnSemanticDirectory, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfMTextXDataColumnRole,
+    DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfTextSymbolValueData,
+    NoopDxfReadObserver,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -108,6 +110,28 @@ fn provenance_lookup_cancellation_scope_and_traits_are_bounded() -> Result<(), B
     Ok(())
 }
 
+#[test]
+fn xdata_reuses_the_unified_scalar_and_mode_projection() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        let ascii_bytes = ascii_document(version.code(), APP, BEGIN, true);
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source)?;
+        assert_unified(
+            &ascii.mtext_column_semantic_directory(&DxfCancellationToken::default())?,
+            &ascii.mtext_column_relation_directory(&DxfCancellationToken::default())?,
+        )?;
+
+        let binary_bytes = binary_document(version)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source)?;
+        assert_unified(
+            &binary.mtext_column_semantic_directory(&DxfCancellationToken::default())?,
+            &binary.mtext_column_relation_directory(&DxfCancellationToken::default())?,
+        )?;
+    }
+    Ok(())
+}
+
 const APP: &str = "ACAD";
 const BEGIN: &str = "ACAD_MTEXT_COLUMN_INFO_BEGIN";
 const END: &str = "ACAD_MTEXT_COLUMN_INFO_END";
@@ -129,6 +153,38 @@ fn signatures(directory: &DxfMTextXDataColumnDirectory) -> Result<Vec<Signature>
             })
         })
         .collect()
+}
+
+fn assert_unified(
+    scalars: &DxfMTextColumnSemanticDirectory,
+    relations: &DxfMTextColumnRelationDirectory,
+) -> Result<(), Box<dyn Error>> {
+    assert_eq!(scalars.semantics().len(), 1);
+    let scalar = scalars.semantics()[0];
+    assert!(matches!(
+        scalar.entry(),
+        DxfMTextColumnSourceEntry::AcadXData(_)
+    ));
+    assert_eq!(
+        scalar.column_type().value(),
+        Some(&DxfMTextColumnType::Dynamic)
+    );
+    assert_eq!(scalar.column_count().value(), Some(&3));
+    assert_eq!(scalar.individual_height_count(), 3);
+    assert_eq!(
+        scalars
+            .individual_heights(scalar)
+            .ok_or_else(invalid_test_data)?[2]
+            .value()
+            .ok_or_else(invalid_test_data)?
+            .to_f64(),
+        0.0
+    );
+    assert_eq!(
+        relations.semantics()[0].mode().value(),
+        Some(&DxfMTextColumnMode::DynamicManual)
+    );
+    Ok(())
 }
 
 fn integer(role: DxfMTextXDataColumnRole, value: i16) -> Signature {

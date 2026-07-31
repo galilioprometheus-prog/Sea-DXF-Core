@@ -1518,6 +1518,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     followed by its source-order 1040 values. Inexact apps/markers and
     incomplete blocks cannot publish partial evidence. Semantic unification
     with modern embedded storage remains separate.
+    M14.2p unifies Embedded and `ACAD` XDATA column evidence behind one
+    source-entry enum and one generic scalar projection. Both sources now reuse
+    identical type/count/dimension/flag/height issues and feed the existing
+    mode-relation directory in marker source order. R2007 dynamic-manual XDATA
+    with a declared height array reaches the same usable mode as modern
+    embedded storage. The separate defined-height and linked-column-handle
+    XDATA blocks remain later checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

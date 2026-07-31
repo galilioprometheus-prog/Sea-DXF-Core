@@ -507,7 +507,7 @@ pub use mtext_column_relation::{
 pub use mtext_column_semantic::{
     DxfMTextColumnBooleanSemantic, DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic,
     DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory, DxfMTextColumnSemantics,
-    DxfMTextColumnType, DxfMTextColumnTypeSemantic,
+    DxfMTextColumnSourceEntry, DxfMTextColumnType, DxfMTextColumnTypeSemantic,
 };
 pub use mtext_embedded_column_evidence::{
     DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole,
