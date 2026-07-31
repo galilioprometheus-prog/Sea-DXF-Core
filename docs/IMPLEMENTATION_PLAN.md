@@ -1465,6 +1465,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     provenance; absence receives no undocumented default. Background-color
     ownership, other numeric ranges, columns, rotation precedence, transforms,
     styles, and glyph geometry remain separate checkpoints.
+    M14.2j validates Autodesk's MTEXT width invariant: read-only group 42 is
+    equal to or less than reference rectangle group 41. Equality and smaller
+    values are explicit usable relations; excess values retain both exact
+    IEEE-754 inputs and group-42 provenance in a typed failure; absent or
+    unusable inputs remain independently typed. Other numeric relationships,
+    background ownership, columns, rotation precedence, transforms, styles,
+    and glyph geometry remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

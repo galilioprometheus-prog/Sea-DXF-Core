@@ -113,8 +113,13 @@ and absence remains `Absent` without an invented default.
 M14.2i classifies Autodesk's three published MTEXT background-fill settings:
 off, explicit fill color, and drawing-window color. Other signed group-90
 values remain unsupported with exact raw provenance rather than being treated
-as undocumented flags. Other numeric ranges, background-color ownership,
-column semantics, rotation precedence, and geometry remain later checkpoints.
+as undocumented flags.
+M14.2j enforces Autodesk's read-only MTEXT actual-width relationship: a usable
+group 42 must not exceed the required group-41 reference width. Equality is
+valid; violations retain both exact IEEE-754 values and source provenance;
+unavailable inputs preserve the originating scalar failure. Other numeric
+ranges, background-color ownership, column semantics, rotation precedence,
+and geometry remain later checkpoints.
 
 ## Milestone queue
 

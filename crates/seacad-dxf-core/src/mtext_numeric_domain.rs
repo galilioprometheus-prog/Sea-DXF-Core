@@ -46,19 +46,35 @@ impl DxfMTextBackgroundFillSetting {
     }
 }
 
+/// Documented relationship between MTEXT actual and reference widths.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfMTextActualWidthRelation {
+    WithinReference,
+}
+
 /// Why a documented MTEXT numeric domain is unavailable.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfMTextNumericDomainIssue {
     Scalar(DxfTextSymbolScalarIssue),
-    LineSpacingFactorOutOfRange { value: DxfDouble },
-    UnsupportedBackgroundFillSetting { code: i32 },
+    LineSpacingFactorOutOfRange {
+        value: DxfDouble,
+    },
+    UnsupportedBackgroundFillSetting {
+        code: i32,
+    },
+    ActualWidthExceedsReference {
+        actual_width: DxfDouble,
+        reference_width: DxfDouble,
+    },
 }
 
 pub type DxfMTextLineSpacingFactorSemantic =
     DxfSemanticValue<DxfMTextLineSpacingFactor, DxfMTextNumericDomainIssue>;
 pub type DxfMTextBackgroundFillSettingSemantic =
     DxfSemanticValue<DxfMTextBackgroundFillSetting, DxfMTextNumericDomainIssue>;
+pub type DxfMTextActualWidthRelationSemantic =
+    DxfSemanticValue<DxfMTextActualWidthRelation, DxfMTextNumericDomainIssue>;
 
 /// MTEXT scalars projected into independently documented numeric domains.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -66,6 +82,7 @@ pub struct DxfMTextNumericDomainSemantics {
     numeric: DxfMTextNumericSemantics,
     line_spacing_factor: DxfMTextLineSpacingFactorSemantic,
     background_fill_setting: DxfMTextBackgroundFillSettingSemantic,
+    actual_width_relation: DxfMTextActualWidthRelationSemantic,
 }
 
 impl DxfMTextNumericDomainSemantics {
@@ -87,6 +104,11 @@ impl DxfMTextNumericDomainSemantics {
     #[must_use]
     pub const fn background_fill_setting(&self) -> &DxfMTextBackgroundFillSettingSemantic {
         &self.background_fill_setting
+    }
+
+    #[must_use]
+    pub const fn actual_width_relation(&self) -> &DxfMTextActualWidthRelationSemantic {
+        &self.actual_width_relation
     }
 }
 
@@ -182,6 +204,10 @@ fn numeric_domain_semantics(numeric: DxfMTextNumericSemantics) -> DxfMTextNumeri
     DxfMTextNumericDomainSemantics {
         line_spacing_factor: project_line_spacing_factor(*numeric.line_spacing_factor()),
         background_fill_setting: project_background_fill_setting(*numeric.background_fill()),
+        actual_width_relation: project_actual_width_relation(
+            *numeric.actual_width(),
+            *numeric.reference_width(),
+        ),
         numeric,
     }
 }
@@ -214,6 +240,82 @@ fn project_background_fill_setting(
             }
         })
     })
+}
+
+fn project_actual_width_relation(
+    actual_width: DxfTextSymbolDoubleValue,
+    reference_width: DxfTextSymbolDoubleValue,
+) -> DxfMTextActualWidthRelationSemantic {
+    match actual_width {
+        DxfSemanticValue::Explicit {
+            value: actual,
+            field,
+            raw,
+        } => match usable_reference_width(reference_width) {
+            Ok(Some(reference)) if actual.to_f64() <= reference.to_f64() => {
+                DxfSemanticValue::explicit(DxfMTextActualWidthRelation::WithinReference, field, raw)
+            }
+            Ok(Some(reference)) => DxfSemanticValue::invalid(
+                DxfMTextNumericDomainIssue::ActualWidthExceedsReference {
+                    actual_width: actual,
+                    reference_width: reference,
+                },
+                field,
+                Some(raw),
+            ),
+            Ok(None) => DxfSemanticValue::absent(field),
+            Err((issue, reference_field, reference_raw)) => DxfSemanticValue::invalid(
+                DxfMTextNumericDomainIssue::Scalar(issue),
+                reference_field,
+                reference_raw,
+            ),
+        },
+        DxfSemanticValue::Defaulted {
+            value: actual,
+            field,
+        } => match usable_reference_width(reference_width) {
+            Ok(Some(reference)) if actual.to_f64() <= reference.to_f64() => {
+                DxfSemanticValue::defaulted(DxfMTextActualWidthRelation::WithinReference, field)
+            }
+            Ok(Some(reference)) => DxfSemanticValue::invalid(
+                DxfMTextNumericDomainIssue::ActualWidthExceedsReference {
+                    actual_width: actual,
+                    reference_width: reference,
+                },
+                field,
+                None,
+            ),
+            Ok(None) => DxfSemanticValue::absent(field),
+            Err((issue, reference_field, reference_raw)) => DxfSemanticValue::invalid(
+                DxfMTextNumericDomainIssue::Scalar(issue),
+                reference_field,
+                reference_raw,
+            ),
+        },
+        DxfSemanticValue::Absent { field } => DxfSemanticValue::absent(field),
+        DxfSemanticValue::Invalid { issue, field, raw } => {
+            DxfSemanticValue::invalid(DxfMTextNumericDomainIssue::Scalar(issue), field, raw)
+        }
+    }
+}
+
+fn usable_reference_width(
+    reference_width: DxfTextSymbolDoubleValue,
+) -> Result<
+    Option<DxfDouble>,
+    (
+        DxfTextSymbolScalarIssue,
+        crate::DxfSemanticFieldProvenance,
+        Option<crate::DxfRawValueProvenance>,
+    ),
+> {
+    match reference_width {
+        DxfSemanticValue::Explicit { value, .. } | DxfSemanticValue::Defaulted { value, .. } => {
+            Ok(Some(value))
+        }
+        DxfSemanticValue::Absent { .. } => Ok(None),
+        DxfSemanticValue::Invalid { issue, field, raw } => Err((issue, field, raw)),
+    }
 }
 
 fn project_double<T: Copy>(

@@ -500,6 +500,7 @@ pub use mtext_layout::{
     DxfMTextLayoutSemantics, DxfMTextLineSpacingStyle, DxfMTextLineSpacingStyleSemantic,
 };
 pub use mtext_numeric_domain::{
+    DxfMTextActualWidthRelation, DxfMTextActualWidthRelationSemantic,
     DxfMTextBackgroundFillSetting, DxfMTextBackgroundFillSettingSemantic,
     DxfMTextLineSpacingFactor, DxfMTextLineSpacingFactorSemantic, DxfMTextNumericDomainDirectory,
     DxfMTextNumericDomainIssue, DxfMTextNumericDomainSemantics,

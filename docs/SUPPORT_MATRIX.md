@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2i can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2j can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -298,8 +298,14 @@ without a default.
 M14.2i classifies Autodesk's published MTEXT group-90 background settings
 `0/1/2`. Other signed settings, invalid ASCII, and duplicates remain typed and
 source-anchored; absence receives no default. Background-color ownership,
-other numeric ranges, column codes, rotation precedence, coordinate
-transforms, styles, and glyphs remain unclaimed.
+other numeric ranges, column codes, rotation precedence, coordinate transforms,
+styles, and glyphs remain unclaimed.
+
+M14.2j validates Autodesk's read-only MTEXT width relation: group 42 must be
+equal to or less than group 41. Excess values retain both exact IEEE-754 inputs
+and source provenance; absent, invalid, and duplicate inputs remain
+independently typed. Other numeric relationships, background ownership,
+columns, rotation precedence, transforms, styles, and glyphs remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
