@@ -109,9 +109,12 @@ remain separate typed states with exact provenance.
 M14.2h validates the independently documented optional MTEXT line-spacing
 factor over the inclusive `0.25..=4.00` domain. Exact boundary values remain
 explicit, out-of-range values retain their IEEE-754 payload and raw provenance,
-and absence remains `Absent` without an invented default. Other numeric ranges,
-background/column semantics, rotation precedence, and geometry remain later
-checkpoints.
+and absence remains `Absent` without an invented default.
+M14.2i classifies Autodesk's three published MTEXT background-fill settings:
+off, explicit fill color, and drawing-window color. Other signed group-90
+values remain unsupported with exact raw provenance rather than being treated
+as undocumented flags. Other numeric ranges, background-color ownership,
+column semantics, rotation precedence, and geometry remain later checkpoints.
 
 ## Milestone queue
 

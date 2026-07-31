@@ -3,8 +3,8 @@
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
     DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfRawDocumentView,
-    DxfSemanticValue, DxfSourceId, DxfTextSymbolDoubleValue, DxfTextSymbolRecordEntry,
-    DxfTextSymbolScalarIssue,
+    DxfSemanticValue, DxfSourceId, DxfTextSymbolDoubleValue, DxfTextSymbolInt32Value,
+    DxfTextSymbolRecordEntry, DxfTextSymbolScalarIssue,
 };
 
 /// Autodesk MTEXT line-spacing factor in the inclusive `0.25..=4.00` domain.
@@ -26,22 +26,46 @@ impl DxfMTextLineSpacingFactor {
     }
 }
 
+/// Autodesk MTEXT background-fill setting.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfMTextBackgroundFillSetting {
+    Off,
+    FillColor,
+    DrawingWindowColor,
+}
+
+impl DxfMTextBackgroundFillSetting {
+    #[must_use]
+    pub const fn code(self) -> i32 {
+        match self {
+            Self::Off => 0,
+            Self::FillColor => 1,
+            Self::DrawingWindowColor => 2,
+        }
+    }
+}
+
 /// Why a documented MTEXT numeric domain is unavailable.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfMTextNumericDomainIssue {
     Scalar(DxfTextSymbolScalarIssue),
     LineSpacingFactorOutOfRange { value: DxfDouble },
+    UnsupportedBackgroundFillSetting { code: i32 },
 }
 
 pub type DxfMTextLineSpacingFactorSemantic =
     DxfSemanticValue<DxfMTextLineSpacingFactor, DxfMTextNumericDomainIssue>;
+pub type DxfMTextBackgroundFillSettingSemantic =
+    DxfSemanticValue<DxfMTextBackgroundFillSetting, DxfMTextNumericDomainIssue>;
 
 /// MTEXT scalars projected into independently documented numeric domains.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfMTextNumericDomainSemantics {
     numeric: DxfMTextNumericSemantics,
     line_spacing_factor: DxfMTextLineSpacingFactorSemantic,
+    background_fill_setting: DxfMTextBackgroundFillSettingSemantic,
 }
 
 impl DxfMTextNumericDomainSemantics {
@@ -58,6 +82,11 @@ impl DxfMTextNumericDomainSemantics {
     #[must_use]
     pub const fn line_spacing_factor(&self) -> &DxfMTextLineSpacingFactorSemantic {
         &self.line_spacing_factor
+    }
+
+    #[must_use]
+    pub const fn background_fill_setting(&self) -> &DxfMTextBackgroundFillSettingSemantic {
+        &self.background_fill_setting
     }
 }
 
@@ -152,6 +181,7 @@ impl DxfBinaryRawDocument<'_> {
 fn numeric_domain_semantics(numeric: DxfMTextNumericSemantics) -> DxfMTextNumericDomainSemantics {
     DxfMTextNumericDomainSemantics {
         line_spacing_factor: project_line_spacing_factor(*numeric.line_spacing_factor()),
+        background_fill_setting: project_background_fill_setting(*numeric.background_fill()),
         numeric,
     }
 }
@@ -171,9 +201,44 @@ fn project_line_spacing_factor(
     })
 }
 
+fn project_background_fill_setting(
+    source: DxfTextSymbolInt32Value,
+) -> DxfMTextBackgroundFillSettingSemantic {
+    project_integer(source, |code| {
+        Ok(match code {
+            0 => DxfMTextBackgroundFillSetting::Off,
+            1 => DxfMTextBackgroundFillSetting::FillColor,
+            2 => DxfMTextBackgroundFillSetting::DrawingWindowColor,
+            _ => {
+                return Err(DxfMTextNumericDomainIssue::UnsupportedBackgroundFillSetting { code });
+            }
+        })
+    })
+}
+
 fn project_double<T: Copy>(
     source: DxfTextSymbolDoubleValue,
     classify: impl FnOnce(DxfDouble) -> Result<T, DxfMTextNumericDomainIssue>,
+) -> DxfSemanticValue<T, DxfMTextNumericDomainIssue> {
+    match source {
+        DxfSemanticValue::Explicit { value, field, raw } => match classify(value) {
+            Ok(value) => DxfSemanticValue::explicit(value, field, raw),
+            Err(issue) => DxfSemanticValue::invalid(issue, field, Some(raw)),
+        },
+        DxfSemanticValue::Defaulted { value, field } => match classify(value) {
+            Ok(value) => DxfSemanticValue::defaulted(value, field),
+            Err(issue) => DxfSemanticValue::invalid(issue, field, None),
+        },
+        DxfSemanticValue::Absent { field } => DxfSemanticValue::absent(field),
+        DxfSemanticValue::Invalid { issue, field, raw } => {
+            DxfSemanticValue::invalid(DxfMTextNumericDomainIssue::Scalar(issue), field, raw)
+        }
+    }
+}
+
+fn project_integer<T: Copy>(
+    source: DxfTextSymbolInt32Value,
+    classify: impl FnOnce(i32) -> Result<T, DxfMTextNumericDomainIssue>,
 ) -> DxfSemanticValue<T, DxfMTextNumericDomainIssue> {
     match source {
         DxfSemanticValue::Explicit { value, field, raw } => match classify(value) {

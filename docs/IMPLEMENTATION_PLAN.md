@@ -1459,6 +1459,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Other numeric ranges, background/column interpretation, rotation
     precedence, transforms, styles, and glyph geometry remain separate
     checkpoints.
+    M14.2i classifies the three MTEXT group-90 settings that Autodesk publishes:
+    `0` background off, `1` explicit fill color, and `2` drawing-window color.
+    Other signed values, invalid ASCII, and duplicates remain typed with exact
+    provenance; absence receives no undocumented default. Background-color
+    ownership, other numeric ranges, columns, rotation precedence, transforms,
+    styles, and glyph geometry remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

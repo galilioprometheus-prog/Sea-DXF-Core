@@ -2,9 +2,10 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfDouble, DxfError, DxfMTextNumericDomainDirectory,
-    DxfMTextNumericDomainIssue, DxfMTextNumericDomainSemantics, DxfMemorySource, DxfReadOptions,
-    DxfResourceProfile, DxfSemanticValueState, DxfTextSymbolScalarIssue, NoopDxfReadObserver,
+    DxfCancellationToken, DxfDouble, DxfError, DxfMTextBackgroundFillSetting,
+    DxfMTextNumericDomainDirectory, DxfMTextNumericDomainIssue, DxfMTextNumericDomainSemantics,
+    DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
+    DxfTextSymbolScalarIssue, NoopDxfReadObserver,
 };
 
 #[test]
@@ -37,6 +38,107 @@ fn every_dialect_has_ascii_binary_line_spacing_factor_parity() -> Result<(), Box
             ]
         );
     }
+    Ok(())
+}
+
+#[test]
+fn every_dialect_has_ascii_binary_background_fill_setting_parity() -> Result<(), Box<dyn Error>> {
+    let values = [None, Some(0), Some(1), Some(2)];
+    for version in DxfAcadVersion::SUPPORTED {
+        let ascii_bytes = ascii_background_fixture(version.code(), &values);
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source)?;
+        let ascii_directory =
+            ascii.mtext_numeric_domain_directory(&DxfCancellationToken::default())?;
+
+        let binary_bytes = binary_background_fixture(version, &values)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source)?;
+        let binary_directory =
+            binary.mtext_numeric_domain_directory(&DxfCancellationToken::default())?;
+
+        assert_eq!(
+            background_signatures(&ascii_directory)?,
+            background_signatures(&binary_directory)?
+        );
+        assert_eq!(
+            background_signatures(&ascii_directory)?,
+            [
+                (DxfSemanticValueState::Absent, None),
+                (DxfSemanticValueState::Explicit, Some(0)),
+                (DxfSemanticValueState::Explicit, Some(1)),
+                (DxfSemanticValueState::Explicit, Some(2)),
+            ]
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn documented_background_settings_and_unsupported_values_stay_typed() -> Result<(), Box<dyn Error>>
+{
+    let values = [Some(0), Some(1), Some(2), Some(-1), Some(3), Some(16)];
+    let bytes = ascii_background_fixture("AC1032", &values);
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.mtext_numeric_domain_directory(&DxfCancellationToken::default())?;
+    let expected = [
+        DxfMTextBackgroundFillSetting::Off,
+        DxfMTextBackgroundFillSetting::FillColor,
+        DxfMTextBackgroundFillSetting::DrawingWindowColor,
+    ];
+    for (index, expected) in expected.into_iter().enumerate() {
+        let value = semantics(&directory, index)?;
+        assert_eq!(value.background_fill_setting().value(), Some(&expected));
+        assert_eq!(expected.code(), i32::try_from(index)?);
+    }
+    for (index, code) in [(3, -1), (4, 3), (5, 16)] {
+        let value = semantics(&directory, index)?;
+        assert_eq!(
+            value.background_fill_setting().invalid_issue(),
+            Some(&DxfMTextNumericDomainIssue::UnsupportedBackgroundFillSetting { code })
+        );
+        assert!(value.background_fill_setting().raw_provenance().is_some());
+    }
+    Ok(())
+}
+
+#[test]
+fn invalid_and_duplicate_background_settings_preserve_scalar_evidence() -> Result<(), Box<dyn Error>>
+{
+    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n\
+0\nSECTION\n2\nENTITIES\n\
+0\nMTEXT\n90\nbad\n\
+0\nMTEXT\n90\n1\n90\n2\n\
+0\nENDSEC\n0\nEOF\n";
+    let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.mtext_numeric_domain_directory(&DxfCancellationToken::default())?;
+
+    let invalid = semantics(&directory, 0)?;
+    assert!(matches!(
+        invalid.background_fill_setting().invalid_issue(),
+        Some(DxfMTextNumericDomainIssue::Scalar(
+            DxfTextSymbolScalarIssue::InvalidAsciiNumber(_)
+        ))
+    ));
+    assert!(invalid.background_fill_setting().raw_provenance().is_some());
+
+    let duplicate = semantics(&directory, 1)?;
+    assert_eq!(
+        duplicate.background_fill_setting().invalid_issue(),
+        Some(&DxfMTextNumericDomainIssue::Scalar(
+            DxfTextSymbolScalarIssue::MultipleValues {
+                occurrence_count: 2,
+            }
+        ))
+    );
+    assert!(
+        duplicate
+            .background_fill_setting()
+            .raw_provenance()
+            .is_some()
+    );
     Ok(())
 }
 
@@ -175,6 +277,27 @@ fn signatures(
         .collect()
 }
 
+fn background_signatures(
+    directory: &DxfMTextNumericDomainDirectory,
+) -> Result<Vec<(DxfSemanticValueState, Option<i32>)>, DxfError> {
+    directory
+        .records()
+        .iter()
+        .copied()
+        .filter_map(|record| match directory.semantics_for_record(record) {
+            Ok(Some(semantics)) => Some(Ok((
+                semantics.background_fill_setting().state(),
+                semantics
+                    .background_fill_setting()
+                    .value()
+                    .map(|setting| setting.code()),
+            ))),
+            Ok(None) => None,
+            Err(error) => Some(Err(error)),
+        })
+        .collect()
+}
+
 fn semantics(
     directory: &DxfMTextNumericDomainDirectory,
     index: usize,
@@ -224,6 +347,44 @@ fn binary_fixture(version: DxfAcadVersion, values: &[Option<f64>]) -> Result<Vec
     Ok(bytes)
 }
 
+fn ascii_background_fixture(version: &str, values: &[Option<i32>]) -> Vec<u8> {
+    let mut entities = String::new();
+    for value in values {
+        entities.push_str("0\nMTEXT\n");
+        if let Some(value) = value {
+            entities.push_str(&format!("90\n{value}\n"));
+        }
+    }
+    format!(
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n\
+0\nSECTION\n2\nENTITIES\n{entities}0\nENDSEC\n0\nEOF\n"
+    )
+    .into_bytes()
+}
+
+fn binary_background_fixture(
+    version: DxfAcadVersion,
+    values: &[Option<i32>],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+    push_string(&mut bytes, version, 0, b"SECTION")?;
+    push_string(&mut bytes, version, 2, b"HEADER")?;
+    push_string(&mut bytes, version, 9, b"$ACADVER")?;
+    push_string(&mut bytes, version, 1, version.code().as_bytes())?;
+    push_string(&mut bytes, version, 0, b"ENDSEC")?;
+    push_string(&mut bytes, version, 0, b"SECTION")?;
+    push_string(&mut bytes, version, 2, b"ENTITIES")?;
+    for value in values {
+        push_string(&mut bytes, version, 0, b"MTEXT")?;
+        if let Some(value) = value {
+            push_i32(&mut bytes, version, 90, *value)?;
+        }
+    }
+    push_string(&mut bytes, version, 0, b"ENDSEC")?;
+    push_string(&mut bytes, version, 0, b"EOF")?;
+    Ok(bytes)
+}
+
 fn push_string(
     bytes: &mut Vec<u8>,
     version: DxfAcadVersion,
@@ -242,6 +403,12 @@ fn push_double(
     code: i16,
     value: f64,
 ) -> io::Result<()> {
+    push_code(bytes, version, code)?;
+    bytes.extend_from_slice(&value.to_le_bytes());
+    Ok(())
+}
+
+fn push_i32(bytes: &mut Vec<u8>, version: DxfAcadVersion, code: i16, value: i32) -> io::Result<()> {
     push_code(bytes, version, code)?;
     bytes.extend_from_slice(&value.to_le_bytes());
     Ok(())
