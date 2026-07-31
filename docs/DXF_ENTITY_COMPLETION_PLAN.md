@@ -249,6 +249,14 @@ remain distinct; duplicate targets preserve source order. Interrupted,
 unclosed, wrong-case, malformed, and application-group-decoy evidence is not
 admitted. DIMSTYLE field semantics, tolerance-string interpretation, glyph
 geometry, edit, and write remain later work.
+M14.2af retains all 68 documented DIMSTYLE-specific fields through one sorted
+registry and typed source-order text, binary64, signed-16-bit, or handle
+evidence. Every admitted exact named DIMSTYLE record receives 68 stable
+absent/unique/multiple cards, preserving duplicates and lexical failures while
+excluding application-group decoys. No occurrence is selected and no default,
+domain rule, name normalization, handle resolution, or downstream text/glyph
+meaning is inferred. AC1009 Binary coverage leaves codes above 255 absent
+because that dialect's one-byte group-code header cannot encode them.
 
 ## Milestone queue
 

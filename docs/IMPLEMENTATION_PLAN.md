@@ -1633,6 +1633,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     ATTDEF implementations without changing their public behavior. DIMSTYLE
     field semantics, tolerance-string interpretation, glyph geometry, edit,
     and write remain unclaimed.
+    M14.2af publishes one reviewed registry for all 68 documented
+    DIMSTYLE-specific fields and retains their exact source-order text,
+    binary64, signed-16-bit, or handle evidence. Every admitted named record
+    exposes 68 fixed cards with absent, unique, or duplicate-preserving
+    multiple state; invalid ASCII numbers and handles remain typed, and
+    application-group content cannot impersonate a field. AC1009 Binary
+    parity keeps codes above 255 absent because its one-byte group-code header
+    cannot represent them. No field value is selected, defaulted, normalized,
+    range-validated, or resolved to another table record. Tolerance-string
+    interpretation, glyph geometry, edit, and write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -41,6 +41,9 @@ mod circular_geometry_semantic;
 mod common_owner_candidate;
 mod diagnostic;
 mod dialect;
+mod dimstyle_field;
+mod dimstyle_field_card;
+mod dimstyle_field_evidence;
 mod dimstyle_table;
 mod ellipse_geometry;
 mod ellipse_geometry_card;
@@ -320,6 +323,15 @@ pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSe
 pub use dialect::{
     DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
     DxfAcadVersionValue,
+};
+pub use dimstyle_field::{DxfDimStyleField, DxfDimStyleWireKind, dxf_dimstyle_fields};
+pub use dimstyle_field_card::{
+    DxfDimStyleCardMember, DxfDimStyleCardMemberRange, DxfDimStyleFieldCard,
+    DxfDimStyleFieldCardDirectory, DxfDimStyleFieldCardState,
+};
+pub use dimstyle_field_evidence::{
+    DxfDimStyleValue, DxfDimStyleValueData, DxfDimStyleValueDirectory, DxfDimStyleValueEntry,
+    DxfDimStyleValueIssue, DxfDimStyleValueRange,
 };
 pub use dimstyle_table::{DxfDimStyleTableDirectory, DxfDimStyleTableEntry};
 pub use ellipse_geometry::{
