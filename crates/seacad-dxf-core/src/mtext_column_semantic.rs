@@ -5,9 +5,10 @@ use std::io;
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
     DxfIoOperation, DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry,
-    DxfMTextEmbeddedColumnRole, DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry,
-    DxfRawDocumentView, DxfRawGroup, DxfRawRecord, DxfSemanticValue, DxfSourceId,
-    DxfTextSymbolNumericIssue, mtext_column_semantic_project::project_entry,
+    DxfMTextEmbeddedColumnRole, DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry,
+    DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfRawDocumentView, DxfRawGroup,
+    DxfRawRecord, DxfSemanticValue, DxfSourceId, DxfTextSymbolNumericIssue,
+    mtext_column_semantic_project::project_entry,
 };
 
 /// Autodesk MTEXT column type.
@@ -69,6 +70,7 @@ pub type DxfMTextColumnDoubleSemantic = DxfSemanticValue<DxfDouble, DxfMTextColu
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfMTextColumnSourceEntry {
+    Flat(DxfMTextFlatColumnEntry),
     Embedded(DxfMTextEmbeddedColumnEntry),
     AcadXData(DxfMTextXDataColumnEntry),
 }
@@ -77,6 +79,7 @@ impl DxfMTextColumnSourceEntry {
     #[must_use]
     pub const fn record(self) -> DxfRawRecord {
         match self {
+            Self::Flat(entry) => entry.record(),
             Self::Embedded(entry) => entry.record(),
             Self::AcadXData(entry) => entry.record(),
         }
@@ -85,6 +88,7 @@ impl DxfMTextColumnSourceEntry {
     #[must_use]
     pub const fn marker(self) -> DxfRawGroup {
         match self {
+            Self::Flat(entry) => entry.marker(),
             Self::Embedded(entry) => entry.marker(),
             Self::AcadXData(entry) => entry.begin(),
         }
@@ -157,6 +161,7 @@ impl DxfMTextColumnSemantics {
 #[derive(Debug)]
 pub struct DxfMTextColumnSemanticDirectory {
     source_id: DxfSourceId,
+    flat_evidence: DxfMTextFlatColumnDirectory,
     embedded_evidence: DxfMTextEmbeddedColumnDirectory,
     xdata_evidence: DxfMTextXDataColumnDirectory,
     semantics: Box<[DxfMTextColumnSemantics]>,
@@ -168,9 +173,14 @@ impl DxfMTextColumnSemanticDirectory {
         document: DxfRawDocumentView<'_>,
         cancellation: &DxfCancellationToken,
     ) -> Result<Self, DxfError> {
+        let flat_evidence = document.mtext_flat_column_directory(cancellation)?;
         let embedded_evidence = document.mtext_embedded_column_directory(cancellation)?;
         let xdata_evidence = document.mtext_xdata_column_directory(cancellation)?;
-        for observed in [embedded_evidence.source_id(), xdata_evidence.source_id()] {
+        for observed in [
+            flat_evidence.source_id(),
+            embedded_evidence.source_id(),
+            xdata_evidence.source_id(),
+        ] {
             if observed != document.source_id() {
                 return Err(DxfError::SourceIdentityMismatch {
                     expected: document.source_id(),
@@ -181,12 +191,20 @@ impl DxfMTextColumnSemanticDirectory {
         let mut sources = Vec::new();
         sources
             .try_reserve(
-                embedded_evidence
+                flat_evidence
                     .entries()
                     .len()
+                    .saturating_add(embedded_evidence.entries().len())
                     .saturating_add(xdata_evidence.entries().len()),
             )
             .map_err(|_| out_of_memory())?;
+        sources.extend(
+            flat_evidence
+                .entries()
+                .iter()
+                .copied()
+                .map(DxfMTextColumnSourceEntry::Flat),
+        );
         sources.extend(
             embedded_evidence
                 .entries()
@@ -208,6 +226,14 @@ impl DxfMTextColumnSemanticDirectory {
             ensure_not_cancelled(cancellation)?;
             semantics.try_reserve(1).map_err(|_| out_of_memory())?;
             semantics.push(match entry {
+                DxfMTextColumnSourceEntry::Flat(source) => project_entry(
+                    document.source_id(),
+                    entry,
+                    flat_evidence
+                        .values_for_entry(source)
+                        .ok_or_else(invalid_internal_data)?,
+                    &mut individual_heights,
+                )?,
                 DxfMTextColumnSourceEntry::Embedded(source) => project_entry(
                     document.source_id(),
                     entry,
@@ -229,6 +255,7 @@ impl DxfMTextColumnSemanticDirectory {
         ensure_not_cancelled(cancellation)?;
         Ok(Self {
             source_id: document.source_id(),
+            flat_evidence,
             embedded_evidence,
             xdata_evidence,
             semantics: semantics.into_boxed_slice(),
@@ -239,6 +266,11 @@ impl DxfMTextColumnSemanticDirectory {
     #[must_use]
     pub const fn source_id(&self) -> DxfSourceId {
         self.source_id
+    }
+
+    #[must_use]
+    pub const fn flat_evidence_directory(&self) -> &DxfMTextFlatColumnDirectory {
+        &self.flat_evidence
     }
 
     #[must_use]

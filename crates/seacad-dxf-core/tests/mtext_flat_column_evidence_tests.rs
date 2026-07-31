@@ -2,9 +2,11 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfError, DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry,
-    DxfMTextFlatColumnRole, DxfMemorySource, DxfReadOptions, DxfResourceProfile,
-    DxfTextSymbolValueData, NoopDxfReadObserver,
+    DxfCancellationToken, DxfError, DxfMTextColumnMode, DxfMTextColumnRelationDirectory,
+    DxfMTextColumnSemanticDirectory, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry, DxfMTextFlatColumnRole, DxfMemorySource,
+    DxfReadOptions, DxfResourceProfile, DxfSemanticValue, DxfTextSymbolValueData,
+    NoopDxfReadObserver,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -18,9 +20,9 @@ fn every_dialect_has_ascii_binary_direct_column_evidence_parity() -> Result<(), 
     let expected = [
         double(DxfMTextFlatColumnRole::RotationOrColumnHeight, 0.5),
         integer(DxfMTextFlatColumnRole::ColumnType, 2),
-        integer(DxfMTextFlatColumnRole::ColumnCount, 3),
+        integer(DxfMTextFlatColumnRole::ColumnCount, 0),
         integer(DxfMTextFlatColumnRole::ColumnFlowReversed, 0),
-        integer(DxfMTextFlatColumnRole::ColumnAutoHeight, 0),
+        integer(DxfMTextFlatColumnRole::ColumnAutoHeight, 1),
         double(DxfMTextFlatColumnRole::ColumnWidth, 20.0),
         double(DxfMTextFlatColumnRole::ColumnGutter, 1.0),
         double(DxfMTextFlatColumnRole::RotationOrColumnHeight, 30.0),
@@ -29,18 +31,27 @@ fn every_dialect_has_ascii_binary_direct_column_evidence_parity() -> Result<(), 
         let ascii_bytes = ascii_document(version.code());
         let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
         let ascii = open_ascii(&ascii_source)?;
+        let cancellation = DxfCancellationToken::default();
         assert_eq!(
-            signatures(&ascii.mtext_flat_column_directory(&DxfCancellationToken::default())?)?,
+            signatures(&ascii.mtext_flat_column_directory(&cancellation)?)?,
             expected
         );
+        assert_unified(
+            &ascii.mtext_column_semantic_directory(&cancellation)?,
+            &ascii.mtext_column_relation_directory(&cancellation)?,
+        )?;
 
         let binary_bytes = binary_document(version)?;
         let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
         let binary = open_binary(&binary_source)?;
         assert_eq!(
-            signatures(&binary.mtext_flat_column_directory(&DxfCancellationToken::default())?)?,
+            signatures(&binary.mtext_flat_column_directory(&cancellation)?)?,
             expected
         );
+        assert_unified(
+            &binary.mtext_column_semantic_directory(&cancellation)?,
+            &binary.mtext_column_relation_directory(&cancellation)?,
+        )?;
     }
     Ok(())
 }
@@ -127,6 +138,37 @@ fn signatures(directory: &DxfMTextFlatColumnDirectory) -> Result<Vec<Signature>,
         .collect()
 }
 
+fn assert_unified(
+    scalars: &DxfMTextColumnSemanticDirectory,
+    relations: &DxfMTextColumnRelationDirectory,
+) -> Result<(), Box<dyn Error>> {
+    assert_eq!(scalars.semantics().len(), 1);
+    let scalar = scalars.semantics()[0];
+    assert!(matches!(scalar.entry(), DxfMTextColumnSourceEntry::Flat(_)));
+    assert_eq!(
+        scalar.column_type().value(),
+        Some(&DxfMTextColumnType::Dynamic)
+    );
+    assert_eq!(scalar.column_count().value(), Some(&0));
+    assert_eq!(scalar.auto_height().value(), Some(&true));
+    assert_eq!(scalar.individual_height_count(), 0);
+    assert!(matches!(
+        scalar.shared_height(),
+        DxfSemanticValue::Absent { .. }
+    ));
+    assert_eq!(
+        scalars
+            .individual_heights(scalar)
+            .ok_or_else(invalid_test_data)?,
+        []
+    );
+    assert_eq!(
+        relations.semantics()[0].mode().value(),
+        Some(&DxfMTextColumnMode::DynamicAutomatic)
+    );
+    Ok(())
+}
+
 fn integer(role: DxfMTextFlatColumnRole, value: i16) -> Signature {
     Signature {
         role,
@@ -144,8 +186,8 @@ fn double(role: DxfMTextFlatColumnRole, value: f64) -> Signature {
 fn ascii_document(version: &str) -> Vec<u8> {
     format!(
         "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n\
-0\nSECTION\n2\nENTITIES\n0\nMTEXT\n50\n0.5\n75\n2\n76\n3\n\
-78\n0\n79\n0\n48\n20\n49\n1\n50\n30\n0\nENDSEC\n0\nEOF\n"
+0\nSECTION\n2\nENTITIES\n0\nMTEXT\n50\n0.5\n75\n2\n76\n0\n\
+78\n0\n79\n1\n48\n20\n49\n1\n50\n30\n0\nENDSEC\n0\nEOF\n"
     )
     .into_bytes()
 }
@@ -165,7 +207,7 @@ fn binary_document(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
         push_string(&mut bytes, version, code, value)?;
     }
     push_double(&mut bytes, version, 50, 0.5)?;
-    for (code, value) in [(75, 2), (76, 3), (78, 0), (79, 0)] {
+    for (code, value) in [(75, 2), (76, 0), (78, 0), (79, 1)] {
         push_i16(&mut bytes, version, code, value)?;
     }
     push_double(&mut bytes, version, 48, 20.0)?;

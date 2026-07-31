@@ -7,8 +7,9 @@ use crate::{
     DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic, DxfMTextColumnIssue,
     DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
     DxfMTextColumnTypeSemantic, DxfMTextEmbeddedColumnRole, DxfMTextEmbeddedColumnValue,
-    DxfMTextXDataColumnRole, DxfMTextXDataColumnValue, DxfRawGroup, DxfRawValueProvenance,
-    DxfSemanticFieldProvenance, DxfSemanticValue, DxfSourceId, DxfTextSymbolValueData,
+    DxfMTextFlatColumnRole, DxfMTextFlatColumnValue, DxfMTextXDataColumnRole,
+    DxfMTextXDataColumnValue, DxfRawGroup, DxfRawValueProvenance, DxfSemanticFieldProvenance,
+    DxfSemanticValue, DxfSourceId, DxfTextSymbolValueData,
 };
 
 const NAMESPACE: &str = "entity.mtext.embedded_columns";
@@ -292,6 +293,29 @@ pub(super) trait ColumnEvidenceValue: Copy {
 impl ColumnEvidenceValue for DxfMTextEmbeddedColumnValue {
     fn role(self) -> Option<DxfMTextEmbeddedColumnRole> {
         Some(self.role())
+    }
+
+    fn data(self) -> DxfTextSymbolValueData {
+        self.data()
+    }
+
+    fn group(self) -> DxfRawGroup {
+        self.group()
+    }
+}
+
+impl ColumnEvidenceValue for DxfMTextFlatColumnValue {
+    fn role(self) -> Option<DxfMTextEmbeddedColumnRole> {
+        use DxfMTextEmbeddedColumnRole as R;
+        Some(match self.role() {
+            DxfMTextFlatColumnRole::ColumnType => R::ColumnType,
+            DxfMTextFlatColumnRole::ColumnCount => R::ColumnCount,
+            DxfMTextFlatColumnRole::ColumnFlowReversed => R::ColumnFlowReversed,
+            DxfMTextFlatColumnRole::ColumnAutoHeight => R::ColumnAutoHeight,
+            DxfMTextFlatColumnRole::ColumnWidth => R::ColumnWidth,
+            DxfMTextFlatColumnRole::ColumnGutter => R::ColumnGutter,
+            DxfMTextFlatColumnRole::RotationOrColumnHeight => return None,
+        })
     }
 
     fn data(self) -> DxfTextSymbolValueData {

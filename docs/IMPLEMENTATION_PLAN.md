@@ -1554,6 +1554,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     retained in source order as `RotationOrColumnHeight`; group 50 alone
     remains orientation evidence and cannot create a column entry. Scalar
     unification and group-50 height disambiguation remain later checkpoints.
+    M14.2u adds direct/flat storage to the common column source enum and generic
+    scalar projector. Type, count, flow, auto-height, width, and gutter reuse
+    the same validation and mode relationships as Embedded/XDATA sources.
+    `RotationOrColumnHeight` intentionally maps to no scalar role: flat
+    dynamic-auto mode can become usable, while static/manual height modes
+    remain fail-closed pending unambiguous group-50 framing.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

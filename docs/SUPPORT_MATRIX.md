@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2t can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2u can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -380,6 +380,13 @@ exists, every direct group 50 remains source ordered and explicitly
 `RotationOrColumnHeight`; a group 50 alone does not create a column entry.
 Scalar unification, group-50 disambiguation, geometry, edit, and write remain
 unclaimed.
+
+M14.2u adds flat/direct storage to the common column source enum and scalar
+projector. Type, count, flow, auto-height, width, and gutter now share the
+same validation and mode relations as Embedded and XDATA storage. Ambiguous
+group 50 is excluded from height projection; dynamic-auto flat columns can be
+usable without silently consuming rotation evidence. Group-50 height
+disambiguation, geometry, edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

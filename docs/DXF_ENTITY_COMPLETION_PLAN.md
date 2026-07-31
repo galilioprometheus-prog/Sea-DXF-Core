@@ -183,6 +183,11 @@ M14.2t adds a separate direct/flat evidence directory for Autodesk groups
 rotation-or-column-height ambiguous. A lone group 50 remains orientation
 evidence, and no field after an exact embedded-object boundary leaks into the
 flat slice. Scalar unification and height disambiguation remain later work.
+M14.2u adds the flat source to the shared scalar and mode projector. Its six
+unambiguous fields use identical domains, provenance, diagnostics, and
+cross-field relationships as Embedded/XDATA storage. Ambiguous group 50 maps
+to no scalar role, so flat dynamic-auto mode is usable while height-bearing
+modes remain fail-closed pending stronger framing evidence.
 
 ## Milestone queue
 
