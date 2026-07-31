@@ -1659,6 +1659,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     these above-255 groups absent. Target record-type validation, name
     resolution, tolerance-string interpretation, glyph geometry, edit, and
     write remain unclaimed.
+    M14.2ai validates each uniquely resolved DIMSTYLE handle against exact
+    membership in a completely closed, matching STYLE or BLOCK_RECORD table.
+    The shared named-symbol scanner also retains DIMSTYLE membership without
+    duplicating table-envelope logic. Unique targets are classified as the
+    expected table kind, another reviewed named-symbol kind, or another raw
+    record; non-unique lower-layer states pass through unchanged. This does
+    not resolve target names, validate block/style contents, apply defaults,
+    interpret tolerance strings, construct glyphs, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -271,6 +271,14 @@ generic duplicate targets preserve source order and no target is selected.
 This does not yet validate that a unique record has the expected STYLE or
 BLOCK_RECORD table type, resolve names, interpret tolerance strings, construct
 glyphs, edit, or write.
+M14.2ai adds exact target-table validation for each uniquely resolved role.
+Only named records from completely closed, matching DIMSTYLE, STYLE, and
+BLOCK_RECORD table envelopes are admitted by one shared scanner. A unique
+target is classified as expected STYLE/BLOCK_RECORD membership, another
+reviewed named-symbol kind, or another raw record; all absent, duplicate,
+invalid, null, missing, and ambiguous states remain unchanged. Target-name
+resolution, record-content semantics, defaults, glyphs, edit, and write remain
+later work.
 
 ## Milestone queue
 

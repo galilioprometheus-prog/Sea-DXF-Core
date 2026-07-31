@@ -46,6 +46,7 @@ mod dimstyle_field_card;
 mod dimstyle_field_evidence;
 mod dimstyle_field_semantic;
 mod dimstyle_handle_resolution;
+mod dimstyle_handle_target_validation;
 mod dimstyle_table;
 mod ellipse_geometry;
 mod ellipse_geometry_card;
@@ -116,6 +117,7 @@ mod mtext_xdata_column_evidence;
 mod mtext_xdata_defined_height;
 mod mtext_xdata_linked_column;
 mod mtext_xdata_linked_column_resolution;
+mod named_symbol_table;
 mod owner_evidence_comparison;
 mod ownership_evidence;
 mod planar_face_geometry;
@@ -342,6 +344,10 @@ pub use dimstyle_field_semantic::{
 pub use dimstyle_handle_resolution::{
     DxfDimStyleHandleResolutionDirectory, DxfDimStyleHandleResolutionEntry, DxfDimStyleHandleRole,
     DxfDimStyleHandleTargetState,
+};
+pub use dimstyle_handle_target_validation::{
+    DxfDimStyleHandleTargetValidationDirectory, DxfDimStyleHandleTargetValidationEntry,
+    DxfDimStyleHandleTargetValidationState,
 };
 pub use dimstyle_table::{DxfDimStyleTableDirectory, DxfDimStyleTableEntry};
 pub use ellipse_geometry::{
@@ -588,6 +594,9 @@ pub use mtext_xdata_linked_column::{
 pub use mtext_xdata_linked_column_resolution::{
     DxfMTextXDataLinkedColumnResolutionDirectory, DxfMTextXDataLinkedColumnResolutionEntry,
     DxfMTextXDataLinkedColumnTarget, DxfMTextXDataLinkedColumnTargetState,
+};
+pub use named_symbol_table::{
+    DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
 };
 pub use owner_evidence_comparison::{
     DxfOwnerEvidenceComparisonDirectory, DxfOwnerEvidenceComparisonEntry,

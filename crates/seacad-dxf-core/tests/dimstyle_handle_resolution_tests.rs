@@ -3,8 +3,11 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDimStyleHandleResolutionDirectory, DxfDimStyleHandleResolutionEntry,
-    DxfDimStyleHandleRole, DxfDimStyleHandleTargetState, DxfError, DxfHandleParseIssue,
-    DxfMemorySource, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+    DxfDimStyleHandleRole, DxfDimStyleHandleTargetState,
+    DxfDimStyleHandleTargetValidationDirectory, DxfDimStyleHandleTargetValidationEntry,
+    DxfDimStyleHandleTargetValidationState, DxfError, DxfHandleParseIssue, DxfMemorySource,
+    DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
+    DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
 };
 
 #[test]
@@ -15,16 +18,26 @@ fn every_dialect_has_ascii_binary_handle_resolution_parity() -> Result<(), Box<d
         let ascii = open_ascii(&ascii_source)?;
         let ascii_directory =
             ascii.dimstyle_handle_resolution_directory(&DxfCancellationToken::default())?;
+        let ascii_validation =
+            ascii.dimstyle_handle_target_validation_directory(&DxfCancellationToken::default())?;
 
         let binary_bytes = binary_fixture(version)?;
         let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
         let binary = open_binary(&binary_source)?;
         let binary_directory =
             binary.dimstyle_handle_resolution_directory(&DxfCancellationToken::default())?;
+        let binary_validation =
+            binary.dimstyle_handle_target_validation_directory(&DxfCancellationToken::default())?;
 
         assert_directory(&ascii_directory, version)?;
         assert_directory(&binary_directory, version)?;
+        assert_validation_directory(&ascii_validation, version)?;
+        assert_validation_directory(&binary_validation, version)?;
         assert_eq!(states(&ascii_directory), states(&binary_directory));
+        assert_eq!(
+            validation_states(&ascii_validation),
+            validation_states(&binary_validation)
+        );
     }
     Ok(())
 }
@@ -34,7 +47,13 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
     assert_copy::<DxfDimStyleHandleResolutionEntry>();
     assert_copy::<DxfDimStyleHandleRole>();
     assert_copy::<DxfDimStyleHandleTargetState>();
+    assert_copy::<DxfDimStyleHandleTargetValidationEntry>();
+    assert_copy::<DxfDimStyleHandleTargetValidationState>();
+    assert_copy::<DxfNamedSymbolTableEntry>();
+    assert_copy::<DxfNamedSymbolTableKind>();
     assert_send_sync::<DxfDimStyleHandleResolutionDirectory>();
+    assert_send_sync::<DxfDimStyleHandleTargetValidationDirectory>();
+    assert_send_sync::<DxfNamedSymbolTableDirectory>();
 
     let bytes = ascii_fixture(DxfAcadVersion::Ac1032);
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -43,6 +62,14 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
     cancellation.cancel();
     assert!(matches!(
         document.dimstyle_handle_resolution_directory(&cancellation),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(matches!(
+        document.dimstyle_handle_target_validation_directory(&cancellation),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(matches!(
+        document.named_symbol_table_directory(&cancellation),
         Err(DxfError::Cancelled)
     ));
 
@@ -58,6 +85,56 @@ fn cancellation_identity_lookup_and_public_traits_hold() -> Result<(), Box<dyn E
     );
     assert_eq!(directory.entry(u64::MAX), None);
     assert_eq!(directory.entries_for_raw_ordinal(u64::MAX), None);
+    let validation =
+        document.dimstyle_handle_target_validation_directory(&DxfCancellationToken::default())?;
+    assert_eq!(validation.entry(u64::MAX), None);
+    assert_eq!(validation.entries_for_raw_ordinal(u64::MAX), None);
+    assert_eq!(
+        validation.entry_for_role(u64::MAX, DxfDimStyleHandleRole::TextStyle),
+        None
+    );
+    assert_eq!(
+        validation
+            .named_symbol_table_directory()
+            .entry_for_raw_ordinal(u64::MAX),
+        None
+    );
+    Ok(())
+}
+
+#[test]
+fn named_membership_requires_exact_closed_reviewed_tables() -> Result<(), Box<dyn Error>> {
+    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n\
+0\nSECTION\n2\nTABLES\n\
+0\nTABLE\n2\nSTYLE\n0\nSTYLE\n2\nS\n5\nA\n0\nENDTAB\n\
+0\nTABLE\n2\nBLOCK_RECORD\n0\nBLOCK_RECORD\n2\nB\n5\nB\n0\nENDTAB\n\
+0\nTABLE\n2\nstyle\n0\nSTYLE\n2\nLower\n5\nC\n0\nENDTAB\n\
+0\nTABLE\n2\nSTYLE\n0\nBLOCK_RECORD\n2\nWrong\n5\nD\n\
+0\nSTYLE\n2\nDuplicate\n2\nName\n5\nE\n\
+0\nSTYLE\n102\n{APP\n2\nDecoy\n102\n}\n2\nVisible\n5\nF\n0\nENDTAB\n\
+0\nTABLE\n2\nSTYLE\n0\nSTYLE\n2\nUnclosed\n5\n10\n\
+0\nENDSEC\n0\nEOF\n";
+    let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.named_symbol_table_directory(&DxfCancellationToken::default())?;
+    assert_eq!(
+        directory
+            .entries()
+            .iter()
+            .map(|entry| entry.kind())
+            .collect::<Vec<_>>(),
+        [
+            DxfNamedSymbolTableKind::Style,
+            DxfNamedSymbolTableKind::BlockRecord,
+            DxfNamedSymbolTableKind::Style,
+        ]
+    );
+    for entry in directory.entries().iter().copied() {
+        assert_eq!(
+            directory.entry_for_raw_ordinal(entry.record().ordinal()),
+            Some(entry)
+        );
+    }
     Ok(())
 }
 
@@ -71,16 +148,16 @@ fn assert_directory(
     } else {
         vec![
             DxfDimStyleHandleTargetState::Unique,
+            DxfDimStyleHandleTargetState::Unique,
+            DxfDimStyleHandleTargetState::Unique,
+            DxfDimStyleHandleTargetState::Unique,
+            DxfDimStyleHandleTargetState::Ambiguous { target_count: 2 },
             DxfDimStyleHandleTargetState::Missing,
             DxfDimStyleHandleTargetState::Null,
             DxfDimStyleHandleTargetState::Invalid(DxfHandleParseIssue::InvalidDigit { offset: 1 }),
-            DxfDimStyleHandleTargetState::Ambiguous { target_count: 2 },
             DxfDimStyleHandleTargetState::MultipleValues {
                 occurrence_count: 2,
             },
-            DxfDimStyleHandleTargetState::Absent,
-            DxfDimStyleHandleTargetState::Absent,
-            DxfDimStyleHandleTargetState::Absent,
             DxfDimStyleHandleTargetState::Absent,
         ]
     };
@@ -126,7 +203,97 @@ fn assert_directory(
     Ok(())
 }
 
+fn assert_validation_directory(
+    directory: &DxfDimStyleHandleTargetValidationDirectory,
+    version: DxfAcadVersion,
+) -> Result<(), DxfError> {
+    assert_eq!(directory.entries().len(), 10);
+    let expected = if version == DxfAcadVersion::Ac1009 {
+        vec![DxfDimStyleHandleTargetValidationState::Absent; 10]
+    } else {
+        vec![
+            DxfDimStyleHandleTargetValidationState::UniqueExpected,
+            DxfDimStyleHandleTargetValidationState::UniqueExpected,
+            DxfDimStyleHandleTargetValidationState::UniqueOtherNamedSymbol {
+                observed: DxfNamedSymbolTableKind::Style,
+            },
+            DxfDimStyleHandleTargetValidationState::UniqueOtherRecord,
+            DxfDimStyleHandleTargetValidationState::Ambiguous { target_count: 2 },
+            DxfDimStyleHandleTargetValidationState::Missing,
+            DxfDimStyleHandleTargetValidationState::Null,
+            DxfDimStyleHandleTargetValidationState::Invalid(DxfHandleParseIssue::InvalidDigit {
+                offset: 1,
+            }),
+            DxfDimStyleHandleTargetValidationState::MultipleValues {
+                occurrence_count: 2,
+            },
+            DxfDimStyleHandleTargetValidationState::Absent,
+        ]
+    };
+    assert_eq!(validation_states(directory), expected);
+    assert_eq!(
+        directory.resolution_directory().source_id(),
+        directory.source_id()
+    );
+    assert_eq!(
+        directory.named_symbol_table_directory().source_id(),
+        directory.source_id()
+    );
+    assert_eq!(directory.named_symbol_table_directory().entries().len(), 6);
+
+    let first_raw = directory.entries()[0]
+        .resolution()
+        .record()
+        .table_entry()
+        .record()
+        .ordinal();
+    assert_eq!(
+        directory
+            .entries_for_raw_ordinal(first_raw)
+            .ok_or_else(invalid_test_data)?
+            .len(),
+        5
+    );
+    for entry in directory.entries().iter().copied() {
+        assert_eq!(directory.entry(entry.ordinal()), Some(entry));
+    }
+    if version != DxfAcadVersion::Ac1009 {
+        let entries = directory.entries();
+        assert!(entries[0].target().is_some());
+        assert_eq!(
+            entries[0]
+                .named_target()
+                .map(DxfNamedSymbolTableEntry::kind),
+            Some(DxfNamedSymbolTableKind::Style)
+        );
+        assert_eq!(
+            entries[2]
+                .named_target()
+                .map(DxfNamedSymbolTableEntry::kind),
+            Some(DxfNamedSymbolTableKind::Style)
+        );
+        assert!(entries[3].target().is_some());
+        assert_eq!(entries[3].named_target(), None);
+        assert_eq!(entries[4].target(), None);
+        assert_eq!(
+            directory.entry_for_role(first_raw, DxfDimStyleHandleRole::SecondArrowBlock),
+            Some(entries[4])
+        );
+    }
+    Ok(())
+}
+
 fn states(directory: &DxfDimStyleHandleResolutionDirectory) -> Vec<DxfDimStyleHandleTargetState> {
+    directory
+        .entries()
+        .iter()
+        .map(|entry| entry.state())
+        .collect()
+}
+
+fn validation_states(
+    directory: &DxfDimStyleHandleTargetValidationDirectory,
+) -> Vec<DxfDimStyleHandleTargetValidationState> {
     directory
         .entries()
         .iter()
@@ -138,17 +305,18 @@ fn ascii_fixture(version: DxfAcadVersion) -> Vec<u8> {
     let handles = if version == DxfAcadVersion::Ac1009 {
         String::new()
     } else {
-        "340\nA\n341\nF\n342\n0\n343\n1G\n344\nC\n".to_owned()
+        "340\nA\n341\nB\n342\nA\n343\nE\n344\nC\n".to_owned()
     };
     let duplicate = if version == DxfAcadVersion::Ac1009 {
         String::new()
     } else {
-        "340\nA\n102\n{APP\n340\nC\n102\n}\n340\nB\n".to_owned()
+        "340\nF\n341\n0\n342\n1G\n343\nA\n102\n{APP\n343\nC\n102\n}\n343\nB\n".to_owned()
     };
     format!(
         "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n\
 0\nTABLE\n2\nSTYLE\n0\nSTYLE\n2\nS\n5\nA\n0\nENDTAB\n\
 0\nTABLE\n2\nBLOCK_RECORD\n0\nBLOCK_RECORD\n2\nB\n5\nB\n0\nBLOCK_RECORD\n2\nC1\n5\nC\n0\nBLOCK_RECORD\n2\nC2\n5\nC\n0\nENDTAB\n\
+0\nTABLE\n2\nLAYER\n5\nE\n0\nENDTAB\n\
 0\nTABLE\n2\nDIMSTYLE\n0\nDIMSTYLE\n2\nFull\n{handles}0\nDIMSTYLE\n2\nMultiple\n{duplicate}0\nENDTAB\n0\nENDSEC\n0\nEOF\n",
         version.code()
     )
@@ -172,15 +340,18 @@ fn binary_fixture(version: DxfAcadVersion) -> io::Result<Vec<u8>> {
         push_named_identity(&mut bytes, version, b"BLOCK_RECORD", name, handle)?;
     }
     push_string(&mut bytes, version, 0, b"ENDTAB")?;
+    push_table_start(&mut bytes, version, b"LAYER")?;
+    push_string(&mut bytes, version, 5, b"E")?;
+    push_string(&mut bytes, version, 0, b"ENDTAB")?;
     push_table_start(&mut bytes, version, b"DIMSTYLE")?;
     push_string(&mut bytes, version, 0, b"DIMSTYLE")?;
     push_string(&mut bytes, version, 2, b"Full")?;
     if version != DxfAcadVersion::Ac1009 {
         for (code, value) in [
             (340, b"A".as_slice()),
-            (341, b"F"),
-            (342, b"0"),
-            (343, b"1G"),
+            (341, b"B"),
+            (342, b"A"),
+            (343, b"E"),
             (344, b"C"),
         ] {
             push_string(&mut bytes, version, code, value)?;
@@ -189,11 +360,14 @@ fn binary_fixture(version: DxfAcadVersion) -> io::Result<Vec<u8>> {
     push_string(&mut bytes, version, 0, b"DIMSTYLE")?;
     push_string(&mut bytes, version, 2, b"Multiple")?;
     if version != DxfAcadVersion::Ac1009 {
-        push_string(&mut bytes, version, 340, b"A")?;
+        push_string(&mut bytes, version, 340, b"F")?;
+        push_string(&mut bytes, version, 341, b"0")?;
+        push_string(&mut bytes, version, 342, b"1G")?;
+        push_string(&mut bytes, version, 343, b"A")?;
         push_string(&mut bytes, version, 102, b"{APP")?;
-        push_string(&mut bytes, version, 340, b"C")?;
+        push_string(&mut bytes, version, 343, b"C")?;
         push_string(&mut bytes, version, 102, b"}")?;
-        push_string(&mut bytes, version, 340, b"B")?;
+        push_string(&mut bytes, version, 343, b"B")?;
     }
     push_string(&mut bytes, version, 0, b"ENDTAB")?;
     push_string(&mut bytes, version, 0, b"ENDSEC")?;
