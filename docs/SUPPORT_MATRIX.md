@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2m can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2n can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -326,9 +326,15 @@ edit, and write remain unclaimed.
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative
-counts/gutters, nonpositive usable dimensions, non-Boolean flags, duplicate
-singletons, and invalid numerics without losing raw provenance. Cross-field
-mode/count/height validation, legacy flat/R2007 XDATA unification, layout
+counts/heights/gutters, nonpositive width, non-Boolean flags, duplicate
+singletons, and invalid numerics without losing raw provenance.
+
+M14.2n validates modern embedded fields as no-column, static, dynamic
+automatic-height, or dynamic manual-height mode. It requires the documented
+active dimensions, validates positive static/manual counts where applicable,
+separates shared-height from per-column-height strategies, and checks repeated
+height cardinality. A source-observed zero terminal manual height remains
+usable and source-anchored. Legacy flat/R2007 XDATA unification, layout
 geometry, edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |

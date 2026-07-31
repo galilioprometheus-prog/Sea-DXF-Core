@@ -26,7 +26,7 @@ pub(super) fn project_entry(
         .filter(|value| value.role() == DxfMTextEmbeddedColumnRole::ColumnHeight)
     {
         heights.try_reserve(1).map_err(|_| out_of_memory())?;
-        heights.push(project_positive_double(source_id, value)?);
+        heights.push(project_nonnegative_double(source_id, value)?);
     }
     Ok(DxfMTextColumnSemantics {
         entry,
@@ -58,7 +58,7 @@ pub(super) fn project_entry(
             source_id,
             values,
             DxfMTextEmbeddedColumnRole::SharedHeight,
-            true,
+            false,
         )?,
         height_start,
         height_end: compact_len(heights.len())?,
@@ -161,6 +161,23 @@ fn project_positive_double(
             Ok(number)
         } else {
             Err(DxfMTextColumnIssue::NonPositiveValue {
+                role,
+                value: number,
+            })
+        }
+    })
+}
+
+fn project_nonnegative_double(
+    source_id: DxfSourceId,
+    value: DxfMTextEmbeddedColumnValue,
+) -> Result<DxfMTextColumnDoubleSemantic, DxfError> {
+    let role = value.role();
+    project_double(field(source_id, role), value, |number| {
+        if number.to_f64() >= 0.0 {
+            Ok(number)
+        } else {
+            Err(DxfMTextColumnIssue::NegativeValue {
                 role,
                 value: number,
             })

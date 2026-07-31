@@ -29,8 +29,9 @@ available through the retained evidence directory.
   column type is considered by a later cross-field checkpoint.
 - Column width must be positive and gutter width may be zero but not negative.
 - Automatic-height and flow-reversal accept only exact integer 0 or 1.
-- Shared and individual height measurements must be positive to become usable
-  scalar values; failed values remain exact raw evidence.
+- Shared and individual height measurements are nonnegative scalar values;
+  their mode-dependent usability is decided by M14.2n. Failed values remain
+  exact raw evidence.
 - Repeated individual heights retain source order and have a bounded slice for
   each embedded object.
 - Missing column type is invalid. Other missing singleton fields remain absent.
@@ -60,6 +61,14 @@ M14.2m does not:
 - unify modern embedded fields with flat groups or R2007 XDATA;
 - resolve legacy group-50 rotation/height ambiguity; or
 - derive layout geometry, edit, or write columns.
+
+## M14.2n refinement
+
+Read-only R2018 behavioral evidence contains a dynamic-manual sequence whose
+last individual height is zero. M14.2n therefore refined the scalar layer to
+retain zero shared/individual heights and moved positive-height requirements
+to the relevant cross-field strategy. The M14.2m receipt below remains the
+historical receipt for its checkpoint commit.
 
 ## Verification
 

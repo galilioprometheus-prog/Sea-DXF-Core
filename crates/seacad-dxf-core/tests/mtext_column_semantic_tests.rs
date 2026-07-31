@@ -86,17 +86,24 @@ fn invalid_domains_duplicates_and_missing_type_fail_closed() -> Result<(), Box<d
             Some(DxfMTextColumnIssue::BooleanOutOfDomain { .. })
         ));
     }
-    assert_non_positive(
-        domains.shared_height().invalid_issue(),
-        DxfMTextEmbeddedColumnRole::SharedHeight,
+    assert_eq!(
+        domains
+            .shared_height()
+            .value()
+            .ok_or_else(invalid_test_data)?
+            .to_f64(),
+        0.0
     );
-    assert_non_positive(
+    assert!(matches!(
         directory
             .individual_heights(domains)
             .ok_or_else(invalid_test_data)?[0]
             .invalid_issue(),
-        DxfMTextEmbeddedColumnRole::ColumnHeight,
-    );
+        Some(DxfMTextColumnIssue::NegativeValue {
+            role: DxfMTextEmbeddedColumnRole::ColumnHeight,
+            ..
+        })
+    ));
 
     assert_eq!(
         semantics(&directory, 3)?.column_type().invalid_issue(),

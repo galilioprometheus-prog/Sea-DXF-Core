@@ -137,11 +137,17 @@ not validate column relationships, merge legacy flat or R2007 XDATA storage,
 or claim geometry, edit, or write support.
 M14.2m projects that embedded evidence into typed scalar semantics. It
 classifies no/static/dynamic column types, retains a nonnegative count,
-requires positive usable width and height measurements, permits a zero gutter,
-and accepts only exact Boolean 0/1 flags. Missing required type, duplicate
-singletons, invalid numbers, and out-of-domain values remain typed with raw
-provenance. Cross-field mode/count/height relationships and legacy-storage
-unification remain later checkpoints.
+requires positive usable width, retains nonnegative height and gutter
+measurements, and accepts only exact Boolean 0/1 flags. Missing required type,
+duplicate singletons, invalid numbers, and out-of-domain values remain typed
+with raw provenance.
+M14.2n validates the cross-field no/static/dynamic-auto/dynamic-manual modes.
+Static columns require positive count and shared height; dynamic automatic
+columns reject individual heights; and dynamic manual columns require positive
+count plus either a positive shared height or exactly one source-order height
+per column. A zero terminal individual height observed in R2018 behavioral
+evidence remains usable rather than being silently rewritten. Legacy-storage
+unification, geometry, edit, and write remain later checkpoints.
 
 ## Milestone queue
 

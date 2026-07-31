@@ -1499,13 +1499,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     remain separate checkpoints.
     M14.2m adds a bounded scalar-semantic projection over the modern embedded
     evidence. Column type is one of no/static/dynamic; count is a nonnegative
-    integer; width and usable height measurements are positive; gutter is
-    nonnegative; and automatic-height/flow-reversed accept only Boolean 0/1.
+    integer; width is positive; height and gutter measurements are nonnegative;
+    and automatic-height/flow-reversed accept only Boolean 0/1.
     Missing type, duplicate singleton fields, invalid numerics, and
     out-of-domain inputs stay typed and source-anchored. Individual heights
-    retain source order in a separate bounded slice. Type-dependent field
-    requirements, count/height cardinality, legacy storage unification,
-    geometry, edit, and write remain separate checkpoints.
+    retain source order in a separate bounded slice.
+    M14.2n validates type-dependent field relationships. Static mode requires
+    positive count and shared height, active modes require usable width and
+    gutter, dynamic automatic mode excludes individual heights, and dynamic
+    manual mode requires positive count plus either a positive shared height or
+    exactly one source-order height per column. The observed terminal zero in a
+    valid-looking R2018 dynamic-manual height sequence is retained. Legacy
+    storage unification, geometry, edit, and write remain separate checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
