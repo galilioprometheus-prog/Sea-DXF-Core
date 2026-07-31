@@ -10,6 +10,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: powershell
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
@@ -27,7 +31,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify provisioned toolchain
-        shell: pwsh
         run: |
           $rustVersion = rustc +1.97.1 --version
           if ($LASTEXITCODE -ne 0 -or -not $rustVersion.StartsWith("rustc 1.97.1 ")) {
