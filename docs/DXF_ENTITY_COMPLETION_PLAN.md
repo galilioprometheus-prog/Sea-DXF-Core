@@ -236,6 +236,12 @@ evidence remains reachable. Invalid or duplicate rotation/flags/extrusion,
 non-finite Binary values, zero extrusion, and basis failure remain explicit.
 Style metrics, oblique/width/height geometry, glyph outlines, edit, and write
 remain later work.
+M14.2ad composes TOLERANCE's required WCS insertion and WCS x-axis direction
+with its normalized extrusion normal. Both WCS vectors remain bit-exact; no
+OCS transform, x-axis normalization, or invented y-axis is applied. Missing,
+invalid, duplicate, non-finite, zero x-axis/extrusion, and basis failures
+remain explicit. Dimension-style resolution, tolerance-string interpretation,
+glyph geometry, edit, and write remain later work.
 
 ## Milestone queue
 

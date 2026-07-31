@@ -1616,6 +1616,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     non-finite Binary values, zero extrusion, and basis failure remain typed.
     Style metrics, oblique/width/height geometry, glyph outlines, edit, and
     write remain unclaimed.
+    M14.2ad composes TOLERANCE's required WCS insertion and WCS x-axis
+    direction with its normalized extrusion normal. The two WCS vectors remain
+    bit-exact; no OCS transform, x-axis normalization, or invented y-axis is
+    applied. Missing, invalid, duplicate, non-finite, zero x-axis/extrusion,
+    and basis failures remain typed with complete scalar evidence. Dimension
+    style resolution, tolerance-string interpretation, glyph geometry, edit,
+    and write remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
