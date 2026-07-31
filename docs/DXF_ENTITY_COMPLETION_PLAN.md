@@ -201,6 +201,12 @@ retains its exact vector and exposes a separately normalized unit direction.
 Partial, invalid, zero-length, non-finite-length, and group-50-ambiguous inputs
 remain typed. This does not yet combine insertion, extrusion, or text metrics
 into placement or glyph geometry.
+M14.2x selects the exact TEXT placement point in OCS. Left/baseline layout
+uses group 10/20/30; every other supported horizontal or vertical
+justification uses group 11/21/31. Missing required components, absent optional
+components, invalid numerics, duplicates, and unavailable justification remain
+typed with exact provenance. OCS-to-WCS transformation, style resolution,
+metrics, glyph geometry, edit, and write remain later work.
 
 ## Milestone queue
 

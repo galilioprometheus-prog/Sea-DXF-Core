@@ -1575,6 +1575,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     exposes a normalized unit direction. Partial, invalid, zero-length, and
     non-finite-length vectors remain typed, and M14.2v group-50 ambiguity
     propagates unchanged instead of becoming geometry.
+    M14.2x selects the exact TEXT placement anchor in OCS from M14.2f layout
+    semantics. Left/baseline layout uses the required group-10/20/30 point;
+    any nonzero horizontal or vertical justification uses the optional
+    group-11/21/31 point. Missing, invalid, or duplicate point components and
+    unavailable justification remain distinct typed failures with source
+    provenance. This checkpoint does not transform the selected point to WCS,
+    resolve styles, measure text, or derive glyph geometry.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

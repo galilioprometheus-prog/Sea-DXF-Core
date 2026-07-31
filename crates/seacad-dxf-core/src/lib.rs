@@ -152,6 +152,7 @@ mod text_control;
 mod text_decoder;
 mod text_escape;
 mod text_layout;
+mod text_placement_anchor;
 mod text_shape_scalar;
 mod text_symbol_card;
 mod text_symbol_evidence;
@@ -703,6 +704,12 @@ pub use text_layout::{
     DxfTextGenerationFlags, DxfTextGenerationFlagsSemantic, DxfTextHorizontalJustification,
     DxfTextHorizontalJustificationSemantic, DxfTextLayoutDirectory, DxfTextLayoutIssue,
     DxfTextLayoutSemantics, DxfTextVerticalJustification, DxfTextVerticalJustificationSemantic,
+};
+pub use text_placement_anchor::{
+    DxfTextJustificationAxis, DxfTextOcsPlacementAnchor, DxfTextOcsPlacementAnchorDirectory,
+    DxfTextOcsPlacementAnchorIssue, DxfTextOcsPlacementAnchorKind,
+    DxfTextOcsPlacementAnchorSemantic, DxfTextOcsPlacementAnchorSemantics,
+    DxfTextPlacementComponent,
 };
 pub use text_shape_scalar::{
     DxfShapeNumericSemantics, DxfTextNumericSemantics, DxfTextShapeDoubleValue,
