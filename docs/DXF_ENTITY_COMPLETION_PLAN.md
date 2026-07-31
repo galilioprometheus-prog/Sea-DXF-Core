@@ -120,6 +120,14 @@ valid; violations retain both exact IEEE-754 values and source provenance;
 unavailable inputs preserve the originating scalar failure. Other numeric
 ranges, background-color ownership, column semantics, rotation precedence,
 and geometry remain later checkpoints.
+M14.2k resolves Autodesk's source-order precedence between MTEXT group-50
+rotation input and the group-11/21/31 X-axis input when group 50 is
+unambiguously rotational. The last input form wins; invalid or duplicate
+rotation evidence remains typed when it is effective, while a later X-axis
+input remains selectable. Any coexistence of group 50 with column fields stays
+fail-closed as an ambiguous rotation-or-column-height role until column
+structure is validated. Vector assembly, normalization, coordinate
+transforms, and column-height interpretation remain later checkpoints.
 
 ## Milestone queue
 

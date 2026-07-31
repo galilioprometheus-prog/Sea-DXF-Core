@@ -98,6 +98,7 @@ mod lightweight_polyline_vertex_semantic;
 mod limits;
 mod mtext_layout;
 mod mtext_numeric_domain;
+mod mtext_orientation;
 mod mtext_tolerance_scalar;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -504,6 +505,10 @@ pub use mtext_numeric_domain::{
     DxfMTextBackgroundFillSetting, DxfMTextBackgroundFillSettingSemantic,
     DxfMTextLineSpacingFactor, DxfMTextLineSpacingFactorSemantic, DxfMTextNumericDomainDirectory,
     DxfMTextNumericDomainIssue, DxfMTextNumericDomainSemantics,
+};
+pub use mtext_orientation::{
+    DxfMTextOrientationDirectory, DxfMTextOrientationInput, DxfMTextOrientationInputSemantic,
+    DxfMTextOrientationIssue, DxfMTextOrientationSemantics, DxfMTextRotationSemantic,
 };
 pub use mtext_tolerance_scalar::{
     DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfToleranceNumericSemantics,

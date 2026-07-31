@@ -1472,6 +1472,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     unusable inputs remain independently typed. Other numeric relationships,
     background ownership, columns, rotation precedence, transforms, styles,
     and glyph geometry remain separate checkpoints.
+    M14.2k resolves source-order precedence between the MTEXT group-50 rotation
+    input and group-11/21/31 X-axis input. When no column fields make group 50
+    ambiguous, the input form whose final source occurrence is later is
+    effective. Invalid or duplicate rotation remains typed when effective, and
+    a later X-axis input remains selectable without erasing the rotation
+    diagnostic. Coexisting column fields and group 50 fail closed pending
+    column-height structure validation. Axis-vector assembly, normalization,
+    transforms, column heights, styles, and glyph geometry remain separate
+    checkpoints.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
