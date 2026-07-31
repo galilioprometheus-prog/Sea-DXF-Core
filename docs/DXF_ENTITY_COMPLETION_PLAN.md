@@ -214,13 +214,14 @@ canonical positive zero, and typed provenance. Invalid anchor/extrusion
 evidence, non-finite Binary inputs, zero extrusion, basis failure, and derived
 overflow remain explicit. Rotation, style metrics, glyph geometry, edit, and
 write remain later work.
-M14.2z transforms the required SHAPE insertion from OCS to WCS with its
-normalized extrusion and the shared text-symbol arbitrary-axis projection.
-The result retains a finite WCS point, normalized normal, canonical positive
-zero, and typed provenance. Missing, invalid, duplicate, non-finite, zero
-extrusion, basis, and derived-overflow failures remain explicit. SHAPE
-definition resolution, rotation, metrics, glyph geometry, edit, and write
-remain later work.
+M14.2z introduced a shared text-symbol extrusion/OCS projection helper and the
+first SHAPE placement projection. M14.2aa corrects the coordinate-system
+contract: Autodesk defines SHAPE groups 10/20/30 directly in WCS, so the exact
+finite point is retained unchanged and only extrusion is normalized into the
+WCS normal. Missing, invalid, duplicate, non-finite, zero-extrusion, and basis
+failures remain explicit; maximum finite WCS coordinates are not rejected by
+an inapplicable transform. SHAPE definition resolution, rotation, metrics,
+glyph geometry, edit, and write remain later work.
 
 ## Milestone queue
 

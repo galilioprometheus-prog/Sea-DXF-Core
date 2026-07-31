@@ -1,4 +1,4 @@
-//! OCS-to-WCS projection for classic SHAPE insertion points.
+//! Exact classic SHAPE WCS insertion points and normalized extrusion normals.
 
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
@@ -6,7 +6,7 @@ use crate::{
     DxfShapeNumericSemantics, DxfSourceId, DxfTextShapeScalarDirectory, DxfTextSymbolDoubleValue,
     DxfTextSymbolRecordEntry, DxfTextSymbolScalarIssue,
     text_symbol_ocs_projection::{
-        OcsPointProjectionIssue, OcsProjectionComponent, project_ocs_point,
+        OcsPointProjectionIssue, OcsProjectionComponent, project_extrusion,
     },
 };
 
@@ -43,10 +43,9 @@ pub enum DxfShapeWcsInsertionIssue {
     NonFiniteExtrusion,
     ZeroLengthExtrusion,
     NonFiniteDerivedBasis,
-    NonFiniteDerivedPoint,
 }
 
-/// Classic SHAPE insertion point transformed into WCS.
+/// Classic SHAPE WCS insertion point and normalized extrusion normal.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfShapeWcsInsertion {
     point: [DxfDouble; 3],
@@ -192,22 +191,33 @@ fn project_insertion(
     source_id: DxfSourceId,
     numeric: DxfShapeNumericSemantics,
 ) -> DxfShapeWcsInsertionSemantic {
-    let field = DxfSemanticFieldProvenance::new(source_id, NAMESPACE, "transformed_insertion");
+    let field = DxfSemanticFieldProvenance::new(source_id, NAMESPACE, "wcs_insertion");
     let point = match insertion_vector(numeric.insertion()) {
         Ok(point) => point,
         Err((issue, raw)) => return DxfSemanticValue::invalid(issue, field, raw),
     };
-    let projected = match project_ocs_point(point.0, point.1, numeric.extrusion()) {
+    if !point
+        .0
+        .iter()
+        .all(|component| component.to_f64().is_finite())
+    {
+        return DxfSemanticValue::invalid(
+            DxfShapeWcsInsertionIssue::NonFiniteInsertion,
+            field,
+            point.1,
+        );
+    }
+    let extrusion = match project_extrusion(numeric.extrusion()) {
         Ok(projected) => projected,
         Err((issue, raw)) => {
             return DxfSemanticValue::invalid(map_projection_issue(issue), field, raw);
         }
     };
     let value = DxfShapeWcsInsertion {
-        point: projected.point(),
-        normal: projected.normal(),
+        point: point.0,
+        normal: extrusion.normal(),
     };
-    match projected.raw() {
+    match point.1.or(extrusion.raw()) {
         Some(raw) => DxfSemanticValue::explicit(value, field, raw),
         None => DxfSemanticValue::defaulted(value, field),
     }
@@ -266,7 +276,7 @@ fn map_projection_issue(issue: OcsPointProjectionIssue) -> DxfShapeWcsInsertionI
             DxfShapeWcsInsertionIssue::NonFiniteDerivedBasis
         }
         OcsPointProjectionIssue::NonFiniteDerivedPoint => {
-            DxfShapeWcsInsertionIssue::NonFiniteDerivedPoint
+            DxfShapeWcsInsertionIssue::NonFiniteInsertion
         }
     }
 }

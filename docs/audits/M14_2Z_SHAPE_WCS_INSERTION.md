@@ -1,5 +1,9 @@
 # M14.2z SHAPE WCS Insertion
 
+> Superseded by M14.2aa. This historical checkpoint incorrectly treated SHAPE
+> groups 10/20/30 as OCS. Autodesk defines them directly in WCS; the corrective
+> checkpoint keeps the point unchanged and normalizes extrusion independently.
+
 ## Scope
 
 M14.2z transforms the required classic SHAPE insertion from OCS to WCS and

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.2z can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.2aa can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -419,13 +419,15 @@ anchors or extrusion components, non-finite Binary values, zero extrusion,
 basis failure, and derived overflow remain typed. Text rotation, style
 metrics, glyph geometry, edit, and write remain unclaimed.
 
-M14.2z transforms the required SHAPE insertion from OCS to WCS with the same
-shared arbitrary-axis projection. It retains a finite WCS point, normalized
-normal, canonical positive zero, and exact scalar provenance. Missing,
-invalid, or duplicate insertion/extrusion values, non-finite Binary inputs,
-zero extrusion, basis failure, and derived overflow remain typed. SHAPE
-definition resolution, rotation, style metrics, glyph geometry, edit, and
-write remain unclaimed.
+M14.2z introduced shared text-symbol extrusion/OCS projection code and an
+initial SHAPE placement projection. M14.2aa corrects its coordinate-system
+boundary from Autodesk's normative SHAPE reference: groups 10/20/30 are
+already WCS and therefore remain bit-exact instead of being multiplied by an
+OCS basis. Extrusion is independently normalized into the WCS normal. Missing,
+invalid, duplicate, non-finite, zero-extrusion, and basis failures remain
+typed; a finite maximum-magnitude WCS point remains usable. SHAPE definition
+resolution, rotation, style metrics, glyph geometry, edit, and write remain
+unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|

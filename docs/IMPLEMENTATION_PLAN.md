@@ -1590,14 +1590,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     non-finite Binary inputs, zero extrusion, basis failure, and transformed
     overflow remain typed. Rotation, style metrics, glyph geometry, edit, and
     write remain unclaimed.
-    M14.2z transforms the required SHAPE insertion point from OCS to WCS with
-    its documented extrusion default and the same shared arbitrary-axis
-    projection used by TEXT. It retains a finite WCS point, normalized normal,
-    canonical positive zero, scalar provenance, and typed failures for
-    insertion/extrusion evidence, non-finite Binary values, zero extrusion,
-    basis failure, and derived overflow. The checkpoint also extracts the
-    shared 129-line text-symbol projection helper and reduces the TEXT WCS
-    module from 309 to 271 lines without changing its public contract.
+    M14.2z extracted the shared text-symbol extrusion/OCS projection helper and
+    added the first SHAPE placement projection. M14.2aa corrects that
+    checkpoint after a normative re-audit: Autodesk defines SHAPE groups
+    10/20/30 directly in WCS, unlike TEXT's OCS alignment points. SHAPE now
+    retains its exact finite WCS insertion unchanged and uses the shared helper
+    only to normalize extrusion for the WCS normal. A finite `f64::MAX` point
+    remains usable, proving no accidental basis multiplication. Missing,
+    invalid, duplicate, non-finite, zero-extrusion, and basis failures remain
+    typed. TEXT continues to use the helper's OCS-to-WCS point transform with
+    unchanged regression evidence.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

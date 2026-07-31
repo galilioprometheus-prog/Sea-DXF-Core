@@ -21,12 +21,12 @@ struct Signature {
 }
 
 #[test]
-fn every_dialect_has_ascii_binary_ocs_to_wcs_parity() -> Result<(), Box<dyn Error>> {
+fn every_dialect_preserves_wcs_point_and_normal_parity() -> Result<(), Box<dyn Error>> {
     let rows = [Row::Default, Row::NormalY, Row::NormalNegativeZ];
     let expected = [
         projected([1.0, 2.0, 3.0], [0.0, 0.0, 1.0]),
-        projected([-1.0, 3.0, 2.0], [0.0, 1.0, 0.0]),
-        projected([-1.0, 2.0, -3.0], [0.0, 0.0, -1.0]),
+        projected([1.0, 2.0, 3.0], [0.0, 1.0, 0.0]),
+        projected([1.0, 2.0, 3.0], [0.0, 0.0, -1.0]),
     ];
     for version in DxfAcadVersion::SUPPORTED {
         let ascii_bytes = ascii_fixture(version.code(), &rows);
@@ -98,7 +98,7 @@ fn source_failures_and_zero_extrusion_remain_typed() -> Result<(), Box<dyn Error
 }
 
 #[test]
-fn binary_nonfinite_inputs_and_derived_overflow_fail_typed() -> Result<(), Box<dyn Error>> {
+fn binary_nonfinite_inputs_and_large_wcs_point_are_exact() -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
     let mut bytes = binary_preamble(version)?;
     push_shape(&mut bytes, version, [f64::NAN, 2.0, 3.0], [0.0, 0.0, 1.0])?;
@@ -126,9 +126,14 @@ fn binary_nonfinite_inputs_and_derived_overflow_fail_typed() -> Result<(), Box<d
         issue(&directory, 1)?,
         DxfShapeWcsInsertionIssue::NonFiniteExtrusion
     );
+    let large = semantics(&directory, 2)?
+        .wcs_insertion()
+        .value()
+        .copied()
+        .ok_or_else(invalid_test_data)?;
     assert_eq!(
-        issue(&directory, 2)?,
-        DxfShapeWcsInsertionIssue::NonFiniteDerivedPoint
+        large.point().map(|value| value.to_f64().to_bits()),
+        [f64::MAX.to_bits(); 3]
     );
     Ok(())
 }

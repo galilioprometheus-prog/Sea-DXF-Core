@@ -1,4 +1,4 @@
-//! Shared finite OCS-point projection for TEXT and SHAPE semantics.
+//! Shared text-symbol extrusion normalization and finite OCS-point projection.
 
 use crate::{
     DxfDouble, DxfInsertTransformIssue, DxfRawValueProvenance, DxfSemanticValue,
@@ -38,6 +38,26 @@ pub(crate) struct OcsPointProjection {
     raw: Option<DxfRawValueProvenance>,
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct ExtrusionProjection {
+    basis: OcsBasis,
+    raw: Option<DxfRawValueProvenance>,
+}
+
+impl ExtrusionProjection {
+    pub(crate) fn transform(self, point: [f64; 3]) -> [f64; 3] {
+        self.basis.transform(point)
+    }
+
+    pub(crate) fn normal(self) -> [DxfDouble; 3] {
+        self.basis.normal().map(canonical_double)
+    }
+
+    pub(crate) const fn raw(self) -> Option<DxfRawValueProvenance> {
+        self.raw
+    }
+}
+
 impl OcsPointProjection {
     pub(crate) const fn point(self) -> [DxfDouble; 3] {
         self.point
@@ -61,23 +81,33 @@ pub(crate) fn project_ocs_point(
     if !finite3(point) {
         return Err((OcsPointProjectionIssue::NonFinitePoint, point_raw));
     }
-    let extrusion = extrusion_vector(extrusion_values)?;
+    let extrusion = project_extrusion(extrusion_values)?;
+    let transformed = extrusion.transform(point);
+    if !finite3(transformed) {
+        return Err((
+            OcsPointProjectionIssue::NonFiniteDerivedPoint,
+            point_raw.or(extrusion.raw()),
+        ));
+    }
+    Ok(OcsPointProjection {
+        point: transformed.map(canonical_double),
+        normal: extrusion.normal(),
+        raw: point_raw.or(extrusion.raw()),
+    })
+}
+
+pub(crate) fn project_extrusion(
+    values: &[DxfTextSymbolDoubleValue; 3],
+) -> Result<ExtrusionProjection, OcsPointProjectionFailure> {
+    let extrusion = extrusion_vector(values)?;
     if !finite3(extrusion.0) {
         return Err((OcsPointProjectionIssue::NonFiniteExtrusion, extrusion.1));
     }
     let basis = OcsBasis::from_extrusion(extrusion.0)
         .map_err(|issue| (map_basis_issue(issue), extrusion.1))?;
-    let transformed = basis.transform(point);
-    if !finite3(transformed) {
-        return Err((
-            OcsPointProjectionIssue::NonFiniteDerivedPoint,
-            point_raw.or(extrusion.1),
-        ));
-    }
-    Ok(OcsPointProjection {
-        point: transformed.map(canonical_double),
-        normal: basis.normal().map(canonical_double),
-        raw: point_raw.or(extrusion.1),
+    Ok(ExtrusionProjection {
+        basis,
+        raw: extrusion.1,
     })
 }
 
