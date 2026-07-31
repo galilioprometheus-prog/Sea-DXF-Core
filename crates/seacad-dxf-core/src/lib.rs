@@ -159,6 +159,7 @@ mod source;
 mod source_id;
 mod source_scan;
 mod source_span;
+mod spline_card;
 mod spline_evidence;
 mod text_control;
 mod text_decoder;
@@ -739,6 +740,10 @@ pub use shape_wcs_orientation::{
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
+pub use spline_card::{
+    DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,
+    DxfSplineCardState, DxfSplineValueCard,
+};
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
     DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,

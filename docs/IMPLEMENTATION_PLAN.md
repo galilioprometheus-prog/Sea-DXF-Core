@@ -1677,6 +1677,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     excluded. No values are selected, no defaults or version applicability
     are applied, and counts, flags, point grouping, curve validity, geometry,
     HELIX subclass data, edit, and write remain unclaimed.
+    M14.3b adds 24 fixed per-role cardinality cards to every retained SPLINE
+    record. Absent, unique, and duplicate-preserving multiple states remain
+    independent of lexical validity, and compact members point back to M14.3a
+    evidence without copying or selecting values. Defaults, flag/count
+    semantics, point grouping, curve validity, geometry, HELIX, edit, and write
+    remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

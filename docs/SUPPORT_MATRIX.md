@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3a can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -348,6 +348,12 @@ raw spans, and float bits remain visible; group-102 application content cannot
 impersonate a field. Value selection, defaults, version applicability, flags,
 count reconciliation, point grouping, curve validity, geometry, HELIX subclass
 data, edit, and write remain unclaimed.
+
+M14.3b adds 24 fixed source-ordered role cards per retained SPLINE record.
+Absent, unique, and duplicate-preserving multiple states remain independent of
+numeric lexical validity, with compact members resolving back to exact M14.3a
+evidence. Value selection, defaults, flags/count semantics, point grouping,
+curve validity, geometry, HELIX, edit, and write remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

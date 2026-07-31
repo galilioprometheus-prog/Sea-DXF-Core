@@ -1,11 +1,12 @@
 use std::{error::Error, io};
 
 use seacad_dxf_core::{
-    DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiNumericIssue, DxfAsciiRawDocument,
-    DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble, DxfError,
-    DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfSplineDirectory, DxfSplineNumber,
-    DxfSplineNumericIssue, DxfSplineRecordEntry, DxfSplineValue, DxfSplineValueRole,
-    NoopDxfReadObserver,
+    DXF_BINARY_SENTINEL, DXF_SPLINE_ROLES, DxfAcadVersion, DxfAsciiNumericIssue,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble,
+    DxfError, DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfSplineCardDirectory,
+    DxfSplineCardMember, DxfSplineCardState, DxfSplineDirectory, DxfSplineNumber,
+    DxfSplineNumericIssue, DxfSplineRecordEntry, DxfSplineValue, DxfSplineValueCard,
+    DxfSplineValueRole, NoopDxfReadObserver,
 };
 
 type Evidence = (DxfSplineValueRole, DxfSplineNumber);
@@ -18,16 +19,21 @@ fn every_dialect_has_ascii_binary_spline_evidence_parity() -> Result<(), Box<dyn
         let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
         let ascii = open_ascii(&ascii_source)?;
         let ascii_directory = ascii.spline_directory(&DxfCancellationToken::default())?;
+        let ascii_cards = ascii.spline_card_directory(&DxfCancellationToken::default())?;
 
         let binary_bytes = binary_fixture(version)?;
         let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
         let binary = open_binary(&binary_source)?;
         let binary_directory = binary.spline_directory(&DxfCancellationToken::default())?;
+        let binary_cards = binary.spline_card_directory(&DxfCancellationToken::default())?;
 
         assert_directory(&ascii_directory)?;
         assert_directory(&binary_directory)?;
+        assert_card_directory(&ascii_cards)?;
+        assert_card_directory(&binary_cards)?;
         assert_eq!(evidence(&ascii_directory)?, expected);
         assert_eq!(evidence(&binary_directory)?, expected);
+        assert_eq!(card_evidence(&ascii_cards)?, card_evidence(&binary_cards)?);
     }
     Ok(())
 }
@@ -65,6 +71,32 @@ fn duplicates_invalid_numbers_and_application_decoys_remain_exact() -> Result<()
         directory.values_for_raw_record(directory.records()[1].record().ordinal()),
         Some([].as_slice())
     );
+
+    let cards = document.spline_card_directory(&DxfCancellationToken::default())?;
+    let raw = cards.evidence_directory().records()[0].record().ordinal();
+    assert_eq!(
+        cards
+            .card_for_role(raw, DxfSplineValueRole::Flags)
+            .ok_or(io::Error::other("flags card"))?
+            .state(),
+        DxfSplineCardState::Unique
+    );
+    let degree = cards
+        .card_for_role(raw, DxfSplineValueRole::Degree)
+        .ok_or(io::Error::other("degree card"))?;
+    assert_eq!(
+        degree.state(),
+        DxfSplineCardState::Multiple {
+            occurrence_count: 2
+        }
+    );
+    assert_eq!(
+        cards
+            .card_for_role(raw, DxfSplineValueRole::NormalX)
+            .ok_or(io::Error::other("normal x card"))?
+            .state(),
+        DxfSplineCardState::Absent
+    );
     Ok(())
 }
 
@@ -96,14 +128,92 @@ fn cancellation_lookup_and_public_traits_hold() -> Result<(), Box<dyn Error>> {
         document.spline_directory(&cancellation),
         Err(DxfError::Cancelled)
     ));
+    assert!(matches!(
+        document.spline_card_directory(&cancellation),
+        Err(DxfError::Cancelled)
+    ));
     let directory = document.spline_directory(&DxfCancellationToken::default())?;
     assert_eq!(directory.record_for_raw_ordinal(u64::MAX), None);
     assert_eq!(directory.values_for_raw_record(u64::MAX), None);
     assert_eq!(directory.value_for_group(u64::MAX), None);
     assert_copy::<DxfSplineValue>();
     assert_copy::<DxfSplineRecordEntry>();
+    assert_copy::<DxfSplineValueCard>();
+    assert_copy::<DxfSplineCardMember>();
     assert_send_sync::<DxfSplineDirectory>();
+    assert_send_sync::<DxfSplineCardDirectory>();
     Ok(())
+}
+
+fn assert_card_directory(directory: &DxfSplineCardDirectory) -> Result<(), Box<dyn Error>> {
+    assert_eq!(directory.cards().len(), DXF_SPLINE_ROLES.len());
+    assert_eq!(directory.members().len(), 28);
+    assert_eq!(
+        directory.source_id(),
+        directory.evidence_directory().source_id()
+    );
+    let record = directory.evidence_directory().records()[0];
+    let cards = directory
+        .cards_for_raw_record(record.record().ordinal())
+        .ok_or(io::Error::other("spline cards"))?;
+    assert_eq!(
+        cards.iter().map(|card| card.role()).collect::<Vec<_>>(),
+        DXF_SPLINE_ROLES
+    );
+    for role in [
+        DxfSplineValueRole::KnotValue,
+        DxfSplineValueRole::ControlPointX,
+        DxfSplineValueRole::ControlPointY,
+        DxfSplineValueRole::ControlPointZ,
+    ] {
+        assert_eq!(
+            directory
+                .card_for_role(record.record().ordinal(), role)
+                .ok_or(io::Error::other("multiple card"))?
+                .state(),
+            DxfSplineCardState::Multiple {
+                occurrence_count: 2
+            }
+        );
+    }
+    assert!(
+        cards
+            .iter()
+            .filter(|card| !matches!(
+                card.role(),
+                DxfSplineValueRole::KnotValue
+                    | DxfSplineValueRole::ControlPointX
+                    | DxfSplineValueRole::ControlPointY
+                    | DxfSplineValueRole::ControlPointZ
+            ))
+            .all(|card| card.state() == DxfSplineCardState::Unique)
+    );
+    Ok(())
+}
+
+fn card_evidence(
+    directory: &DxfSplineCardDirectory,
+) -> Result<Vec<(DxfSplineValueRole, DxfSplineCardState, Vec<DxfSplineNumber>)>, io::Error> {
+    directory
+        .cards()
+        .iter()
+        .copied()
+        .map(|card| {
+            let values = directory
+                .members_for_card(card.ordinal())
+                .ok_or(io::Error::other("card members"))?
+                .iter()
+                .map(|member| {
+                    directory
+                        .value_for_member(*member)
+                        .ok_or(io::Error::other("member value"))?
+                        .value()
+                        .map_err(|_| io::Error::other("member number"))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok((card.role(), card.state(), values))
+        })
+        .collect()
 }
 
 fn assert_directory(directory: &DxfSplineDirectory) -> Result<(), Box<dyn Error>> {

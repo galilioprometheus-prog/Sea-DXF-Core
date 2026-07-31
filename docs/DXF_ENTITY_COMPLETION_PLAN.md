@@ -286,6 +286,12 @@ values, duplicate singleton candidates, invalid ASCII numbers, raw spans, and
 group-102 exclusion. It does not select values, apply documented defaults,
 interpret flags, reconcile counts, group coordinates, validate a curve, admit
 HELIX subclass fields, construct geometry, edit, or write.
+M14.3b gives every retained SPLINE record 24 fixed role cards in stable order.
+Each card reports absent, unique, or duplicate-preserving multiple cardinality
+and retains compact references to the original M14.3a values independently of
+lexical validity. It does not select values, apply defaults, interpret flags or
+counts, group points, validate or construct a curve, process HELIX, edit, or
+write.
 
 ## Milestone queue
 
