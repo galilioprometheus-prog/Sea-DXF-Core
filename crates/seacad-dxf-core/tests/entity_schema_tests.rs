@@ -2,11 +2,13 @@ use std::error::Error;
 
 use seacad_dxf_core::{
     DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_APPLICABILITY,
-    DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256, DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS,
-    DxfAcadVersion, DxfEntityAlias, DxfEntityAliasEvidence, DxfEntityApplicability,
-    DxfEntityApplicabilityEvidence, DxfEntityNameClassification, DxfEntityTopic,
-    classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_applicability,
-    dxf_entity_topics,
+    DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256, DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256,
+    DXF_ENTITY_COMMON_FIELDS, DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS, DxfAcadVersion,
+    DxfEntityAlias, DxfEntityAliasEvidence, DxfEntityApplicability, DxfEntityApplicabilityEvidence,
+    DxfEntityCoordinateSpace, DxfEntityField, DxfEntityFieldApplicability,
+    DxfEntityFieldCardinality, DxfEntityFieldDefault, DxfEntityFieldScope, DxfEntityFieldWireType,
+    DxfEntityNameClassification, DxfEntityTopic, classify_exact_dxf_entity_name,
+    dxf_entity_aliases, dxf_entity_applicability, dxf_entity_common_fields, dxf_entity_topics,
 };
 
 const EXPECTED_DXF_NAMES: [&str; 45] = [
@@ -283,6 +285,125 @@ fn official_underlay_ranges_are_typed_without_inventing_unreviewed_floors()
         );
     }
     Ok(())
+}
+
+#[test]
+fn common_field_registry_freezes_group_wire_cardinality_and_provenance()
+-> Result<(), Box<dyn Error>> {
+    let fields = dxf_entity_common_fields();
+    assert_eq!(fields, DXF_ENTITY_COMMON_FIELDS);
+    assert_eq!(fields.len(), 19);
+    assert_eq!(DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256.len(), 64);
+    let expected = [
+        ("handle", 5, DxfEntityFieldWireType::Handle),
+        ("owner", 330, DxfEntityFieldWireType::Handle),
+        ("extension_dictionary", 360, DxfEntityFieldWireType::Handle),
+        ("paper_space", 67, DxfEntityFieldWireType::Int16),
+        ("layout", 410, DxfEntityFieldWireType::ExactText),
+        ("layer", 8, DxfEntityFieldWireType::ExactText),
+        ("linetype", 6, DxfEntityFieldWireType::ExactText),
+        ("material", 347, DxfEntityFieldWireType::Handle),
+        ("color", 62, DxfEntityFieldWireType::Int16),
+        ("lineweight", 370, DxfEntityFieldWireType::Int16),
+        ("linetype_scale", 48, DxfEntityFieldWireType::Double),
+        ("visibility", 60, DxfEntityFieldWireType::Int16),
+        ("proxy_graphics_size", 92, DxfEntityFieldWireType::Int32),
+        (
+            "proxy_graphics_data",
+            310,
+            DxfEntityFieldWireType::BinaryChunk,
+        ),
+        ("true_color", 420, DxfEntityFieldWireType::Int32),
+        ("color_name", 430, DxfEntityFieldWireType::ExactText),
+        ("transparency", 440, DxfEntityFieldWireType::Int32),
+        ("plot_style", 390, DxfEntityFieldWireType::Handle),
+        ("shadow", 284, DxfEntityFieldWireType::Int16),
+    ];
+    for (ordinal, (descriptor, (id, group_code, wire_type))) in
+        fields.iter().zip(expected).enumerate()
+    {
+        let ordinal = u8::try_from(ordinal)?;
+        assert_eq!(descriptor.field().ordinal(), ordinal);
+        assert_eq!(descriptor.id(), id);
+        assert_eq!(descriptor.group_code(), group_code);
+        assert_eq!(descriptor.wire_type(), wire_type);
+        assert_eq!(
+            DxfEntityField::from_ordinal(ordinal),
+            Some(descriptor.field())
+        );
+        assert_eq!(
+            DxfEntityField::from_group_code(group_code),
+            Some(descriptor.field())
+        );
+        assert_eq!(descriptor.field().descriptor(), Some(descriptor));
+        assert_eq!(
+            descriptor.coordinate_space(),
+            DxfEntityCoordinateSpace::NotApplicable
+        );
+        assert_eq!(
+            descriptor.applicability(),
+            DxfEntityFieldApplicability::NotYetReviewed
+        );
+        assert_eq!(descriptor.source_id(), "autodesk.common_entity_codes.2024");
+        assert_eq!(
+            descriptor.source_reference(),
+            "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD"
+        );
+        assert_eq!(descriptor.source_facts_sha256().len(), 64);
+        assert!(
+            descriptor
+                .source_fact()
+                .starts_with(&format!("group:{group_code}"))
+        );
+    }
+    assert_eq!(DxfEntityField::from_ordinal(19), None);
+    assert_eq!(DxfEntityField::from_group_code(999), None);
+    Ok(())
+}
+
+#[test]
+fn common_field_defaults_scopes_and_sequence_shape_are_explicit() {
+    assert_eq!(
+        DxfEntityField::LINETYPE
+            .descriptor()
+            .map(|descriptor| descriptor.default()),
+        Some(DxfEntityFieldDefault::ExactText("BYLAYER"))
+    );
+    assert_eq!(
+        DxfEntityField::MATERIAL
+            .descriptor()
+            .map(|descriptor| descriptor.default()),
+        Some(DxfEntityFieldDefault::ByLayer)
+    );
+    assert_eq!(
+        DxfEntityField::COLOR
+            .descriptor()
+            .map(|descriptor| descriptor.default()),
+        Some(DxfEntityFieldDefault::Int16(256))
+    );
+    assert_eq!(
+        DxfEntityField::LINETYPE_SCALE
+            .descriptor()
+            .map(|descriptor| descriptor.default()),
+        Some(DxfEntityFieldDefault::DoubleBits(1.0_f64.to_bits()))
+    );
+    assert_eq!(
+        DxfEntityField::PROXY_GRAPHICS_DATA
+            .descriptor()
+            .map(|descriptor| (descriptor.cardinality(), descriptor.scope())),
+        Some((
+            DxfEntityFieldCardinality::OptionalSequence,
+            DxfEntityFieldScope::AcDbEntity
+        ))
+    );
+    assert_eq!(
+        DxfEntityField::EXTENSION_DICTIONARY
+            .descriptor()
+            .map(|descriptor| descriptor.scope()),
+        Some(DxfEntityFieldScope::ExtensionDictionaryApplicationGroup)
+    );
+    assert_send_sync::<DxfEntityField>();
+    assert_copy::<DxfEntityField>();
 }
 
 fn assert_send_sync<T: Send + Sync>() {}

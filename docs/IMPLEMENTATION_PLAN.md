@@ -1758,6 +1758,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     interrupted/unclosed sections, cancellation, source mismatch, and public
     metadata bounds. This checkpoint does not add common fields, typed family
     semantics, geometry, edit, write, or a support-state advancement.
+    M14.3j freezes 19 common entity-property roles from Autodesk's common-code
+    table into generated descriptors. Stable field ordinals map exact group
+    codes to wire type, required/optional singleton or optional-sequence
+    cardinality, documented defaults, entity-preamble/`AcDbEntity`/extension-
+    dictionary scope, non-coordinate classification, explicit field-version
+    `NotYetReviewed`, and per-row provenance. The schema distinguishes the
+    BLOCK_RECORD owner from group-330 reactor content and keeps group-360 in
+    the `ACAD_XDICTIONARY` application scope. Generator validation rejects
+    count/order drift, duplicate ids/codes, invalid wire families, defaults,
+    scope facts, source kind, and stale normalized receipts. This checkpoint
+    does not scan field occurrences, evaluate cardinality, decode values,
+    apply defaults, edit, write, or advance support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

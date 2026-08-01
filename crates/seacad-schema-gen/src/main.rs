@@ -21,6 +21,7 @@ const HEADER_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_sc
 const ENTITY_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/entity_schema.rs";
 const EXPECTED_ENTITY_TOPIC_COUNT: usize = 45;
 const EXPECTED_ENTITY_ALIAS_COUNT: usize = 14;
+const EXPECTED_ENTITY_COMMON_FIELD_COUNT: usize = 19;
 const EXPECTED_ENTITY_APPLICABILITY_COUNT: usize =
     EXPECTED_ENTITY_TOPIC_COUNT + EXPECTED_ENTITY_ALIAS_COUNT;
 
@@ -32,6 +33,7 @@ struct SchemaManifest {
     entity_topics: String,
     entity_aliases: String,
     entity_applicability: String,
+    entity_common_fields: String,
     families: Vec<String>,
 }
 
@@ -111,10 +113,34 @@ struct EntityApplicability {
     source_id: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityCommonFieldRegistry {
+    schema_version: String,
+    namespace: String,
+    fields: Vec<EntityCommonField>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityCommonField {
+    id: String,
+    group_code: i16,
+    wire_type: EntityFieldWireType,
+    cardinality: EntityFieldCardinality,
+    default: EntityFieldDefault,
+    scope: EntityFieldScope,
+    coordinate_space: EntityCoordinateSpace,
+    applicability: EntityFieldApplicability,
+    source_id: String,
+    source_fact: String,
+}
+
 struct EntityRegistryReceipts<'a> {
     topic: &'a str,
     alias: &'a str,
     applicability: &'a str,
+    common_fields: &'a str,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -128,6 +154,55 @@ enum EntityNameKind {
 #[serde(rename_all = "snake_case")]
 enum ApplicabilityReviewState {
     ApplicableRange,
+    NotYetReviewed,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityFieldWireType {
+    BinaryChunk,
+    Double,
+    ExactText,
+    Handle,
+    Int16,
+    Int32,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityFieldCardinality {
+    RequiredSingleton,
+    OptionalSingleton,
+    OptionalSequence,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "kind", content = "value", rename_all = "snake_case")]
+enum EntityFieldDefault {
+    None,
+    Int16(i16),
+    DoubleOne,
+    ExactText(String),
+    ByLayer,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityFieldScope {
+    EntityPreamble,
+    AcdbEntity,
+    ExtensionDictionaryApplicationGroup,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityCoordinateSpace {
+    NotApplicable,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityFieldApplicability {
     NotYetReviewed,
 }
 
@@ -190,6 +265,7 @@ enum ReviewState {
 enum EvidenceKind {
     AliasList,
     ApplicabilityList,
+    CommonEntityCodes,
     OracleInventory,
     Row,
     TopicList,
@@ -285,14 +361,18 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
         &entity_aliases,
         &entity_applicability,
     )?;
+    let entity_common_fields = load_entity_common_fields(&root, &manifest)?;
+    validate_entity_common_fields(&manifest, &sources, &entity_common_fields)?;
     let header_receipt = normalized_receipt(&manifest, &sources, &families)?;
     let entity_receipt = normalized_entity_receipt(&entity_topics, entity_source)?;
     let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
     let applicability_receipt = normalized_applicability_receipt(&entity_applicability, &sources)?;
+    let common_field_receipt = normalized_common_field_receipt(&entity_common_fields, &sources)?;
     let entity_receipts = EntityRegistryReceipts {
         topic: &entity_receipt,
         alias: &alias_receipt,
         applicability: &applicability_receipt,
+        common_fields: &common_field_receipt,
     };
     let header_output = render_registry(&manifest, &sources, &families, &header_receipt)?;
     let entity_output = render_entity_registry(
@@ -301,6 +381,7 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
         &entity_aliases,
         &sources,
         &entity_applicability,
+        &entity_common_fields,
         &entity_receipts,
     )?;
     let header_target = root.join(HEADER_OUTPUT_PATH);
@@ -402,6 +483,22 @@ fn load_entity_applicability(
         ));
     }
     let path = format!("schema/dxf/v1/{}", manifest.entity_applicability);
+    read_json(root, &path, "root")
+}
+
+fn load_entity_common_fields(
+    root: &Path,
+    manifest: &SchemaManifest,
+) -> Result<EntityCommonFieldRegistry, SchemaError> {
+    if !valid_family_filename(&manifest.entity_common_fields) {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_PATH",
+            MANIFEST_PATH,
+            "entity_common_fields",
+            "entity common-field path must be one lowercase .json filename",
+        ));
+    }
+    let path = format!("schema/dxf/v1/{}", manifest.entity_common_fields);
     read_json(root, &path, "root")
 }
 
@@ -891,6 +988,207 @@ fn validate_entity_applicability(
     Ok(())
 }
 
+fn validate_entity_common_fields(
+    manifest: &SchemaManifest,
+    registry: &SourceRegistry,
+    common_fields: &EntityCommonFieldRegistry,
+) -> Result<(), SchemaError> {
+    let path = format!("schema/dxf/v1/{}", manifest.entity_common_fields);
+    if common_fields.schema_version != manifest.schema_version {
+        return Err(SchemaError::new(
+            "SCHEMA_VERSION",
+            &path,
+            "schema_version",
+            "entity common-field version does not match manifest",
+        ));
+    }
+    if common_fields.namespace != "entity_common" {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_NAMESPACE",
+            &path,
+            "namespace",
+            "entity common-field namespace must be exactly entity_common",
+        ));
+    }
+    if common_fields.fields.len() != EXPECTED_ENTITY_COMMON_FIELD_COUNT {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_COUNT",
+            &path,
+            "fields",
+            format!("expected exactly {EXPECTED_ENTITY_COMMON_FIELD_COUNT} reviewed fields"),
+        ));
+    }
+    let sources: BTreeMap<_, _> = registry
+        .sources
+        .iter()
+        .map(|source| (source.id.as_str(), source))
+        .collect();
+    let mut ids = BTreeSet::new();
+    let mut group_codes = BTreeSet::new();
+    let mut referenced_source = None;
+    for (index, field) in common_fields.fields.iter().enumerate() {
+        let entry = format!("fields[{index}]");
+        if !valid_entity_id(&field.id) || !ids.insert(field.id.as_str()) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_ID",
+                &path,
+                format!("{entry}.id"),
+                "field id must be unique lowercase ASCII",
+            ));
+        }
+        if !group_codes.insert(field.group_code) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_GROUP",
+                &path,
+                format!("{entry}.group_code"),
+                "common-property group code must be unique",
+            ));
+        }
+        let expected_wire = common_field_wire_type(field.group_code).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_GROUP",
+                &path,
+                format!("{entry}.group_code"),
+                "group code is not in the reviewed common-property inventory",
+            )
+        })?;
+        if field.wire_type != expected_wire {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_WIRE",
+                &path,
+                format!("{entry}.wire_type"),
+                "wire type does not match the reviewed group-code family",
+            ));
+        }
+        validate_common_field_shape(field, &path, &entry)?;
+        let expected_fact_prefix = format!("group:{}", field.group_code);
+        if !field.source_fact.starts_with(&expected_fact_prefix) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_PROVENANCE",
+                &path,
+                format!("{entry}.source_fact"),
+                "source fact must begin with the exact reviewed group code",
+            ));
+        }
+        let source = sources.get(field.source_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                &path,
+                format!("{entry}.source_id"),
+                "field references an unknown source id",
+            )
+        })?;
+        if !matches!(source.evidence_kind, EvidenceKind::CommonEntityCodes) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_SOURCE",
+                &path,
+                format!("{entry}.source_id"),
+                "field source must use common_entity_codes evidence",
+            ));
+        }
+        if referenced_source
+            .replace(source.id.as_str())
+            .is_some_and(|id| id != source.id)
+        {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_SOURCE",
+                &path,
+                format!("{entry}.source_id"),
+                "one reviewed table must anchor the complete common-field registry",
+            ));
+        }
+    }
+    let source_id = referenced_source.ok_or_else(|| {
+        SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_SOURCE",
+            &path,
+            "fields",
+            "common-field registry must reference one source",
+        )
+    })?;
+    let source = sources.get(source_id).ok_or_else(|| {
+        SchemaError::new(
+            "SCHEMA_SOURCE_REF",
+            &path,
+            source_id,
+            "validated common-field source disappeared",
+        )
+    })?;
+    let observed = normalized_common_field_facts_sha256(common_fields)?;
+    if source.normalized_facts_sha256 != observed {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_SOURCE_RECEIPT",
+            &path,
+            source_id,
+            format!(
+                "recorded source facts differ from normalized common fields; observed {observed}"
+            ),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_common_field_shape(
+    field: &EntityCommonField,
+    path: &str,
+    entry: &str,
+) -> Result<(), SchemaError> {
+    if field.cardinality == EntityFieldCardinality::OptionalSequence
+        && field.wire_type != EntityFieldWireType::BinaryChunk
+    {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_CARDINALITY",
+            path,
+            format!("{entry}.cardinality"),
+            "only proxy binary chunks use common-property sequence cardinality",
+        ));
+    }
+    let default_is_valid = match (&field.default, field.group_code) {
+        (EntityFieldDefault::None, _) => true,
+        (EntityFieldDefault::Int16(0), 67 | 60)
+        | (EntityFieldDefault::Int16(256), 62)
+        | (EntityFieldDefault::DoubleOne, 48) => true,
+        (EntityFieldDefault::ExactText(value), 6) => value == "BYLAYER",
+        (EntityFieldDefault::ByLayer, 347) => true,
+        _ => false,
+    };
+    if !default_is_valid {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COMMON_DEFAULT",
+            path,
+            format!("{entry}.default"),
+            "default does not match the reviewed Autodesk table row",
+        ));
+    }
+    Ok(())
+}
+
+fn common_field_wire_type(group_code: i16) -> Option<EntityFieldWireType> {
+    match group_code {
+        310 => Some(EntityFieldWireType::BinaryChunk),
+        48 => Some(EntityFieldWireType::Double),
+        6 | 8 | 410 | 430 => Some(EntityFieldWireType::ExactText),
+        5 | 330 | 347 | 360 | 390 => Some(EntityFieldWireType::Handle),
+        60 | 62 | 67 | 284 | 370 => Some(EntityFieldWireType::Int16),
+        92 | 420 | 440 => Some(EntityFieldWireType::Int32),
+        _ => None,
+    }
+}
+
+fn normalized_common_field_facts_sha256(
+    common_fields: &EntityCommonFieldRegistry,
+) -> Result<String, SchemaError> {
+    let bytes = serde_json::to_vec(&common_fields.fields).map_err(|error| {
+        SchemaError::new(
+            "SCHEMA_JSON",
+            ENTITY_OUTPUT_PATH,
+            "entity_common_fields",
+            error.to_string(),
+        )
+    })?;
+    sha256_hex(&bytes, "entity_common_field_facts")
+}
+
 fn acad_version_index(version: &str) -> Option<u8> {
     match version {
         "AC1009" => Some(0),
@@ -1138,6 +1436,20 @@ fn normalized_applicability_receipt(
     digest_hex(hasher.finalize().as_slice(), "entity_applicability_receipt")
 }
 
+fn normalized_common_field_receipt(
+    common_fields: &EntityCommonFieldRegistry,
+    registry: &SourceRegistry,
+) -> Result<String, SchemaError> {
+    let mut hasher = Sha256::new();
+    update_normalized_hash(&mut hasher, common_fields, "entity_common_fields")?;
+    for source in &registry.sources {
+        if matches!(source.evidence_kind, EvidenceKind::CommonEntityCodes) {
+            update_normalized_hash(&mut hasher, source, "entity_common_field_source")?;
+        }
+    }
+    digest_hex(hasher.finalize().as_slice(), "entity_common_field_receipt")
+}
+
 fn update_normalized_hash<T: Serialize>(
     hasher: &mut Sha256,
     value: &T,
@@ -1240,6 +1552,7 @@ fn render_entity_registry(
     entity_aliases: &EntityAliasRegistry,
     registry: &SourceRegistry,
     applicability: &EntityApplicabilityRegistry,
+    common_fields: &EntityCommonFieldRegistry,
     receipts: &EntityRegistryReceipts<'_>,
 ) -> Result<String, SchemaError> {
     let mut output = String::new();
@@ -1414,7 +1727,10 @@ fn render_entity_registry(
         let evidence = match alias_source.evidence_kind {
             EvidenceKind::AliasList => "Normative",
             EvidenceKind::OracleInventory => "BehavioralOracle",
-            EvidenceKind::ApplicabilityList | EvidenceKind::Row | EvidenceKind::TopicList => {
+            EvidenceKind::ApplicabilityList
+            | EvidenceKind::CommonEntityCodes
+            | EvidenceKind::Row
+            | EvidenceKind::TopicList => {
                 return Err(SchemaError::new(
                     "SCHEMA_ENTITY_ALIAS_SOURCE",
                     ENTITY_OUTPUT_PATH,
@@ -1549,7 +1865,146 @@ fn render_entity_registry(
     output.push_str(
         "];\n\n#[must_use]\npub const fn dxf_entity_applicability() -> &'static [DxfEntityApplicabilityDescriptor] {\n    DXF_ENTITY_APPLICABILITY\n}\n",
     );
+    render_entity_common_fields(&mut output, common_fields, &sources, receipts.common_fields)?;
     Ok(output)
+}
+
+fn render_entity_common_fields(
+    output: &mut String,
+    common_fields: &EntityCommonFieldRegistry,
+    sources: &BTreeMap<&str, &SchemaSource>,
+    receipt: &str,
+) -> Result<(), SchemaError> {
+    output.push_str("\n#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str("pub struct DxfEntityField {\n    ordinal: u8,\n}\n\n");
+    output.push_str("impl DxfEntityField {\n");
+    for (ordinal, field) in common_fields.fields.iter().enumerate() {
+        writeln!(
+            output,
+            "    pub const {}: Self = Self {{ ordinal: {ordinal} }};",
+            field.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("\n    #[must_use]\n    pub const fn ordinal(self) -> u8 {\n        self.ordinal\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub fn from_ordinal(ordinal: u8) -> Option<Self> {\n        DXF_ENTITY_COMMON_FIELDS\n            .get(usize::from(ordinal))\n            .map(|descriptor| descriptor.field())\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub fn from_group_code(group_code: i16) -> Option<Self> {\n        match group_code {\n");
+    for field in &common_fields.fields {
+        writeln!(
+            output,
+            "            {} => Some(Self::{}),",
+            field.group_code,
+            field.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("            _ => None,\n        }\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub fn descriptor(self) -> Option<&'static DxfEntityFieldDescriptor> {\n        DXF_ENTITY_COMMON_FIELDS.get(usize::from(self.ordinal))\n    }\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldWireType {\n    BinaryChunk,\n    Double,\n    ExactText,\n    Handle,\n    Int16,\n    Int32,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldCardinality {\n    RequiredSingleton,\n    OptionalSingleton,\n    OptionalSequence,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldDefault {\n    None,\n    Int16(i16),\n    DoubleBits(u64),\n    ExactText(&'static str),\n    ByLayer,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldScope {\n    EntityPreamble,\n    AcDbEntity,\n    ExtensionDictionaryApplicationGroup,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityCoordinateSpace {\n    NotApplicable,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldApplicability {\n    NotYetReviewed,\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct DxfEntityFieldDescriptor {\n    field: DxfEntityField,\n    id: &'static str,\n    group_code: i16,\n    wire_type: DxfEntityFieldWireType,\n    cardinality: DxfEntityFieldCardinality,\n    default: DxfEntityFieldDefault,\n    scope: DxfEntityFieldScope,\n    coordinate_space: DxfEntityCoordinateSpace,\n    applicability: DxfEntityFieldApplicability,\n    source_id: &'static str,\n    source_reference: &'static str,\n    source_facts_sha256: &'static str,\n    source_fact: &'static str,\n}\n\n");
+    output.push_str("impl DxfEntityFieldDescriptor {\n    #[must_use]\n    pub const fn field(self) -> DxfEntityField {\n        self.field\n    }\n\n    #[must_use]\n    pub const fn id(self) -> &'static str {\n        self.id\n    }\n\n    #[must_use]\n    pub const fn group_code(self) -> i16 {\n        self.group_code\n    }\n\n    #[must_use]\n    pub const fn wire_type(self) -> DxfEntityFieldWireType {\n        self.wire_type\n    }\n\n    #[must_use]\n    pub const fn cardinality(self) -> DxfEntityFieldCardinality {\n        self.cardinality\n    }\n\n    #[must_use]\n    pub const fn default(self) -> DxfEntityFieldDefault {\n        self.default\n    }\n\n    #[must_use]\n    pub const fn scope(self) -> DxfEntityFieldScope {\n        self.scope\n    }\n\n    #[must_use]\n    pub const fn coordinate_space(self) -> DxfEntityCoordinateSpace {\n        self.coordinate_space\n    }\n\n    #[must_use]\n    pub const fn applicability(self) -> DxfEntityFieldApplicability {\n        self.applicability\n    }\n\n    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n    #[must_use]\n    pub const fn source_reference(self) -> &'static str {\n        self.source_reference\n    }\n\n    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n\n    #[must_use]\n    pub const fn source_fact(self) -> &'static str {\n        self.source_fact\n    }\n}\n\n");
+    output.push_str("pub const DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256: &str =\n");
+    writeln!(output, "    {receipt:?};\n")?;
+    output.push_str("pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[\n");
+    for field in &common_fields.fields {
+        let source = sources.get(field.source_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                ENTITY_OUTPUT_PATH,
+                &field.id,
+                "validated common-field source disappeared before rendering",
+            )
+        })?;
+        output.push_str("    DxfEntityFieldDescriptor {\n");
+        writeln!(
+            output,
+            "        field: DxfEntityField::{},",
+            field.id.to_ascii_uppercase()
+        )?;
+        writeln!(output, "        id: {:?},", field.id)?;
+        writeln!(output, "        group_code: {},", field.group_code)?;
+        writeln!(
+            output,
+            "        wire_type: DxfEntityFieldWireType::{},",
+            entity_field_wire_variant(field.wire_type)
+        )?;
+        writeln!(
+            output,
+            "        cardinality: DxfEntityFieldCardinality::{},",
+            entity_field_cardinality_variant(field.cardinality)
+        )?;
+        writeln!(
+            output,
+            "        default: {},",
+            render_entity_field_default(&field.default)
+        )?;
+        writeln!(
+            output,
+            "        scope: DxfEntityFieldScope::{},",
+            entity_field_scope_variant(field.scope)
+        )?;
+        output.push_str("        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,\n");
+        output.push_str("        applicability: DxfEntityFieldApplicability::NotYetReviewed,\n");
+        writeln!(output, "        source_id: {:?},", source.id)?;
+        writeln!(output, "        source_reference: {:?},", source.topic_id)?;
+        writeln!(
+            output,
+            "        source_facts_sha256: {:?},",
+            source.normalized_facts_sha256
+        )?;
+        writeln!(output, "        source_fact: {:?},", field.source_fact)?;
+        output.push_str("    },\n");
+    }
+    output.push_str("];\n\n#[must_use]\npub const fn dxf_entity_common_fields() -> &'static [DxfEntityFieldDescriptor] {\n    DXF_ENTITY_COMMON_FIELDS\n}\n");
+    Ok(())
+}
+
+fn entity_field_wire_variant(wire_type: EntityFieldWireType) -> &'static str {
+    match wire_type {
+        EntityFieldWireType::BinaryChunk => "BinaryChunk",
+        EntityFieldWireType::Double => "Double",
+        EntityFieldWireType::ExactText => "ExactText",
+        EntityFieldWireType::Handle => "Handle",
+        EntityFieldWireType::Int16 => "Int16",
+        EntityFieldWireType::Int32 => "Int32",
+    }
+}
+
+fn entity_field_cardinality_variant(cardinality: EntityFieldCardinality) -> &'static str {
+    match cardinality {
+        EntityFieldCardinality::RequiredSingleton => "RequiredSingleton",
+        EntityFieldCardinality::OptionalSingleton => "OptionalSingleton",
+        EntityFieldCardinality::OptionalSequence => "OptionalSequence",
+    }
+}
+
+fn entity_field_scope_variant(scope: EntityFieldScope) -> &'static str {
+    match scope {
+        EntityFieldScope::EntityPreamble => "EntityPreamble",
+        EntityFieldScope::AcdbEntity => "AcDbEntity",
+        EntityFieldScope::ExtensionDictionaryApplicationGroup => {
+            "ExtensionDictionaryApplicationGroup"
+        }
+    }
+}
+
+fn render_entity_field_default(default: &EntityFieldDefault) -> String {
+    match default {
+        EntityFieldDefault::None => "DxfEntityFieldDefault::None".to_string(),
+        EntityFieldDefault::Int16(value) => {
+            format!("DxfEntityFieldDefault::Int16({value})")
+        }
+        EntityFieldDefault::DoubleOne => {
+            "DxfEntityFieldDefault::DoubleBits(1.0_f64.to_bits())".to_string()
+        }
+        EntityFieldDefault::ExactText(value) => {
+            format!("DxfEntityFieldDefault::ExactText({value:?})")
+        }
+        EntityFieldDefault::ByLayer => "DxfEntityFieldDefault::ByLayer".to_string(),
+    }
 }
 
 fn render_optional_acad_version(version: Option<&str>) -> Result<String, SchemaError> {
@@ -1609,6 +2064,7 @@ fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
     match kind {
         EvidenceKind::AliasList
         | EvidenceKind::ApplicabilityList
+        | EvidenceKind::CommonEntityCodes
         | EvidenceKind::OracleInventory => false,
         EvidenceKind::Row => row_evidence_matches(field),
         EvidenceKind::TopicList => false,
@@ -1750,6 +2206,7 @@ fn valid_source_reference(source: &SchemaSource) -> bool {
         }
         EvidenceKind::AliasList
         | EvidenceKind::ApplicabilityList
+        | EvidenceKind::CommonEntityCodes
         | EvidenceKind::Row
         | EvidenceKind::TopicList => valid_topic_id(&source.topic_id),
     }
@@ -1793,13 +2250,15 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EXPECTED_ENTITY_ALIAS_COUNT, EXPECTED_ENTITY_APPLICABILITY_COUNT, EntityRegistryReceipts,
+        EXPECTED_ENTITY_ALIAS_COUNT, EXPECTED_ENTITY_APPLICABILITY_COUNT,
+        EXPECTED_ENTITY_COMMON_FIELD_COUNT, EntityFieldDefault, EntityRegistryReceipts,
         EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches,
-        load_entity_aliases, load_entity_applicability, load_entity_topics, load_schema,
-        normalized_alias_receipt, normalized_applicability_receipt, normalized_entity_receipt,
-        normalized_receipt, render_entity_registry, render_registry, validate_entity_aliases,
-        validate_entity_applicability, validate_entity_topics, validate_schema,
-        validate_wire_shape,
+        load_entity_aliases, load_entity_applicability, load_entity_common_fields,
+        load_entity_topics, load_schema, normalized_alias_receipt,
+        normalized_applicability_receipt, normalized_common_field_receipt,
+        normalized_entity_receipt, normalized_receipt, render_entity_registry, render_registry,
+        validate_entity_aliases, validate_entity_applicability, validate_entity_common_fields,
+        validate_entity_topics, validate_schema, validate_wire_shape,
     };
 
     #[test]
@@ -2031,6 +2490,8 @@ mod tests {
             &entity_aliases,
             &applicability,
         )?;
+        let common_fields = load_entity_common_fields(&root, &manifest)?;
+        validate_entity_common_fields(&manifest, &sources, &common_fields)?;
         assert_eq!(entity_topics.topics.len(), 45);
         assert_eq!(entity_topics.topics[0].dxf_name, "3DFACE");
         assert_eq!(entity_topics.topics[44].dxf_name, "XLINE");
@@ -2038,15 +2499,18 @@ mod tests {
         let second = normalized_entity_receipt(&entity_topics, source)?;
         let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
         let applicability_receipt = normalized_applicability_receipt(&applicability, &sources)?;
+        let common_field_receipt = normalized_common_field_receipt(&common_fields, &sources)?;
         let first_receipts = EntityRegistryReceipts {
             topic: &first,
             alias: &alias_receipt,
             applicability: &applicability_receipt,
+            common_fields: &common_field_receipt,
         };
         let second_receipts = EntityRegistryReceipts {
             topic: &second,
             alias: &alias_receipt,
             applicability: &applicability_receipt,
+            common_fields: &common_field_receipt,
         };
         assert_eq!(first, second);
         assert_eq!(first.len(), 64);
@@ -2057,6 +2521,7 @@ mod tests {
                 &entity_aliases,
                 &sources,
                 &applicability,
+                &common_fields,
                 &first_receipts,
             )?,
             render_entity_registry(
@@ -2065,9 +2530,40 @@ mod tests {
                 &entity_aliases,
                 &sources,
                 &applicability,
+                &common_fields,
                 &second_receipts,
             )?
         );
+        Ok(())
+    }
+
+    #[test]
+    fn reviewed_common_entity_fields_are_complete_and_fail_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let fields = load_entity_common_fields(&root, &manifest)?;
+        validate_entity_common_fields(&manifest, &sources, &fields)?;
+        assert_eq!(fields.fields.len(), EXPECTED_ENTITY_COMMON_FIELD_COUNT);
+        assert_eq!(fields.fields[0].id, "handle");
+        assert_eq!(fields.fields[18].id, "shadow");
+        assert_eq!(fields.fields[13].group_code, 310);
+        assert_eq!(
+            fields.fields[6].default,
+            EntityFieldDefault::ExactText("BYLAYER".to_string())
+        );
+
+        let first = normalized_common_field_receipt(&fields, &sources)?;
+        let second = normalized_common_field_receipt(&fields, &sources)?;
+        assert_eq!(first, second);
+        assert_eq!(first.len(), 64);
+
+        let mut duplicate = fields.clone();
+        duplicate.fields[1].group_code = duplicate.fields[0].group_code;
+        assert!(validate_entity_common_fields(&manifest, &sources, &duplicate).is_err());
+
+        let mut invalid_default = fields.clone();
+        invalid_default.fields[6].default = EntityFieldDefault::Int16(0);
+        assert!(validate_entity_common_fields(&manifest, &sources, &invalid_default).is_err());
         Ok(())
     }
 

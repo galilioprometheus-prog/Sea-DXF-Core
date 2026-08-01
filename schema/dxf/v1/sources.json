@@ -8,6 +8,12 @@
       "evidence_kind": "oracle_inventory"
     },
     {
+      "id": "autodesk.common_entity_codes.2024",
+      "topic_id": "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+      "normalized_facts_sha256": "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+      "evidence_kind": "common_entity_codes"
+    },
+    {
       "id": "autodesk.entities.2024",
       "topic_id": "GUID-7D07C886-FD1D-4A0C-A7AB-B4D21F18E484",
       "normalized_facts_sha256": "a7d540ad9109768edd57db100743148756c21966854b634dc04450066fd3e4f7",

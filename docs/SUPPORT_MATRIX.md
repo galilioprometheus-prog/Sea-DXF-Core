@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3i can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3j can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -416,6 +416,17 @@ application envelopes do not enter that semantic path. All other groups and
 bytes remain authoritative and untouched. This is indexing infrastructure;
 common fields, family semantics, geometry, CRUD, writer gating, and support
 completion remain unclaimed.
+
+M14.3j adds a deterministic generated registry for 19 common entity-property
+roles from Autodesk's common entity-code table. Each descriptor exposes its
+stable field ordinal, exact group code, wire type, cardinality, documented
+default, preamble/`AcDbEntity`/extension-dictionary scope, non-coordinate
+classification, explicit field-version review state, and source receipt.
+Proxy graphics code 310 is the sole common optional sequence; group 360 is
+scoped to `ACAD_XDICTIONARY`, while the group-330 BLOCK_RECORD owner is distinct
+from reactor content. Field applicability remains `NotYetReviewed` rather than
+guessing historical introduction versions. This schema does not yet scan
+occurrences, form cards, decode semantics, edit, write, or advance support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

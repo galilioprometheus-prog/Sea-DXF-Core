@@ -1044,3 +1044,496 @@ pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
 pub const fn dxf_entity_applicability() -> &'static [DxfEntityApplicabilityDescriptor] {
     DXF_ENTITY_APPLICABILITY
 }
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityField {
+    ordinal: u8,
+}
+
+impl DxfEntityField {
+    pub const HANDLE: Self = Self { ordinal: 0 };
+    pub const OWNER: Self = Self { ordinal: 1 };
+    pub const EXTENSION_DICTIONARY: Self = Self { ordinal: 2 };
+    pub const PAPER_SPACE: Self = Self { ordinal: 3 };
+    pub const LAYOUT: Self = Self { ordinal: 4 };
+    pub const LAYER: Self = Self { ordinal: 5 };
+    pub const LINETYPE: Self = Self { ordinal: 6 };
+    pub const MATERIAL: Self = Self { ordinal: 7 };
+    pub const COLOR: Self = Self { ordinal: 8 };
+    pub const LINEWEIGHT: Self = Self { ordinal: 9 };
+    pub const LINETYPE_SCALE: Self = Self { ordinal: 10 };
+    pub const VISIBILITY: Self = Self { ordinal: 11 };
+    pub const PROXY_GRAPHICS_SIZE: Self = Self { ordinal: 12 };
+    pub const PROXY_GRAPHICS_DATA: Self = Self { ordinal: 13 };
+    pub const TRUE_COLOR: Self = Self { ordinal: 14 };
+    pub const COLOR_NAME: Self = Self { ordinal: 15 };
+    pub const TRANSPARENCY: Self = Self { ordinal: 16 };
+    pub const PLOT_STYLE: Self = Self { ordinal: 17 };
+    pub const SHADOW: Self = Self { ordinal: 18 };
+
+    #[must_use]
+    pub const fn ordinal(self) -> u8 {
+        self.ordinal
+    }
+
+    #[must_use]
+    pub fn from_ordinal(ordinal: u8) -> Option<Self> {
+        DXF_ENTITY_COMMON_FIELDS
+            .get(usize::from(ordinal))
+            .map(|descriptor| descriptor.field())
+    }
+
+    #[must_use]
+    pub fn from_group_code(group_code: i16) -> Option<Self> {
+        match group_code {
+            5 => Some(Self::HANDLE),
+            330 => Some(Self::OWNER),
+            360 => Some(Self::EXTENSION_DICTIONARY),
+            67 => Some(Self::PAPER_SPACE),
+            410 => Some(Self::LAYOUT),
+            8 => Some(Self::LAYER),
+            6 => Some(Self::LINETYPE),
+            347 => Some(Self::MATERIAL),
+            62 => Some(Self::COLOR),
+            370 => Some(Self::LINEWEIGHT),
+            48 => Some(Self::LINETYPE_SCALE),
+            60 => Some(Self::VISIBILITY),
+            92 => Some(Self::PROXY_GRAPHICS_SIZE),
+            310 => Some(Self::PROXY_GRAPHICS_DATA),
+            420 => Some(Self::TRUE_COLOR),
+            430 => Some(Self::COLOR_NAME),
+            440 => Some(Self::TRANSPARENCY),
+            390 => Some(Self::PLOT_STYLE),
+            284 => Some(Self::SHADOW),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn descriptor(self) -> Option<&'static DxfEntityFieldDescriptor> {
+        DXF_ENTITY_COMMON_FIELDS.get(usize::from(self.ordinal))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityFieldWireType {
+    BinaryChunk,
+    Double,
+    ExactText,
+    Handle,
+    Int16,
+    Int32,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityFieldCardinality {
+    RequiredSingleton,
+    OptionalSingleton,
+    OptionalSequence,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityFieldDefault {
+    None,
+    Int16(i16),
+    DoubleBits(u64),
+    ExactText(&'static str),
+    ByLayer,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityFieldScope {
+    EntityPreamble,
+    AcDbEntity,
+    ExtensionDictionaryApplicationGroup,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityCoordinateSpace {
+    NotApplicable,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityFieldApplicability {
+    NotYetReviewed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityFieldDescriptor {
+    field: DxfEntityField,
+    id: &'static str,
+    group_code: i16,
+    wire_type: DxfEntityFieldWireType,
+    cardinality: DxfEntityFieldCardinality,
+    default: DxfEntityFieldDefault,
+    scope: DxfEntityFieldScope,
+    coordinate_space: DxfEntityCoordinateSpace,
+    applicability: DxfEntityFieldApplicability,
+    source_id: &'static str,
+    source_reference: &'static str,
+    source_facts_sha256: &'static str,
+    source_fact: &'static str,
+}
+
+impl DxfEntityFieldDescriptor {
+    #[must_use]
+    pub const fn field(self) -> DxfEntityField {
+        self.field
+    }
+
+    #[must_use]
+    pub const fn id(self) -> &'static str {
+        self.id
+    }
+
+    #[must_use]
+    pub const fn group_code(self) -> i16 {
+        self.group_code
+    }
+
+    #[must_use]
+    pub const fn wire_type(self) -> DxfEntityFieldWireType {
+        self.wire_type
+    }
+
+    #[must_use]
+    pub const fn cardinality(self) -> DxfEntityFieldCardinality {
+        self.cardinality
+    }
+
+    #[must_use]
+    pub const fn default(self) -> DxfEntityFieldDefault {
+        self.default
+    }
+
+    #[must_use]
+    pub const fn scope(self) -> DxfEntityFieldScope {
+        self.scope
+    }
+
+    #[must_use]
+    pub const fn coordinate_space(self) -> DxfEntityCoordinateSpace {
+        self.coordinate_space
+    }
+
+    #[must_use]
+    pub const fn applicability(self) -> DxfEntityFieldApplicability {
+        self.applicability
+    }
+
+    #[must_use]
+    pub const fn source_id(self) -> &'static str {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn source_reference(self) -> &'static str {
+        self.source_reference
+    }
+
+    #[must_use]
+    pub const fn source_facts_sha256(self) -> &'static str {
+        self.source_facts_sha256
+    }
+
+    #[must_use]
+    pub const fn source_fact(self) -> &'static str {
+        self.source_fact
+    }
+}
+
+pub const DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256: &str =
+    "77df4e5ed6ae77cfa2ad5e791a971f91bc26950e43cbafc6771ad8570519ece4";
+
+pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::HANDLE,
+        id: "handle",
+        group_code: 5,
+        wire_type: DxfEntityFieldWireType::Handle,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::EntityPreamble,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:5",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::OWNER,
+        id: "owner",
+        group_code: 330,
+        wire_type: DxfEntityFieldWireType::Handle,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::EntityPreamble,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:330:block_record_owner",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::EXTENSION_DICTIONARY,
+        id: "extension_dictionary",
+        group_code: 360,
+        wire_type: DxfEntityFieldWireType::Handle,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::ExtensionDictionaryApplicationGroup,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:360:acad_xdictionary",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::PAPER_SPACE,
+        id: "paper_space",
+        group_code: 67,
+        wire_type: DxfEntityFieldWireType::Int16,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::Int16(0),
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:67",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::LAYOUT,
+        id: "layout",
+        group_code: 410,
+        wire_type: DxfEntityFieldWireType::ExactText,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:410",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::LAYER,
+        id: "layer",
+        group_code: 8,
+        wire_type: DxfEntityFieldWireType::ExactText,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:8",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::LINETYPE,
+        id: "linetype",
+        group_code: 6,
+        wire_type: DxfEntityFieldWireType::ExactText,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::ExactText("BYLAYER"),
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:6",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::MATERIAL,
+        id: "material",
+        group_code: 347,
+        wire_type: DxfEntityFieldWireType::Handle,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::ByLayer,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:347",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::COLOR,
+        id: "color",
+        group_code: 62,
+        wire_type: DxfEntityFieldWireType::Int16,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::Int16(256),
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:62",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::LINEWEIGHT,
+        id: "lineweight",
+        group_code: 370,
+        wire_type: DxfEntityFieldWireType::Int16,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:370",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::LINETYPE_SCALE,
+        id: "linetype_scale",
+        group_code: 48,
+        wire_type: DxfEntityFieldWireType::Double,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::DoubleBits(1.0_f64.to_bits()),
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:48",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::VISIBILITY,
+        id: "visibility",
+        group_code: 60,
+        wire_type: DxfEntityFieldWireType::Int16,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::Int16(0),
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:60",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::PROXY_GRAPHICS_SIZE,
+        id: "proxy_graphics_size",
+        group_code: 92,
+        wire_type: DxfEntityFieldWireType::Int32,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:92",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::PROXY_GRAPHICS_DATA,
+        id: "proxy_graphics_data",
+        group_code: 310,
+        wire_type: DxfEntityFieldWireType::BinaryChunk,
+        cardinality: DxfEntityFieldCardinality::OptionalSequence,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:310",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::TRUE_COLOR,
+        id: "true_color",
+        group_code: 420,
+        wire_type: DxfEntityFieldWireType::Int32,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:420",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::COLOR_NAME,
+        id: "color_name",
+        group_code: 430,
+        wire_type: DxfEntityFieldWireType::ExactText,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:430",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::TRANSPARENCY,
+        id: "transparency",
+        group_code: 440,
+        wire_type: DxfEntityFieldWireType::Int32,
+        cardinality: DxfEntityFieldCardinality::OptionalSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:440",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::PLOT_STYLE,
+        id: "plot_style",
+        group_code: 390,
+        wire_type: DxfEntityFieldWireType::Handle,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:390",
+    },
+    DxfEntityFieldDescriptor {
+        field: DxfEntityField::SHADOW,
+        id: "shadow",
+        group_code: 284,
+        wire_type: DxfEntityFieldWireType::Int16,
+        cardinality: DxfEntityFieldCardinality::RequiredSingleton,
+        default: DxfEntityFieldDefault::None,
+        scope: DxfEntityFieldScope::AcDbEntity,
+        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
+        applicability: DxfEntityFieldApplicability::NotYetReviewed,
+        source_id: "autodesk.common_entity_codes.2024",
+        source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
+        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_fact: "group:284",
+    },
+];
+
+#[must_use]
+pub const fn dxf_entity_common_fields() -> &'static [DxfEntityFieldDescriptor] {
+    DXF_ENTITY_COMMON_FIELDS
+}

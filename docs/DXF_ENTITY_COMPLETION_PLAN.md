@@ -349,6 +349,16 @@ the raw document. The index has ASCII/Binary parity for all nine dialects and
 does not yet expose common fields, family semantics, geometry, CRUD, or writer
 applicability gates.
 
+M14.3j freezes the common-property schema before the generic evidence scan.
+Nineteen generated field descriptors cover handle/owner, extension dictionary,
+paper/layout placement, layer, linetype/material/color/lineweight, linetype
+scale, visibility, proxy graphics, true color/name, transparency, plot style,
+and shadow. Each retains wire type, cardinality, Autodesk default, structural
+scope, coordinate-space classification, explicit unreviewed field-version
+applicability, and normalized provenance. Application-control handles remain
+scope-separated. This checkpoint is registry metadata only and does not yet
+parse or edit these fields.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

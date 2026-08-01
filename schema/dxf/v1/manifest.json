@@ -4,6 +4,7 @@
   "entity_topics": "entity_topics.json",
   "entity_aliases": "entity_aliases.json",
   "entity_applicability": "entity_applicability.json",
+  "entity_common_fields": "entity_common_fields.json",
   "families": [
     "header.bootstrap.json"
   ]
