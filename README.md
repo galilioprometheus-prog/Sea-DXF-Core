@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3s. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3t. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -46,6 +46,9 @@ or wrong-section values from entering HELIX evidence.
 HELIX cardinality publishes exactly 16 stable cards per record with absent,
 unique, or multiple states and exact member-to-value links. Invalid numeric
 syntax remains a unique occurrence rather than being mistaken for absence.
+Seven HELIX scalar roles now use the shared provenance-bearing semantic value
+model. Public handedness and constraint domains are typed, non-finite doubles
+fail closed, and undocumented positivity/default policies are not inferred.
 Budget-aware development runs required quality/dependency gates locally and
 does not allocate hosted runners for pushes or pull requests. GitHub Actions
 retains a manual Windows x64 self-hosted diagnostic and the manual six-native

@@ -528,6 +528,16 @@ the AC1009 group-code boundary. This does not establish required/default
 semantics, version applicability, coordinate or parameter validity, embedded
 SPLINE composition, geometry, CRUD, writer support, or `Complete` status.
 
+M14.3t adds `DxfHelixScalarDirectory` with seven entries per HELIX record over
+the shared source-provenance semantic value type. Versions and finite scalar
+parameters retain exact values; handedness and constraint type expose their
+documented enum domains. Absent, duplicate, invalid ASCII, non-finite Binary,
+and invalid-domain states remain distinct. No positivity, requiredness,
+default, or cross-field relationship is inferred. Nine-dialect ASCII/Binary
+parity does not advance applicability or support. WCS tuples, axis/parameter
+relations, embedded SPLINE composition, geometry, CRUD, writer support, and
+`Complete` status remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

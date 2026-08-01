@@ -1890,6 +1890,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     are covered. HELIX typed semantics, point/vector grouping, parameter
     relationships, embedded SPLINE composition, geometry, CRUD, writes,
     applicability advancement, and support completion remain unclaimed.
+    M14.3t adds seven provenance-bearing HELIX scalar semantics using the
+    platform `DxfSemanticValue<T, I>`. Version integers and finite
+    radius/turns/turn-height doubles remain exact; documented handedness 0/1
+    and constraint 0/1/2 values map to typed enums. Absence remains `Absent`
+    because no default or requiredness is inferred. Duplicate singletons,
+    invalid ASCII numbers, Binary non-finite doubles, and out-of-domain enum
+    values become typed `Invalid` states without value selection. Negative or
+    zero versions/parameters remain explicit pending a separately evidenced
+    relationship/domain milestone. Nine-dialect ASCII/Binary parity,
+    malformed/domain/non-finite fixtures, cancellation, provenance, lookup,
+    and bounds are covered. HELIX WCS tuple semantics, axis and parameter
+    relationships, embedded SPLINE composition, geometry, CRUD, writes,
+    applicability advancement, and support completion remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -446,6 +446,18 @@ or excluded from the typed projection without changing raw data. Cardinality,
 defaults, domain/relationship validation, embedded SPLINE composition,
 geometry, CRUD, and writes remain later HELIX checkpoints.
 
+M14.3t projects seven HELIX scalar roles through the shared
+`DxfSemanticValue<T, I>` contract. Major/maintenance versions remain exact
+Int32 values; finite radius, turns, and turn height remain exact doubles;
+handedness maps documented 0/1 to left/right; constraint type maps documented
+0/1/2 to turn-height/turns/height. Absence stays distinct from invalidity,
+duplicates fail without occurrence selection, invalid ASCII and Binary
+non-finite doubles retain provenance, and undocumented positivity/version
+domains are not inferred. Nine-dialect ASCII/Binary parity, invalid domains,
+non-finite Binary values, cancellation, lookup, and bounds are covered.
+Coordinate grouping, parameter relations, embedded SPLINE composition,
+geometry, CRUD, and writes remain later HELIX checkpoints.
+
 M14.3s adds exactly 16 stable cardinality cards per HELIX record over M14.3r
 evidence. Each role is absent, unique, or multiple with a checked compact range
 of source-ordered member references; invalid numeric evidence remains present
