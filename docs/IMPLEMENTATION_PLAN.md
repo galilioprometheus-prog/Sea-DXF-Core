@@ -2014,6 +2014,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     arbitrary group order and preserve unknown groups. This checkpoint does
     not calculate record-specific insertion anchors, insert a group, mutate a
     source, resolve subclass envelopes, or advance CRUD/support claims.
+    M14.3ac uses that ordinal to plan one source-bound between-group anchor for
+    an absent common-field singleton. Handle anchors immediately after the
+    entity marker; owner anchors after complete preamble application groups and
+    before the exact `AcDbEntity` subclass. AC1012 and later require exactly one
+    such subclass, while AC1009 scans a bounded legacy preamble and refuses an
+    unclosed/interrupted group-102 envelope. AcDbEntity fields constrain the
+    anchor after every earlier known common field and before every later one;
+    conflicting existing order fails typed, and unknown groups remain in place.
+    The result exposes the exact byte offset plus immediate neighbor group
+    occurrences. Existing fields, sequences, extension dictionaries, wrong
+    sections, absent dialects, source mismatches, and cancellation remain typed.
+    This checkpoint does not encode or insert a group, build a transaction,
+    mutate a source, validate domains/references, or claim CRUD completion.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

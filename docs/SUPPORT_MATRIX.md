@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ab can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ac can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -632,6 +632,21 @@ metadata does not constrain parsing, which remains group-order independent and
 unknown-group preserving. It does not select a record-specific insertion
 anchor, insert or move a group, resolve subclass envelopes, advance
 applicability, or establish full update/CRUD/`Complete` support.
+
+M14.3ac adds `DxfEntityFieldInsertionAnchor`. For one absent singleton it
+locates an exact byte boundary between complete source groups and publishes the
+immediate neighbor occurrences. Preamble handle/owner anchors remain outside
+closed group-102 envelopes; modern common properties require exactly one
+`AcDbEntity` subclass, while AC1009 uses a bounded legacy preamble. Generated
+writer order constrains the target between all earlier/later known common
+fields, and contradictory existing order fails typed. Existing singletons,
+sequences, extension dictionaries, malformed application groups, wrong
+sections, unavailable dialects, source mismatches, and cancellation remain
+explicit. Nine-dialect ASCII/Binary fixtures have anchor parity, including
+BLOCKS/unknown records and untouched unknown groups. This checkpoint does not
+encode or insert bytes, create a transaction or destination, validate domains
+or references, advance applicability, or establish full CRUD/`Complete`
+support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -561,6 +561,18 @@ incorrect order values. Parsing remains order-independent and unknown groups
 remain lossless. Record-specific insertion anchors, subclass-envelope edits,
 field insertion, and broader CRUD support remain later checkpoints.
 
+M14.3ac adds a source-bound insertion-anchor planner for one absent common
+singleton. It returns a byte offset between complete raw groups together with
+the immediate preceding/following group occurrences. Handle and owner use the
+entity preamble boundary; AcDbEntity fields use the generated writer order
+inside an exact subclass range. Modern records require exactly one
+`AcDbEntity`; AC1009 uses a bounded legacy preamble and rejects incomplete
+application groups. Existing fields, sequences, extension dictionaries, and
+inconsistent earlier/later field order fail typed without selecting or moving
+anything. Unknown groups retain their exact position. Encoding, insertion,
+transactions, multi-field sessions, and broader CRUD support remain later
+checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

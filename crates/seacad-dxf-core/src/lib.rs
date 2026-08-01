@@ -54,6 +54,7 @@ mod ellipse_geometry_semantic;
 mod encoding;
 mod entity_directory;
 mod entity_field_evidence;
+mod entity_field_insertion_anchor;
 mod entity_field_replacement;
 mod entity_field_reset;
 mod entity_field_semantic;
@@ -397,6 +398,10 @@ pub use entity_directory::{
 pub use entity_field_evidence::{
     DxfEntityFieldCard, DxfEntityFieldCardMember, DxfEntityFieldCardMemberRange,
     DxfEntityFieldCardState, DxfEntityFieldEvidenceDirectory, DxfEntityFieldOccurrence,
+};
+pub use entity_field_insertion_anchor::{
+    DxfEntityFieldInsertionAnchor, DxfEntityFieldInsertionAnchorIssue,
+    DxfEntityFieldInsertionAnchorOutcome,
 };
 pub use entity_field_replacement::{
     DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldReplacementPlan,
