@@ -2,15 +2,18 @@
 
 use std::{fmt, io};
 
+use crate::entity_common_reference_edit::classify_with_identities;
+use crate::entity_common_reference_target::reviewed_common_reference_target_kind;
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
     ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
-    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome, DxfEntityEditPlan,
+    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityKey, DxfError, DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile,
-    DxfSourceId, DxfTransactionPlan,
+    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation, DxfRawDocumentView,
+    DxfResource, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
 };
 
 /// One typed common-field operation accepted by an entity edit session.
@@ -60,6 +63,7 @@ pub enum DxfEntityEditIssue {
         field: DxfEntityField,
     },
     Domain(DxfEntityCommonFieldDomainIssue),
+    Reference(DxfEntityCommonReferenceEditIssue),
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
     Reset(DxfEntityFieldResetIssue),
@@ -129,6 +133,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     evidence: &'evidence DxfEntityFieldEvidenceDirectory,
     profile: DxfResourceProfile,
     cancellation: &'cancellation DxfCancellationToken,
+    handle_identities: Option<DxfHandleIdentityDirectory>,
     pending: Vec<PendingEdit>,
 }
 
@@ -159,6 +164,7 @@ impl<'document, 'evidence, 'cancellation>
             evidence,
             profile,
             cancellation,
+            handle_identities: None,
             pending: Vec::new(),
         })
     }
@@ -193,6 +199,13 @@ impl<'document, 'evidence, 'cancellation>
         }
         match patch {
             DxfEntityCommonFieldPatch::SetExplicit { value, .. } => {
+                if let DxfEntityCommonReferenceEditOutcome::Invalid(issue) =
+                    self.classify_reference_edit(field, value)?
+                {
+                    return Ok(DxfEntityEditOutcome::Unavailable(
+                        DxfEntityEditIssue::Reference(issue),
+                    ));
+                }
                 if let DxfEntityCommonFieldDomainOutcome::Invalid(issue) =
                     crate::classify_entity_common_field_edit_domain(field, value)
                 {
@@ -204,6 +217,27 @@ impl<'document, 'evidence, 'cancellation>
             }
             DxfEntityCommonFieldPatch::ResetToDefault { .. } => self.reset(key, field),
         }
+    }
+
+    fn classify_reference_edit(
+        &mut self,
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'_>,
+    ) -> Result<DxfEntityCommonReferenceEditOutcome, DxfError> {
+        if reviewed_common_reference_target_kind(field).is_some()
+            && matches!(value, DxfEntityEditValue::Handle(handle) if !handle.is_null())
+            && self.handle_identities.is_none()
+        {
+            self.handle_identities =
+                Some(self.document.handle_identity_directory(self.cancellation)?);
+        }
+        classify_with_identities(
+            self.document,
+            self.handle_identities.as_ref(),
+            field,
+            value,
+            self.cancellation,
+        )
     }
 
     /// Freezes every accepted update into one source-order transaction plan.

@@ -709,6 +709,20 @@ identity, and bounds. Ownership topology, dictionary membership, lifecycle,
 reference-safe CRUD, applicability, family graphs, and `Complete` support
 remain later work.
 
+M14.3ao moves the three reviewed target-kind rules into common-field edit
+admission. A generic singleton patch cannot change group-5 identity or group-
+330 owner; those now return typed handle-remap or placement-operation
+requirements. Extension dictionary, material, and plot-style edits require a
+non-null handle resolving to one exact reviewed `OBJECTS` target before they
+enter a session. Missing, duplicate, wrong-marker, and wrong-section targets
+leave the queue and source unchanged. The public classifier has ASCII/Binary
+parity across all nine dialects; modern-session materialization, strict
+reparse, semantic target verification, and exact inverse cover AC1012 through
+AC1032. AC1009 Binary remains physically unable to encode group 347, while
+ASCII applicability is not inferred. Handle remap, owner placement,
+dictionary membership, lifecycle, cross-document clone/delete, applicability,
+and `Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -372,11 +372,22 @@ fn fixture(
         (9, Value::Text(b"$ACADVER")),
         (1, Value::Text(version.code().as_bytes())),
         (0, Value::Text(b"ENDSEC")),
+    ];
+    if extended {
+        groups.extend([
+            (0, Value::Text(b"SECTION")),
+            (2, Value::Text(b"OBJECTS")),
+            (0, Value::Text(b"MATERIAL")),
+            (5, Value::Text(b"2A")),
+            (0, Value::Text(b"ENDSEC")),
+        ]);
+    }
+    groups.extend([
         (0, Value::Text(b"SECTION")),
         (2, Value::Text(b"ENTITIES")),
         (0, Value::Text(b"LINE")),
         (5, Value::Text(b"10")),
-    ];
+    ]);
     if version != DxfAcadVersion::Ac1009 {
         groups.extend([(330, Value::Text(b"1F")), (100, Value::Text(b"AcDbEntity"))]);
     }

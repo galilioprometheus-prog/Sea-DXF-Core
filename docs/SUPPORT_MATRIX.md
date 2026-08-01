@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3an can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ao can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -801,6 +801,21 @@ fixtures cover AC1009 through AC1032, wrong markers, wrong sections,
 cancellation, source identity, and public bounds. Authoritative ownership,
 dictionary membership, pointer lifecycle, applicability, reference-safe CRUD,
 family graphs, and `Complete` support remain open.
+
+M14.3ao validates common handle edits before generic singleton planning.
+Identity group 5 requires a handle-remap operation and owner group 330 requires
+a placement/ownership operation. Extension dictionary 360, material 347, and
+plot style 390 require a non-null handle with exactly one same-document target
+of the reviewed `OBJECTS` kind. Null, missing, ambiguous, wrong-marker, and
+wrong-section proposals return typed issues and never enter the session queue.
+The identity index is built lazily once per session. Public classification has
+ASCII/Binary parity across AC1009 through AC1032; AC1012-through-AC1032 session
+tests prove materialization, strict target semantics, and byte-identical
+inverse restoration. AC1009 Binary rejects group 347 at its physical wire
+gate; accepting an expressible AC1009 ASCII group does not establish dialect
+applicability. Handle remap, owner placement, dictionary membership, pointer
+lifecycle, cross-document clone/delete, applicability, family graphs, and
+`Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

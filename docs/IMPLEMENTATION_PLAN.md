@@ -2164,6 +2164,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     identity, and bounds. This checkpoint does not validate authoritative
     ownership, dictionary membership, lifecycle or reference-safe edits,
     applicability, family graphs, or `Complete` support.
+    M14.3ao applies those reviewed target-kind rules before a generic singleton
+    edit enters `DxfEntityEditSession`. Handle identity group 5 now requires a
+    handle-remap operation and owner group 330 requires a placement/ownership
+    operation. Extension dictionary, material, and plot-style edits require a
+    non-null handle, one unique document target, and the exact reviewed
+    `OBJECTS` marker; wrong-kind, wrong-section, missing, and ambiguous targets
+    fail typed without queueing a patch. The session builds the shared identity
+    directory lazily and reuses it across requests. Classifier parity spans
+    ASCII/Binary AC1009 through AC1032; verified materialization and exact
+    inverse span the eight modern dialects. AC1009 Binary retains its physical
+    group-code rejection, while ASCII applicability remains explicitly
+    unreviewed. This checkpoint does not implement handle remap, owner changes,
+    dictionary membership, lifecycle, cross-document remap, applicability,
+    clone/delete, or family graph CRUD.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

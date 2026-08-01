@@ -134,7 +134,7 @@ impl DxfEntityCommonReferenceTargetDirectory {
             else {
                 return Err(invalid_internal_data());
             };
-            let expected = expected_kind(source_entry.field());
+            let expected = reviewed_common_reference_target_kind(source_entry.field());
             let semantics = match expected {
                 Some(kind) => DxfEntityCommonReferenceTargetSemantics::Reviewed(project_reviewed(
                     document, kind, reference,
@@ -253,16 +253,7 @@ fn project_reviewed(
             field,
             raw,
         } => {
-            let record = target.record();
-            let marker = document
-                .group(record.marker_occurrence())
-                .ok_or_else(invalid_internal_data)?;
-            if record.section_kind() == expected.section()
-                && marker.value_payload_span().len()
-                    == u64::try_from(expected.marker().len())
-                        .map_err(|_| invalid_internal_data())?
-                && document.raw_span_equals_exact(marker.value_payload_span(), expected.marker())?
-            {
+            if common_reference_target_matches(document, expected, target)? {
                 DxfSemanticValue::explicit(value, field, raw)
             } else {
                 DxfSemanticValue::invalid(
@@ -290,7 +281,9 @@ fn project_reviewed(
     })
 }
 
-fn expected_kind(field: DxfEntityField) -> Option<DxfEntityCommonReferenceTargetKind> {
+pub(crate) fn reviewed_common_reference_target_kind(
+    field: DxfEntityField,
+) -> Option<DxfEntityCommonReferenceTargetKind> {
     if field == DxfEntityField::EXTENSION_DICTIONARY {
         Some(DxfEntityCommonReferenceTargetKind::ExtensionDictionary)
     } else if field == DxfEntityField::MATERIAL {
@@ -300,6 +293,21 @@ fn expected_kind(field: DxfEntityField) -> Option<DxfEntityCommonReferenceTarget
     } else {
         None
     }
+}
+
+pub(crate) fn common_reference_target_matches(
+    document: DxfRawDocumentView<'_>,
+    expected: DxfEntityCommonReferenceTargetKind,
+    target: DxfHandleIdentityMatch,
+) -> Result<bool, DxfError> {
+    let record = target.record();
+    let marker = document
+        .group(record.marker_occurrence())
+        .ok_or_else(invalid_internal_data)?;
+    Ok(record.section_kind() == expected.section()
+        && marker.value_payload_span().len()
+            == u64::try_from(expected.marker().len()).map_err(|_| invalid_internal_data())?
+        && document.raw_span_equals_exact(marker.value_payload_span(), expected.marker())?)
 }
 
 fn is_common_reference(field: DxfEntityField) -> bool {
