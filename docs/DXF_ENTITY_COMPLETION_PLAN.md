@@ -505,6 +505,18 @@ analytic output. Autodesk warns that inherited NURBS operations on HELIX are
 not a defined evaluation contract, so sampling/tessellation, CRUD, writes,
 applicability, and support completion remain later checkpoints.
 
+M14.3x completes the next unified-platform layer for all 19 common entity
+properties. Singleton fields expose separate typed double, Int16, Int32,
+handle, source-backed exact-text, schema-text-default, and material-BYLAYER
+values through `DxfSemanticValue`. Omitted values use only reviewed generated
+defaults; missing required fields, duplicate singletons, malformed ASCII
+numbers/handles, and Binary non-finite doubles remain typed without occurrence
+selection. Proxy group-310 members stay an exact opaque sequence linked to the
+evidence directory. Nine-dialect ASCII/Binary parity does not settle unreviewed
+field applicability. Domain/reference validation, proxy size reconciliation,
+application-group closure, CRUD, writes, and support completion remain later
+checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -1947,6 +1947,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     entry bound are covered. This exposes analytic representation only; it
     does not evaluate NURBS calls on HELIX, sample/tessellate geometry, add
     CRUD or writes, settle applicability, or advance support completion.
+    M14.3x returns to the unified platform and projects all 19 generated common
+    entity fields into typed semantics. Singleton fields use the shared
+    provenance-bearing four-state value contract: exact signed integers,
+    finite binary64, parsed handles, and source-backed exact text remain in
+    separate wire domains. Reviewed omitted values materialize only the
+    generated defaults, including the distinct material `ByLayer` state.
+    Missing required fields, duplicate singletons, invalid ASCII numbers,
+    invalid handles, and Binary non-finite doubles fail typed without selecting
+    an occurrence. Proxy group-310 data remains an opaque sequence whose exact
+    members resolve through the evidence directory. Nine-dialect ASCII/Binary
+    parity, all wire domains, defaults/absence, malformed values, cancellation,
+    source identity, exact text decoding, lookup, and a 320-byte entry bound are
+    covered. `MissingRequired` reflects schema shape while field applicability
+    is unreviewed. This checkpoint does not validate property domains/references,
+    proxy byte counts, application-group closure, CRUD, writes, or advance any
+    entity to `Complete`.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

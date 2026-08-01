@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3k can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3x can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -570,6 +570,19 @@ height remains a valid flat state. Nine-dialect ASCII/Binary parity does not
 establish HELIX applicability in older versions or advance support. NURBS
 evaluation on HELIX, sampling/tessellation, CRUD, writer support, and
 `Complete` status remain unclaimed.
+
+M14.3x adds `DxfEntityFieldSemanticDirectory` for every semantic entity and all
+19 generated common fields. Singleton fields preserve distinct double, Int16,
+Int32, handle, and exact-text wire domains through the shared four-state
+semantic value model. Exact text is source-backed and decodes without
+replacement; schema defaults are materialized only when the field is omitted,
+including a distinct material `ByLayer` value. Missing required fields,
+duplicate singletons, invalid ASCII numbers/handles, and Binary non-finite
+doubles fail typed without selecting an occurrence. Proxy group-310 data stays
+an opaque sequence linked to exact card members. Nine-dialect ASCII/Binary
+parity does not establish field applicability in older versions or validate
+property domains, references, proxy byte counts, application-group closure,
+CRUD, writer support, or any `Complete` status.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
