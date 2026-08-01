@@ -463,11 +463,18 @@ fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfEr
     }
 }
 
-fn remove_incomplete(destination: &Path, primary: DxfError) -> DxfError {
+pub(crate) fn remove_created_destination(destination: &Path) -> Result<(), DxfError> {
     match fs::remove_file(destination) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(DxfError::from_io(DxfIoOperation::Remove, &error)),
+    }
+}
+
+fn remove_incomplete(destination: &Path, primary: DxfError) -> DxfError {
+    match remove_created_destination(destination) {
         Ok(()) => primary,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => primary,
-        Err(error) => DxfError::from_io(DxfIoOperation::Remove, &error),
+        Err(error) => error,
     }
 }
 

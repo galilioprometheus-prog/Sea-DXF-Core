@@ -1,12 +1,14 @@
 //! Semantic postcondition verification for unified entity edit plans.
 
-use std::{fmt, io};
+use std::{fmt, io, path::Path};
 
 use crate::{
-    DxfCancellationToken, DxfDouble, DxfEntityEditValue, DxfEntityField, DxfEntityFieldCardState,
-    DxfEntityFieldDefault, DxfEntityFieldSemantics, DxfEntityFieldValue, DxfError, DxfHandle,
-    DxfIoOperation, DxfRawDocumentView, DxfResourceProfile, DxfSemanticValueState, DxfSourceId,
-    DxfTransactionPlan,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfEntityEditValue,
+    DxfEntityField, DxfEntityFieldCardState, DxfEntityFieldDefault, DxfEntityFieldSemantics,
+    DxfEntityFieldValue, DxfError, DxfFileSource, DxfHandle, DxfIoOperation, DxfRawDocumentFormat,
+    DxfRawDocumentView, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticValueState, DxfSourceId, DxfTransactionPlan, DxfTransactionWriteReceipt,
+    NoopDxfReadObserver,
 };
 
 pub(crate) enum DxfEntityExpectedValue {
@@ -160,6 +162,58 @@ pub enum DxfEntityEditVerificationOutcome {
     Verified(DxfEntityEditVerificationJournal),
 }
 
+/// Create-new write and semantic receipts paired with an executable inverse.
+#[derive(Debug)]
+pub struct DxfEntityEditWriteJournal {
+    write_receipt: DxfTransactionWriteReceipt,
+    edit_count: u32,
+    inverse: DxfTransactionPlan,
+}
+
+impl DxfEntityEditWriteJournal {
+    #[must_use]
+    pub const fn write_receipt(&self) -> DxfTransactionWriteReceipt {
+        self.write_receipt
+    }
+
+    #[must_use]
+    pub const fn verification_receipt(&self) -> DxfEntityEditVerificationReceipt {
+        DxfEntityEditVerificationReceipt {
+            source_id: self.write_receipt.source_id(),
+            post_image_id: self.write_receipt.output_id(),
+            edit_count: self.edit_count,
+        }
+    }
+
+    #[must_use]
+    pub const fn inverse_plan(&self) -> &DxfTransactionPlan {
+        &self.inverse
+    }
+
+    #[must_use]
+    pub fn into_parts(
+        self,
+    ) -> (
+        DxfTransactionWriteReceipt,
+        DxfEntityEditVerificationReceipt,
+        DxfTransactionPlan,
+    ) {
+        (
+            self.write_receipt,
+            self.verification_receipt(),
+            self.inverse,
+        )
+    }
+}
+
+/// Result of create-new writing followed by strict semantic verification.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum DxfEntityEditWriteOutcome {
+    Unavailable(DxfEntityEditVerificationIssue),
+    Written(DxfEntityEditWriteJournal),
+}
+
 /// One immutable transaction plus the semantic states requested by its session.
 pub struct DxfEntityEditPlan {
     transaction: DxfTransactionPlan,
@@ -231,6 +285,121 @@ impl DxfEntityEditPlan {
                     post_image_id: post_image.source_id(),
                     edit_count,
                 },
+                inverse,
+            },
+        ))
+    }
+
+    /// Writes to a new path, strictly reparses, verifies semantics, and journals.
+    ///
+    /// Any failure or unavailable semantic postcondition after file creation
+    /// removes the destination. An existing destination is never modified.
+    pub fn write_reparse_verify_and_journal_to_new_file(
+        &self,
+        source_document: DxfRawDocumentView<'_>,
+        destination: impl AsRef<Path>,
+        profile: DxfResourceProfile,
+        cancellation: &DxfCancellationToken,
+        observer: &mut dyn DxfReadObserver,
+    ) -> Result<DxfEntityEditWriteOutcome, DxfError> {
+        let destination = destination.as_ref();
+        let write_receipt = self.transaction.write_to_new_file(
+            source_document,
+            destination,
+            cancellation,
+            observer,
+        )?;
+        let outcome = self.reparse_and_verify_written_destination(
+            source_document,
+            destination,
+            write_receipt,
+            profile,
+            cancellation,
+        );
+        match outcome {
+            Ok(DxfEntityEditWriteOutcome::Written(journal)) => {
+                Ok(DxfEntityEditWriteOutcome::Written(journal))
+            }
+            Ok(DxfEntityEditWriteOutcome::Unavailable(issue)) => {
+                crate::transaction_write::remove_created_destination(destination)?;
+                Ok(DxfEntityEditWriteOutcome::Unavailable(issue))
+            }
+            Err(primary) => {
+                match crate::transaction_write::remove_created_destination(destination) {
+                    Ok(()) => Err(primary),
+                    Err(cleanup) => Err(cleanup),
+                }
+            }
+        }
+    }
+
+    fn reparse_and_verify_written_destination(
+        &self,
+        source_document: DxfRawDocumentView<'_>,
+        destination: &Path,
+        write_receipt: DxfTransactionWriteReceipt,
+        profile: DxfResourceProfile,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfEntityEditWriteOutcome, DxfError> {
+        ensure_not_cancelled(cancellation)?;
+        let output_source = DxfFileSource::open(destination, profile)?;
+        let options = DxfReadOptions::new(DxfReadMode::Strict, profile);
+        let mut observer = NoopDxfReadObserver;
+        match self.transaction.format() {
+            DxfRawDocumentFormat::Ascii => {
+                let post_image = DxfAsciiRawDocument::open(
+                    &output_source,
+                    options,
+                    cancellation,
+                    &mut observer,
+                )?;
+                self.finish_written_verification(
+                    source_document,
+                    DxfRawDocumentView::from(&post_image),
+                    write_receipt,
+                    profile,
+                    cancellation,
+                )
+            }
+            DxfRawDocumentFormat::Binary => {
+                let post_image = DxfBinaryRawDocument::open(
+                    &output_source,
+                    options,
+                    cancellation,
+                    &mut observer,
+                )?;
+                self.finish_written_verification(
+                    source_document,
+                    DxfRawDocumentView::from(&post_image),
+                    write_receipt,
+                    profile,
+                    cancellation,
+                )
+            }
+        }
+    }
+
+    fn finish_written_verification(
+        &self,
+        source_document: DxfRawDocumentView<'_>,
+        post_image: DxfRawDocumentView<'_>,
+        write_receipt: DxfTransactionWriteReceipt,
+        profile: DxfResourceProfile,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<DxfEntityEditWriteOutcome, DxfError> {
+        let journal =
+            match self.verify_post_image(source_document, post_image, profile, cancellation)? {
+                DxfEntityEditVerificationOutcome::Unavailable(issue) => {
+                    return Ok(DxfEntityEditWriteOutcome::Unavailable(issue));
+                }
+                DxfEntityEditVerificationOutcome::Verified(journal) => journal,
+            };
+        let (verification_receipt, inverse) = journal.into_parts();
+        validate_written_identities(write_receipt, verification_receipt)?;
+        Ok(DxfEntityEditWriteOutcome::Written(
+            DxfEntityEditWriteJournal {
+                write_receipt,
+                edit_count: verification_receipt.edit_count,
                 inverse,
             },
         ))
@@ -384,6 +553,25 @@ fn validate_post_image_envelope(
     if post_image.format() != transaction.format() {
         return Err(DxfError::TransactionPostImageMismatch {
             span: crate::ByteSpan::new(0, 0).ok_or_else(invalid_internal_data)?,
+        });
+    }
+    Ok(())
+}
+
+fn validate_written_identities(
+    write: DxfTransactionWriteReceipt,
+    verification: DxfEntityEditVerificationReceipt,
+) -> Result<(), DxfError> {
+    if write.source_id() != verification.source_id() {
+        return Err(DxfError::SourceIdentityMismatch {
+            expected: write.source_id(),
+            observed: verification.source_id(),
+        });
+    }
+    if write.output_id() != verification.post_image_id() {
+        return Err(DxfError::TransactionOutputIdentityMismatch {
+            expected: write.output_id(),
+            observed: verification.post_image_id(),
         });
     }
     Ok(())

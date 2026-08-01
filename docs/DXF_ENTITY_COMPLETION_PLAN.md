@@ -610,6 +610,21 @@ mismatch from unrelated raw-byte mismatch and restore byte-identical source.
 Create-new writer/cleanup integration, domain/reference validation, family
 patches, insert/clone/delete, and complete CRUD remain later checkpoints.
 
+M14.3ag makes the verifiable entity plan executable through the existing M12
+create-new writer. The destination must not exist. Its complete bytes are
+streamed, hashed, flushed, synced, reopened, and strictly reparsed using the
+transaction's exact ASCII/Binary format. Semantic postconditions are checked
+before the exact raw transaction verifier releases an inverse, so a modified
+edited field remains a typed semantic issue while an unrelated modification
+remains a raw mismatch. The returned journal pairs the M12 write receipt with
+the semantic receipt and byte-exact inverse. Any failure or semantic
+unavailability after creation removes the output; cleanup failure replaces the
+primary result. Tests cover ASCII and Binary AC1009 through AC1032, exact
+inverse restoration, pre-existing/source mismatch rejection, cancellation,
+strict-reparse cleanup, semantic cleanup, and raw-mismatch cleanup. This does
+not add field-domain/reference validators, family patches, sequence/nested
+operations, insert/clone/delete, handle/owner assignment, or complete CRUD.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

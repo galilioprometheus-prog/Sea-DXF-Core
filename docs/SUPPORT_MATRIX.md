@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3af can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ag can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -693,6 +693,22 @@ invoke M12 create-new writing, clean a filesystem destination after semantic
 failure, validate field domains/references, add family patches or sequence/
 nested edits, insert entities, clone/delete closed sets, advance applicability,
 or establish full CRUD/`Complete` support.
+
+M14.3ag adds the create-new execution path for `DxfEntityEditPlan`. It composes
+the existing streaming hash/flush/sync verifier with a strict reparse in the
+transaction's physical format, the M14.3af semantic postconditions, the exact
+raw post-image verifier, and inverse materialization. A successful journal
+exposes the write and semantic receipts plus the executable inverse without
+duplicating source/output identities internally. Any strict parse, semantic,
+raw, cancellation, or identity failure after creation removes the destination;
+semantic unavailability also removes it before returning its typed issue, and
+cleanup failure replaces the primary result. A pre-existing destination is
+never changed. Paired ASCII/Binary tests across AC1009 through AC1032 prove
+successful output and byte-identical inverse restoration. Controlled post-hash
+tampering separately proves strict-reparse cleanup, edited-field semantic
+cleanup, and unrelated raw-mismatch cleanup. Domain/reference validation,
+family patches, sequences/nested edits, entity insert/clone/delete, handle/
+owner assignment, applicability, and full CRUD/`Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

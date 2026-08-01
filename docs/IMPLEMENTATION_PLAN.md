@@ -2066,6 +2066,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     distinct. This checkpoint does not call the M12 create-new writer, remove a
     destination after semantic failure, validate domains/references, add family
     patches, or establish broader CRUD support.
+    M14.3ag connects that verifiable entity plan to the existing M12 create-new
+    writer. `write_reparse_verify_and_journal_to_new_file` first streams and
+    independently hashes a new destination, then strictly reparses the exact
+    ASCII/Binary format, checks every requested common-field postcondition,
+    verifies every transaction byte, and returns paired write/semantic receipts
+    with the executable inverse. Semantic unavailability and every strict/raw/
+    cancellation error after creation remove the destination; cleanup failure
+    replaces the primary result, and a pre-existing path remains untouched.
+    Paired success coverage spans all nine dialects, while controlled post-hash
+    tampering proves typed semantic mismatch, unrelated raw mismatch, strict
+    reparse failure, and cleanup. This checkpoint does not add domain/reference
+    validation, family patches, sequence/nested edits, entity insert/clone/
+    delete, handle/owner assignment, or full CRUD support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

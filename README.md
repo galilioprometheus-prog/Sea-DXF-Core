@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3af. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ag. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -68,12 +68,15 @@ restoration. A source-bound `DxfEntityEditSession` now batches explicit common-
 field set/reset requests across entities into one immutable transaction. It
 rejects a second queued edit for the same field and merges same-anchor
 insertions in generated writer order. Sequence/nested operations, family
-patches, insert/clone/delete, verified destination writes, and complete CRUD
+patches, insert/clone/delete, and complete CRUD
 remain later checkpoints. `finish_verifiable` can now retain payload-redacted
 semantic postconditions beside the transaction. An independently opened post-
 image must match each edited field's cardinality, state, and typed value before
-the exact raw verifier releases an executable inverse journal. Create-new
-writer integration and cleanup on semantic failure remain the next boundary.
+the exact raw verifier releases an executable inverse journal. The same plan
+can now stream to a new path, strictly reparse the independently opened output,
+verify those semantic postconditions, and return the write/semantic receipts
+with an executable inverse. Any strict, semantic, raw, or cancellation failure
+after creation removes the destination; an existing path is never modified.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

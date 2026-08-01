@@ -405,7 +405,7 @@ pub use entity_edit_session::{
 pub use entity_edit_verification::{
     DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,
     DxfEntityEditVerificationJournal, DxfEntityEditVerificationOutcome,
-    DxfEntityEditVerificationReceipt,
+    DxfEntityEditVerificationReceipt, DxfEntityEditWriteJournal, DxfEntityEditWriteOutcome,
 };
 pub use entity_field_evidence::{
     DxfEntityFieldCard, DxfEntityFieldCardMember, DxfEntityFieldCardMemberRange,
