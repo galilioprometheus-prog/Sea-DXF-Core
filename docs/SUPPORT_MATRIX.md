@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3f can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3g can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -384,6 +384,15 @@ drift, source-kind drift, or changed generated output. Aliases and unknown
 markers remain unclassified. This registry does not scan records, establish
 version applicability or field schemas, expose common properties, parse any
 new entity, construct geometry, edit, or write.
+
+M14.3g adds a generated registry of 14 exact group-zero
+alias/specialization spellings. Five mappings carry normative Autodesk source
+GUIDs; nine observed concrete names carry a distinct AutoCAD 2027 behavioral
+oracle receipt. Classification is byte-exact and returns canonical, alias, or
+unknown while alias descriptors expose the canonical topic, exact wire name,
+evidence kind, source reference, and normalized facts hash. This is inventory
+only: section/dialect legality, record indexing, typed fields, semantic or
+geometry projection, CRUD, and support-state advancement remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

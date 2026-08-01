@@ -2,6 +2,7 @@
   "schema_version": "dxf.v1",
   "sources": "sources.json",
   "entity_topics": "entity_topics.json",
+  "entity_aliases": "entity_aliases.json",
   "families": [
     "header.bootstrap.json"
   ]

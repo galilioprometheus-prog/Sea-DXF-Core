@@ -1,0 +1,20 @@
+{
+  "schema_version": "dxf.v1",
+  "namespace": "entity_alias",
+  "aliases": [
+    { "id": "mpolygon", "dxf_name": "MPOLYGON", "topic_id": "hatch", "source_id": "autodesk.hatch.2025" },
+    { "id": "acad_table", "dxf_name": "ACAD_TABLE", "topic_id": "table", "source_id": "autodesk.table.2025" },
+    { "id": "dgnunderlay", "dxf_name": "DGNUNDERLAY", "topic_id": "underlay", "source_id": "autodesk.underlay.2025" },
+    { "id": "dwfunderlay", "dxf_name": "DWFUNDERLAY", "topic_id": "underlay", "source_id": "autodesk.underlay.2025" },
+    { "id": "pdfunderlay", "dxf_name": "PDFUNDERLAY", "topic_id": "underlay", "source_id": "autodesk.underlay.2025" },
+    { "id": "arc_dimension", "dxf_name": "ARC_DIMENSION", "topic_id": "dimension", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "large_radial_dimension", "dxf_name": "LARGE_RADIAL_DIMENSION", "topic_id": "dimension", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "multileader", "dxf_name": "MULTILEADER", "topic_id": "mleader", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "sectionobject", "dxf_name": "SECTIONOBJECT", "topic_id": "section", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "extrudedsurface", "dxf_name": "EXTRUDEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "loftedsurface", "dxf_name": "LOFTEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "planesurface", "dxf_name": "PLANESURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "revolvedsurface", "dxf_name": "REVOLVEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
+    { "id": "sweptsurface", "dxf_name": "SWEPTSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" }
+  ]
+}

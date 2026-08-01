@@ -374,8 +374,10 @@ pub use encoding::{
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
 pub use generated::entity_schema::{
-    DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS, DxfEntityTopic, DxfEntityTopicDescriptor,
-    dxf_entity_topics,
+    DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_TOPIC_SCHEMA_SHA256,
+    DXF_ENTITY_TOPICS, DxfEntityAlias, DxfEntityAliasDescriptor, DxfEntityAliasEvidence,
+    DxfEntityNameClassification, DxfEntityTopic, DxfEntityTopicDescriptor,
+    classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_topics,
 };
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,

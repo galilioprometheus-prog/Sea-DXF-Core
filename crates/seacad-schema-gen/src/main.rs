@@ -20,6 +20,7 @@ const MANIFEST_PATH: &str = "schema/dxf/v1/manifest.json";
 const HEADER_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_schema.rs";
 const ENTITY_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/entity_schema.rs";
 const EXPECTED_ENTITY_TOPIC_COUNT: usize = 45;
+const EXPECTED_ENTITY_ALIAS_COUNT: usize = 14;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -27,6 +28,7 @@ struct SchemaManifest {
     schema_version: String,
     sources: String,
     entity_topics: String,
+    entity_aliases: String,
     families: Vec<String>,
 }
 
@@ -68,6 +70,23 @@ struct EntityTopicRegistry {
 struct EntityTopic {
     id: String,
     dxf_name: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityAliasRegistry {
+    schema_version: String,
+    namespace: String,
+    aliases: Vec<EntityAlias>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityAlias {
+    id: String,
+    dxf_name: String,
+    topic_id: String,
+    source_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -127,6 +146,8 @@ enum ReviewState {
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum EvidenceKind {
+    AliasList,
+    OracleInventory,
     Row,
     TopicList,
 }
@@ -211,10 +232,20 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
     validate_schema(&manifest, &sources, &families)?;
     let entity_topics = load_entity_topics(&root, &manifest)?;
     let entity_source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
+    let entity_aliases = load_entity_aliases(&root, &manifest)?;
+    validate_entity_aliases(&manifest, &sources, &entity_topics, &entity_aliases)?;
     let header_receipt = normalized_receipt(&manifest, &sources, &families)?;
     let entity_receipt = normalized_entity_receipt(&entity_topics, entity_source)?;
+    let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
     let header_output = render_registry(&manifest, &sources, &families, &header_receipt)?;
-    let entity_output = render_entity_registry(&entity_topics, entity_source, &entity_receipt)?;
+    let entity_output = render_entity_registry(
+        &entity_topics,
+        entity_source,
+        &entity_receipt,
+        &entity_aliases,
+        &sources,
+        &alias_receipt,
+    )?;
     let header_target = root.join(HEADER_OUTPUT_PATH);
     let entity_target = root.join(ENTITY_OUTPUT_PATH);
     match mode {
@@ -282,6 +313,22 @@ fn load_entity_topics(
         ));
     }
     let path = format!("schema/dxf/v1/{}", manifest.entity_topics);
+    read_json(root, &path, "root")
+}
+
+fn load_entity_aliases(
+    root: &Path,
+    manifest: &SchemaManifest,
+) -> Result<EntityAliasRegistry, SchemaError> {
+    if !valid_family_filename(&manifest.entity_aliases) {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_PATH",
+            MANIFEST_PATH,
+            "entity_aliases",
+            "entity alias path must be one lowercase .json filename",
+        ));
+    }
+    let path = format!("schema/dxf/v1/{}", manifest.entity_aliases);
     read_json(root, &path, "root")
 }
 
@@ -462,6 +509,170 @@ fn normalized_entity_facts_sha256(
     Ok(receipt)
 }
 
+fn validate_entity_aliases(
+    manifest: &SchemaManifest,
+    registry: &SourceRegistry,
+    entity_topics: &EntityTopicRegistry,
+    entity_aliases: &EntityAliasRegistry,
+) -> Result<(), SchemaError> {
+    let path = format!("schema/dxf/v1/{}", manifest.entity_aliases);
+    if entity_aliases.schema_version != manifest.schema_version {
+        return Err(SchemaError::new(
+            "SCHEMA_VERSION",
+            &path,
+            "schema_version",
+            "entity alias version does not match manifest",
+        ));
+    }
+    if entity_aliases.namespace != "entity_alias" {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_ALIAS_NAMESPACE",
+            &path,
+            "namespace",
+            "entity alias namespace must be exactly entity_alias",
+        ));
+    }
+    if entity_aliases.aliases.len() != EXPECTED_ENTITY_ALIAS_COUNT {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_ALIAS_COUNT",
+            &path,
+            "aliases",
+            format!("expected exactly {EXPECTED_ENTITY_ALIAS_COUNT} reviewed aliases"),
+        ));
+    }
+
+    let topics: BTreeMap<_, _> = entity_topics
+        .topics
+        .iter()
+        .map(|topic| (topic.id.as_str(), topic))
+        .collect();
+    let canonical_names: BTreeSet<_> = entity_topics
+        .topics
+        .iter()
+        .map(|topic| topic.dxf_name.as_str())
+        .collect();
+    let sources: BTreeMap<_, _> = registry
+        .sources
+        .iter()
+        .map(|source| (source.id.as_str(), source))
+        .collect();
+    let mut ids = BTreeSet::new();
+    let mut names = BTreeSet::new();
+    let mut referenced_sources = BTreeSet::new();
+    for (index, alias) in entity_aliases.aliases.iter().enumerate() {
+        let entry = format!("aliases[{index}]");
+        if !valid_entity_id(&alias.id) || !ids.insert(alias.id.as_str()) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_ID",
+                &path,
+                format!("{entry}.id"),
+                "entity alias id must be unique lowercase ASCII",
+            ));
+        }
+        if !valid_entity_dxf_name(&alias.dxf_name)
+            || canonical_names.contains(alias.dxf_name.as_str())
+            || !names.insert(alias.dxf_name.as_str())
+        {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_NAME",
+                &path,
+                format!("{entry}.dxf_name"),
+                "entity alias must be unique uppercase ASCII and not canonical",
+            ));
+        }
+        if !topics.contains_key(alias.topic_id.as_str()) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_TOPIC",
+                &path,
+                format!("{entry}.topic_id"),
+                "entity alias references an unknown canonical topic id",
+            ));
+        }
+        let source = sources.get(alias.source_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                &path,
+                format!("{entry}.source_id"),
+                "entity alias references an unknown source id",
+            )
+        })?;
+        if !matches!(
+            source.evidence_kind,
+            EvidenceKind::AliasList | EvidenceKind::OracleInventory
+        ) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_SOURCE",
+                &path,
+                format!("{entry}.source_id"),
+                "entity alias source must use alias_list or oracle_inventory evidence",
+            ));
+        }
+        referenced_sources.insert(alias.source_id.as_str());
+    }
+
+    for source_id in referenced_sources {
+        let source = sources.get(source_id).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                &path,
+                source_id,
+                "validated alias source disappeared",
+            )
+        })?;
+        let observed = normalized_alias_source_facts_sha256(entity_aliases, source_id)?;
+        if source.normalized_facts_sha256 != observed {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_SOURCE_RECEIPT",
+                &path,
+                source_id,
+                format!(
+                    "recorded source facts differ from normalized alias facts; observed {observed}"
+                ),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn normalized_alias_source_facts_sha256(
+    entity_aliases: &EntityAliasRegistry,
+    source_id: &str,
+) -> Result<String, SchemaError> {
+    let facts: Vec<_> = entity_aliases
+        .aliases
+        .iter()
+        .filter(|alias| alias.source_id == source_id)
+        .collect();
+    let bytes = serde_json::to_vec(&facts).map_err(|error| {
+        SchemaError::new(
+            "SCHEMA_JSON",
+            ENTITY_OUTPUT_PATH,
+            "entity_aliases",
+            error.to_string(),
+        )
+    })?;
+    sha256_hex(&bytes, "entity_alias_facts")
+}
+
+fn sha256_hex(bytes: &[u8], entry: &str) -> Result<String, SchemaError> {
+    digest_hex(Sha256::digest(bytes).as_slice(), entry)
+}
+
+fn digest_hex(bytes: &[u8], entry: &str) -> Result<String, SchemaError> {
+    let mut receipt = String::with_capacity(64);
+    for byte in bytes {
+        write!(&mut receipt, "{byte:02x}").map_err(|error| {
+            SchemaError::new(
+                "SCHEMA_RENDER",
+                ENTITY_OUTPUT_PATH,
+                entry,
+                error.to_string(),
+            )
+        })?;
+    }
+    Ok(receipt)
+}
+
 fn validate_sources<'a>(
     registry: &'a SourceRegistry,
     path: &str,
@@ -491,7 +702,7 @@ fn validate_sources<'a>(
             ));
         }
         previous_id = Some(&source.id);
-        if !valid_topic_id(&source.topic_id) || !valid_sha256(&source.normalized_facts_sha256) {
+        if !valid_source_reference(source) || !valid_sha256(&source.normalized_facts_sha256) {
             return Err(SchemaError::new(
                 "SCHEMA_SOURCE",
                 path,
@@ -644,6 +855,23 @@ fn normalized_entity_receipt(
     Ok(receipt)
 }
 
+fn normalized_alias_receipt(
+    entity_aliases: &EntityAliasRegistry,
+    registry: &SourceRegistry,
+) -> Result<String, SchemaError> {
+    let mut hasher = Sha256::new();
+    update_normalized_hash(&mut hasher, entity_aliases, "entity_aliases")?;
+    for source in &registry.sources {
+        if matches!(
+            source.evidence_kind,
+            EvidenceKind::AliasList | EvidenceKind::OracleInventory
+        ) {
+            update_normalized_hash(&mut hasher, source, "entity_alias_source")?;
+        }
+    }
+    digest_hex(hasher.finalize().as_slice(), "entity_alias_receipt")
+}
+
 fn update_normalized_hash<T: Serialize>(
     hasher: &mut Sha256,
     value: &T,
@@ -744,6 +972,9 @@ fn render_entity_registry(
     entity_topics: &EntityTopicRegistry,
     source: &SchemaSource,
     receipt: &str,
+    entity_aliases: &EntityAliasRegistry,
+    registry: &SourceRegistry,
+    alias_receipt: &str,
 ) -> Result<String, SchemaError> {
     let mut output = String::new();
     writeln!(
@@ -752,9 +983,7 @@ fn render_entity_registry(
         env!("CARGO_PKG_VERSION")
     )?;
     writeln!(output, "// Normalized entity input SHA-256: {receipt}")?;
-    output.push_str(
-        "// Reviewed canonical topics only; aliases and support state are not inferred.\n\n",
-    );
+    output.push_str("// Reviewed names only; classification does not imply semantic support.\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
     output.push_str("pub struct DxfEntityTopic {\n    ordinal: u8,\n}\n\n");
     output.push_str("impl DxfEntityTopic {\n");
@@ -797,8 +1026,70 @@ fn render_entity_registry(
     output.push_str("    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n");
     output.push_str("    #[must_use]\n    pub const fn source_topic_id(self) -> &'static str {\n        self.source_topic_id\n    }\n\n");
     output.push_str("    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str("pub struct DxfEntityAlias {\n    ordinal: u8,\n}\n\n");
+    output.push_str("impl DxfEntityAlias {\n");
+    for (ordinal, alias) in entity_aliases.aliases.iter().enumerate() {
+        writeln!(
+            output,
+            "    pub const {}: Self = Self {{ ordinal: {ordinal} }};",
+            alias.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("\n    #[must_use]\n    pub const fn ordinal(self) -> u8 {\n        self.ordinal\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub fn from_ordinal(ordinal: u8) -> Option<Self> {\n        DXF_ENTITY_ALIASES\n            .get(usize::from(ordinal))\n            .map(|descriptor| descriptor.alias())\n    }\n\n",
+    );
+    output.push_str(
+        "    #[must_use]\n    pub fn from_exact_name(name: &[u8]) -> Option<Self> {\n        match name {\n",
+    );
+    for alias in &entity_aliases.aliases {
+        writeln!(
+            output,
+            "            b\"{}\" => Some(Self::{}),",
+            alias.dxf_name,
+            alias.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("            _ => None,\n        }\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub fn descriptor(self) -> Option<&'static DxfEntityAliasDescriptor> {\n        DXF_ENTITY_ALIASES.get(usize::from(self.ordinal))\n    }\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub enum DxfEntityAliasEvidence {\n    Normative,\n    BehavioralOracle,\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub struct DxfEntityAliasDescriptor {\n    alias: DxfEntityAlias,\n    id: &'static str,\n    dxf_name: &'static str,\n    topic: DxfEntityTopic,\n    evidence: DxfEntityAliasEvidence,\n    source_id: &'static str,\n    source_reference: &'static str,\n    source_facts_sha256: &'static str,\n}\n\n",
+    );
+    output.push_str("impl DxfEntityAliasDescriptor {\n");
+    output.push_str("    #[must_use]\n    pub const fn alias(self) -> DxfEntityAlias {\n        self.alias\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub const fn id(self) -> &'static str {\n        self.id\n    }\n\n",
+    );
+    output.push_str("    #[must_use]\n    pub const fn dxf_name(self) -> &'static str {\n        self.dxf_name\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn topic(self) -> DxfEntityTopic {\n        self.topic\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn evidence(self) -> DxfEntityAliasEvidence {\n        self.evidence\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_reference(self) -> &'static str {\n        self.source_reference\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str("pub enum DxfEntityNameClassification {\n    Canonical(DxfEntityTopic),\n    Alias(DxfEntityAlias),\n    Unknown,\n}\n\n");
+    output.push_str("impl DxfEntityNameClassification {\n");
+    output.push_str(
+        "    #[must_use]\n    pub fn topic(self) -> Option<DxfEntityTopic> {\n        match self {\n            Self::Canonical(topic) => Some(topic),\n            Self::Alias(alias) => alias.descriptor().map(|descriptor| descriptor.topic()),\n            Self::Unknown => None,\n        }\n    }\n\n",
+    );
+    output.push_str(
+        "    #[must_use]\n    pub fn exact_name(self) -> Option<&'static str> {\n        match self {\n            Self::Canonical(topic) => topic.descriptor().map(|descriptor| descriptor.dxf_name()),\n            Self::Alias(alias) => alias.descriptor().map(|descriptor| descriptor.dxf_name()),\n            Self::Unknown => None,\n        }\n    }\n}\n\n",
+    );
+    output.push_str(
+        "#[must_use]\npub fn classify_exact_dxf_entity_name(name: &[u8]) -> DxfEntityNameClassification {\n    if let Some(topic) = DxfEntityTopic::from_exact_name(name) {\n        DxfEntityNameClassification::Canonical(topic)\n    } else if let Some(alias) = DxfEntityAlias::from_exact_name(name) {\n        DxfEntityNameClassification::Alias(alias)\n    } else {\n        DxfEntityNameClassification::Unknown\n    }\n}\n\n",
+    );
     output.push_str("pub const DXF_ENTITY_TOPIC_SCHEMA_SHA256: &str =\n");
     writeln!(output, "    {receipt:?};\n")?;
+    output.push_str("pub const DXF_ENTITY_ALIAS_SCHEMA_SHA256: &str =\n");
+    writeln!(output, "    {alias_receipt:?};\n")?;
     output.push_str("pub static DXF_ENTITY_TOPICS: &[DxfEntityTopicDescriptor] = &[\n");
     for topic in &entity_topics.topics {
         output.push_str("    DxfEntityTopicDescriptor {\n");
@@ -819,7 +1110,80 @@ fn render_entity_registry(
         output.push_str("    },\n");
     }
     output.push_str(
-        "];\n\n#[must_use]\npub const fn dxf_entity_topics() -> &'static [DxfEntityTopicDescriptor] {\n    DXF_ENTITY_TOPICS\n}\n",
+        "];\n\n#[must_use]\npub const fn dxf_entity_topics() -> &'static [DxfEntityTopicDescriptor] {\n    DXF_ENTITY_TOPICS\n}\n\n",
+    );
+    let sources: BTreeMap<_, _> = registry
+        .sources
+        .iter()
+        .map(|source| (source.id.as_str(), source))
+        .collect();
+    let topics: BTreeMap<_, _> = entity_topics
+        .topics
+        .iter()
+        .map(|topic| (topic.id.as_str(), topic))
+        .collect();
+    output.push_str("pub static DXF_ENTITY_ALIASES: &[DxfEntityAliasDescriptor] = &[\n");
+    for alias in &entity_aliases.aliases {
+        let alias_source = sources.get(alias.source_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                ENTITY_OUTPUT_PATH,
+                &alias.id,
+                "validated alias source disappeared before rendering",
+            )
+        })?;
+        let topic = topics.get(alias.topic_id.as_str()).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_ENTITY_ALIAS_TOPIC",
+                ENTITY_OUTPUT_PATH,
+                &alias.id,
+                "validated alias topic disappeared before rendering",
+            )
+        })?;
+        let evidence = match alias_source.evidence_kind {
+            EvidenceKind::AliasList => "Normative",
+            EvidenceKind::OracleInventory => "BehavioralOracle",
+            EvidenceKind::Row | EvidenceKind::TopicList => {
+                return Err(SchemaError::new(
+                    "SCHEMA_ENTITY_ALIAS_SOURCE",
+                    ENTITY_OUTPUT_PATH,
+                    &alias.id,
+                    "validated alias source kind changed before rendering",
+                ));
+            }
+        };
+        output.push_str("    DxfEntityAliasDescriptor {\n");
+        writeln!(
+            output,
+            "        alias: DxfEntityAlias::{},",
+            alias.id.to_ascii_uppercase()
+        )?;
+        writeln!(output, "        id: {:?},", alias.id)?;
+        writeln!(output, "        dxf_name: {:?},", alias.dxf_name)?;
+        writeln!(
+            output,
+            "        topic: DxfEntityTopic::{},",
+            topic.id.to_ascii_uppercase()
+        )?;
+        writeln!(
+            output,
+            "        evidence: DxfEntityAliasEvidence::{evidence},"
+        )?;
+        writeln!(output, "        source_id: {:?},", alias_source.id)?;
+        writeln!(
+            output,
+            "        source_reference: {:?},",
+            alias_source.topic_id
+        )?;
+        writeln!(
+            output,
+            "        source_facts_sha256: {:?},",
+            alias_source.normalized_facts_sha256
+        )?;
+        output.push_str("    },\n");
+    }
+    output.push_str(
+        "];\n\n#[must_use]\npub const fn dxf_entity_aliases() -> &'static [DxfEntityAliasDescriptor] {\n    DXF_ENTITY_ALIASES\n}\n",
     );
     Ok(output)
 }
@@ -840,6 +1204,7 @@ fn storage_variant(storage: StorageKind) -> &'static str {
 
 fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
     match kind {
+        EvidenceKind::AliasList | EvidenceKind::OracleInventory => false,
         EvidenceKind::Row => row_evidence_matches(field),
         EvidenceKind::TopicList => false,
     }
@@ -965,6 +1330,25 @@ fn valid_topic_id(value: &str) -> bool {
         })
 }
 
+fn valid_source_reference(source: &SchemaSource) -> bool {
+    match source.evidence_kind {
+        EvidenceKind::OracleInventory => {
+            source
+                .topic_id
+                .strip_prefix("SHA256-")
+                .is_some_and(|receipt| {
+                    receipt.len() == 64
+                        && receipt
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+                })
+        }
+        EvidenceKind::AliasList | EvidenceKind::Row | EvidenceKind::TopicList => {
+            valid_topic_id(&source.topic_id)
+        }
+    }
+}
+
 fn valid_dxf_name(value: &str) -> bool {
     value.starts_with('$')
         && value.len() > 1
@@ -1003,10 +1387,11 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches,
-        load_entity_topics, load_schema, normalized_entity_receipt, normalized_receipt,
-        render_entity_registry, render_registry, validate_entity_topics, validate_schema,
-        validate_wire_shape,
+        EXPECTED_ENTITY_ALIAS_COUNT, EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind,
+        evidence_matches, load_entity_aliases, load_entity_topics, load_schema,
+        normalized_alias_receipt, normalized_entity_receipt, normalized_receipt,
+        render_entity_registry, render_registry, validate_entity_aliases, validate_entity_topics,
+        validate_schema, validate_wire_shape,
     };
 
     #[test]
@@ -1228,17 +1613,68 @@ mod tests {
         let (manifest, sources, _) = load_schema(&root)?;
         let entity_topics = load_entity_topics(&root, &manifest)?;
         let source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
+        let entity_aliases = load_entity_aliases(&root, &manifest)?;
+        validate_entity_aliases(&manifest, &sources, &entity_topics, &entity_aliases)?;
         assert_eq!(entity_topics.topics.len(), 45);
         assert_eq!(entity_topics.topics[0].dxf_name, "3DFACE");
         assert_eq!(entity_topics.topics[44].dxf_name, "XLINE");
         let first = normalized_entity_receipt(&entity_topics, source)?;
         let second = normalized_entity_receipt(&entity_topics, source)?;
+        let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
         assert_eq!(first, second);
         assert_eq!(first.len(), 64);
         assert_eq!(
-            render_entity_registry(&entity_topics, source, &first)?,
-            render_entity_registry(&entity_topics, source, &second)?
+            render_entity_registry(
+                &entity_topics,
+                source,
+                &first,
+                &entity_aliases,
+                &sources,
+                &alias_receipt,
+            )?,
+            render_entity_registry(
+                &entity_topics,
+                source,
+                &second,
+                &entity_aliases,
+                &sources,
+                &alias_receipt,
+            )?
         );
+        Ok(())
+    }
+
+    #[test]
+    fn reviewed_entity_aliases_are_complete_and_fail_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let topics = load_entity_topics(&root, &manifest)?;
+        let aliases = load_entity_aliases(&root, &manifest)?;
+        validate_entity_aliases(&manifest, &sources, &topics, &aliases)?;
+        assert_eq!(aliases.aliases.len(), EXPECTED_ENTITY_ALIAS_COUNT);
+        assert_eq!(aliases.aliases[0].dxf_name, "MPOLYGON");
+        assert_eq!(aliases.aliases[13].dxf_name, "SWEPTSURFACE");
+
+        let mut duplicate = load_entity_aliases(&root, &manifest)?;
+        duplicate.aliases[1].dxf_name = duplicate.aliases[0].dxf_name.clone();
+        let error = validate_entity_aliases(&manifest, &sources, &topics, &duplicate)
+            .err()
+            .ok_or("duplicate entity alias unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_ALIAS_NAME");
+
+        let mut bad_topic = load_entity_aliases(&root, &manifest)?;
+        bad_topic.aliases[0].topic_id = "future_topic".to_string();
+        let error = validate_entity_aliases(&manifest, &sources, &topics, &bad_topic)
+            .err()
+            .ok_or("unknown alias topic unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_ALIAS_TOPIC");
+
+        let mut stale = load_entity_aliases(&root, &manifest)?;
+        stale.aliases[0].dxf_name = "MPOLYGON2".to_string();
+        let error = validate_entity_aliases(&manifest, &sources, &topics, &stale)
+            .err()
+            .ok_or("stale alias source receipt unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_ALIAS_SOURCE_RECEIPT");
         Ok(())
     }
 
@@ -1277,7 +1713,7 @@ mod tests {
 
     #[test]
     fn unknown_manifest_key_is_rejected() {
-        let json = r#"{"schema_version":"dxf.v1","sources":"sources.json","entity_topics":"entity_topics.json","families":[],"typo":true}"#;
+        let json = r#"{"schema_version":"dxf.v1","sources":"sources.json","entity_topics":"entity_topics.json","entity_aliases":"entity_aliases.json","families":[],"typo":true}"#;
         let result = serde_json::from_str::<SchemaManifest>(json);
         assert!(result.is_err());
     }
@@ -1504,7 +1940,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, mut sources, families) = load_schema(&root)?;
         let mut duplicate = sources.sources[0].clone();
-        duplicate.id = "autodesk.header.copy".to_string();
+        duplicate.id = "zz.oracle.copy".to_string();
         sources.sources.push(duplicate);
         let error = validate_schema(&manifest, &sources, &families)
             .err()

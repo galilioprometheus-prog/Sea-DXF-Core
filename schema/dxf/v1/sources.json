@@ -2,16 +2,40 @@
   "schema_version": "dxf.v1",
   "sources": [
     {
+      "id": "autocad.entity.inventory.2027",
+      "topic_id": "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
+      "normalized_facts_sha256": "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+      "evidence_kind": "oracle_inventory"
+    },
+    {
       "id": "autodesk.entities.2024",
       "topic_id": "GUID-7D07C886-FD1D-4A0C-A7AB-B4D21F18E484",
       "normalized_facts_sha256": "a7d540ad9109768edd57db100743148756c21966854b634dc04450066fd3e4f7",
       "evidence_kind": "topic_list"
     },
     {
+      "id": "autodesk.hatch.2025",
+      "topic_id": "GUID-C6C71CED-CE0F-4184-82A5-07AD6241F15B",
+      "normalized_facts_sha256": "e0c521bd0f9f6ca901f7dcc1c785e9d5edf326747a3ff96fc3173c04d03dca5d",
+      "evidence_kind": "alias_list"
+    },
+    {
       "id": "autodesk.header.2026",
       "topic_id": "GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A",
       "normalized_facts_sha256": "d1034c4246758f368ac79982fa1c21d59328851d9fdca8ccebe944f20f71cfaf",
       "evidence_kind": "row"
+    },
+    {
+      "id": "autodesk.table.2025",
+      "topic_id": "GUID-D8CCD2F0-18A3-42BB-A64D-539114A07DA0",
+      "normalized_facts_sha256": "d7dc48f25513fa9da8543624faadf48b6e03ab470ee170098ac8c0af481c0947",
+      "evidence_kind": "alias_list"
+    },
+    {
+      "id": "autodesk.underlay.2025",
+      "topic_id": "GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077",
+      "normalized_facts_sha256": "ee2c1d8556dcc14708a61acee622eb81cd82f9ac8219056bbca3e2c6c28fa724",
+      "evidence_kind": "alias_list"
     }
   ]
 }

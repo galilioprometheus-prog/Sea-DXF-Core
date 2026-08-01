@@ -320,6 +320,16 @@ infrastructure only: it does not scan a DXF record, classify an alias, define
 version applicability or fields, expose common properties, parse any new
 entity, construct geometry, edit, or write.
 
+M14.3g freezes 14 reviewed on-wire alias/specialization names. Autodesk topic
+pages normatively anchor `MPOLYGON` to HATCH, `ACAD_TABLE` to TABLE, and
+`DGNUNDERLAY`/`DWFUNDERLAY`/`PDFUNDERLAY` to UNDERLAY. A separate AutoCAD 2027
+oracle receipt anchors observed concrete dimension, MLEADER, SECTION, and five
+SURFACE spellings; these remain visibly `BehavioralOracle`, not normative.
+Generated exact-byte classification distinguishes canonical, alias, and
+unknown names and preserves the exact marker through the alias descriptor.
+This checkpoint does not decide whether a name is legal in its source section
+or dialect and adds no semantic, geometry, CRUD, or support claim.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

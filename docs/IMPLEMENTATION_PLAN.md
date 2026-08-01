@@ -1726,6 +1726,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     non-topic-list source. This checkpoint does not scan records, map aliases,
     define version applicability or fields, project common properties, parse
     any new entity, construct geometry, edit, or write.
+    M14.3g adds 14 reviewed group-zero alias/specialization names to the same
+    generated platform. Five mappings are normative Autodesk facts
+    (`MPOLYGON`, `ACAD_TABLE`, and the DGN/DWF/PDF underlay names); nine
+    concrete dimension, MLEADER, SECTION, and SURFACE spellings are explicitly
+    labeled behavioral AutoCAD-oracle evidence. Public exact-byte
+    classification returns canonical, alias, or unknown and maps aliases to a
+    canonical topic without hiding their exact marker. Per-source normalized
+    receipts reject mapping or provenance drift. Section validity, dialect
+    applicability, record scanning, semantics, geometry, edit, and write remain
+    unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
