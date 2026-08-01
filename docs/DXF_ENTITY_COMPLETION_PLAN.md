@@ -408,6 +408,16 @@ relations unavailable without selecting a value. Point semantics,
 degree/knot/periodic invariants, NURBS geometry, HELIX, CRUD, and writes remain
 later checkpoints.
 
+M14.3p adds typed SPLINE topology readiness. Degree evidence remains absent,
+duplicate, invalid, nonpositive, or explicit. Knot sequences become empty,
+nondecreasing, decreasing at an exact first index, or unavailable with an
+invalid-member count. Explicit degree is compared with the observed control
+point count and the defining NURBS knot-count relation; arithmetic overflow is
+typed. Closed/periodic flag combinations are reported without asserting an
+undocumented equivalence. Declared count cards remain available through the
+existing count directory. Point values, analytic NURBS projection, HELIX,
+CRUD, and writes remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

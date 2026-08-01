@@ -1833,6 +1833,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     ASCII/Binary parity, relation edges, cancellation, lookup, and bounds are
     covered. Point semantics, degree/knot/periodic invariants, analytic NURBS
     data, HELIX, CRUD, writes, and support advancement remain unclaimed.
+    M14.3p adds one bounded topology entry per SPLINE. Degree is absent,
+    duplicate, invalid, nonpositive, or explicit with exact evidence. Knot
+    order is empty, nondecreasing, decreasing at its first exact right-member
+    index, or unavailable with an invalid-member count. Positive degree is
+    compared with observed group-10 control anchors and with the defining
+    NURBS relation `knot_count = control_point_count + degree + 1`; expected
+    count overflow stays typed. All four closed/periodic flag combinations are
+    observations, not an undocumented validity equivalence. Nine-dialect
+    ASCII/Binary parity, degree/count/order edges, cancellation, lookup, and
+    bounds are covered. Point values, analytic NURBS projection, HELIX, CRUD,
+    writes, and support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

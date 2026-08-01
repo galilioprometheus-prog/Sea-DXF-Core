@@ -417,6 +417,15 @@ bytes remain authoritative and untouched. This is indexing infrastructure;
 common fields, family semantics, geometry, CRUD, writer gating, and support
 completion remain unclaimed.
 
+M14.3p adds `DxfSplineTopologyDirectory`. It types degree domain, knot ordering
+and the first decreasing index, minimum control-point readiness, the defining
+NURBS knot-count equation, overflow, and every closed/periodic flag
+combination. Invalid sequence members make ordering unavailable rather than
+being skipped, and no flag combination is normalized. Declared-versus-observed
+group 72/73/74 states remain in `DxfSplineCountDirectory`. Point values,
+analytic NURBS data, HELIX, CRUD, writer, and support completion remain
+unclaimed.
+
 M14.3j adds a deterministic generated registry for 19 common entity-property
 roles from Autodesk's common entity-code table. Each descriptor exposes its
 stable field ordinal, exact group code, wire type, cardinality, documented

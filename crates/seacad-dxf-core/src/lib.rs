@@ -169,6 +169,7 @@ mod spline_evidence;
 mod spline_point_tuple;
 mod spline_relation;
 mod spline_scalar_semantic;
+mod spline_topology;
 mod text_control;
 mod text_decoder;
 mod text_escape;
@@ -801,6 +802,11 @@ pub use spline_relation::{
 };
 pub use spline_scalar_semantic::{
     DXF_SPLINE_SCALAR_ROLES, DxfSplineScalarDirectory, DxfSplineScalarEntry, DxfSplineScalarState,
+};
+pub use spline_topology::{
+    DxfSplineDegreeControlRelation, DxfSplineDegreeState, DxfSplineInvariantDisposition,
+    DxfSplineKnotOrderState, DxfSplineNurbsCountRelation, DxfSplinePeriodicClosedRelation,
+    DxfSplineTopologyDirectory, DxfSplineTopologyEntry,
 };
 pub use text_control::{
     DxfDecodedTextSpan, DxfTextControlContext, DxfTextControlCursor, DxfTextControlError,
