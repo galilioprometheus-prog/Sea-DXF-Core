@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3j can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3k can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -427,6 +427,17 @@ scoped to `ACAD_XDICTIONARY`, while the group-330 BLOCK_RECORD owner is distinct
 from reactor content. Field applicability remains `NotYetReviewed` rather than
 guessing historical introduction versions. This schema does not yet scan
 occurrences, form cards, decode semantics, edit, write, or advance support.
+
+M14.3k adds `DxfEntityFieldEvidenceDirectory`, retaining source-order raw
+occurrences and 19 fixed common-field cards for every canonical, alias, or
+unknown entity in `BLOCKS`/`ENTITIES`. Cards distinguish required or optional
+absence, a unique singleton, typed duplicate singleton counts, and positive
+sequence counts. Subclass context separates preamble, `AcDbEntity`, and later
+family fields; application context accepts group 360 only from
+`ACAD_XDICTIONARY` and keeps its exact closure evidence. Reactor handles,
+family-subclass collisions, and reviewed names in wrong sections are excluded.
+This layer does not decode values, apply defaults, validate references or
+proxy byte counts, edit, write, or advance entity support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

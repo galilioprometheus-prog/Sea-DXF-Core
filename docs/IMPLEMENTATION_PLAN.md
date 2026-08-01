@@ -1770,6 +1770,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     scope facts, source kind, and stale normalized receipts. This checkpoint
     does not scan field occurrences, evaluate cardinality, decode values,
     apply defaults, edit, write, or advance support.
+    M14.3k scans the 19 generated common-field roles once per unified semantic
+    entity and builds fixed descriptor-order cardinality cards. Exact raw
+    occurrences remain in source order; required/optional absence, unique
+    singleton, duplicate singleton, and sequence counts are distinct.
+    Preamble fields, `AcDbEntity` fields, and `ACAD_XDICTIONARY` group-360
+    content are scope-separated; reactor and family-subclass collisions are
+    excluded. Extension-dictionary evidence retains a resolvable application-
+    group ordinal and closure state. Canonical, alias, and unknown records in
+    `BLOCKS`/`ENTITIES` participate, while wrong-section classifications do
+    not. Nine-dialect ASCII/Binary parity, source identity, cancellation,
+    metadata bounds, and debug redaction are covered. This checkpoint does not
+    decode values, apply defaults, validate domains/references/proxy byte
+    counts, edit, write, or advance support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

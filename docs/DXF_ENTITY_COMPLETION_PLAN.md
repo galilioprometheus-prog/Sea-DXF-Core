@@ -359,6 +359,15 @@ applicability, and normalized provenance. Application-control handles remain
 scope-separated. This checkpoint is registry metadata only and does not yet
 parse or edit these fields.
 
+M14.3k projects the generated common-field schema over the unified entity
+directory. Each semantic entity receives 19 descriptor-order cards backed by
+exact source-order occurrences. Required/optional absence, unique or duplicate
+singletons, and proxy-data sequences stay typed without choosing an occurrence.
+Subclass and group-102 scopes prevent reactor, extension-dictionary, and
+family-specific code collisions. Unknown entities retain common evidence;
+wrong-section records do not become semantic entities. Value decoding,
+defaults, domain/reference checks, CRUD, and writes remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
