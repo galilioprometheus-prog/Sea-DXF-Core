@@ -2092,6 +2092,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     restoration. This checkpoint does not validate existing raw-domain values,
     names, handles/references, transparency, proxy count/data agreement,
     cross-field relations, applicability, or family-specific patches.
+    M14.3ai composes the existing-document common-field semantic directory with
+    the M14.3ah domain classifier. The eight reviewed scalar fields retain the
+    shared explicit/defaulted/absent/invalid state and exact raw provenance;
+    valid usable values become typed domain values, while scalar decode,
+    duplicate, missing-required, and domain failures remain distinguishable.
+    Every unreviewed common field passes through its exact prior semantics rather
+    than receiving an implied validity claim. ASCII/Binary parity spans AC1009
+    through AC1032, including out-of-order groups, invalid scalars, defaults,
+    absence, opaque sequences, source identity, cancellation, and public API
+    bounds. This checkpoint does not validate names or references, transparency,
+    proxy count/data agreement, cross-field relations, applicability, family
+    patches, or complete CRUD.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

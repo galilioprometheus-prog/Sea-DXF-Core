@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ah can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ai can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -726,6 +726,19 @@ byte-identical inverse restoration. Existing raw-value domain projection,
 text/name and handle/reference validation, transparency, proxy byte-count/data
 agreement, cross-field relations, applicability, family patches, and full
 CRUD/`Complete` support remain open.
+
+M14.3ai adds an existing-document common-field domain directory. It projects
+the eight M14.3ah reviewed scalar domains over the generic semantic directory,
+retaining exact explicit/defaulted/absent/invalid state and provenance. Valid
+usable values become typed domain values; scalar decode failures, duplicate or
+missing-required cardinality, and out-of-domain values remain distinguishable
+typed issues. The remaining common fields pass through their exact unreviewed
+singleton or opaque-sequence semantics. Paired ASCII/Binary tests cover AC1009
+through AC1032, invalid scalars, defaults, absence, source identity,
+cancellation, lookup, and public bounds. This is domain projection, not name or
+reference validation, transparency support, proxy count/data reconciliation,
+cross-field validation, applicability, family patches, full CRUD, or a
+`Complete` support claim.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

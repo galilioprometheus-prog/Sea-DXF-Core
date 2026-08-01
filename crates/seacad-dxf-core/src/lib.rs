@@ -53,6 +53,7 @@ mod ellipse_geometry_card;
 mod ellipse_geometry_semantic;
 mod encoding;
 mod entity_common_field_domain;
+mod entity_common_field_domain_semantic;
 mod entity_directory;
 mod entity_edit_session;
 mod entity_edit_verification;
@@ -400,6 +401,11 @@ pub use entity_common_field_domain::{
     DxfEntityCommonFieldDomainValue, DxfEntityIndexedColor, DxfEntityLineweight,
     DxfEntityShadowMode, DxfEntitySpace, DxfEntityTrueColor, DxfEntityVisibility,
     classify_entity_common_field_edit_domain,
+};
+pub use entity_common_field_domain_semantic::{
+    DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainEntry,
+    DxfEntityCommonFieldDomainSemanticIssue, DxfEntityCommonFieldDomainSemanticValue,
+    DxfEntityCommonFieldDomainSemantics,
 };
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,

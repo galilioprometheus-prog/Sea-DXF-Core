@@ -641,6 +641,17 @@ projection, references/names, transparency, proxy size/data reconciliation,
 cross-field relations, version applicability, and family patches remain later
 work.
 
+M14.3ai projects those same reviewed domains from existing raw documents. It
+composes the generic common-field semantic directory instead of rescanning raw
+groups: usable explicit/defaulted scalars become typed domain values, while raw
+decode errors, duplicates, missing required fields, and out-of-domain values
+remain separate typed invalid states with exact evidence. Unreviewed singleton
+and opaque-sequence fields pass through unchanged. Paired ASCII/Binary fixtures
+cover all nine dialects, invalid raw values, defaults, absence, cancellation,
+source-bound lookup, and bounded public types. Names/references, transparency,
+proxy size/data reconciliation, cross-field relations, applicability, family
+patches, and complete CRUD remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

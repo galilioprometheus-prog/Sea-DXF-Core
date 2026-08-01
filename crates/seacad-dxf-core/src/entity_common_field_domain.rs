@@ -332,6 +332,17 @@ pub fn classify_entity_common_field_edit_domain(
     DxfEntityCommonFieldDomainOutcome::Unreviewed { field }
 }
 
+pub(crate) fn has_reviewed_entity_common_field_domain(field: DxfEntityField) -> bool {
+    field == DxfEntityField::PAPER_SPACE
+        || field == DxfEntityField::COLOR
+        || field == DxfEntityField::LINEWEIGHT
+        || field == DxfEntityField::LINETYPE_SCALE
+        || field == DxfEntityField::VISIBILITY
+        || field == DxfEntityField::PROXY_GRAPHICS_SIZE
+        || field == DxfEntityField::TRUE_COLOR
+        || field == DxfEntityField::SHADOW
+}
+
 fn classify_i16(
     field: DxfEntityField,
     value: DxfEntityEditValue<'_>,
