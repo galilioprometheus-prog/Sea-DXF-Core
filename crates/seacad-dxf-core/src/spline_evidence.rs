@@ -53,6 +53,13 @@ pub enum DxfSplineNumericIssue {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfSplineRecordKind {
+    Spline,
+    Helix,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfSplineValueRange {
     start: u32,
     end: u32,
@@ -114,6 +121,7 @@ impl DxfSplineValue {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfSplineRecordEntry {
     record: DxfRawRecord,
+    kind: DxfSplineRecordKind,
     value_range: DxfSplineValueRange,
 }
 
@@ -121,6 +129,11 @@ impl DxfSplineRecordEntry {
     #[must_use]
     pub const fn record(self) -> DxfRawRecord {
         self.record
+    }
+
+    #[must_use]
+    pub const fn kind(self) -> DxfSplineRecordKind {
+        self.kind
     }
 
     #[must_use]
@@ -163,14 +176,17 @@ impl DxfSplineDirectory {
             if !matches!(
                 record.section_kind(),
                 DxfRawRecordSectionKind::Blocks | DxfRawRecordSectionKind::Entities
-            ) || !is_spline(document, record)?
-            {
+            ) {
                 continue;
             }
+            let Some(kind) = record_kind(document, record)? else {
+                continue;
+            };
             let start = compact_len(values.len())?;
             append_values(
                 document,
                 record,
+                kind,
                 &application_groups,
                 cancellation,
                 &mut values,
@@ -179,6 +195,7 @@ impl DxfSplineDirectory {
             records.try_reserve(1).map_err(|_| out_of_memory())?;
             records.push(DxfSplineRecordEntry {
                 record,
+                kind,
                 value_range: DxfSplineValueRange::new(start, end)?,
             });
         }
@@ -269,11 +286,12 @@ impl DxfBinaryRawDocument<'_> {
 fn append_values(
     document: DxfRawDocumentView<'_>,
     record: DxfRawRecord,
+    kind: DxfSplineRecordKind,
     application_groups: &DxfApplicationGroupDirectory,
     cancellation: &DxfCancellationToken,
     values: &mut Vec<DxfSplineValue>,
 ) -> Result<(), DxfError> {
-    let mut spline_scope = true;
+    let mut spline_scope = kind == DxfSplineRecordKind::Spline;
     for occurrence in record.marker_occurrence().saturating_add(1)..record.group_range().end() {
         ensure_not_cancelled(cancellation)?;
         if application_groups
@@ -303,11 +321,20 @@ fn append_values(
     Ok(())
 }
 
-fn is_spline(document: DxfRawDocumentView<'_>, record: DxfRawRecord) -> Result<bool, DxfError> {
+fn record_kind(
+    document: DxfRawDocumentView<'_>,
+    record: DxfRawRecord,
+) -> Result<Option<DxfSplineRecordKind>, DxfError> {
     let marker = document
         .group(record.marker_occurrence())
         .ok_or_else(invalid_internal_data)?;
-    document.raw_span_equals_exact(marker.value_payload_span(), b"SPLINE")
+    if document.raw_span_equals_exact(marker.value_payload_span(), b"SPLINE")? {
+        Ok(Some(DxfSplineRecordKind::Spline))
+    } else if document.raw_span_equals_exact(marker.value_payload_span(), b"HELIX")? {
+        Ok(Some(DxfSplineRecordKind::Helix))
+    } else {
+        Ok(None)
+    }
 }
 
 fn decode_number(

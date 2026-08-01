@@ -6,7 +6,8 @@ use seacad_dxf_core::{
     DxfError, DxfMemorySource, DxfReadOptions, DxfResourceProfile, DxfSplineCardDirectory,
     DxfSplineCardMember, DxfSplineCardState, DxfSplineDirectory, DxfSplineFlags,
     DxfSplineFlagsSemantic, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
-    DxfSplineValue, DxfSplineValueCard, DxfSplineValueRole, NoopDxfReadObserver,
+    DxfSplineRecordKind, DxfSplineValue, DxfSplineValueCard, DxfSplineValueRole,
+    NoopDxfReadObserver,
 };
 
 type Evidence = (DxfSplineValueRole, DxfSplineNumber);
@@ -250,6 +251,7 @@ fn assert_directory(directory: &DxfSplineDirectory) -> Result<(), Box<dyn Error>
     assert_eq!(directory.records().len(), 1);
     assert!(directory.raw_record_count() >= 1);
     let record = directory.records()[0];
+    assert_eq!(record.kind(), DxfSplineRecordKind::Spline);
     let values = directory
         .values_for_raw_record(record.record().ordinal())
         .ok_or(io::Error::other("spline values"))?;

@@ -558,6 +558,19 @@ HELIX applicability in older versions or advance support. Embedded SPLINE
 composition, analytic geometry, CRUD, writer support, and `Complete` status
 remain unclaimed.
 
+M14.3w adds `DxfHelixAnalyticDirectory` and extends the shared SPLINE
+projection with explicit `Spline`/`Helix` record kinds. HELIX curve evidence
+is scoped only to the exact `AcDbSpline` subclass and is joined to HELIX
+relations by exact raw-record ordinal. Availability requires one ordered
+`AcDbSpline` then `AcDbHelix` marker, an available embedded spline, exact axis
+perpendicularity, nonnegative stored radius, positive turns, and finite
+compared height. Failures accumulate without partial analytic data; turns
+above the command's 500 limit remain readable existing-data state and zero
+height remains a valid flat state. Nine-dialect ASCII/Binary parity does not
+establish HELIX applicability in older versions or advance support. NURBS
+evaluation on HELIX, sampling/tessellation, CRUD, writer support, and
+`Complete` status remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

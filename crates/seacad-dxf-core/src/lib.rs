@@ -75,6 +75,7 @@ mod header_scalar;
 mod header_schema_directory;
 mod header_text;
 mod header_view;
+mod helix_analytic;
 mod helix_card;
 mod helix_evidence;
 mod helix_relation;
@@ -445,6 +446,11 @@ pub use header_text::{
 };
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
+};
+pub use helix_analytic::{
+    DxfHelixAnalyticData, DxfHelixAnalyticDirectory, DxfHelixAnalyticEntry,
+    DxfHelixAnalyticIssueKind, DxfHelixAnalyticIssues, DxfHelixAnalyticState,
+    DxfHelixSubclassPathState,
 };
 pub use helix_card::{
     DxfHelixCardDirectory, DxfHelixCardMember, DxfHelixCardMemberRange, DxfHelixCardState,
@@ -826,7 +832,7 @@ pub use spline_count_relation::{
 };
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
-    DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,
+    DxfSplineRecordKind, DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,
 };
 pub use spline_point_tuple::{
     DxfSplinePointComponentCounts, DxfSplinePointComponents, DxfSplinePointKind,

@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3v. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3w. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -56,6 +56,12 @@ HELIX relation semantics now normalize a usable nonzero axis, retain the exact
 orthogonality residual, derive the base radius from axis-base/start geometry,
 classify the stored radius and turns domains, and derive axial height from
 turns and turn height. Zero-height flat helices remain observable.
+HELIX analytic readiness now composes that metadata with the exact embedded
+`AcDbSpline` projection on the same raw record. It requires one ordered
+`AcDbSpline`/`AcDbHelix` subclass pair, a valid embedded curve, perpendicular
+axis geometry, nonnegative radius, positive turns, and finite derived height;
+failures accumulate without publishing partial analytic data. Evaluation and
+tessellation remain out of scope.
 Budget-aware development runs required quality/dependency gates locally and
 does not allocate hosted runners for pushes or pull requests. GitHub Actions
 retains a manual Windows x64 self-hosted diagnostic and the manual six-native

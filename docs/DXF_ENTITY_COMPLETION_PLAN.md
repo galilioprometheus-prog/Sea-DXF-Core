@@ -493,6 +493,18 @@ derived overflow, cancellation, lookup, and bounds are covered. Embedded
 SPLINE composition, analytic HELIX geometry, CRUD, and writes remain later
 checkpoints.
 
+M14.3w composes HELIX metadata with its embedded spline representation. The
+shared SPLINE directory now distinguishes exact `SPLINE` and `HELIX` records;
+for HELIX it collects curve fields only inside the exact `AcDbSpline`
+subclass. Readiness joins both projections by raw-record ordinal and requires
+one ordered `AcDbSpline` then `AcDbHelix` pair, valid spline analytic data,
+exactly perpendicular usable axis data, nonnegative stored radius, positive
+turns, and finite derived height. Over-500 turns remain readable observations
+and flat zero height remains valid. Typed failures accumulate without partial
+analytic output. Autodesk warns that inherited NURBS operations on HELIX are
+not a defined evaluation contract, so sampling/tessellation, CRUD, writes,
+applicability, and support completion remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -1932,6 +1932,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     base radius beyond Autodesk's DXF wording. Embedded SPLINE composition,
     analytic HELIX geometry, CRUD, writes, applicability advancement, and
     support completion remain unclaimed.
+    M14.3w extends the shared SPLINE evidence and analytic directories to
+    classify exact `SPLINE` and `HELIX` record kinds. HELIX spline values are
+    admitted only inside the exact `AcDbSpline` subclass, so colliding
+    `AcDbHelix` groups cannot enter the embedded curve. One HELIX analytic
+    entry joins relation and spline readiness by exact raw-record ordinal and
+    requires exactly one ordered `AcDbSpline` then `AcDbHelix` marker, an
+    available embedded curve, exact axis perpendicularity, nonnegative stored
+    radius, positive turns, and finite compared height. Above-500 turns remain
+    readable existing-data state; flat zero height remains valid. Failures
+    accumulate in a typed mask and publish no partial analytic data.
+    Nine-dialect ASCII/Binary parity, malformed subclass paths, invalid curve
+    and relation inputs, cancellation, lookup, source identity, and a 512-byte
+    entry bound are covered. This exposes analytic representation only; it
+    does not evaluate NURBS calls on HELIX, sample/tessellate geometry, add
+    CRUD or writes, settle applicability, or advance support completion.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
