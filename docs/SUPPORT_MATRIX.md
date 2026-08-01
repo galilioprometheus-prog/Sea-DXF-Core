@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3am can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3an can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -788,6 +788,19 @@ nine dialects, with AC1009 retaining absence because group 440 is not
 expressible by its Binary group-code wire. Effective layer/block resolution,
 percentage rounding, rendering, applicability, and `Complete` support remain
 open.
+
+M14.3an adds target-kind validation after unique common-reference resolution.
+Extension dictionary group 360 accepts only an exact `DICTIONARY` record in
+`OBJECTS`, material group 347 only `OBJECTS`/`MATERIAL`, and plot-style group
+390 only `OBJECTS`/`ACDBPLACEHOLDER`. A unique handle aimed at another marker
+or section is a typed incompatible target with exact target evidence. Null,
+missing, ambiguous, invalid-field, absent, and generated-default outcomes keep
+their prior precedence; owner group 330 is explicitly unreviewed because its
+valid target kind is family- and placement-dependent. Paired ASCII/Binary
+fixtures cover AC1009 through AC1032, wrong markers, wrong sections,
+cancellation, source identity, and public bounds. Authoritative ownership,
+dictionary membership, pointer lifecycle, applicability, reference-safe CRUD,
+family graphs, and `Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

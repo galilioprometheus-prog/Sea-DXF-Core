@@ -4,10 +4,12 @@ use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfEntityCommonHandleDirectory, DxfEntityCommonHandleSemantics,
     DxfEntityCommonReferenceIssue, DxfEntityCommonReferenceSemanticValue,
+    DxfEntityCommonReferenceTargetDirectory, DxfEntityCommonReferenceTargetIssue,
+    DxfEntityCommonReferenceTargetKind, DxfEntityCommonReferenceTargetSemantics,
     DxfEntityCommonReferenceValue, DxfEntityField, DxfEntityFieldSemanticIssue,
     DxfEntityFieldValue, DxfError, DxfHandle, DxfHandleParseIssue, DxfMemorySource,
-    DxfRawDocumentFormat, DxfReadOptions, DxfResourceProfile, DxfSemanticValue,
-    DxfSemanticValueState, NoopDxfReadObserver,
+    DxfRawDocumentFormat, DxfRawRecordSectionKind, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticValue, DxfSemanticValueState, NoopDxfReadObserver,
 };
 
 #[test]
@@ -141,6 +143,180 @@ fn cancellation_source_bound_lookups_and_public_bounds_fail_closed() -> Result<(
     let other_handles = other.entity_common_handle_directory(&token())?;
     assert!(matches!(
         handles.entries_for_entity(only_entity(&other_handles)?),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+    Ok(())
+}
+
+#[test]
+fn every_dialect_has_ascii_binary_reference_target_parity() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        let ascii_bytes = target_kind_fixture(DxfRawDocumentFormat::Ascii, version)?;
+        let ascii_source = DxfMemorySource::new(&ascii_bytes, DxfResourceProfile::Safe)?;
+        let ascii = open_ascii(&ascii_source)?;
+        let ascii_targets = ascii.entity_common_reference_target_directory(&token())?;
+
+        let binary_bytes = target_kind_fixture(DxfRawDocumentFormat::Binary, version)?;
+        let binary_source = DxfMemorySource::new(&binary_bytes, DxfResourceProfile::Safe)?;
+        let binary = open_binary(&binary_source)?;
+        let binary_targets = binary.entity_common_reference_target_directory(&token())?;
+
+        assert_valid_target_kinds(&ascii_targets, version)?;
+        assert_valid_target_kinds(&binary_targets, version)?;
+        assert_eq!(
+            target_signature(&ascii_targets)?,
+            target_signature(&binary_targets)?
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn unique_wrong_markers_and_sections_are_incompatible() -> Result<(), Box<dyn Error>> {
+    for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        let bytes = encode(format, DxfAcadVersion::Ac1032, &wrong_target_kind_groups())?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let directory = match format {
+            DxfRawDocumentFormat::Ascii => {
+                open_ascii(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            DxfRawDocumentFormat::Binary => {
+                open_binary(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            _ => return Err(io::Error::other("test format").into()),
+        };
+        let entity = target_entity(&directory)?;
+        for (field, expected) in [
+            (
+                DxfEntityField::EXTENSION_DICTIONARY,
+                DxfEntityCommonReferenceTargetKind::ExtensionDictionary,
+            ),
+            (
+                DxfEntityField::MATERIAL,
+                DxfEntityCommonReferenceTargetKind::Material,
+            ),
+            (
+                DxfEntityField::PLOT_STYLE,
+                DxfEntityCommonReferenceTargetKind::PlotStyle,
+            ),
+        ] {
+            let value = reviewed_target(&directory, entity, field)?;
+            assert!(matches!(
+                value.invalid_issue(),
+                Some(DxfEntityCommonReferenceTargetIssue::IncompatibleTarget {
+                    expected: observed,
+                    target,
+                }) if *observed == expected
+                    && target.record().section_kind() == DxfRawRecordSectionKind::Objects
+            ));
+            assert!(value.raw_provenance().is_some());
+        }
+
+        let bytes = encode(
+            format,
+            DxfAcadVersion::Ac1032,
+            &wrong_target_section_groups(),
+        )?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let directory = match format {
+            DxfRawDocumentFormat::Ascii => {
+                open_ascii(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            DxfRawDocumentFormat::Binary => {
+                open_binary(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            _ => return Err(io::Error::other("test format").into()),
+        };
+        let value = reviewed_target(
+            &directory,
+            target_entity(&directory)?,
+            DxfEntityField::EXTENSION_DICTIONARY,
+        )?;
+        assert!(matches!(
+            value.invalid_issue(),
+            Some(DxfEntityCommonReferenceTargetIssue::IncompatibleTarget { target, .. })
+                if target.record().section_kind() == DxfRawRecordSectionKind::Tables
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn source_resolution_failures_precede_target_kind_checks() -> Result<(), Box<dyn Error>> {
+    let groups = negative_target_groups();
+    for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        let bytes = encode(format, DxfAcadVersion::Ac1032, &groups)?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let directory = match format {
+            DxfRawDocumentFormat::Ascii => {
+                open_ascii(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            DxfRawDocumentFormat::Binary => {
+                open_binary(&source)?.entity_common_reference_target_directory(&token())?
+            }
+            _ => return Err(io::Error::other("test format").into()),
+        };
+        let entity = target_entity(&directory)?;
+        assert!(matches!(
+            reviewed_target(&directory, entity, DxfEntityField::EXTENSION_DICTIONARY)?
+                .invalid_issue(),
+            Some(DxfEntityCommonReferenceTargetIssue::Source(
+                DxfEntityCommonReferenceIssue::Missing
+            ))
+        ));
+        assert!(matches!(
+            reviewed_target(&directory, entity, DxfEntityField::MATERIAL)?.invalid_issue(),
+            Some(DxfEntityCommonReferenceTargetIssue::Source(
+                DxfEntityCommonReferenceIssue::Ambiguous { target_count: 2 }
+            ))
+        ));
+        assert!(matches!(
+            reviewed_target(&directory, entity, DxfEntityField::PLOT_STYLE)?.invalid_issue(),
+            Some(DxfEntityCommonReferenceTargetIssue::IncompatibleTarget { .. })
+        ));
+        assert!(matches!(
+            target_entry(&directory, entity, DxfEntityField::OWNER)?.semantics(),
+            DxfEntityCommonReferenceTargetSemantics::Unreviewed(DxfSemanticValue::Invalid {
+                issue: DxfEntityCommonReferenceIssue::Null,
+                ..
+            })
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn target_directory_cancellation_identity_and_bounds_fail_closed() -> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityCommonReferenceTargetDirectory>();
+    assert_copy::<seacad_dxf_core::DxfEntityCommonReferenceTargetEntry>();
+    assert_copy::<DxfEntityCommonReferenceTargetSemantics>();
+
+    let bytes = target_kind_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        document.entity_common_reference_target_directory(&cancelled),
+        Err(DxfError::Cancelled)
+    ));
+    let directory = document.entity_common_reference_target_directory(&token())?;
+    let entity = target_entity(&directory)?;
+    assert_eq!(directory.source_id(), document.source_id());
+    assert_eq!(directory.entries().len(), 4);
+    assert_eq!(directory.entries_for_entity(entity)?.len(), 4);
+    assert_eq!(directory.entry(u64::MAX), None);
+    assert_eq!(
+        directory.entry_for_field(entity, DxfEntityField::HANDLE)?,
+        None
+    );
+
+    let other_bytes = target_kind_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1027)?;
+    let other_source = DxfMemorySource::new(&other_bytes, DxfResourceProfile::Safe)?;
+    let other = open_ascii(&other_source)?;
+    let other_directory = other.entity_common_reference_target_directory(&token())?;
+    assert!(matches!(
+        directory.entries_for_entity(target_entity(&other_directory)?),
         Err(DxfError::SourceIdentityMismatch { .. })
     ));
     Ok(())
@@ -293,6 +469,146 @@ fn only_entity(
     Ok(*entity)
 }
 
+fn assert_valid_target_kinds(
+    directory: &DxfEntityCommonReferenceTargetDirectory,
+    version: DxfAcadVersion,
+) -> Result<(), Box<dyn Error>> {
+    assert_eq!(directory.entries().len(), 4);
+    let entity = target_entity(directory)?;
+    let owner = target_entry(directory, entity, DxfEntityField::OWNER)?;
+    assert_eq!(owner.expected_target_kind(), None);
+    assert!(matches!(
+        owner.semantics(),
+        DxfEntityCommonReferenceTargetSemantics::Unreviewed(_)
+    ));
+
+    if version == DxfAcadVersion::Ac1009 {
+        assert_eq!(
+            reviewed_target(directory, entity, DxfEntityField::EXTENSION_DICTIONARY)?.state(),
+            DxfSemanticValueState::Absent
+        );
+        let material = reviewed_target(directory, entity, DxfEntityField::MATERIAL)?;
+        assert_eq!(material.state(), DxfSemanticValueState::Defaulted);
+        assert_eq!(
+            material.value(),
+            Some(&DxfEntityCommonReferenceValue::ByLayer)
+        );
+        assert!(matches!(
+            reviewed_target(directory, entity, DxfEntityField::PLOT_STYLE)?.invalid_issue(),
+            Some(DxfEntityCommonReferenceTargetIssue::Source(
+                DxfEntityCommonReferenceIssue::Field(DxfEntityFieldSemanticIssue::MissingRequired)
+            ))
+        ));
+    } else {
+        for (field, kind, handle) in [
+            (
+                DxfEntityField::EXTENSION_DICTIONARY,
+                DxfEntityCommonReferenceTargetKind::ExtensionDictionary,
+                0x2f,
+            ),
+            (
+                DxfEntityField::MATERIAL,
+                DxfEntityCommonReferenceTargetKind::Material,
+                0x3f,
+            ),
+            (
+                DxfEntityField::PLOT_STYLE,
+                DxfEntityCommonReferenceTargetKind::PlotStyle,
+                0x4f,
+            ),
+        ] {
+            let entry = target_entry(directory, entity, field)?;
+            assert_eq!(entry.expected_target_kind(), Some(kind));
+            let value = reviewed_target(directory, entity, field)?;
+            assert_eq!(value.state(), DxfSemanticValueState::Explicit);
+            assert!(matches!(
+                value.value(),
+                Some(DxfEntityCommonReferenceValue::Resolved { target, .. })
+                    if target.handle().value() == handle
+            ));
+        }
+    }
+    Ok(())
+}
+
+type TargetSignature = Vec<(
+    DxfEntityField,
+    Option<DxfEntityCommonReferenceTargetKind>,
+    bool,
+    u8,
+    Option<u64>,
+)>;
+
+fn target_signature(
+    directory: &DxfEntityCommonReferenceTargetDirectory,
+) -> Result<TargetSignature, Box<dyn Error>> {
+    let mut result = Vec::new();
+    for entry in directory.entries().iter().copied() {
+        let (reviewed, state, target) = match entry.semantics() {
+            DxfEntityCommonReferenceTargetSemantics::Unreviewed(value) => {
+                (false, value.state(), resolved_target(value.value()))
+            }
+            DxfEntityCommonReferenceTargetSemantics::Reviewed(value) => {
+                (true, value.state(), resolved_target(value.value()))
+            }
+            _ => return Err(io::Error::other("unknown target semantics").into()),
+        };
+        result.push((
+            entry.field(),
+            entry.expected_target_kind(),
+            reviewed,
+            state as u8,
+            target,
+        ));
+    }
+    Ok(result)
+}
+
+fn resolved_target(value: Option<&DxfEntityCommonReferenceValue>) -> Option<u64> {
+    match value {
+        Some(DxfEntityCommonReferenceValue::Resolved { target, .. }) => {
+            Some(target.handle().value())
+        }
+        _ => None,
+    }
+}
+
+fn reviewed_target(
+    directory: &DxfEntityCommonReferenceTargetDirectory,
+    entity: seacad_dxf_core::DxfEntityRef,
+    field: DxfEntityField,
+) -> Result<seacad_dxf_core::DxfEntityCommonReferenceTargetSemanticValue, Box<dyn Error>> {
+    match target_entry(directory, entity, field)?.semantics() {
+        DxfEntityCommonReferenceTargetSemantics::Reviewed(value) => Ok(value),
+        _ => Err(io::Error::other("reviewed target semantics").into()),
+    }
+}
+
+fn target_entry(
+    directory: &DxfEntityCommonReferenceTargetDirectory,
+    entity: seacad_dxf_core::DxfEntityRef,
+    field: DxfEntityField,
+) -> Result<seacad_dxf_core::DxfEntityCommonReferenceTargetEntry, Box<dyn Error>> {
+    directory
+        .entry_for_field(entity, field)?
+        .ok_or_else(|| io::Error::other("common reference target entry").into())
+}
+
+fn target_entity(
+    directory: &DxfEntityCommonReferenceTargetDirectory,
+) -> Result<seacad_dxf_core::DxfEntityRef, Box<dyn Error>> {
+    let [entity] = directory
+        .source_directory()
+        .source_directory()
+        .evidence_directory()
+        .entity_directory()
+        .entities()
+    else {
+        return Err(io::Error::other("one target entity").into());
+    };
+    Ok(*entity)
+}
+
 #[derive(Clone, Copy)]
 enum Value<'a> {
     Text(&'a [u8]),
@@ -329,6 +645,94 @@ fn valid_fixture(
     }
     groups.extend([(0, Value::Text(b"ENDSEC")), (0, Value::Text(b"EOF"))]);
     encode(format, version, &groups)
+}
+
+fn target_kind_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut groups = header(version);
+    if version != DxfAcadVersion::Ac1009 {
+        groups.extend(target_records_with_markers(&[
+            (b"DICTIONARY", b"1F"),
+            (b"DICTIONARY", b"2F"),
+            (b"MATERIAL", b"3F"),
+            (b"ACDBPLACEHOLDER", b"4F"),
+        ]));
+    }
+    groups.extend([
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"ENTITIES")),
+        (0, Value::Text(b"LINE")),
+        (5, Value::Text(b"10")),
+    ]);
+    if version != DxfAcadVersion::Ac1009 {
+        groups.extend([
+            (330, Value::Text(b"1F")),
+            (102, Value::Text(b"{ACAD_XDICTIONARY")),
+            (360, Value::Text(b"2F")),
+            (102, Value::Text(b"}")),
+            (100, Value::Text(b"AcDbEntity")),
+            (390, Value::Text(b"4F")),
+            (347, Value::Text(b"3F")),
+            (8, Value::Text(b"SECRET")),
+            (100, Value::Text(b"AcDbLine")),
+        ]);
+    } else {
+        groups.push((8, Value::Text(b"SECRET")));
+    }
+    groups.extend([(0, Value::Text(b"ENDSEC")), (0, Value::Text(b"EOF"))]);
+    encode(format, version, &groups)
+}
+
+fn wrong_target_kind_groups() -> Vec<(i16, Value<'static>)> {
+    let mut groups = header(DxfAcadVersion::Ac1032);
+    groups.extend(target_records_with_markers(&[
+        (b"DICTIONARY", b"1F"),
+        (b"XRECORD", b"2F"),
+        (b"DICTIONARY", b"3F"),
+        (b"MATERIAL", b"4F"),
+    ]));
+    groups.extend(reference_entity_groups());
+    groups
+}
+
+fn wrong_target_section_groups() -> Vec<(i16, Value<'static>)> {
+    let mut groups = header(DxfAcadVersion::Ac1032);
+    groups.extend([
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"TABLES")),
+        (0, Value::Text(b"DICTIONARY")),
+        (5, Value::Text(b"2F")),
+        (0, Value::Text(b"ENDSEC")),
+    ]);
+    groups.extend(target_records_with_markers(&[
+        (b"DICTIONARY", b"1F"),
+        (b"MATERIAL", b"3F"),
+        (b"ACDBPLACEHOLDER", b"4F"),
+    ]));
+    groups.extend(reference_entity_groups());
+    groups
+}
+
+fn reference_entity_groups() -> [(i16, Value<'static>); 15] {
+    [
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"ENTITIES")),
+        (0, Value::Text(b"LINE")),
+        (5, Value::Text(b"10")),
+        (330, Value::Text(b"1F")),
+        (102, Value::Text(b"{ACAD_XDICTIONARY")),
+        (360, Value::Text(b"2F")),
+        (102, Value::Text(b"}")),
+        (100, Value::Text(b"AcDbEntity")),
+        (390, Value::Text(b"4F")),
+        (347, Value::Text(b"3F")),
+        (8, Value::Text(b"SECRET")),
+        (100, Value::Text(b"AcDbLine")),
+        (0, Value::Text(b"ENDSEC")),
+        (0, Value::Text(b"EOF")),
+    ]
 }
 
 fn negative_target_groups() -> Vec<(i16, Value<'static>)> {
@@ -388,6 +792,17 @@ fn target_records(handles: &[&'static [u8]]) -> Vec<(i16, Value<'static>)> {
     let mut groups = vec![(0, Value::Text(b"SECTION")), (2, Value::Text(b"OBJECTS"))];
     for handle in handles {
         groups.extend([(0, Value::Text(b"DICTIONARY")), (5, Value::Text(handle))]);
+    }
+    groups.push((0, Value::Text(b"ENDSEC")));
+    groups
+}
+
+fn target_records_with_markers(
+    records: &[(&'static [u8], &'static [u8])],
+) -> Vec<(i16, Value<'static>)> {
+    let mut groups = vec![(0, Value::Text(b"SECTION")), (2, Value::Text(b"OBJECTS"))];
+    for (marker, handle) in records {
+        groups.extend([(0, Value::Text(marker)), (5, Value::Text(handle))]);
     }
     groups.push((0, Value::Text(b"ENDSEC")));
     groups

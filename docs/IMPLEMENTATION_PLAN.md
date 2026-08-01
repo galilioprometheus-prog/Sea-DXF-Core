@@ -2150,6 +2150,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     retains absence and rejects inexpressible insertion through the existing
     wire gate. This checkpoint does not resolve layer/block effective alpha,
     map UI percentage rounding, render transparency, or claim applicability.
+    M14.3an composes the common-handle projection with exact target-record
+    classification for the three references whose public target kinds are
+    reviewed. Extension dictionary group 360 requires an `OBJECTS`/`DICTIONARY`
+    record, material group 347 requires `OBJECTS`/`MATERIAL`, and plot-style
+    group 390 requires `OBJECTS`/`ACDBPLACEHOLDER`. A uniquely resolved handle
+    with another exact marker or section becomes a typed incompatible-target
+    state; null, missing, ambiguous, raw-field, absent, and generated-default
+    states retain their existing precedence and provenance. Owner group 330
+    remains explicitly unreviewed because its valid target kind depends on
+    entity family and placement. ASCII/Binary fixtures cover all nine dialects,
+    wrong marker, wrong section, resolution failures, cancellation, source
+    identity, and bounds. This checkpoint does not validate authoritative
+    ownership, dictionary membership, lifecycle or reference-safe edits,
+    applicability, family graphs, or `Complete` support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

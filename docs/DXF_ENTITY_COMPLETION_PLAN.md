@@ -696,6 +696,19 @@ the existing wrong-dialect edit rejection. Effective inherited transparency,
 UI percentage conversion, rendering, applicability, family CRUD, and
 `Complete` support remain later work.
 
+M14.3an validates the public target kind of the three reviewed common object
+references after document-local handle resolution. Extension dictionary 360
+requires an exact `OBJECTS`/`DICTIONARY` target, material 347 requires
+`OBJECTS`/`MATERIAL`, and plot style 390 requires
+`OBJECTS`/`ACDBPLACEHOLDER`. Wrong-section and wrong-marker unique targets are
+typed incompatibilities; earlier null, missing, ambiguous, raw-field, absent,
+and default outcomes remain intact. Owner 330 remains explicitly unreviewed
+because entity family and placement determine its valid kind. Paired
+ASCII/Binary fixtures span all nine dialects plus cancellation, source
+identity, and bounds. Ownership topology, dictionary membership, lifecycle,
+reference-safe CRUD, applicability, family graphs, and `Complete` support
+remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
