@@ -469,6 +469,16 @@ remain typed without selecting evidence. Rational/planar/linear relations,
 zero-normal policy, spline invariants, NURBS data, HELIX, CRUD, writer, and
 support completion remain unclaimed.
 
+M14.3o adds `DxfSplineRelationDirectory`. It composes group-70 evidence with
+effective weights and normals without selecting duplicate or invalid flags.
+The documented linear-plus-planar requirement is explicit; rational state is
+paired with implicit or explicit weights plus count/domain issue totals but is
+not treated as an undocumented validity equivalence. Planar normals are
+missing, explicit (including exact zero), or unavailable, while a nonplanar
+normal remains a typed unexpected observation. Point semantics,
+degree/knot/periodic invariants, NURBS data, HELIX, CRUD, writer, and support
+completion remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

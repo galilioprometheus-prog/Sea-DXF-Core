@@ -167,6 +167,7 @@ mod spline_card;
 mod spline_count_relation;
 mod spline_evidence;
 mod spline_point_tuple;
+mod spline_relation;
 mod spline_scalar_semantic;
 mod text_control;
 mod text_decoder;
@@ -793,6 +794,10 @@ pub use spline_point_tuple::{
     DxfSplinePointComponentCounts, DxfSplinePointComponents, DxfSplinePointKind,
     DxfSplinePointTuple, DxfSplinePointTupleDirectory, DxfSplinePointTupleEntry,
     DxfSplinePointTupleRange, DxfSplinePointTupleState,
+};
+pub use spline_relation::{
+    DxfSplineLinearPlanarRelation, DxfSplinePlanarNormalRelation, DxfSplineRationalWeightRelation,
+    DxfSplineRelationDirectory, DxfSplineRelationEntry,
 };
 pub use spline_scalar_semantic::{
     DXF_SPLINE_SCALAR_ROLES, DxfSplineScalarDirectory, DxfSplineScalarEntry, DxfSplineScalarState,

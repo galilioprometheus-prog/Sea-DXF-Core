@@ -1821,6 +1821,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     bounds are covered. Rational/planar/linear relations, zero-normal policy,
     point semantics, degree/knot invariants, analytic NURBS data, HELIX, CRUD,
     writes, and support advancement remain unclaimed.
+    M14.3o composes the exact group-70 state with M14.3n weights and normal.
+    Linear-plus-planar is a typed satisfied or contradictory relation per the
+    Autodesk flag definition. Rational and non-rational flags are paired with
+    implicit-unit, explicit-matched, or explicit-count-mismatched weights and
+    retain invalid/nonpositive member totals without imposing an undocumented
+    equivalence. Planar normals are missing, explicit with an exact-zero
+    observation, or unavailable; nonplanar normals remain typed unexpected
+    observations because Autodesk says they are omitted. Missing, duplicate,
+    and invalid flags fail all dependent projections closed. Nine-dialect
+    ASCII/Binary parity, relation edges, cancellation, lookup, and bounds are
+    covered. Point semantics, degree/knot/periodic invariants, analytic NURBS
+    data, HELIX, CRUD, writes, and support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -398,6 +398,16 @@ unavailable state. Flag relations, zero-normal validation, control/fit point
 semantics, degree/knot invariants, NURBS geometry, HELIX, CRUD, and writes
 remain later checkpoints.
 
+M14.3o adds one typed flag/auxiliary relation entry per SPLINE. It identifies
+Autodesk's required linear-plus-planar combination, records rational versus
+implicit/explicit weight form with count and numeric-domain issue totals, and
+classifies the planar normal as missing, explicit, exact-zero, or unavailable.
+A normal on a nonplanar spline remains an unexpected source observation rather
+than being discarded. Missing, duplicate, or invalid flags make all dependent
+relations unavailable without selecting a value. Point semantics,
+degree/knot/periodic invariants, NURBS geometry, HELIX, CRUD, and writes remain
+later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
