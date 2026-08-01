@@ -1916,6 +1916,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     parameter relationships, embedded SPLINE composition, analytic geometry,
     CRUD, writes, applicability advancement, and support completion remain
     unclaimed.
+    M14.3v composes HELIX scalar and WCS-vector semantics into one relation
+    entry per retained record. A complete nonzero axis is normalized, the
+    start-minus-axis-base radial vector yields a derived base radius, and an
+    exact orthogonality residual reports whether the documented perpendicular
+    relation is bit-exact without inventing a tolerance. Zero axes and every
+    non-finite derived stage remain typed. The stored radius is classified as
+    negative or nonnegative, turns as nonpositive, within the documented
+    command limit of 500, or above it, and axial height is derived as turns
+    times turn height with explicit overflow and flat-height states. Autodesk
+    permits height zero, so the legacy oracle's zero-turn-height rejection is
+    not imported. Nine-dialect ASCII/Binary parity, unavailable inputs,
+    residual/domain/overflow cases, cancellation, lookup, source identity,
+    and bounds are covered. The group-40 radius is not relabeled as top or
+    base radius beyond Autodesk's DXF wording. Embedded SPLINE composition,
+    analytic HELIX geometry, CRUD, writes, applicability advancement, and
+    support completion remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3u. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3v. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -52,6 +52,10 @@ fail closed, and undocumented positivity/default policies are not inferred.
 HELIX axis base, start point, and axis vector now expose three exact WCS
 component semantics each. A tuple is available only when all three components
 are usable; missing Y/Z is not silently defaulted.
+HELIX relation semantics now normalize a usable nonzero axis, retain the exact
+orthogonality residual, derive the base radius from axis-base/start geometry,
+classify the stored radius and turns domains, and derive axial height from
+turns and turn height. Zero-height flat helices remain observable.
 Budget-aware development runs required quality/dependency gates locally and
 does not allocate hosted runners for pushes or pull requests. GitHub Actions
 retains a manual Windows x64 self-hosted diagnostic and the manual six-native

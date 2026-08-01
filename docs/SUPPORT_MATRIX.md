@@ -547,6 +547,17 @@ Nine-dialect ASCII/Binary parity does not advance applicability or support.
 Axis/parameter relations, embedded SPLINE composition, analytic geometry,
 CRUD, writer support, and `Complete` status remain unclaimed.
 
+M14.3v adds `DxfHelixRelationDirectory` with one composed relation entry per
+HELIX. Complete nonzero axes expose a normalized direction, derived radial
+vector/base radius, and exact orthogonality residual; zero axes and non-finite
+derived arithmetic remain typed. The stored radius is classified without
+relabeling group 40, turns are compared with zero and Autodesk's 500-turn
+command limit, and axial height is derived from turns times turn height with a
+distinct flat state. Nine-dialect ASCII/Binary parity does not establish
+HELIX applicability in older versions or advance support. Embedded SPLINE
+composition, analytic geometry, CRUD, writer support, and `Complete` status
+remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

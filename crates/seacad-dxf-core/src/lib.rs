@@ -77,6 +77,7 @@ mod header_text;
 mod header_view;
 mod helix_card;
 mod helix_evidence;
+mod helix_relation;
 mod helix_scalar_semantic;
 mod helix_vector_semantic;
 mod infinite_line_geometry;
@@ -452,6 +453,11 @@ pub use helix_card::{
 pub use helix_evidence::{
     DXF_HELIX_ROLES, DxfHelixDirectory, DxfHelixNumber, DxfHelixNumericIssue, DxfHelixRecordEntry,
     DxfHelixValue, DxfHelixValueRange, DxfHelixValueRole,
+};
+pub use helix_relation::{
+    DXF_HELIX_MAX_COMMAND_TURNS, DxfHelixAxisDerivationStage, DxfHelixAxisRelation,
+    DxfHelixHeightRelation, DxfHelixRadiusDomain, DxfHelixRelationDirectory, DxfHelixRelationEntry,
+    DxfHelixTurnsDomain,
 };
 pub use helix_scalar_semantic::{
     DXF_HELIX_SCALAR_ROLES, DxfHelixConstraintType, DxfHelixHandedness, DxfHelixScalarDirectory,

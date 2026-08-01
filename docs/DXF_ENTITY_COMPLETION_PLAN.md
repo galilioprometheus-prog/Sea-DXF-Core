@@ -479,6 +479,20 @@ cancellation, lookup, and public bounds are covered. Typed field semantics,
 coordinate grouping, parameter relations, embedded SPLINE composition,
 geometry, CRUD, and writes remain later HELIX checkpoints.
 
+M14.3v adds one typed relation entry per HELIX by composing the existing scalar
+and WCS-vector projections. Usable nonzero axes are normalized; the
+start-minus-axis-base vector supplies a derived base radius and exact
+orthogonality residual. No tolerance is invented. Stored radius and turns
+receive observational domain states, including Autodesk's 500-turn command
+limit, while axial height is derived as turns times turn height with explicit
+non-finite and flat-height states. Height zero is retained because Autodesk
+documents flat 2D helices; the legacy zero-turn-height rejection is not
+adopted. Nine-dialect ASCII/Binary parity, missing/invalid input, zero axes,
+non-perpendicular vectors, negative radius, nonpositive/over-limit turns,
+derived overflow, cancellation, lookup, and bounds are covered. Embedded
+SPLINE composition, analytic HELIX geometry, CRUD, and writes remain later
+checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
