@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3q1. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3q2. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -34,6 +34,11 @@ roles with wire type, cardinality, default, subclass/application scope,
 coordinate-space classification, version-review state, and provenance.
 A generic common-field evidence directory retains exact source occurrences and
 fixed per-entity cardinality cards without decoding or selecting duplicates.
+SPLINE now exposes an analytic-readiness projection that composes exact knots,
+weighted WCS control/fit points, degree, declared counts, knot order and
+multiplicity, active parameter domain, flags, optional tangents, and planar
+normal requirements. Failures accumulate as typed issues and never publish a
+partial curve; evaluation and tessellation remain out of scope.
 Budget-aware development runs required quality/dependency gates locally and
 does not allocate hosted runners for pushes or pull requests. GitHub Actions
 retains a manual Windows x64 self-hosted diagnostic and the manual six-native

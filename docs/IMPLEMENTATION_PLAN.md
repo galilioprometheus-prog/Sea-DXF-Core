@@ -1854,6 +1854,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     invalid/partial values, cancellation, lookup, and bounds are covered. Full
     topology/count/multiplicity/parameter-domain and vector readiness remains
     M14.3q2; HELIX, CRUD, writes, and support advancement remain unclaimed.
+    M14.3q2 adds the final source-backed SPLINE analytic-readiness projection.
+    It composes q1 value ranges with unique valid flags and degree, matched
+    declared knot/control counts, an absent-or-matched fit count, nondecreasing
+    knots, degree/control and NURBS count relations, bounded knot multiplicity,
+    a positive active parameter interval, usable optional tangents, and the
+    documented planar-normal relation. Every failed prerequisite accumulates
+    in a typed issue mask and no partial analytic data is published. The
+    closed/periodic combination remains observational. Nine-dialect
+    ASCII/Binary parity, multi-issue failures, cancellation, lookup, and public
+    bounds are covered. Evaluation, tessellation, HELIX, CRUD, writes, and
+    support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -427,6 +427,15 @@ failures accumulate in one typed mask and publish no partial ranges. Full
 degree/count/order/multiplicity/domain and vector readiness composition remains
 M14.3q2; HELIX, CRUD, and writes remain later checkpoints.
 
+M14.3q2 composes the SPLINE value, topology, relation, and declared-count
+directories into one analytic-readiness entry. A curve is available only when
+degree and flags are unique and valid, declared knot/control counts match,
+optional fit count is absent only for an empty fit sequence, knot order and the
+NURBS count equation hold, multiplicity does not exceed degree plus one, and
+the active knot domain is positive. Malformed optional tangents and invalid
+planar-normal relations fail closed. Closed/periodic flags remain observations;
+no evaluator, tessellator, HELIX support, CRUD, or write claim is added.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

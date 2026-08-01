@@ -497,6 +497,17 @@ Omitted Z uses a behavioral zero default and remains distinguishable. Full
 topology/count/multiplicity/domain and vector readiness remains M14.3q2;
 HELIX, CRUD, writer, and support completion remain unclaimed.
 
+M14.3q2 adds `DxfSplineAnalyticDirectory`, the fail-closed composition of the
+existing value, topology, count, flag-relation, and vector-semantic layers.
+Available entries expose exact compact value ranges, flags, degree, optional
+vectors, and the active knot interval. Typed issues cover missing or ambiguous
+prerequisites, declared-count mismatch, topology contradictions, excessive
+knot multiplicity, a nonpositive active domain, malformed optional tangents,
+and invalid planar-normal relations. Closed/periodic bits are retained without
+normalization. Nine-dialect ASCII/Binary parity and malformed/cancellation
+coverage do not advance SPLINE to `Complete`; evaluation, tessellation, HELIX,
+CRUD, and writer support remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative
