@@ -72,8 +72,10 @@ impl DxfSplineVectorComponents {
     const Z: u8 = 4;
     const COMPLETE: u8 = Self::X | Self::Y | Self::Z;
 
-    const fn from_bits(bits: u8) -> Self {
-        Self { bits }
+    pub(crate) const fn from_bits(bits: u8) -> Self {
+        Self {
+            bits: bits & Self::COMPLETE,
+        }
     }
 
     #[must_use]

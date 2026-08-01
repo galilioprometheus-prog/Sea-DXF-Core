@@ -459,6 +459,16 @@ not validate weight/vector domains, derive effective vectors, evaluate spline
 invariants, construct NURBS data, process HELIX, edit, write, or advance
 entity support.
 
+M14.3n adds `DxfSplineAuxiliarySemanticDirectory`. It retains implicit unit
+weights, explicit matched and mismatched sequences, invalid numeric evidence,
+and a visibly behavioral nonpositive classification. Start/end tangent and
+normal vectors become absent, effective, or unavailable: only a unique valid
+X permits a value, omitted Y/Z components default to zero, and explicit
+component provenance stays in a mask. Duplicate, invalid, and missing-X masks
+remain typed without selecting evidence. Rational/planar/linear relations,
+zero-normal policy, spline invariants, NURBS data, HELIX, CRUD, writer, and
+support completion remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

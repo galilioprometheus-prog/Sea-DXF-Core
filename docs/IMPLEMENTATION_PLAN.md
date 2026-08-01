@@ -1808,6 +1808,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     partial/duplicate/invalid evidence, cancellation, and public bounds are
     covered. Vector defaults/domains, spline invariants, analytic NURBS data,
     HELIX, CRUD, writes, and support advancement remain unclaimed.
+    M14.3n projects M14.3m evidence into typed effective weight and vector
+    values. Missing group-41 sequences retain an implicit unit-weight state;
+    explicit matched, count-mismatched, valid, invalid-numeric, and
+    behavioral nonpositive weight states remain distinct with exact evidence.
+    A wholly absent tangent/normal stays absent. Otherwise unique valid X is
+    required, optional Y/Z components default to zero, and the effective vector
+    records which components were explicit. Duplicate components, invalid
+    numerics, or missing X produce one unavailable state with independent
+    component masks and no occurrence selection. Nine-dialect ASCII/Binary
+    parity, defaults, mismatch/domain evidence, cancellation, and metadata
+    bounds are covered. Rational/planar/linear relations, zero-normal policy,
+    point semantics, degree/knot invariants, analytic NURBS data, HELIX, CRUD,
+    writes, and support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

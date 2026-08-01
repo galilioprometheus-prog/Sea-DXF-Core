@@ -162,6 +162,7 @@ mod source_id;
 mod source_scan;
 mod source_span;
 mod spline_auxiliary;
+mod spline_auxiliary_semantic;
 mod spline_card;
 mod spline_count_relation;
 mod spline_evidence;
@@ -770,6 +771,11 @@ pub use spline_auxiliary::{
     DxfSplineAuxiliaryDirectory, DxfSplineVectorComponentState, DxfSplineVectorComponents,
     DxfSplineVectorEntry, DxfSplineVectorKind, DxfSplineVectorState,
     DxfSplineWeightCountDisposition, DxfSplineWeightEntry, DxfSplineWeightState,
+};
+pub use spline_auxiliary_semantic::{
+    DxfSplineAuxiliarySemanticDirectory, DxfSplineEffectiveVector, DxfSplineVectorSemanticEntry,
+    DxfSplineVectorSemanticIssue, DxfSplineVectorSemanticState, DxfSplineWeightSemanticEntry,
+    DxfSplineWeightSemanticState, DxfSplineWeightValueRange, DxfSplineWeightValueState,
 };
 pub use spline_card::{
     DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,

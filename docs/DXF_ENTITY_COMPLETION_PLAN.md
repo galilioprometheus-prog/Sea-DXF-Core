@@ -388,6 +388,16 @@ are ignored without changing raw bytes. Numeric domain validation, effective
 vector defaults, invariants, NURBS geometry, HELIX, CRUD, and writes remain
 later checkpoints.
 
+M14.3n adds typed effective values over that auxiliary evidence. Implicit unit
+weights, explicit matched sequences, count mismatches, invalid numbers, and
+behaviorally nonpositive weights remain distinct. Optional vectors are absent
+as a whole or require one unique valid X component; unique missing Y/Z values
+default to zero while retaining an explicit-component mask. Duplicate,
+invalid, and missing-X component issues remain independently visible in one
+unavailable state. Flag relations, zero-normal validation, control/fit point
+semantics, degree/knot invariants, NURBS geometry, HELIX, CRUD, and writes
+remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
