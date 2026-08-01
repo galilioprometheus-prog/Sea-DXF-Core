@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3y. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3z. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -44,6 +44,11 @@ canonical ASCII groups or dialect-correct Binary groups for exact raw text,
 handles, finite binary64, Int16, Int32, and bounded opaque chunks; invalid
 wire/value combinations and AC1009-inexpressible group codes fail typed before
 any document edit is planned.
+Source-bound entity keys now drive explicit replacement planning for an
+existing unique common-field singleton. The planner replaces exactly one raw
+group through the immutable transaction/inverse kernel; absent fields require
+a later insertion-anchor operation, duplicates are never selected, and opaque
+sequences require specialized edits.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

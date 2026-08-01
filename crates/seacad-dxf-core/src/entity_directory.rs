@@ -39,6 +39,32 @@ pub enum DxfEntityClassification {
     WrongSection(DxfEntityKnownClassification),
 }
 
+/// Stable source-bound identity for one indexed entity record.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityKey {
+    source_id: DxfSourceId,
+    raw_record_ordinal: u64,
+}
+
+impl DxfEntityKey {
+    const fn from_entity(entity: DxfEntityRef) -> Self {
+        Self {
+            source_id: entity.source_id(),
+            raw_record_ordinal: entity.record().ordinal(),
+        }
+    }
+
+    #[must_use]
+    pub const fn source_id(self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn raw_record_ordinal(self) -> u64 {
+        self.raw_record_ordinal
+    }
+}
+
 impl DxfEntityClassification {
     #[must_use]
     pub fn topic(self) -> Option<DxfEntityTopic> {
@@ -118,6 +144,10 @@ pub struct DxfEntityRef {
 }
 
 impl DxfEntityRef {
+    pub const fn key(self) -> DxfEntityKey {
+        DxfEntityKey::from_entity(self)
+    }
+
     #[must_use]
     pub const fn source_id(self) -> DxfSourceId {
         self.source_id
@@ -277,6 +307,16 @@ impl DxfEntityDirectory {
             .binary_search_by_key(&raw_record_ordinal, |entity| entity.record().ordinal())
             .ok()
             .and_then(|index| self.entities.get(index).copied())
+    }
+
+    pub fn entity_for_key(&self, key: DxfEntityKey) -> Result<Option<DxfEntityRef>, DxfError> {
+        if key.source_id() != self.source_id {
+            return Err(DxfError::SourceIdentityMismatch {
+                expected: self.source_id,
+                observed: key.source_id(),
+            });
+        }
+        Ok(self.entity_for_raw_ordinal(key.raw_record_ordinal()))
     }
 
     #[must_use]

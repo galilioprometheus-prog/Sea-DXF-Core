@@ -1978,6 +1978,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     This checkpoint does not transcode Unicode into legacy code pages, create
     sequence operations, choose insertion anchors, allocate handles/owners,
     edit a source, build a transaction plan, or claim CRUD/writer completion.
+    M14.3z introduces source-bound `DxfEntityKey` values and composes M14.3k
+    cards, M14.3y encoding, and the existing M11 transaction/inverse kernel for
+    one explicit common-field replacement. Only an existing `Unique`
+    non-sequence card is eligible. Missing required/optional fields remain
+    typed and require future canonical insertion anchors; duplicate singletons
+    fail without occurrence selection; group-310 cards always require a
+    sequence operation; wrong-section entities, unavailable dialects, and
+    encoder failures remain typed. One exact raw group span is replaced and
+    every other source byte remains outside the plan. Nine-dialect paired
+    ASCII/Binary outputs strictly reparse, expose the new field semantic, and
+    produce executable inverse plans that restore byte-identical input. This
+    checkpoint does not insert/reset fields, validate property domains or
+    references, combine patches in an edit session, write a destination, or
+    claim complete entity update/CRUD support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

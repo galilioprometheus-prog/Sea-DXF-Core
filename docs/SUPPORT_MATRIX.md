@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3y can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3z can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -596,6 +596,20 @@ AC1009 fail closed. All nine dialects strictly reparse paired ASCII/Binary
 fixtures. This does not transcode Unicode, concatenate group-310 sequences,
 insert/update entities, assign handles or owners, build transactions, mutate a
 source, advance applicability, or establish CRUD/writer/`Complete` support.
+
+M14.3z adds `DxfEntityKey` and
+`DxfEntityFieldReplacementPlan`. A source-bound key plus one generated common
+field may replace exactly one existing unique singleton. The plan composes the
+generic field card, M14.3y encoder, and M11 raw transaction/inverse machinery;
+its only patch covers the original group's exact full span. Missing fields,
+duplicate singletons, group-310 sequences, wrong-section records, unavailable
+dialects, encoder failures, source mismatches, and cancellation fail closed.
+For AC1009 through AC1032, paired ASCII/Binary post-images strictly reparse,
+publish the requested typed field value, and materialize an inverse that
+restores byte-identical source. This does not insert or reset fields, validate
+property domains/references, batch patches in `DxfEntityEditSession`, write a
+destination, advance applicability, or establish full update/CRUD/`Complete`
+support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

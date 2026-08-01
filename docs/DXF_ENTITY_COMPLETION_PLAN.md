@@ -528,6 +528,18 @@ codes fail closed. Strict nine-dialect reparse proves emitted framing, but no
 Unicode transcoding, insertion/update operation, sequence replacement, handle
 or owner assignment, transaction plan, source mutation, or CRUD claim is made.
 
+M14.3z adds stable source-bound entity keys and the first common-field update
+plan. A caller may explicitly replace one already-present unique singleton;
+the planner resolves the exact M14.3k occurrence, encodes its new value through
+M14.3y, and returns one immutable M11 transaction plan with inverse evidence.
+Absent fields are not silently inserted, duplicate singletons are never
+selected, proxy-graphics sequences require a specialized operation, and
+wrong-section/source/dialect/value failures stay typed. Strict ASCII/Binary
+reparse across all nine dialects plus byte-identical inverse restoration prove
+the replacement boundary. Canonical insertion anchors, reset-to-default,
+multi-patch edit sessions, domain/reference validation, verified destination
+writes, and full update/CRUD support remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
