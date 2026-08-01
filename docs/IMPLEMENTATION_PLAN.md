@@ -1903,6 +1903,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and bounds are covered. HELIX WCS tuple semantics, axis and parameter
     relationships, embedded SPLINE composition, geometry, CRUD, writes,
     applicability advancement, and support completion remain unclaimed.
+    M14.3u adds three WCS vector semantic entries per HELIX: axis base, start
+    point, and axis vector. Nine component values use the platform semantic
+    contract with exact raw and field provenance. Fully usable triples are
+    published without coordinate transformation; absent, duplicate, invalid
+    ASCII, and Binary non-finite components remain distinct and suppress the
+    tuple. No Y/Z default is inferred from the Autodesk HELIX table. A
+    fully explicit zero axis remains observable rather than being rejected in
+    this component milestone. Nine-dialect ASCII/Binary parity, deliberately
+    out-of-order groups, partial/duplicate/invalid/non-finite cases,
+    cancellation, lookup, provenance, and bounds are covered. HELIX axis and
+    parameter relationships, embedded SPLINE composition, analytic geometry,
+    CRUD, writes, applicability advancement, and support completion remain
+    unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -446,6 +446,17 @@ or excluded from the typed projection without changing raw data. Cardinality,
 defaults, domain/relationship validation, embedded SPLINE composition,
 geometry, CRUD, and writes remain later HELIX checkpoints.
 
+M14.3u projects axis base, start point, and axis vector as three stable WCS
+semantic entries per HELIX. Each X/Y/Z component uses the common provenance
+model and remains explicit, absent, or typed invalid for duplicate, invalid
+ASCII, or non-finite Binary evidence. A vector value is published only when
+all three components are usable; no undocumented Y/Z zero default is applied.
+Zero axis vectors remain exact observations for the later relationship/domain
+validator. Nine-dialect ASCII/Binary parity, out-of-order components,
+partial/duplicate/invalid/non-finite fixtures, cancellation, lookup, and bounds
+are covered. Axis/parameter relations, embedded SPLINE composition, analytic
+HELIX geometry, CRUD, and writes remain later checkpoints.
+
 M14.3t projects seven HELIX scalar roles through the shared
 `DxfSemanticValue<T, I>` contract. Major/maintenance versions remain exact
 Int32 values; finite radius, turns, and turn height remain exact doubles;

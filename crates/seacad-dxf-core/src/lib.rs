@@ -78,6 +78,7 @@ mod header_view;
 mod helix_card;
 mod helix_evidence;
 mod helix_scalar_semantic;
+mod helix_vector_semantic;
 mod infinite_line_geometry;
 mod infinite_line_geometry_card;
 mod infinite_line_geometry_semantic;
@@ -455,6 +456,10 @@ pub use helix_evidence::{
 pub use helix_scalar_semantic::{
     DXF_HELIX_SCALAR_ROLES, DxfHelixConstraintType, DxfHelixHandedness, DxfHelixScalarDirectory,
     DxfHelixScalarEntry, DxfHelixScalarIssue, DxfHelixScalarSemanticValue, DxfHelixScalarValue,
+};
+pub use helix_vector_semantic::{
+    DXF_HELIX_VECTOR_KINDS, DxfHelixCoordinateIssue, DxfHelixCoordinateSemanticValue,
+    DxfHelixVectorDirectory, DxfHelixVectorKind, DxfHelixVectorSemantics,
 };
 pub use infinite_line_geometry::{
     DxfInfiniteLineGeometryDirectory, DxfInfiniteLineGeometryKind,

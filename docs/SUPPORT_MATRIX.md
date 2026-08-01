@@ -538,6 +538,15 @@ parity does not advance applicability or support. WCS tuples, axis/parameter
 relations, embedded SPLINE composition, geometry, CRUD, writer support, and
 `Complete` status remain unclaimed.
 
+M14.3u adds `DxfHelixVectorDirectory`. Axis base, start point, and axis vector
+each expose three WCS `DxfSemanticValue` components with exact provenance.
+Complete finite triples are available as exact values; absence, duplicates,
+invalid ASCII, or Binary non-finite evidence suppresses the triple without
+inventing coordinates. No Y/Z default or zero-axis validity claim is made.
+Nine-dialect ASCII/Binary parity does not advance applicability or support.
+Axis/parameter relations, embedded SPLINE composition, analytic geometry,
+CRUD, writer support, and `Complete` status remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative
