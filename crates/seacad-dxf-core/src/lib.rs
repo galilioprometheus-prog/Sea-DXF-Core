@@ -75,6 +75,7 @@ mod header_scalar;
 mod header_schema_directory;
 mod header_text;
 mod header_view;
+mod helix_card;
 mod helix_evidence;
 mod infinite_line_geometry;
 mod infinite_line_geometry_card;
@@ -441,6 +442,10 @@ pub use header_text::{
 };
 pub use header_view::{
     DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
+};
+pub use helix_card::{
+    DxfHelixCardDirectory, DxfHelixCardMember, DxfHelixCardMemberRange, DxfHelixCardState,
+    DxfHelixValueCard,
 };
 pub use helix_evidence::{
     DXF_HELIX_ROLES, DxfHelixDirectory, DxfHelixNumber, DxfHelixNumericIssue, DxfHelixRecordEntry,

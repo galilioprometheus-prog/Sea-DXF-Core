@@ -519,6 +519,15 @@ Nine-dialect ASCII/Binary evidence parity does not claim HELIX applicability
 in older dialects. Cardinality, semantics, embedded SPLINE composition,
 geometry, CRUD, writer support, and `Complete` status remain unclaimed.
 
+M14.3s adds `DxfHelixCardDirectory`. Each indexed HELIX record receives the
+same 16 source-role cards in registry order, with absent, unique, or multiple
+cardinality and exact source-ordered member references. Numeric validity does
+not alter occurrence cardinality, and duplicate singleton evidence is never
+selected. Nine-dialect ASCII/Binary parity includes out-of-order fields and
+the AC1009 group-code boundary. This does not establish required/default
+semantics, version applicability, coordinate or parameter validity, embedded
+SPLINE composition, geometry, CRUD, writer support, or `Complete` status.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

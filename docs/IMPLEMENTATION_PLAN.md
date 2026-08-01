@@ -1878,6 +1878,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     lookup, and bounds are covered. HELIX cardinality, semantics, embedded
     SPLINE composition, geometry, CRUD, writes, applicability advancement, and
     support completion remain unclaimed.
+    M14.3s adds 16 fixed cardinality cards per indexed HELIX record. Every card
+    retains a compact source-order member range into M14.3r evidence and is
+    classified as absent, unique, or multiple; invalid numeric syntax remains
+    a present occurrence. Capacity arithmetic is checked, allocations are
+    fallible, source identity is verified, and cancellation is checked before
+    and during card construction. No duplicate singleton is selected and no
+    required/optional or default policy is inferred from the Autodesk table.
+    Nine-dialect ASCII/Binary parity, deliberately out-of-order fields, empty
+    and duplicate records, invalid members, cancellation, lookup, and bounds
+    are covered. HELIX typed semantics, point/vector grouping, parameter
+    relationships, embedded SPLINE composition, geometry, CRUD, writes,
+    applicability advancement, and support completion remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

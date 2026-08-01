@@ -446,6 +446,16 @@ or excluded from the typed projection without changing raw data. Cardinality,
 defaults, domain/relationship validation, embedded SPLINE composition,
 geometry, CRUD, and writes remain later HELIX checkpoints.
 
+M14.3s adds exactly 16 stable cardinality cards per HELIX record over M14.3r
+evidence. Each role is absent, unique, or multiple with a checked compact range
+of source-ordered member references; invalid numeric evidence remains present
+for cardinality purposes. No duplicate singleton is selected, and the card
+layer makes no unsupported required/optional or default claim. Nine-dialect
+ASCII/Binary parity, out-of-order groups, empty and duplicate records,
+cancellation, lookup, and public bounds are covered. Typed field semantics,
+coordinate grouping, parameter relations, embedded SPLINE composition,
+geometry, CRUD, and writes remain later HELIX checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
