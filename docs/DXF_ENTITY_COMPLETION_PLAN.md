@@ -310,6 +310,15 @@ mismatched, negative, absent, invalid, and duplicate declarations without
 inventing values or discarding source evidence. Coordinate tuple grouping,
 member validity, knots/topology, geometry, HELIX, edit, and write remain later
 work.
+M14.3f freezes this document's 45 canonical Autodesk topics into the reviewed
+schema registry. Generated public descriptors retain stable ordinals, schema
+ids, exact canonical group-zero names, and the normalized normative-source
+receipt. Byte lookup is exact and case-sensitive; aliases and unknown markers
+remain deliberately unclassified. Generator validation fails closed on topic
+count, duplicate id/name, namespace, or source-kind drift. This is inventory
+infrastructure only: it does not scan a DXF record, classify an alias, define
+version applicability or fields, expose common properties, parse any new
+entity, construct geometry, edit, or write.
 
 ## Milestone queue
 

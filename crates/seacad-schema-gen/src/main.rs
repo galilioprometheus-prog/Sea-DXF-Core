@@ -17,13 +17,16 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 const MANIFEST_PATH: &str = "schema/dxf/v1/manifest.json";
-const OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_schema.rs";
+const HEADER_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_schema.rs";
+const ENTITY_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/entity_schema.rs";
+const EXPECTED_ENTITY_TOPIC_COUNT: usize = 45;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct SchemaManifest {
     schema_version: String,
     sources: String,
+    entity_topics: String,
     families: Vec<String>,
 }
 
@@ -49,6 +52,22 @@ struct SchemaFamily {
     schema_version: String,
     namespace: String,
     fields: Vec<SchemaField>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityTopicRegistry {
+    schema_version: String,
+    namespace: String,
+    source_id: String,
+    topics: Vec<EntityTopic>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityTopic {
+    id: String,
+    dxf_name: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -109,6 +128,7 @@ enum ReviewState {
 #[serde(rename_all = "snake_case")]
 enum EvidenceKind {
     Row,
+    TopicList,
 }
 
 #[derive(Clone, Copy)]
@@ -189,12 +209,23 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let (manifest, sources, families) = load_schema(&root)?;
     validate_schema(&manifest, &sources, &families)?;
-    let receipt = normalized_receipt(&manifest, &sources, &families)?;
-    let output = render_registry(&manifest, &sources, &families, &receipt)?;
-    let target = root.join(OUTPUT_PATH);
+    let entity_topics = load_entity_topics(&root, &manifest)?;
+    let entity_source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
+    let header_receipt = normalized_receipt(&manifest, &sources, &families)?;
+    let entity_receipt = normalized_entity_receipt(&entity_topics, entity_source)?;
+    let header_output = render_registry(&manifest, &sources, &families, &header_receipt)?;
+    let entity_output = render_entity_registry(&entity_topics, entity_source, &entity_receipt)?;
+    let header_target = root.join(HEADER_OUTPUT_PATH);
+    let entity_target = root.join(ENTITY_OUTPUT_PATH);
     match mode {
-        Mode::Check => check_output(&target, &output),
-        Mode::Write => write_output(&target, &output),
+        Mode::Check => {
+            check_output(&header_target, &header_output, HEADER_OUTPUT_PATH)?;
+            check_output(&entity_target, &entity_output, ENTITY_OUTPUT_PATH)
+        }
+        Mode::Write => {
+            write_output(&header_target, &header_output, HEADER_OUTPUT_PATH)?;
+            write_output(&entity_target, &entity_output, ENTITY_OUTPUT_PATH)
+        }
     }
 }
 
@@ -236,6 +267,22 @@ fn load_schema(
         families.push(read_json(root, &path, "root")?);
     }
     Ok((manifest, sources, families))
+}
+
+fn load_entity_topics(
+    root: &Path,
+    manifest: &SchemaManifest,
+) -> Result<EntityTopicRegistry, SchemaError> {
+    if !valid_family_filename(&manifest.entity_topics) {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_PATH",
+            MANIFEST_PATH,
+            "entity_topics",
+            "entity topic path must be one lowercase .json filename",
+        ));
+    }
+    let path = format!("schema/dxf/v1/{}", manifest.entity_topics);
+    read_json(root, &path, "root")
 }
 
 fn read_json<T: for<'de> Deserialize<'de>>(
@@ -302,6 +349,117 @@ fn validate_schema(
         validate_fields(family, &path, &sources)?;
     }
     Ok(())
+}
+
+fn validate_entity_topics<'a>(
+    manifest: &SchemaManifest,
+    registry: &'a SourceRegistry,
+    entity_topics: &EntityTopicRegistry,
+) -> Result<&'a SchemaSource, SchemaError> {
+    let path = format!("schema/dxf/v1/{}", manifest.entity_topics);
+    if entity_topics.schema_version != manifest.schema_version {
+        return Err(SchemaError::new(
+            "SCHEMA_VERSION",
+            &path,
+            "schema_version",
+            "entity topic version does not match manifest",
+        ));
+    }
+    if entity_topics.namespace != "entity" {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_NAMESPACE",
+            &path,
+            "namespace",
+            "entity topic namespace must be exactly entity",
+        ));
+    }
+    if entity_topics.topics.len() != EXPECTED_ENTITY_TOPIC_COUNT {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_COUNT",
+            &path,
+            "topics",
+            format!("expected exactly {EXPECTED_ENTITY_TOPIC_COUNT} reviewed topics"),
+        ));
+    }
+
+    let source = registry
+        .sources
+        .iter()
+        .find(|source| source.id == entity_topics.source_id)
+        .ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                &path,
+                "source_id",
+                "entity inventory references an unknown source id",
+            )
+        })?;
+    if !matches!(source.evidence_kind, EvidenceKind::TopicList) {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_SOURCE",
+            &path,
+            "source_id",
+            "entity inventory source must use topic_list evidence",
+        ));
+    }
+    let mut ids = BTreeSet::new();
+    let mut names = BTreeSet::new();
+    for (index, topic) in entity_topics.topics.iter().enumerate() {
+        let entry = format!("topics[{index}]");
+        if !valid_entity_id(&topic.id) || !ids.insert(topic.id.as_str()) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_ID",
+                &path,
+                format!("{entry}.id"),
+                "entity topic id must be unique lowercase ASCII",
+            ));
+        }
+        if !valid_entity_dxf_name(&topic.dxf_name) || !names.insert(topic.dxf_name.as_str()) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_NAME",
+                &path,
+                format!("{entry}.dxf_name"),
+                "entity DXF name must be unique uppercase ASCII",
+            ));
+        }
+    }
+    let normalized_facts = normalized_entity_facts_sha256(entity_topics)?;
+    if source.normalized_facts_sha256 != normalized_facts {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_SOURCE_RECEIPT",
+            &path,
+            "source_id",
+            format!(
+                "recorded source facts differ from normalized topic facts; observed {normalized_facts}"
+            ),
+        ));
+    }
+    Ok(source)
+}
+
+fn normalized_entity_facts_sha256(
+    entity_topics: &EntityTopicRegistry,
+) -> Result<String, SchemaError> {
+    let bytes = serde_json::to_vec(&entity_topics.topics).map_err(|error| {
+        SchemaError::new(
+            "SCHEMA_JSON",
+            ENTITY_OUTPUT_PATH,
+            "entity_topics",
+            error.to_string(),
+        )
+    })?;
+    let mut receipt = String::with_capacity(64);
+    for byte in Sha256::digest(bytes) {
+        write!(&mut receipt, "{byte:02x}").map_err(|error| {
+            SchemaError::new(
+                "SCHEMA_RENDER",
+                ENTITY_OUTPUT_PATH,
+                "entity_facts_receipt",
+                error.to_string(),
+            )
+        })?;
+    }
+    Ok(receipt)
 }
 
 fn validate_sources<'a>(
@@ -454,7 +612,33 @@ fn normalized_receipt(
     let mut receipt = String::with_capacity(64);
     for byte in hasher.finalize() {
         write!(&mut receipt, "{byte:02x}").map_err(|error| {
-            SchemaError::new("SCHEMA_RENDER", OUTPUT_PATH, "receipt", error.to_string())
+            SchemaError::new(
+                "SCHEMA_RENDER",
+                HEADER_OUTPUT_PATH,
+                "receipt",
+                error.to_string(),
+            )
+        })?;
+    }
+    Ok(receipt)
+}
+
+fn normalized_entity_receipt(
+    entity_topics: &EntityTopicRegistry,
+    source: &SchemaSource,
+) -> Result<String, SchemaError> {
+    let mut hasher = Sha256::new();
+    update_normalized_hash(&mut hasher, entity_topics, "entity_topics")?;
+    update_normalized_hash(&mut hasher, source, "entity_source")?;
+    let mut receipt = String::with_capacity(64);
+    for byte in hasher.finalize() {
+        write!(&mut receipt, "{byte:02x}").map_err(|error| {
+            SchemaError::new(
+                "SCHEMA_RENDER",
+                ENTITY_OUTPUT_PATH,
+                "receipt",
+                error.to_string(),
+            )
         })?;
     }
     Ok(receipt)
@@ -522,7 +706,7 @@ fn render_registry(
             let source = sources.get(field.source_id.as_str()).ok_or_else(|| {
                 SchemaError::new(
                     "SCHEMA_SOURCE_REF",
-                    OUTPUT_PATH,
+                    HEADER_OUTPUT_PATH,
                     &field.id,
                     "validated field source disappeared before rendering",
                 )
@@ -556,6 +740,90 @@ fn render_registry(
     Ok(output)
 }
 
+fn render_entity_registry(
+    entity_topics: &EntityTopicRegistry,
+    source: &SchemaSource,
+    receipt: &str,
+) -> Result<String, SchemaError> {
+    let mut output = String::new();
+    writeln!(
+        output,
+        "// @generated by seacad-schema-gen {}.",
+        env!("CARGO_PKG_VERSION")
+    )?;
+    writeln!(output, "// Normalized entity input SHA-256: {receipt}")?;
+    output.push_str(
+        "// Reviewed canonical topics only; aliases and support state are not inferred.\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str("pub struct DxfEntityTopic {\n    ordinal: u8,\n}\n\n");
+    output.push_str("impl DxfEntityTopic {\n");
+    for (ordinal, topic) in entity_topics.topics.iter().enumerate() {
+        writeln!(
+            output,
+            "    pub const {}: Self = Self {{ ordinal: {ordinal} }};",
+            topic.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("\n    #[must_use]\n    pub const fn ordinal(self) -> u8 {\n        self.ordinal\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub fn from_ordinal(ordinal: u8) -> Option<Self> {\n        DXF_ENTITY_TOPICS\n            .get(usize::from(ordinal))\n            .map(|descriptor| descriptor.topic())\n    }\n\n",
+    );
+    output.push_str(
+        "    #[must_use]\n    pub fn from_exact_name(name: &[u8]) -> Option<Self> {\n        match name {\n",
+    );
+    for topic in &entity_topics.topics {
+        writeln!(
+            output,
+            "            b\"{}\" => Some(Self::{}),",
+            topic.dxf_name,
+            topic.id.to_ascii_uppercase()
+        )?;
+    }
+    output.push_str("            _ => None,\n        }\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub fn descriptor(self) -> Option<&'static DxfEntityTopicDescriptor> {\n        DXF_ENTITY_TOPICS.get(usize::from(self.ordinal))\n    }\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub struct DxfEntityTopicDescriptor {\n    topic: DxfEntityTopic,\n    id: &'static str,\n    dxf_name: &'static str,\n    source_id: &'static str,\n    source_topic_id: &'static str,\n    source_facts_sha256: &'static str,\n}\n\n",
+    );
+    output.push_str("impl DxfEntityTopicDescriptor {\n");
+    output.push_str("    #[must_use]\n    pub const fn topic(self) -> DxfEntityTopic {\n        self.topic\n    }\n\n");
+    output.push_str(
+        "    #[must_use]\n    pub const fn id(self) -> &'static str {\n        self.id\n    }\n\n",
+    );
+    output.push_str("    #[must_use]\n    pub const fn dxf_name(self) -> &'static str {\n        self.dxf_name\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_topic_id(self) -> &'static str {\n        self.source_topic_id\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n}\n\n");
+    output.push_str("pub const DXF_ENTITY_TOPIC_SCHEMA_SHA256: &str =\n");
+    writeln!(output, "    {receipt:?};\n")?;
+    output.push_str("pub static DXF_ENTITY_TOPICS: &[DxfEntityTopicDescriptor] = &[\n");
+    for topic in &entity_topics.topics {
+        output.push_str("    DxfEntityTopicDescriptor {\n");
+        writeln!(
+            output,
+            "        topic: DxfEntityTopic::{},",
+            topic.id.to_ascii_uppercase()
+        )?;
+        writeln!(output, "        id: {:?},", topic.id)?;
+        writeln!(output, "        dxf_name: {:?},", topic.dxf_name)?;
+        writeln!(output, "        source_id: {:?},", source.id)?;
+        writeln!(output, "        source_topic_id: {:?},", source.topic_id)?;
+        writeln!(
+            output,
+            "        source_facts_sha256: {:?},",
+            source.normalized_facts_sha256
+        )?;
+        output.push_str("    },\n");
+    }
+    output.push_str(
+        "];\n\n#[must_use]\npub const fn dxf_entity_topics() -> &'static [DxfEntityTopicDescriptor] {\n    DXF_ENTITY_TOPICS\n}\n",
+    );
+    Ok(output)
+}
+
 fn storage_variant(storage: StorageKind) -> &'static str {
     match storage {
         StorageKind::Boolean => "Boolean",
@@ -573,6 +841,7 @@ fn storage_variant(storage: StorageKind) -> &'static str {
 fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
     match kind {
         EvidenceKind::Row => row_evidence_matches(field),
+        EvidenceKind::TopicList => false,
     }
 }
 
@@ -607,13 +876,13 @@ fn row_evidence_matches(field: &SchemaField) -> bool {
     first <= current && current <= last
 }
 
-fn check_output(target: &Path, expected: &str) -> Result<(), SchemaError> {
+fn check_output(target: &Path, expected: &str, output_path: &str) -> Result<(), SchemaError> {
     let actual = fs::read_to_string(target)
-        .map_err(|error| SchemaError::new("SCHEMA_IO", OUTPUT_PATH, "output", error.to_string()))?;
+        .map_err(|error| SchemaError::new("SCHEMA_IO", output_path, "output", error.to_string()))?;
     if actual != expected {
         return Err(SchemaError::new(
             "SCHEMA_OUTPUT_DIFF",
-            OUTPUT_PATH,
+            output_path,
             "output",
             "committed generated Rust differs; run --write and review the diff",
         ));
@@ -621,7 +890,7 @@ fn check_output(target: &Path, expected: &str) -> Result<(), SchemaError> {
     Ok(())
 }
 
-fn write_output(target: &Path, output: &str) -> Result<(), SchemaError> {
+fn write_output(target: &Path, output: &str, output_path: &str) -> Result<(), SchemaError> {
     if fs::read_to_string(target).is_ok_and(|current| current == output) {
         return Ok(());
     }
@@ -631,7 +900,7 @@ fn write_output(target: &Path, output: &str) -> Result<(), SchemaError> {
         .create_new(true)
         .open(&temporary)
         .map_err(|error| {
-            SchemaError::new("SCHEMA_IO", OUTPUT_PATH, "temporary", error.to_string())
+            SchemaError::new("SCHEMA_IO", output_path, "temporary", error.to_string())
         })?;
     let write_result = file
         .write_all(output.as_bytes())
@@ -640,7 +909,7 @@ fn write_output(target: &Path, output: &str) -> Result<(), SchemaError> {
         let _ = fs::remove_file(&temporary);
         return Err(SchemaError::new(
             "SCHEMA_IO",
-            OUTPUT_PATH,
+            output_path,
             "temporary",
             error.to_string(),
         ));
@@ -649,7 +918,7 @@ fn write_output(target: &Path, output: &str) -> Result<(), SchemaError> {
         let _ = fs::remove_file(&temporary);
         return Err(SchemaError::new(
             "SCHEMA_IO",
-            OUTPUT_PATH,
+            output_path,
             "rename",
             error.to_string(),
         ));
@@ -675,6 +944,13 @@ fn valid_id(value: &str) -> bool {
         })
 }
 
+fn valid_entity_id(value: &str) -> bool {
+    value.as_bytes().first().is_some_and(u8::is_ascii_lowercase)
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
+}
+
 fn valid_topic_id(value: &str) -> bool {
     let Some(guid) = value.strip_prefix("GUID-") else {
         return false;
@@ -697,6 +973,13 @@ fn valid_dxf_name(value: &str) -> bool {
             .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit() || *byte == b'_')
 }
 
+fn valid_entity_dxf_name(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit() || byte == b'_')
+}
+
 fn valid_sha256(value: &str) -> bool {
     value.len() == 64
         && value
@@ -706,7 +989,12 @@ fn valid_sha256(value: &str) -> bool {
 
 impl From<fmt::Error> for SchemaError {
     fn from(error: fmt::Error) -> Self {
-        Self::new("SCHEMA_RENDER", OUTPUT_PATH, "output", error.to_string())
+        Self::new(
+            "SCHEMA_RENDER",
+            HEADER_OUTPUT_PATH,
+            "output",
+            error.to_string(),
+        )
     }
 }
 
@@ -715,8 +1003,10 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches, load_schema,
-        normalized_receipt, render_registry, validate_schema, validate_wire_shape,
+        EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches,
+        load_entity_topics, load_schema, normalized_entity_receipt, normalized_receipt,
+        render_entity_registry, render_registry, validate_entity_topics, validate_schema,
+        validate_wire_shape,
     };
 
     #[test]
@@ -933,9 +1223,61 @@ mod tests {
     }
 
     #[test]
+    fn reviewed_entity_inventory_is_complete_and_deterministic() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let entity_topics = load_entity_topics(&root, &manifest)?;
+        let source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
+        assert_eq!(entity_topics.topics.len(), 45);
+        assert_eq!(entity_topics.topics[0].dxf_name, "3DFACE");
+        assert_eq!(entity_topics.topics[44].dxf_name, "XLINE");
+        let first = normalized_entity_receipt(&entity_topics, source)?;
+        let second = normalized_entity_receipt(&entity_topics, source)?;
+        assert_eq!(first, second);
+        assert_eq!(first.len(), 64);
+        assert_eq!(
+            render_entity_registry(&entity_topics, source, &first)?,
+            render_entity_registry(&entity_topics, source, &second)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn duplicate_entity_topic_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let mut entity_topics = load_entity_topics(&root, &manifest)?;
+        entity_topics.topics[1].id = entity_topics.topics[0].id.clone();
+        let error = validate_entity_topics(&manifest, &sources, &entity_topics)
+            .err()
+            .ok_or("duplicate entity topic unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_ID");
+
+        let mut entity_topics = load_entity_topics(&root, &manifest)?;
+        entity_topics.topics[1].dxf_name = entity_topics.topics[0].dxf_name.clone();
+        let error = validate_entity_topics(&manifest, &sources, &entity_topics)
+            .err()
+            .ok_or("duplicate entity name unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_NAME");
+        Ok(())
+    }
+
+    #[test]
+    fn stale_entity_source_receipt_fails_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let mut entity_topics = load_entity_topics(&root, &manifest)?;
+        entity_topics.topics[0].dxf_name = "3DFACE2".to_string();
+        let error = validate_entity_topics(&manifest, &sources, &entity_topics)
+            .err()
+            .ok_or("stale entity source receipt unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_SOURCE_RECEIPT");
+        Ok(())
+    }
+
+    #[test]
     fn unknown_manifest_key_is_rejected() {
-        let json =
-            r#"{"schema_version":"dxf.v1","sources":"sources.json","families":[],"typo":true}"#;
+        let json = r#"{"schema_version":"dxf.v1","sources":"sources.json","entity_topics":"entity_topics.json","families":[],"typo":true}"#;
         let result = serde_json::from_str::<SchemaManifest>(json);
         assert!(result.is_err());
     }

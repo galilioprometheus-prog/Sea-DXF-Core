@@ -373,6 +373,10 @@ pub use encoding::{
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
+pub use generated::entity_schema::{
+    DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS, DxfEntityTopic, DxfEntityTopicDescriptor,
+    dxf_entity_topics,
+};
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
     parse_dxf_handle_hex,

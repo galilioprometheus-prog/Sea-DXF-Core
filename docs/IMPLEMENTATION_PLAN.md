@@ -1717,6 +1717,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     lower-layer evidence. This occurrence relation does not infer complete
     coordinate tuples, validate numeric members, knots/topology, or geometry,
     process HELIX, edit, or write.
+    M14.3f freezes the canonical 45-topic Autodesk entity inventory as reviewed
+    schema input and deterministic generated Rust. Every entry exposes one
+    stable ordinal, schema id, exact canonical group-zero spelling, and the
+    shared normalized source receipt. Exact byte lookup is case-sensitive;
+    aliases and unknown spellings remain unclassified. The generator rejects
+    missing/extra topics, duplicate ids or names, an invalid namespace, and a
+    non-topic-list source. This checkpoint does not scan records, map aliases,
+    define version applicability or fields, project common properties, parse
+    any new entity, construct geometry, edit, or write.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
