@@ -540,6 +540,18 @@ the replacement boundary. Canonical insertion anchors, reset-to-default,
 multi-patch edit sessions, domain/reference validation, verified destination
 writes, and full update/CRUD support remain later checkpoints.
 
+M14.3aa adds the matching reset-to-default operation for one common-field
+optional singleton. An already-absent optional field returns `AlreadyImplicit`;
+an existing unique value becomes one source-bound deletion over its exact raw
+group span. Required fields and duplicates fail typed, proxy group-310 data
+requires a sequence operation even when absent, and group 360 inside
+`ACAD_XDICTIONARY` requires a nested-structure operation rather than leaving an
+empty group-102 envelope. Strict ASCII/Binary reparse across all nine dialects
+proves generated omitted defaults and byte-identical inverse restoration.
+Canonical insertion anchors, whole nested-group edits, multi-patch sessions,
+domain/reference validation, verified destination writes, and full CRUD remain
+later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

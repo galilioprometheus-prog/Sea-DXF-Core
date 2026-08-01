@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3z can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3aa can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -608,6 +608,19 @@ For AC1009 through AC1032, paired ASCII/Binary post-images strictly reparse,
 publish the requested typed field value, and materialize an inverse that
 restores byte-identical source. This does not insert or reset fields, validate
 property domains/references, batch patches in `DxfEntityEditSession`, write a
+destination, advance applicability, or establish full update/CRUD/`Complete`
+support.
+
+M14.3aa adds `DxfEntityFieldResetPlan`. An optional singleton already absent
+returns `AlreadyImplicit` without a patch; an existing unique optional
+singleton produces one deletion patch over the exact full raw group span.
+Required fields, duplicate singletons, proxy group-310 sequences, and the
+nested group-360 extension-dictionary member fail with distinct typed states;
+the planner never selects a duplicate or leaves an empty `ACAD_XDICTIONARY`
+wrapper. For AC1009 through AC1032, paired ASCII/Binary post-images strictly
+reparse, publish the generated omitted default or absence, and materialize an
+inverse restoring byte-identical source. This does not insert fields, delete a
+whole application group, batch edits, validate domains/references, write a
 destination, advance applicability, or establish full update/CRUD/`Complete`
 support.
 

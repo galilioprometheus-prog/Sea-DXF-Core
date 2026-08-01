@@ -55,6 +55,7 @@ mod encoding;
 mod entity_directory;
 mod entity_field_evidence;
 mod entity_field_replacement;
+mod entity_field_reset;
 mod entity_field_semantic;
 mod entity_value_encoder;
 mod error;
@@ -399,6 +400,9 @@ pub use entity_field_evidence::{
 };
 pub use entity_field_replacement::{
     DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldReplacementPlan,
+};
+pub use entity_field_reset::{
+    DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome, DxfEntityFieldResetPlan,
 };
 pub use entity_field_semantic::{
     DxfEntityFieldSemanticDirectory, DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue,

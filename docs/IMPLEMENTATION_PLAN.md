@@ -1992,6 +1992,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     checkpoint does not insert/reset fields, validate property domains or
     references, combine patches in an edit session, write a destination, or
     claim complete entity update/CRUD support.
+    M14.3aa adds an explicit reset-to-default planner for one common-field
+    optional singleton. `AbsentOptional` is already implicit and produces no
+    transaction. `Unique` deletes the exact complete raw group through one M11
+    patch, while required fields and duplicate singletons fail typed without
+    occurrence selection. Optional sequences always require a sequence
+    operation, and an extension-dictionary handle inside the documented
+    `ACAD_XDICTIONARY` group requires a nested-structure operation so the
+    singleton planner cannot leave an empty group-102 wrapper. Nine-dialect
+    paired ASCII/Binary post-images strictly reparse, expose the generated
+    omitted semantic default or absence, and produce inverse plans that restore
+    byte-identical input. This checkpoint does not remove whole application
+    groups, insert fields, combine patches, validate domains/references, write
+    a destination, or claim complete entity update/CRUD support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
