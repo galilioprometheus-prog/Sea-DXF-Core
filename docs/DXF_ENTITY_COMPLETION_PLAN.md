@@ -584,6 +584,19 @@ failures stay separately typed. Sequence/nested insertion, multi-field edit
 sessions, domain/reference validation, destination writes, and broader CRUD
 support remain later checkpoints.
 
+M14.3ae adds the first unified source-bound edit session. Its typed common-
+field patch either sets an explicit value or resets an optional singleton to
+its schema default. Set chooses replacement versus canonical insertion from
+the original evidence; reset keeps an already-implicit value as a no-op.
+Queued duplicate entity/field targets fail without choosing an occurrence.
+At finish, non-overlapping replacements, deletions, and insertions become one
+transaction; multiple insertions sharing one entity anchor are concatenated in
+generated writer order, independent of caller order. Paired strict
+ASCII/Binary tests across all nine dialects prove multi-record semantics and
+byte-identical inverse restoration. Family-specific patches, nested/sequence
+operations, domain/reference validation, insert/clone/delete, and destination
+verification remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

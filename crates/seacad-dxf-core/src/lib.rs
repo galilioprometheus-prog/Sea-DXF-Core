@@ -53,6 +53,7 @@ mod ellipse_geometry_card;
 mod ellipse_geometry_semantic;
 mod encoding;
 mod entity_directory;
+mod entity_edit_session;
 mod entity_field_evidence;
 mod entity_field_insertion;
 mod entity_field_insertion_anchor;
@@ -395,6 +396,10 @@ pub use encoding::{
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,
     DxfEntityRef, DxfEntitySubclassMarker, DxfEntitySubclassRange,
+};
+pub use entity_edit_session::{
+    DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
+    DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityPatch,
 };
 pub use entity_field_evidence::{
     DxfEntityFieldCard, DxfEntityFieldCardMember, DxfEntityFieldCardMemberRange,

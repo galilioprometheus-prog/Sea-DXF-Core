@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ad. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ae. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -64,7 +64,12 @@ An absent singleton can now be encoded at that anchor into one immutable
 zero-length-source transaction patch. ASCII insertion preserves the preceding
 group's LF, CR, or CRLF ending; Binary insertion uses the declared dialect.
 Strict post-images and executable inverse plans prove byte-identical source
-restoration. Multi-field sessions and complete CRUD remain later checkpoints.
+restoration. A source-bound `DxfEntityEditSession` now batches explicit common-
+field set/reset requests across entities into one immutable transaction. It
+rejects a second queued edit for the same field and merges same-anchor
+insertions in generated writer order. Sequence/nested operations, family
+patches, insert/clone/delete, verified destination writes, and complete CRUD
+remain later checkpoints.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

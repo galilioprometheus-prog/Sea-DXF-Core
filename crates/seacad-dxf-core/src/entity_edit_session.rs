@@ -1,0 +1,466 @@
+//! Unified batching for common-entity singleton updates.
+
+use std::{fmt, io};
+
+use crate::{
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditValue,
+    DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue,
+    DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
+    DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
+    DxfEntityKey, DxfError, DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile,
+    DxfSourceId, DxfTransactionPlan,
+};
+
+/// One typed common-field operation accepted by an entity edit session.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityCommonFieldPatch<'a> {
+    SetExplicit {
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'a>,
+    },
+    ResetToDefault {
+        field: DxfEntityField,
+    },
+}
+
+impl DxfEntityCommonFieldPatch<'_> {
+    #[must_use]
+    pub const fn field(self) -> DxfEntityField {
+        match self {
+            Self::SetExplicit { field, .. } | Self::ResetToDefault { field } => field,
+        }
+    }
+}
+
+/// Topic-discriminated entity update. More topic variants are added by family.
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityPatch<'a> {
+    CommonField(DxfEntityCommonFieldPatch<'a>),
+}
+
+impl<'a> DxfEntityPatch<'a> {
+    #[must_use]
+    pub const fn common_field(self) -> DxfEntityCommonFieldPatch<'a> {
+        match self {
+            Self::CommonField(patch) => patch,
+        }
+    }
+}
+
+/// Typed reason why an update was not admitted to the session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityEditIssue {
+    DuplicateFieldEdit {
+        key: DxfEntityKey,
+        field: DxfEntityField,
+    },
+    Insertion(DxfEntityFieldInsertionIssue),
+    Replacement(DxfEntityFieldReplacementIssue),
+    Reset(DxfEntityFieldResetIssue),
+}
+
+/// Effect of one accepted update request.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityEditDisposition {
+    AlreadyImplicit,
+    Inserted,
+    Replaced,
+    Reset,
+}
+
+/// Non-payload receipt for one accepted update request.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityEditReceipt {
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    disposition: DxfEntityEditDisposition,
+    queued_edit_count: u32,
+}
+
+impl DxfEntityEditReceipt {
+    #[must_use]
+    pub const fn key(self) -> DxfEntityKey {
+        self.key
+    }
+
+    #[must_use]
+    pub const fn field(self) -> DxfEntityField {
+        self.field
+    }
+
+    #[must_use]
+    pub const fn disposition(self) -> DxfEntityEditDisposition {
+        self.disposition
+    }
+
+    #[must_use]
+    pub const fn queued_edit_count(self) -> u64 {
+        self.queued_edit_count as u64
+    }
+}
+
+/// Result of applying one update request to an edit session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityEditOutcome {
+    Applied(DxfEntityEditReceipt),
+    Unavailable(DxfEntityEditIssue),
+}
+
+struct PendingEdit {
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    write_order: u8,
+    source_span: ByteSpan,
+    replacement: Box<[u8]>,
+}
+
+/// Source-bound batch of entity edits that finishes as one immutable transaction.
+pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
+    document: DxfRawDocumentView<'document>,
+    evidence: &'evidence DxfEntityFieldEvidenceDirectory,
+    profile: DxfResourceProfile,
+    cancellation: &'cancellation DxfCancellationToken,
+    pending: Vec<PendingEdit>,
+}
+
+impl fmt::Debug for DxfEntityEditSession<'_, '_, '_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("DxfEntityEditSession")
+            .field("source_id", &self.document.source_id())
+            .field("format", &self.document.format())
+            .field("queued_edit_count", &self.pending.len())
+            .finish()
+    }
+}
+
+impl<'document, 'evidence, 'cancellation>
+    DxfEntityEditSession<'document, 'evidence, 'cancellation>
+{
+    fn new(
+        document: DxfRawDocumentView<'document>,
+        evidence: &'evidence DxfEntityFieldEvidenceDirectory,
+        profile: DxfResourceProfile,
+        cancellation: &'cancellation DxfCancellationToken,
+    ) -> Result<Self, DxfError> {
+        ensure_not_cancelled(cancellation)?;
+        ensure_source(document.source_id(), evidence.source_id())?;
+        Ok(Self {
+            document,
+            evidence,
+            profile,
+            cancellation,
+            pending: Vec::new(),
+        })
+    }
+
+    #[must_use]
+    pub fn source_id(&self) -> DxfSourceId {
+        self.document.source_id()
+    }
+
+    #[must_use]
+    pub fn queued_edit_count(&self) -> u64 {
+        self.pending.len() as u64
+    }
+
+    /// Adds one typed update without changing the source document.
+    pub fn update(
+        &mut self,
+        key: DxfEntityKey,
+        patch: DxfEntityPatch<'_>,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        let patch = patch.common_field();
+        let field = patch.field();
+        if self
+            .pending
+            .iter()
+            .any(|edit| edit.key == key && edit.field == field)
+        {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::DuplicateFieldEdit { key, field },
+            ));
+        }
+        match patch {
+            DxfEntityCommonFieldPatch::SetExplicit { value, .. } => {
+                self.set_explicit(key, field, value)
+            }
+            DxfEntityCommonFieldPatch::ResetToDefault { .. } => self.reset(key, field),
+        }
+    }
+
+    /// Freezes every accepted update into one source-order transaction plan.
+    pub fn finish(mut self) -> Result<DxfTransactionPlan, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        self.pending.sort_unstable_by_key(|edit| {
+            (
+                edit.source_span.start(),
+                edit.source_span.end(),
+                edit.key.raw_record_ordinal(),
+                edit.write_order,
+            )
+        });
+        let mut builder = self.document.transaction_plan_builder(self.profile)?;
+        let mut cursor = 0_usize;
+        while cursor < self.pending.len() {
+            ensure_not_cancelled(self.cancellation)?;
+            let edit = self.pending.get(cursor).ok_or_else(invalid_internal_data)?;
+            if !edit.source_span.is_empty() {
+                builder.replace_raw_span(edit.source_span, &edit.replacement, self.cancellation)?;
+                cursor += 1;
+                continue;
+            }
+            let end = insertion_group_end(&self.pending, cursor)?;
+            if end == cursor + 1 {
+                builder.replace_raw_span(edit.source_span, &edit.replacement, self.cancellation)?;
+            } else {
+                let combined = combine_insertions(&self.pending[cursor..end])?;
+                builder.replace_raw_span(edit.source_span, &combined, self.cancellation)?;
+            }
+            cursor = end;
+        }
+        builder.finish(self.cancellation)
+    }
+
+    fn set_explicit(
+        &mut self,
+        key: DxfEntityKey,
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'_>,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        match self.document.plan_entity_field_replacement(
+            self.evidence,
+            key,
+            field,
+            value,
+            self.profile,
+            self.cancellation,
+        )? {
+            DxfEntityFieldReplacementOutcome::Planned(plan) => self.queue_transaction(
+                key,
+                field,
+                DxfEntityEditDisposition::Replaced,
+                plan.into_transaction(),
+            ),
+            DxfEntityFieldReplacementOutcome::Unavailable(
+                DxfEntityFieldReplacementIssue::FieldAbsent { .. },
+            ) => match self.document.plan_entity_field_insertion(
+                self.evidence,
+                key,
+                field,
+                value,
+                self.profile,
+                self.cancellation,
+            )? {
+                DxfEntityFieldInsertionOutcome::Planned(plan) => self.queue_transaction(
+                    key,
+                    field,
+                    DxfEntityEditDisposition::Inserted,
+                    plan.into_transaction(),
+                ),
+                DxfEntityFieldInsertionOutcome::Unavailable(issue) => Ok(
+                    DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Insertion(issue)),
+                ),
+            },
+            DxfEntityFieldReplacementOutcome::Unavailable(issue) => Ok(
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Replacement(issue)),
+            ),
+        }
+    }
+
+    fn reset(
+        &mut self,
+        key: DxfEntityKey,
+        field: DxfEntityField,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        match self.document.plan_entity_field_reset_to_default(
+            self.evidence,
+            key,
+            field,
+            self.profile,
+            self.cancellation,
+        )? {
+            DxfEntityFieldResetOutcome::AlreadyImplicit { .. } => applied(
+                key,
+                field,
+                DxfEntityEditDisposition::AlreadyImplicit,
+                self.pending.len(),
+            ),
+            DxfEntityFieldResetOutcome::Planned(plan) => self.queue_transaction(
+                key,
+                field,
+                DxfEntityEditDisposition::Reset,
+                plan.into_transaction(),
+            ),
+            DxfEntityFieldResetOutcome::Unavailable(issue) => Ok(
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Reset(issue)),
+            ),
+        }
+    }
+
+    fn queue_transaction(
+        &mut self,
+        key: DxfEntityKey,
+        field: DxfEntityField,
+        disposition: DxfEntityEditDisposition,
+        transaction: DxfTransactionPlan,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        transaction.validate_source_precondition(self.document)?;
+        let [patch] = transaction.patches() else {
+            return Err(invalid_internal_data());
+        };
+        let replacement = transaction
+            .replacement_bytes_for_patch_ordinal(patch.ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let next_count = self
+            .pending
+            .len()
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        enforce_edit_limit(self.profile, next_count)?;
+        let descriptor = field.descriptor().ok_or_else(invalid_internal_data)?;
+        let mut owned = Vec::new();
+        owned
+            .try_reserve_exact(replacement.len())
+            .map_err(|_| out_of_memory())?;
+        owned.extend_from_slice(replacement);
+        self.pending.try_reserve(1).map_err(|_| out_of_memory())?;
+        ensure_not_cancelled(self.cancellation)?;
+        self.pending.push(PendingEdit {
+            key,
+            field,
+            write_order: descriptor.write_order().ordinal(),
+            source_span: patch.source_span(),
+            replacement: owned.into_boxed_slice(),
+        });
+        applied(key, field, disposition, self.pending.len())
+    }
+}
+
+impl<'document> DxfRawDocumentView<'document> {
+    pub fn entity_edit_session<'evidence, 'cancellation>(
+        self,
+        evidence: &'evidence DxfEntityFieldEvidenceDirectory,
+        profile: DxfResourceProfile,
+        cancellation: &'cancellation DxfCancellationToken,
+    ) -> Result<DxfEntityEditSession<'document, 'evidence, 'cancellation>, DxfError> {
+        DxfEntityEditSession::new(self, evidence, profile, cancellation)
+    }
+}
+
+impl DxfAsciiRawDocument<'_> {
+    pub fn entity_edit_session<'document, 'evidence, 'cancellation>(
+        &'document self,
+        evidence: &'evidence DxfEntityFieldEvidenceDirectory,
+        profile: DxfResourceProfile,
+        cancellation: &'cancellation DxfCancellationToken,
+    ) -> Result<DxfEntityEditSession<'document, 'evidence, 'cancellation>, DxfError> {
+        DxfRawDocumentView::from(self).entity_edit_session(evidence, profile, cancellation)
+    }
+}
+
+impl DxfBinaryRawDocument<'_> {
+    pub fn entity_edit_session<'document, 'evidence, 'cancellation>(
+        &'document self,
+        evidence: &'evidence DxfEntityFieldEvidenceDirectory,
+        profile: DxfResourceProfile,
+        cancellation: &'cancellation DxfCancellationToken,
+    ) -> Result<DxfEntityEditSession<'document, 'evidence, 'cancellation>, DxfError> {
+        DxfRawDocumentView::from(self).entity_edit_session(evidence, profile, cancellation)
+    }
+}
+
+fn insertion_group_end(pending: &[PendingEdit], start: usize) -> Result<usize, DxfError> {
+    let first = pending.get(start).ok_or_else(invalid_internal_data)?;
+    let mut end = start + 1;
+    while let Some(next) = pending.get(end) {
+        if !next.source_span.is_empty()
+            || next.source_span.start() != first.source_span.start()
+            || next.key != first.key
+        {
+            break;
+        }
+        end += 1;
+    }
+    Ok(end)
+}
+
+fn combine_insertions(pending: &[PendingEdit]) -> Result<Vec<u8>, DxfError> {
+    let capacity = pending.iter().try_fold(0_usize, |total, edit| {
+        total
+            .checked_add(edit.replacement.len())
+            .ok_or_else(invalid_internal_data)
+    })?;
+    let mut combined = Vec::new();
+    combined
+        .try_reserve_exact(capacity)
+        .map_err(|_| out_of_memory())?;
+    for edit in pending {
+        combined.extend_from_slice(&edit.replacement);
+    }
+    Ok(combined)
+}
+
+fn applied(
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    disposition: DxfEntityEditDisposition,
+    queued_edit_count: usize,
+) -> Result<DxfEntityEditOutcome, DxfError> {
+    Ok(DxfEntityEditOutcome::Applied(DxfEntityEditReceipt {
+        key,
+        field,
+        disposition,
+        queued_edit_count: u32::try_from(queued_edit_count).map_err(|_| invalid_internal_data())?,
+    }))
+}
+
+fn enforce_edit_limit(profile: DxfResourceProfile, observed: usize) -> Result<(), DxfError> {
+    let observed = u64::try_from(observed).map_err(|_| invalid_internal_data())?;
+    let limit = profile.limits().max_records();
+    if observed > limit {
+        Err(DxfError::resource_limit(
+            DxfResource::Records,
+            limit,
+            observed,
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+fn ensure_source(expected: DxfSourceId, observed: DxfSourceId) -> Result<(), DxfError> {
+    if expected == observed {
+        Ok(())
+    } else {
+        Err(DxfError::SourceIdentityMismatch { expected, observed })
+    }
+}
+
+fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
+    if cancellation.is_cancelled() {
+        Err(DxfError::Cancelled)
+    } else {
+        Ok(())
+    }
+}
+
+fn invalid_internal_data() -> DxfError {
+    DxfError::from_io(
+        DxfIoOperation::Write,
+        &io::Error::from(io::ErrorKind::InvalidData),
+    )
+}
+
+fn out_of_memory() -> DxfError {
+    DxfError::from_io(
+        DxfIoOperation::Write,
+        &io::Error::from(io::ErrorKind::OutOfMemory),
+    )
+}

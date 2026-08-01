@@ -2039,6 +2039,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     sequences or extension-dictionary envelopes, batch fields in an edit
     session, validate domains/references, allocate handles/owners, write a
     create-new destination, or claim complete entity update/CRUD support.
+    M14.3ae introduces the first public `DxfEntityEditSession` and typed
+    `DxfEntityPatch::CommonField` update path. Explicit set dispatches to exact
+    replacement or absent-field insertion; reset dispatches to the existing
+    optional-singleton reset contract. Every accepted edit remains source-
+    bound and payload-redacted. A second queued edit for the same entity/field
+    fails typed, while already-implicit resets remain no-ops. `finish` sorts raw
+    spans, merges same-entity empty-span insertions by generated writer order,
+    and returns one immutable M11 transaction. Five logical edits across two
+    records collapse to three non-overlapping patches in paired strict
+    ASCII/Binary tests for all nine dialects, and the executable inverse
+    restores byte-identical source. This checkpoint does not add topic-family
+    patch variants, sequences/nested grammar, insert/clone/delete, domain or
+    reference validators, or the create-new verified destination pipeline.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ad can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ae can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -661,6 +661,22 @@ mismatches, resource limits, and cancellation prevent a plan from escaping.
 This does not batch edits, validate property domains/references, allocate
 handles/owners, write a destination, advance applicability, or establish full
 CRUD/`Complete` support.
+
+M14.3ae adds `DxfEntityEditSession` and the first typed
+`DxfEntityPatch::CommonField` variant. One session admits explicit singleton
+set/reset requests against its original source/evidence pair, rejects a second
+queued edit for the same entity/field, and retains already-implicit reset as a
+zero-patch receipt. Set chooses exact replacement or canonical insertion;
+reset chooses exact deletion. `finish` orders source spans and merges multiple
+same-entity insertions at one empty source span by generated writer order, so
+caller order cannot reorder common fields. Five edits across two entities
+produce one three-patch transaction with strict ASCII/Binary semantic parity
+for AC1009 through AC1032 and an executable byte-identical inverse. Structural,
+encoding, source, resource, conflict, and cancellation failures escape no
+ambiguous partial plan. Topic-family patches, sequence/nested operations,
+domain/reference validation, entity insertion, handle/owner allocation,
+closed-set clone/delete, create-new verified writes, applicability, and full
+CRUD/`Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
