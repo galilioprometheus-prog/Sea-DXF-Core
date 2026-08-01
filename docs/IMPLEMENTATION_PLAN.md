@@ -2027,6 +2027,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     sections, absent dialects, source mismatches, and cancellation remain typed.
     This checkpoint does not encode or insert a group, build a transaction,
     mutate a source, validate domains/references, or claim CRUD completion.
+    M14.3ad composes M14.3ac anchors, M14.3y typed encoding, and the M11 raw
+    transaction/inverse kernel to insert one absent common-field singleton.
+    The source span is empty at the exact anchor and the owned replacement is
+    one complete group. ASCII replaces the encoder's two canonical separators
+    with the preceding group's exact LF, CR, or CRLF ending; Binary bytes remain
+    dialect-correct. Anchor failures and encoder failures remain distinct typed
+    outcomes before a plan escapes. Across AC1009 through AC1032, paired strict
+    ASCII/Binary post-images publish the inserted semantic and executable
+    inverse plans restore byte-identical source. This checkpoint does not insert
+    sequences or extension-dictionary envelopes, batch fields in an edit
+    session, validate domains/references, allocate handles/owners, write a
+    create-new destination, or claim complete entity update/CRUD support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

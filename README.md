@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ac. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ad. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -59,8 +59,12 @@ sequences, and nested extension-dictionary members fail typed. Canonical
 common-field insertion-anchor planning now locates one exact between-group
 byte offset for an absent singleton. It respects preamble/application-group
 envelopes, exact `AcDbEntity` scope, writer order, unknown groups, and legacy
-AC1009 records without editing the source. Encoding the insertion and complete
-CRUD remain later checkpoints.
+AC1009 records without editing the source.
+An absent singleton can now be encoded at that anchor into one immutable
+zero-length-source transaction patch. ASCII insertion preserves the preceding
+group's LF, CR, or CRLF ending; Binary insertion uses the declared dialect.
+Strict post-images and executable inverse plans prove byte-identical source
+restoration. Multi-field sessions and complete CRUD remain later checkpoints.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

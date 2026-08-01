@@ -573,6 +573,17 @@ anything. Unknown groups retain their exact position. Encoding, insertion,
 transactions, multi-field sessions, and broader CRUD support remain later
 checkpoints.
 
+M14.3ad turns one successful M14.3ac anchor into an immutable insertion
+transaction. The existing typed encoder supplies one complete dialect-correct
+group; its ASCII separators inherit the preceding group's LF, CR, or CRLF
+ending, while Binary bytes remain unchanged. One empty source span owns the
+inserted bytes and captures an empty inverse fragment. Strict ASCII/Binary
+post-images across all nine dialects publish the requested semantic, and the
+materialized inverse restores byte-identical input. Anchor and encoding
+failures stay separately typed. Sequence/nested insertion, multi-field edit
+sessions, domain/reference validation, destination writes, and broader CRUD
+support remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

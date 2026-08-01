@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ac can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ad can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -647,6 +647,20 @@ BLOCKS/unknown records and untouched unknown groups. This checkpoint does not
 encode or insert bytes, create a transaction or destination, validate domains
 or references, advance applicability, or establish full CRUD/`Complete`
 support.
+
+M14.3ad adds `DxfEntityFieldInsertionPlan`. A successful M14.3ac absent-
+singleton anchor and M14.3y value encoding become one M11 transaction patch
+whose source span is empty at the exact byte offset. ASCII insertion preserves
+the preceding raw group's LF, CR, or CRLF ending; Binary insertion retains the
+declared dialect's group-code and payload encoding. For AC1009 through AC1032,
+paired strict ASCII/Binary post-images publish the inserted semantic and an
+executable inverse restores byte-identical source. Existing/duplicate fields,
+sequences, nested extension dictionaries, structural anchor failures, wire
+mismatches, non-finite/invalid values, unavailable group codes, source
+mismatches, resource limits, and cancellation prevent a plan from escaping.
+This does not batch edits, validate property domains/references, allocate
+handles/owners, write a destination, advance applicability, or establish full
+CRUD/`Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
