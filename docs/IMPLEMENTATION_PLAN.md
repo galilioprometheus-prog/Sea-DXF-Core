@@ -2104,6 +2104,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     bounds. This checkpoint does not validate names or references, transparency,
     proxy count/data agreement, cross-field relations, applicability, family
     patches, or complete CRUD.
+    M14.3aj composes the generic common-field semantics with the M7.3b handle
+    resolution directory for all five handle-valued common fields. Group 5
+    remains lexical identity evidence. Owner group 330, closed
+    `ACAD_XDICTIONARY` group 360, material group 347, and plot-style group 390
+    preserve field invalidity and the shared four-state model while adding
+    typed null, missing, unique, and ambiguous document-local target outcomes.
+    Material omission remains the generated `ByLayer` default and is never
+    resolved as a fabricated handle. ASCII/Binary parity spans all nine
+    dialects; AC1009 retains its exact missing-required/absent/defaulted states
+    because applicability is still unreviewed. This checkpoint does not validate
+    target record kinds, authoritative ownership, dictionary membership,
+    pointer lifecycle, names, applicability, or reference-safe edits.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

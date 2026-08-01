@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ai. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3aj. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -88,6 +88,11 @@ discarding source evidence. Explicit and defaulted valid values become typed
 domain values; raw decode, duplicate, missing-required, and domain failures
 remain distinct typed issues with provenance. The other common fields pass
 through their exact existing semantic state and are not claimed as reviewed.
+The five common handle-valued fields now have a source-bound projection. Group
+5 remains lexical object identity, while owner, extension dictionary, material,
+and plot-style references retain absent/defaulted/invalid state and distinguish
+null, missing, unique, and ambiguous document-local targets. Unique lookup is
+not promoted to target-kind, ownership, dictionary, or lifecycle validity.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

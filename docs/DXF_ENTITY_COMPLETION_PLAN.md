@@ -652,6 +652,18 @@ source-bound lookup, and bounded public types. Names/references, transparency,
 proxy size/data reconciliation, cross-field relations, applicability, family
 patches, and complete CRUD remain later work.
 
+M14.3aj joins the five handle-valued common fields to existing M7 evidence.
+Object handle group 5 stays lexical identity. Owner 330, extension-dictionary
+360, material 347, and plot-style 390 project exact field failure/absence and
+typed null, missing, unique, or ambiguous document-local targets; omitted
+material remains the schema-backed `ByLayer` default. The join reuses shared
+identity/target slices and never selects one ambiguous occurrence or target.
+Paired ASCII/Binary fixtures cover AC1009 through AC1032 plus malformed,
+duplicate, null, dangling, duplicate-target, cancellation, source identity,
+and public-bound cases. Unique lookup is not target-kind compatibility,
+authoritative ownership, dictionary membership, pointer-lifecycle validity,
+applicability, or reference-safe CRUD.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
