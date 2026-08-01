@@ -330,6 +330,15 @@ unknown names and preserves the exact marker through the alias descriptor.
 This checkpoint does not decide whether a name is legal in its source section
 or dialect and adds no semantic, geometry, CRUD, or support claim.
 
+M14.3h gives all 45 canonical topics and 14 reviewed aliases one generated
+nine-dialect applicability descriptor. Reviewed inclusive ranges return typed
+`Applicable`/`NotApplicable`; insufficient evidence returns
+`NotYetReviewed` rather than a guessed floor. Autodesk compatibility guidance
+anchors DWF/DGN underlays at AC1021 and PDF underlays at AC1024. The other 56
+names stay explicitly unreviewed. The registry is not yet a parser or writer
+gate and does not decide section legality, fields, semantics, geometry, CRUD,
+or support completion.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -2,6 +2,8 @@
 // Normalized entity input SHA-256: 7a492812fa00c44ca58016753dd5aba682b09a1951dfd7e885e251d9be10d68e
 // Reviewed names only; classification does not imply semantic support.
 
+use crate::dialect::DxfAcadVersion;
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfEntityTopic {
     ordinal: u8,
@@ -844,4 +846,201 @@ pub static DXF_ENTITY_ALIASES: &[DxfEntityAliasDescriptor] = &[
 #[must_use]
 pub const fn dxf_entity_aliases() -> &'static [DxfEntityAliasDescriptor] {
     DXF_ENTITY_ALIASES
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityApplicability {
+    Applicable,
+    NotApplicable,
+    NotYetReviewed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DxfEntityApplicabilityEvidence {
+    AutodeskCompatibility,
+    NotYetReviewed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityApplicabilityDescriptor {
+    classification: DxfEntityNameClassification,
+    minimum_version: Option<DxfAcadVersion>,
+    maximum_version: Option<DxfAcadVersion>,
+    evidence: DxfEntityApplicabilityEvidence,
+    source_id: Option<&'static str>,
+    source_reference: Option<&'static str>,
+    source_facts_sha256: Option<&'static str>,
+}
+
+impl DxfEntityApplicabilityDescriptor {
+    const fn not_yet_reviewed(classification: DxfEntityNameClassification) -> Self {
+        Self {
+            classification,
+            minimum_version: None,
+            maximum_version: None,
+            evidence: DxfEntityApplicabilityEvidence::NotYetReviewed,
+            source_id: None,
+            source_reference: None,
+            source_facts_sha256: None,
+        }
+    }
+
+    const fn autodesk_compatibility(
+        classification: DxfEntityNameClassification,
+        minimum_version: DxfAcadVersion,
+        maximum_version: Option<DxfAcadVersion>,
+        source_id: &'static str,
+        source_reference: &'static str,
+        source_facts_sha256: &'static str,
+    ) -> Self {
+        Self {
+            classification,
+            minimum_version: Some(minimum_version),
+            maximum_version,
+            evidence: DxfEntityApplicabilityEvidence::AutodeskCompatibility,
+            source_id: Some(source_id),
+            source_reference: Some(source_reference),
+            source_facts_sha256: Some(source_facts_sha256),
+        }
+    }
+
+    #[must_use]
+    pub const fn classification(self) -> DxfEntityNameClassification {
+        self.classification
+    }
+
+    #[must_use]
+    pub const fn minimum_version(self) -> Option<DxfAcadVersion> {
+        self.minimum_version
+    }
+
+    #[must_use]
+    pub const fn maximum_version(self) -> Option<DxfAcadVersion> {
+        self.maximum_version
+    }
+
+    #[must_use]
+    pub const fn evidence(self) -> DxfEntityApplicabilityEvidence {
+        self.evidence
+    }
+
+    #[must_use]
+    pub const fn source_id(self) -> Option<&'static str> {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn source_reference(self) -> Option<&'static str> {
+        self.source_reference
+    }
+
+    #[must_use]
+    pub const fn source_facts_sha256(self) -> Option<&'static str> {
+        self.source_facts_sha256
+    }
+
+    #[must_use]
+    pub fn applicability(self, version: DxfAcadVersion) -> DxfEntityApplicability {
+        let Some(minimum) = self.minimum_version else {
+            return DxfEntityApplicability::NotYetReviewed;
+        };
+        if version < minimum
+            || self
+                .maximum_version
+                .is_some_and(|maximum| version > maximum)
+        {
+            DxfEntityApplicability::NotApplicable
+        } else {
+            DxfEntityApplicability::Applicable
+        }
+    }
+}
+
+impl DxfEntityNameClassification {
+    #[must_use]
+    pub fn applicability_descriptor(self) -> Option<&'static DxfEntityApplicabilityDescriptor> {
+        let ordinal = match self {
+            Self::Canonical(topic) => usize::from(topic.ordinal()),
+            Self::Alias(alias) => DXF_ENTITY_TOPICS.len() + usize::from(alias.ordinal()),
+            Self::Unknown => return None,
+        };
+        DXF_ENTITY_APPLICABILITY.get(ordinal)
+    }
+
+    #[must_use]
+    pub fn applicability(self, version: DxfAcadVersion) -> Option<DxfEntityApplicability> {
+        self.applicability_descriptor()
+            .map(|descriptor| descriptor.applicability(version))
+    }
+}
+
+pub const DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256: &str =
+    "d6adb21246d5fcca917399bd89969c173744a3b17fd8e6669dc9d445c7aee963";
+
+#[rustfmt::skip]
+pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::THREE_D_FACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::THREE_D_SOLID)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::ACAD_PROXY_ENTITY)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::ARC)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::ATTDEF)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::ATTRIB)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::BODY)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::CIRCLE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::DIMENSION)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::ELLIPSE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::HATCH)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::HELIX)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::IMAGE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::INSERT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LEADER)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LIGHT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LWPOLYLINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MESH)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MLINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MLEADERSTYLE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MLEADER)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MTEXT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::OLEFRAME)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::OLE2FRAME)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::POINT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::POLYLINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::RAY)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::REGION)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SECTION)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SEQEND)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SHAPE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SOLID)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SPLINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SUN)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::SURFACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::TABLE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::TEXT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::TOLERANCE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::TRACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::UNDERLAY)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::VERTEX)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::VIEWPORT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::WIPEOUT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::XLINE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::MPOLYGON)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::ACAD_TABLE)),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::DGNUNDERLAY), DxfAcadVersion::Ac1021, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::DWFUNDERLAY), DxfAcadVersion::Ac1021, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::PDFUNDERLAY), DxfAcadVersion::Ac1024, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::ARC_DIMENSION)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::LARGE_RADIAL_DIMENSION)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::MULTILEADER)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::SECTIONOBJECT)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::EXTRUDEDSURFACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::LOFTEDSURFACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::PLANESURFACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::REVOLVEDSURFACE)),
+    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::SWEPTSURFACE)),
+];
+
+#[must_use]
+pub const fn dxf_entity_applicability() -> &'static [DxfEntityApplicabilityDescriptor] {
+    DXF_ENTITY_APPLICABILITY
 }

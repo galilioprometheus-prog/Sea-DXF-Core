@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3g can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3h can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -393,6 +393,17 @@ unknown while alias descriptors expose the canonical topic, exact wire name,
 evidence kind, source reference, and normalized facts hash. This is inventory
 only: section/dialect legality, record indexing, typed fields, semantic or
 geometry projection, CRUD, and support-state advancement remain unclaimed.
+
+M14.3h adds a deterministic applicability descriptor for all 59 reviewed exact
+names and evaluates each descriptor against AC1009, AC1012, AC1014, AC1015,
+AC1018, AC1021, AC1024, AC1027, and AC1032. Source-backed inclusive ranges
+produce typed `Applicable` or `NotApplicable`; rows without sufficient
+version evidence produce `NotYetReviewed` for every dialect. Autodesk's
+underlay compatibility guidance establishes DWF/DGN at AC1021 and PDF at
+AC1024. The remaining 56 rows deliberately stay unreviewed. This matrix is
+metadata only: it does not validate record section placement, reject a parsed
+record or writer request, add entity fields/semantics/geometry/CRUD, or advance
+any entity to `Complete`.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

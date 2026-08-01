@@ -1736,6 +1736,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     receipts reject mapping or provenance drift. Section validity, dialect
     applicability, record scanning, semantics, geometry, edit, and write remain
     unclaimed.
+    M14.3h adds one generated applicability row for every canonical topic and
+    reviewed alias across all nine supported `$ACADVER` dialects. A row is
+    either a source-backed inclusive range or explicitly `NotYetReviewed`;
+    missing evidence is never converted into a guessed version floor. Autodesk
+    compatibility guidance establishes DWF and DGN underlays at AC1021 and PDF
+    underlays at AC1024. All other rows remain unreviewed. The generator rejects
+    missing/reordered rows, unsupported or inverted ranges, metadata attached
+    to unreviewed rows, wrong source kinds, and stale per-source receipts. This
+    checkpoint does not scan records, validate section placement, gate writers,
+    add fields or semantics, construct geometry, edit, or advance support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

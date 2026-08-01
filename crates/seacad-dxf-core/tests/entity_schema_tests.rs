@@ -1,9 +1,12 @@
 use std::error::Error;
 
 use seacad_dxf_core::{
-    DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_TOPIC_SCHEMA_SHA256,
-    DXF_ENTITY_TOPICS, DxfEntityAlias, DxfEntityAliasEvidence, DxfEntityNameClassification,
-    DxfEntityTopic, classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_topics,
+    DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_APPLICABILITY,
+    DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256, DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS,
+    DxfAcadVersion, DxfEntityAlias, DxfEntityAliasEvidence, DxfEntityApplicability,
+    DxfEntityApplicabilityEvidence, DxfEntityNameClassification, DxfEntityTopic,
+    classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_applicability,
+    dxf_entity_topics,
 };
 
 const EXPECTED_DXF_NAMES: [&str; 45] = [
@@ -197,6 +200,89 @@ fn exact_name_classification_is_case_sensitive_and_explicitly_unknown() {
         assert_eq!(classification.topic(), None);
         assert_eq!(classification.exact_name(), None);
     }
+}
+
+#[test]
+fn applicability_matrix_covers_every_reviewed_name_and_supported_dialect() {
+    let matrix = dxf_entity_applicability();
+    assert_eq!(matrix, DXF_ENTITY_APPLICABILITY);
+    assert_eq!(
+        matrix.len(),
+        DXF_ENTITY_TOPICS.len() + DXF_ENTITY_ALIASES.len()
+    );
+    assert_eq!(DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256.len(), 64);
+
+    for descriptor in matrix {
+        assert_eq!(
+            descriptor.classification().applicability_descriptor(),
+            Some(descriptor)
+        );
+        for version in DxfAcadVersion::SUPPORTED {
+            assert_eq!(
+                descriptor.classification().applicability(version),
+                Some(descriptor.applicability(version))
+            );
+        }
+    }
+    assert_eq!(
+        DxfEntityNameClassification::Unknown.applicability(DxfAcadVersion::Ac1032),
+        None
+    );
+}
+
+#[test]
+fn official_underlay_ranges_are_typed_without_inventing_unreviewed_floors()
+-> Result<(), Box<dyn Error>> {
+    let dgn = classify_exact_dxf_entity_name(b"DGNUNDERLAY")
+        .applicability_descriptor()
+        .ok_or("reviewed DGN alias is missing its applicability row")?;
+    assert_eq!(dgn.minimum_version(), Some(DxfAcadVersion::Ac1021));
+    assert_eq!(dgn.maximum_version(), None);
+    assert_eq!(
+        dgn.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        dgn.source_reference(),
+        Some("GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0")
+    );
+    assert_eq!(
+        dgn.applicability(DxfAcadVersion::Ac1018),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        dgn.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::Applicable
+    );
+
+    let pdf = classify_exact_dxf_entity_name(b"PDFUNDERLAY")
+        .applicability_descriptor()
+        .ok_or("reviewed PDF alias is missing its applicability row")?;
+    assert_eq!(pdf.minimum_version(), Some(DxfAcadVersion::Ac1024));
+    assert_eq!(
+        pdf.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        pdf.applicability(DxfAcadVersion::Ac1032),
+        DxfEntityApplicability::Applicable
+    );
+
+    let spline = classify_exact_dxf_entity_name(b"SPLINE")
+        .applicability_descriptor()
+        .ok_or("canonical SPLINE topic is missing its applicability row")?;
+    assert_eq!(spline.minimum_version(), None);
+    assert_eq!(
+        spline.evidence(),
+        DxfEntityApplicabilityEvidence::NotYetReviewed
+    );
+    for version in DxfAcadVersion::SUPPORTED {
+        assert_eq!(
+            spline.applicability(version),
+            DxfEntityApplicability::NotYetReviewed
+        );
+    }
+    Ok(())
 }
 
 fn assert_send_sync<T: Send + Sync>() {}

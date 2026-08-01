@@ -36,6 +36,12 @@
       "topic_id": "GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077",
       "normalized_facts_sha256": "ee2c1d8556dcc14708a61acee622eb81cd82f9ac8219056bbca3e2c6c28fa724",
       "evidence_kind": "alias_list"
+    },
+    {
+      "id": "autodesk.underlay.compatibility.2020",
+      "topic_id": "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0",
+      "normalized_facts_sha256": "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea",
+      "evidence_kind": "applicability_list"
     }
   ]
 }

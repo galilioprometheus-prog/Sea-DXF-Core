@@ -21,6 +21,8 @@ const HEADER_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/header_sc
 const ENTITY_OUTPUT_PATH: &str = "crates/seacad-dxf-core/src/generated/entity_schema.rs";
 const EXPECTED_ENTITY_TOPIC_COUNT: usize = 45;
 const EXPECTED_ENTITY_ALIAS_COUNT: usize = 14;
+const EXPECTED_ENTITY_APPLICABILITY_COUNT: usize =
+    EXPECTED_ENTITY_TOPIC_COUNT + EXPECTED_ENTITY_ALIAS_COUNT;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -29,6 +31,7 @@ struct SchemaManifest {
     sources: String,
     entity_topics: String,
     entity_aliases: String,
+    entity_applicability: String,
     families: Vec<String>,
 }
 
@@ -91,6 +94,45 @@ struct EntityAlias {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+struct EntityApplicabilityRegistry {
+    schema_version: String,
+    namespace: String,
+    entries: Vec<EntityApplicability>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct EntityApplicability {
+    name_kind: EntityNameKind,
+    name_id: String,
+    review_state: ApplicabilityReviewState,
+    minimum_version: Option<String>,
+    maximum_version: Option<String>,
+    source_id: Option<String>,
+}
+
+struct EntityRegistryReceipts<'a> {
+    topic: &'a str,
+    alias: &'a str,
+    applicability: &'a str,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum EntityNameKind {
+    Topic,
+    Alias,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum ApplicabilityReviewState {
+    ApplicableRange,
+    NotYetReviewed,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 struct SchemaField {
     id: String,
     dxf_name: String,
@@ -147,6 +189,7 @@ enum ReviewState {
 #[serde(rename_all = "snake_case")]
 enum EvidenceKind {
     AliasList,
+    ApplicabilityList,
     OracleInventory,
     Row,
     TopicList,
@@ -234,17 +277,31 @@ fn run(mode: Mode) -> Result<(), SchemaError> {
     let entity_source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
     let entity_aliases = load_entity_aliases(&root, &manifest)?;
     validate_entity_aliases(&manifest, &sources, &entity_topics, &entity_aliases)?;
+    let entity_applicability = load_entity_applicability(&root, &manifest)?;
+    validate_entity_applicability(
+        &manifest,
+        &sources,
+        &entity_topics,
+        &entity_aliases,
+        &entity_applicability,
+    )?;
     let header_receipt = normalized_receipt(&manifest, &sources, &families)?;
     let entity_receipt = normalized_entity_receipt(&entity_topics, entity_source)?;
     let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
+    let applicability_receipt = normalized_applicability_receipt(&entity_applicability, &sources)?;
+    let entity_receipts = EntityRegistryReceipts {
+        topic: &entity_receipt,
+        alias: &alias_receipt,
+        applicability: &applicability_receipt,
+    };
     let header_output = render_registry(&manifest, &sources, &families, &header_receipt)?;
     let entity_output = render_entity_registry(
         &entity_topics,
         entity_source,
-        &entity_receipt,
         &entity_aliases,
         &sources,
-        &alias_receipt,
+        &entity_applicability,
+        &entity_receipts,
     )?;
     let header_target = root.join(HEADER_OUTPUT_PATH);
     let entity_target = root.join(ENTITY_OUTPUT_PATH);
@@ -329,6 +386,22 @@ fn load_entity_aliases(
         ));
     }
     let path = format!("schema/dxf/v1/{}", manifest.entity_aliases);
+    read_json(root, &path, "root")
+}
+
+fn load_entity_applicability(
+    root: &Path,
+    manifest: &SchemaManifest,
+) -> Result<EntityApplicabilityRegistry, SchemaError> {
+    if !valid_family_filename(&manifest.entity_applicability) {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_PATH",
+            MANIFEST_PATH,
+            "entity_applicability",
+            "entity applicability path must be one lowercase .json filename",
+        ));
+    }
+    let path = format!("schema/dxf/v1/{}", manifest.entity_applicability);
     read_json(root, &path, "root")
 }
 
@@ -654,6 +727,185 @@ fn normalized_alias_source_facts_sha256(
     sha256_hex(&bytes, "entity_alias_facts")
 }
 
+fn validate_entity_applicability(
+    manifest: &SchemaManifest,
+    registry: &SourceRegistry,
+    entity_topics: &EntityTopicRegistry,
+    entity_aliases: &EntityAliasRegistry,
+    applicability: &EntityApplicabilityRegistry,
+) -> Result<(), SchemaError> {
+    let path = format!("schema/dxf/v1/{}", manifest.entity_applicability);
+    if applicability.schema_version != manifest.schema_version {
+        return Err(SchemaError::new(
+            "SCHEMA_VERSION",
+            &path,
+            "schema_version",
+            "entity applicability version does not match manifest",
+        ));
+    }
+    if applicability.namespace != "entity_applicability" {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_APPLICABILITY_NAMESPACE",
+            &path,
+            "namespace",
+            "entity applicability namespace must be exactly entity_applicability",
+        ));
+    }
+    if applicability.entries.len() != EXPECTED_ENTITY_APPLICABILITY_COUNT {
+        return Err(SchemaError::new(
+            "SCHEMA_ENTITY_APPLICABILITY_COUNT",
+            &path,
+            "entries",
+            format!(
+                "expected exactly {EXPECTED_ENTITY_APPLICABILITY_COUNT} topic and alias entries"
+            ),
+        ));
+    }
+
+    let expected = entity_topics
+        .topics
+        .iter()
+        .map(|topic| (EntityNameKind::Topic, topic.id.as_str()))
+        .chain(
+            entity_aliases
+                .aliases
+                .iter()
+                .map(|alias| (EntityNameKind::Alias, alias.id.as_str())),
+        );
+    let sources: BTreeMap<_, _> = registry
+        .sources
+        .iter()
+        .map(|source| (source.id.as_str(), source))
+        .collect();
+    let mut referenced_sources = BTreeSet::new();
+    for (index, (entry, (expected_kind, expected_id))) in
+        applicability.entries.iter().zip(expected).enumerate()
+    {
+        let entry_path = format!("entries[{index}]");
+        if entry.name_kind != expected_kind || entry.name_id != expected_id {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_APPLICABILITY_ORDER",
+                &path,
+                entry_path,
+                "entries must cover every canonical topic then every alias in registry order",
+            ));
+        }
+        match entry.review_state {
+            ApplicabilityReviewState::NotYetReviewed => {
+                if entry.minimum_version.is_some()
+                    || entry.maximum_version.is_some()
+                    || entry.source_id.is_some()
+                {
+                    return Err(SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_UNREVIEWED",
+                        &path,
+                        entry_path,
+                        "unreviewed entries must not carry a range or source",
+                    ));
+                }
+            }
+            ApplicabilityReviewState::ApplicableRange => {
+                let minimum = entry
+                    .minimum_version
+                    .as_deref()
+                    .and_then(acad_version_index)
+                    .ok_or_else(|| {
+                        SchemaError::new(
+                            "SCHEMA_ENTITY_APPLICABILITY_RANGE",
+                            &path,
+                            &entry_path,
+                            "reviewed range requires a supported minimum version",
+                        )
+                    })?;
+                if entry
+                    .maximum_version
+                    .as_deref()
+                    .map(acad_version_index)
+                    .is_some_and(|maximum| maximum.is_none_or(|maximum| maximum < minimum))
+                {
+                    return Err(SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_RANGE",
+                        &path,
+                        &entry_path,
+                        "maximum version must be supported and not precede minimum",
+                    ));
+                }
+                let source_id = entry.source_id.as_deref().ok_or_else(|| {
+                    SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_SOURCE",
+                        &path,
+                        &entry_path,
+                        "reviewed range requires a source",
+                    )
+                })?;
+                let source = sources.get(source_id).ok_or_else(|| {
+                    SchemaError::new(
+                        "SCHEMA_SOURCE_REF",
+                        &path,
+                        &entry_path,
+                        "entity applicability references an unknown source id",
+                    )
+                })?;
+                if !matches!(source.evidence_kind, EvidenceKind::ApplicabilityList) {
+                    return Err(SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_SOURCE",
+                        &path,
+                        &entry_path,
+                        "reviewed range source must use applicability_list evidence",
+                    ));
+                }
+                referenced_sources.insert(source_id);
+            }
+        }
+    }
+
+    for source_id in referenced_sources {
+        let source = sources.get(source_id).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_SOURCE_REF",
+                &path,
+                source_id,
+                "validated applicability source disappeared",
+            )
+        })?;
+        let facts: Vec<_> = applicability
+            .entries
+            .iter()
+            .filter(|entry| entry.source_id.as_deref() == Some(source_id))
+            .collect();
+        let bytes = serde_json::to_vec(&facts).map_err(|error| {
+            SchemaError::new("SCHEMA_JSON", &path, source_id, error.to_string())
+        })?;
+        let observed = sha256_hex(&bytes, "entity_applicability_facts")?;
+        if source.normalized_facts_sha256 != observed {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_APPLICABILITY_SOURCE_RECEIPT",
+                &path,
+                source_id,
+                format!(
+                    "recorded source facts differ from normalized applicability facts; observed {observed}"
+                ),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn acad_version_index(version: &str) -> Option<u8> {
+    match version {
+        "AC1009" => Some(0),
+        "AC1012" => Some(1),
+        "AC1014" => Some(2),
+        "AC1015" => Some(3),
+        "AC1018" => Some(4),
+        "AC1021" => Some(5),
+        "AC1024" => Some(6),
+        "AC1027" => Some(7),
+        "AC1032" => Some(8),
+        _ => None,
+    }
+}
+
 fn sha256_hex(bytes: &[u8], entry: &str) -> Result<String, SchemaError> {
     digest_hex(Sha256::digest(bytes).as_slice(), entry)
 }
@@ -872,6 +1124,20 @@ fn normalized_alias_receipt(
     digest_hex(hasher.finalize().as_slice(), "entity_alias_receipt")
 }
 
+fn normalized_applicability_receipt(
+    applicability: &EntityApplicabilityRegistry,
+    registry: &SourceRegistry,
+) -> Result<String, SchemaError> {
+    let mut hasher = Sha256::new();
+    update_normalized_hash(&mut hasher, applicability, "entity_applicability")?;
+    for source in &registry.sources {
+        if matches!(source.evidence_kind, EvidenceKind::ApplicabilityList) {
+            update_normalized_hash(&mut hasher, source, "entity_applicability_source")?;
+        }
+    }
+    digest_hex(hasher.finalize().as_slice(), "entity_applicability_receipt")
+}
+
 fn update_normalized_hash<T: Serialize>(
     hasher: &mut Sha256,
     value: &T,
@@ -971,10 +1237,10 @@ fn render_registry(
 fn render_entity_registry(
     entity_topics: &EntityTopicRegistry,
     source: &SchemaSource,
-    receipt: &str,
     entity_aliases: &EntityAliasRegistry,
     registry: &SourceRegistry,
-    alias_receipt: &str,
+    applicability: &EntityApplicabilityRegistry,
+    receipts: &EntityRegistryReceipts<'_>,
 ) -> Result<String, SchemaError> {
     let mut output = String::new();
     writeln!(
@@ -982,8 +1248,13 @@ fn render_entity_registry(
         "// @generated by seacad-schema-gen {}.",
         env!("CARGO_PKG_VERSION")
     )?;
-    writeln!(output, "// Normalized entity input SHA-256: {receipt}")?;
+    writeln!(
+        output,
+        "// Normalized entity input SHA-256: {}",
+        receipts.topic
+    )?;
     output.push_str("// Reviewed names only; classification does not imply semantic support.\n\n");
+    output.push_str("use crate::dialect::DxfAcadVersion;\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
     output.push_str("pub struct DxfEntityTopic {\n    ordinal: u8,\n}\n\n");
     output.push_str("impl DxfEntityTopic {\n");
@@ -1087,9 +1358,9 @@ fn render_entity_registry(
         "#[must_use]\npub fn classify_exact_dxf_entity_name(name: &[u8]) -> DxfEntityNameClassification {\n    if let Some(topic) = DxfEntityTopic::from_exact_name(name) {\n        DxfEntityNameClassification::Canonical(topic)\n    } else if let Some(alias) = DxfEntityAlias::from_exact_name(name) {\n        DxfEntityNameClassification::Alias(alias)\n    } else {\n        DxfEntityNameClassification::Unknown\n    }\n}\n\n",
     );
     output.push_str("pub const DXF_ENTITY_TOPIC_SCHEMA_SHA256: &str =\n");
-    writeln!(output, "    {receipt:?};\n")?;
+    writeln!(output, "    {:?};\n", receipts.topic)?;
     output.push_str("pub const DXF_ENTITY_ALIAS_SCHEMA_SHA256: &str =\n");
-    writeln!(output, "    {alias_receipt:?};\n")?;
+    writeln!(output, "    {:?};\n", receipts.alias)?;
     output.push_str("pub static DXF_ENTITY_TOPICS: &[DxfEntityTopicDescriptor] = &[\n");
     for topic in &entity_topics.topics {
         output.push_str("    DxfEntityTopicDescriptor {\n");
@@ -1143,7 +1414,7 @@ fn render_entity_registry(
         let evidence = match alias_source.evidence_kind {
             EvidenceKind::AliasList => "Normative",
             EvidenceKind::OracleInventory => "BehavioralOracle",
-            EvidenceKind::Row | EvidenceKind::TopicList => {
+            EvidenceKind::ApplicabilityList | EvidenceKind::Row | EvidenceKind::TopicList => {
                 return Err(SchemaError::new(
                     "SCHEMA_ENTITY_ALIAS_SOURCE",
                     ENTITY_OUTPUT_PATH,
@@ -1183,9 +1454,141 @@ fn render_entity_registry(
         output.push_str("    },\n");
     }
     output.push_str(
-        "];\n\n#[must_use]\npub const fn dxf_entity_aliases() -> &'static [DxfEntityAliasDescriptor] {\n    DXF_ENTITY_ALIASES\n}\n",
+        "];\n\n#[must_use]\npub const fn dxf_entity_aliases() -> &'static [DxfEntityAliasDescriptor] {\n    DXF_ENTITY_ALIASES\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub enum DxfEntityApplicability {\n    Applicable,\n    NotApplicable,\n    NotYetReviewed,\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub enum DxfEntityApplicabilityEvidence {\n    AutodeskCompatibility,\n    NotYetReviewed,\n}\n\n",
+    );
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\n");
+    output.push_str(
+        "pub struct DxfEntityApplicabilityDescriptor {\n    classification: DxfEntityNameClassification,\n    minimum_version: Option<DxfAcadVersion>,\n    maximum_version: Option<DxfAcadVersion>,\n    evidence: DxfEntityApplicabilityEvidence,\n    source_id: Option<&'static str>,\n    source_reference: Option<&'static str>,\n    source_facts_sha256: Option<&'static str>,\n}\n\n",
+    );
+    output.push_str("impl DxfEntityApplicabilityDescriptor {\n");
+    output.push_str("    const fn not_yet_reviewed(classification: DxfEntityNameClassification) -> Self {\n        Self {\n            classification,\n            minimum_version: None,\n            maximum_version: None,\n            evidence: DxfEntityApplicabilityEvidence::NotYetReviewed,\n            source_id: None,\n            source_reference: None,\n            source_facts_sha256: None,\n        }\n    }\n\n");
+    output.push_str("    const fn autodesk_compatibility(\n        classification: DxfEntityNameClassification,\n        minimum_version: DxfAcadVersion,\n        maximum_version: Option<DxfAcadVersion>,\n        source_id: &'static str,\n        source_reference: &'static str,\n        source_facts_sha256: &'static str,\n    ) -> Self {\n        Self {\n            classification,\n            minimum_version: Some(minimum_version),\n            maximum_version,\n            evidence: DxfEntityApplicabilityEvidence::AutodeskCompatibility,\n            source_id: Some(source_id),\n            source_reference: Some(source_reference),\n            source_facts_sha256: Some(source_facts_sha256),\n        }\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn classification(self) -> DxfEntityNameClassification {\n        self.classification\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn minimum_version(self) -> Option<DxfAcadVersion> {\n        self.minimum_version\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn maximum_version(self) -> Option<DxfAcadVersion> {\n        self.maximum_version\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn evidence(self) -> DxfEntityApplicabilityEvidence {\n        self.evidence\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_id(self) -> Option<&'static str> {\n        self.source_id\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_reference(self) -> Option<&'static str> {\n        self.source_reference\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub const fn source_facts_sha256(self) -> Option<&'static str> {\n        self.source_facts_sha256\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub fn applicability(self, version: DxfAcadVersion) -> DxfEntityApplicability {\n        let Some(minimum) = self.minimum_version else {\n            return DxfEntityApplicability::NotYetReviewed;\n        };\n        if version < minimum\n            || self\n                .maximum_version\n                .is_some_and(|maximum| version > maximum)\n        {\n            DxfEntityApplicability::NotApplicable\n        } else {\n            DxfEntityApplicability::Applicable\n        }\n    }\n}\n\n");
+    output.push_str("impl DxfEntityNameClassification {\n");
+    output.push_str("    #[must_use]\n    pub fn applicability_descriptor(self) -> Option<&'static DxfEntityApplicabilityDescriptor> {\n        let ordinal = match self {\n            Self::Canonical(topic) => usize::from(topic.ordinal()),\n            Self::Alias(alias) => DXF_ENTITY_TOPICS.len() + usize::from(alias.ordinal()),\n            Self::Unknown => return None,\n        };\n        DXF_ENTITY_APPLICABILITY.get(ordinal)\n    }\n\n");
+    output.push_str("    #[must_use]\n    pub fn applicability(self, version: DxfAcadVersion) -> Option<DxfEntityApplicability> {\n        self.applicability_descriptor()\n            .map(|descriptor| descriptor.applicability(version))\n    }\n}\n\n");
+    output.push_str("pub const DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256: &str =\n");
+    writeln!(output, "    {:?};\n", receipts.applicability)?;
+    output.push_str(
+        "#[rustfmt::skip]\npub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[\n",
+    );
+    let aliases: BTreeMap<_, _> = entity_aliases
+        .aliases
+        .iter()
+        .map(|alias| (alias.id.as_str(), alias))
+        .collect();
+    for entry in &applicability.entries {
+        let classification = match entry.name_kind {
+            EntityNameKind::Topic => {
+                let topic = topics.get(entry.name_id.as_str()).ok_or_else(|| {
+                    SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_ORDER",
+                        ENTITY_OUTPUT_PATH,
+                        &entry.name_id,
+                        "validated applicability topic disappeared before rendering",
+                    )
+                })?;
+                format!(
+                    "DxfEntityNameClassification::Canonical(DxfEntityTopic::{})",
+                    topic.id.to_ascii_uppercase()
+                )
+            }
+            EntityNameKind::Alias => {
+                let alias = aliases.get(entry.name_id.as_str()).ok_or_else(|| {
+                    SchemaError::new(
+                        "SCHEMA_ENTITY_APPLICABILITY_ORDER",
+                        ENTITY_OUTPUT_PATH,
+                        &entry.name_id,
+                        "validated applicability alias disappeared before rendering",
+                    )
+                })?;
+                format!(
+                    "DxfEntityNameClassification::Alias(DxfEntityAlias::{})",
+                    alias.id.to_ascii_uppercase()
+                )
+            }
+        };
+        if let Some(source_id) = entry.source_id.as_deref() {
+            let source = sources.get(source_id).ok_or_else(|| {
+                SchemaError::new(
+                    "SCHEMA_SOURCE_REF",
+                    ENTITY_OUTPUT_PATH,
+                    &entry.name_id,
+                    "validated applicability source disappeared before rendering",
+                )
+            })?;
+            let minimum = render_required_acad_version(entry.minimum_version.as_deref())?;
+            let maximum = render_optional_acad_version(entry.maximum_version.as_deref())?;
+            writeln!(
+                output,
+                "    DxfEntityApplicabilityDescriptor::autodesk_compatibility({classification}, {minimum}, {maximum}, {:?}, {:?}, {:?}),",
+                source.id, source.topic_id, source.normalized_facts_sha256
+            )?;
+        } else {
+            writeln!(
+                output,
+                "    DxfEntityApplicabilityDescriptor::not_yet_reviewed({classification}),"
+            )?;
+        }
+    }
+    output.push_str(
+        "];\n\n#[must_use]\npub const fn dxf_entity_applicability() -> &'static [DxfEntityApplicabilityDescriptor] {\n    DXF_ENTITY_APPLICABILITY\n}\n",
     );
     Ok(output)
+}
+
+fn render_optional_acad_version(version: Option<&str>) -> Result<String, SchemaError> {
+    match version {
+        None => Ok("None".to_string()),
+        Some(version) if acad_version_index(version).is_some() => {
+            let variant = version.strip_prefix("AC").ok_or_else(|| {
+                SchemaError::new(
+                    "SCHEMA_ENTITY_APPLICABILITY_RANGE",
+                    ENTITY_OUTPUT_PATH,
+                    version,
+                    "validated version lost AC prefix",
+                )
+            })?;
+            Ok(format!("Some(DxfAcadVersion::Ac{variant})"))
+        }
+        Some(version) => Err(SchemaError::new(
+            "SCHEMA_ENTITY_APPLICABILITY_RANGE",
+            ENTITY_OUTPUT_PATH,
+            version,
+            "unsupported version reached rendering",
+        )),
+    }
+}
+
+fn render_required_acad_version(version: Option<&str>) -> Result<String, SchemaError> {
+    let rendered = render_optional_acad_version(version)?;
+    rendered
+        .strip_prefix("Some(")
+        .and_then(|value| value.strip_suffix(')'))
+        .map(str::to_string)
+        .ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_ENTITY_APPLICABILITY_RANGE",
+                ENTITY_OUTPUT_PATH,
+                "minimum_version",
+                "reviewed applicability range lost its minimum version",
+            )
+        })
 }
 
 fn storage_variant(storage: StorageKind) -> &'static str {
@@ -1204,7 +1607,9 @@ fn storage_variant(storage: StorageKind) -> &'static str {
 
 fn evidence_matches(kind: EvidenceKind, field: &SchemaField) -> bool {
     match kind {
-        EvidenceKind::AliasList | EvidenceKind::OracleInventory => false,
+        EvidenceKind::AliasList
+        | EvidenceKind::ApplicabilityList
+        | EvidenceKind::OracleInventory => false,
         EvidenceKind::Row => row_evidence_matches(field),
         EvidenceKind::TopicList => false,
     }
@@ -1343,9 +1748,10 @@ fn valid_source_reference(source: &SchemaSource) -> bool {
                             .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
                 })
         }
-        EvidenceKind::AliasList | EvidenceKind::Row | EvidenceKind::TopicList => {
-            valid_topic_id(&source.topic_id)
-        }
+        EvidenceKind::AliasList
+        | EvidenceKind::ApplicabilityList
+        | EvidenceKind::Row
+        | EvidenceKind::TopicList => valid_topic_id(&source.topic_id),
     }
 }
 
@@ -1387,11 +1793,13 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EXPECTED_ENTITY_ALIAS_COUNT, EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind,
-        evidence_matches, load_entity_aliases, load_entity_topics, load_schema,
-        normalized_alias_receipt, normalized_entity_receipt, normalized_receipt,
-        render_entity_registry, render_registry, validate_entity_aliases, validate_entity_topics,
-        validate_schema, validate_wire_shape,
+        EXPECTED_ENTITY_ALIAS_COUNT, EXPECTED_ENTITY_APPLICABILITY_COUNT, EntityRegistryReceipts,
+        EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches,
+        load_entity_aliases, load_entity_applicability, load_entity_topics, load_schema,
+        normalized_alias_receipt, normalized_applicability_receipt, normalized_entity_receipt,
+        normalized_receipt, render_entity_registry, render_registry, validate_entity_aliases,
+        validate_entity_applicability, validate_entity_topics, validate_schema,
+        validate_wire_shape,
     };
 
     #[test]
@@ -1615,30 +2023,49 @@ mod tests {
         let source = validate_entity_topics(&manifest, &sources, &entity_topics)?;
         let entity_aliases = load_entity_aliases(&root, &manifest)?;
         validate_entity_aliases(&manifest, &sources, &entity_topics, &entity_aliases)?;
+        let applicability = load_entity_applicability(&root, &manifest)?;
+        validate_entity_applicability(
+            &manifest,
+            &sources,
+            &entity_topics,
+            &entity_aliases,
+            &applicability,
+        )?;
         assert_eq!(entity_topics.topics.len(), 45);
         assert_eq!(entity_topics.topics[0].dxf_name, "3DFACE");
         assert_eq!(entity_topics.topics[44].dxf_name, "XLINE");
         let first = normalized_entity_receipt(&entity_topics, source)?;
         let second = normalized_entity_receipt(&entity_topics, source)?;
         let alias_receipt = normalized_alias_receipt(&entity_aliases, &sources)?;
+        let applicability_receipt = normalized_applicability_receipt(&applicability, &sources)?;
+        let first_receipts = EntityRegistryReceipts {
+            topic: &first,
+            alias: &alias_receipt,
+            applicability: &applicability_receipt,
+        };
+        let second_receipts = EntityRegistryReceipts {
+            topic: &second,
+            alias: &alias_receipt,
+            applicability: &applicability_receipt,
+        };
         assert_eq!(first, second);
         assert_eq!(first.len(), 64);
         assert_eq!(
             render_entity_registry(
                 &entity_topics,
                 source,
-                &first,
                 &entity_aliases,
                 &sources,
-                &alias_receipt,
+                &applicability,
+                &first_receipts,
             )?,
             render_entity_registry(
                 &entity_topics,
                 source,
-                &second,
                 &entity_aliases,
                 &sources,
-                &alias_receipt,
+                &applicability,
+                &second_receipts,
             )?
         );
         Ok(())
@@ -1679,6 +2106,44 @@ mod tests {
     }
 
     #[test]
+    fn entity_applicability_is_complete_and_fail_closed() -> Result<(), Box<dyn Error>> {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let (manifest, sources, _) = load_schema(&root)?;
+        let topics = load_entity_topics(&root, &manifest)?;
+        let aliases = load_entity_aliases(&root, &manifest)?;
+        let applicability = load_entity_applicability(&root, &manifest)?;
+        validate_entity_applicability(&manifest, &sources, &topics, &aliases, &applicability)?;
+        assert_eq!(
+            applicability.entries.len(),
+            EXPECTED_ENTITY_APPLICABILITY_COUNT
+        );
+
+        let mut wrong_order = load_entity_applicability(&root, &manifest)?;
+        wrong_order.entries.swap(0, 1);
+        let error =
+            validate_entity_applicability(&manifest, &sources, &topics, &aliases, &wrong_order)
+                .err()
+                .ok_or("wrong applicability order unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_APPLICABILITY_ORDER");
+
+        let mut invented = load_entity_applicability(&root, &manifest)?;
+        invented.entries[0].minimum_version = Some("AC1009".to_string());
+        let error =
+            validate_entity_applicability(&manifest, &sources, &topics, &aliases, &invented)
+                .err()
+                .ok_or("unreviewed applicability metadata unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_APPLICABILITY_UNREVIEWED");
+
+        let mut stale = load_entity_applicability(&root, &manifest)?;
+        stale.entries[47].minimum_version = Some("AC1024".to_string());
+        let error = validate_entity_applicability(&manifest, &sources, &topics, &aliases, &stale)
+            .err()
+            .ok_or("stale applicability source receipt unexpectedly passed")?;
+        assert_eq!(error.code, "SCHEMA_ENTITY_APPLICABILITY_SOURCE_RECEIPT");
+        Ok(())
+    }
+
+    #[test]
     fn duplicate_entity_topic_fails_closed() -> Result<(), Box<dyn Error>> {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let (manifest, sources, _) = load_schema(&root)?;
@@ -1713,7 +2178,7 @@ mod tests {
 
     #[test]
     fn unknown_manifest_key_is_rejected() {
-        let json = r#"{"schema_version":"dxf.v1","sources":"sources.json","entity_topics":"entity_topics.json","entity_aliases":"entity_aliases.json","families":[],"typo":true}"#;
+        let json = r#"{"schema_version":"dxf.v1","sources":"sources.json","entity_topics":"entity_topics.json","entity_aliases":"entity_aliases.json","entity_applicability":"entity_applicability.json","families":[],"typo":true}"#;
         let result = serde_json::from_str::<SchemaManifest>(json);
         assert!(result.is_err());
     }
