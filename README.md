@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3x. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3y. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -39,6 +39,11 @@ four-state value model: exact numbers and handles are decoded fail-closed,
 exact text remains source-backed, reviewed omitted defaults remain explicit,
 and proxy graphics stay an opaque occurrence sequence. Duplicate singletons
 are never selected.
+The CRUD foundation now includes a typed common-field value encoder. It emits
+canonical ASCII groups or dialect-correct Binary groups for exact raw text,
+handles, finite binary64, Int16, Int32, and bounded opaque chunks; invalid
+wire/value combinations and AC1009-inexpressible group codes fail typed before
+any document edit is planned.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

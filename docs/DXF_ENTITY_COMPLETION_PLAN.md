@@ -517,6 +517,17 @@ field applicability. Domain/reference validation, proxy size reconciliation,
 application-group closure, CRUD, writes, and support completion remain later
 checkpoints.
 
+M14.3y adds the first create-new primitive for the unified CRUD kernel: a typed
+common-field group encoder for ASCII and Binary DXF. Generated descriptors
+must match borrowed exact-text, handle, finite-double, Int16, Int32, or bounded
+binary-chunk edit values. Output is canonical and dialect-aware, including the
+AC1009 one-byte group-code boundary and R13-and-later two-byte little-endian
+codes. Invalid wire/value pairs, text framing bytes, non-finite numbers,
+oversized chunks, resource limits, cancellation, and unrepresentable AC1009
+codes fail closed. Strict nine-dialect reparse proves emitted framing, but no
+Unicode transcoding, insertion/update operation, sequence replacement, handle
+or owner assignment, transaction plan, source mutation, or CRUD claim is made.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

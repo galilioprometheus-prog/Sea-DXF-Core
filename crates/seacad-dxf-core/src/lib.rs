@@ -55,6 +55,7 @@ mod encoding;
 mod entity_directory;
 mod entity_field_evidence;
 mod entity_field_semantic;
+mod entity_value_encoder;
 mod error;
 mod format_probe;
 #[allow(dead_code)]
@@ -399,6 +400,10 @@ pub use entity_field_semantic::{
     DxfEntityFieldSemanticDirectory, DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue,
     DxfEntityFieldSemanticValue, DxfEntityFieldSemantics, DxfEntityFieldTextValue,
     DxfEntityFieldValue,
+};
+pub use entity_value_encoder::{
+    DXF_ENTITY_BINARY_CHUNK_MAX_BYTES, DxfEncodedEntityGroup, DxfEntityEditValue,
+    DxfEntityEditValueKind, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

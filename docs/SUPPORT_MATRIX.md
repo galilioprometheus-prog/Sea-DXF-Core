@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3x can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3y can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -583,6 +583,19 @@ an opaque sequence linked to exact card members. Nine-dialect ASCII/Binary
 parity does not establish field applicability in older versions or validate
 property domains, references, proxy byte counts, application-group closure,
 CRUD, writer support, or any `Complete` status.
+
+M14.3y adds `DxfEntityGroupEncoder`, a create-new group primitive over the 19
+generated common-field descriptors. It emits canonical ASCII or Binary bytes
+for exact raw text, handles, finite binary64, Int16, Int32, and individual
+opaque binary chunks. Binary group-code framing follows the AC1009 one-byte
+boundary and the R13-and-later two-byte little-endian contract; numeric payloads
+are little-endian, strings are NUL-terminated, and chunks are length-prefixed.
+Wire mismatches, non-finite doubles, NUL/CR/LF exact text, chunks above 128
+bytes, resource exhaustion, cancellation, and common codes unavailable in
+AC1009 fail closed. All nine dialects strictly reparse paired ASCII/Binary
+fixtures. This does not transcode Unicode, concatenate group-310 sequences,
+insert/update entities, assign handles or owners, build transactions, mutate a
+source, advance applicability, or establish CRUD/writer/`Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

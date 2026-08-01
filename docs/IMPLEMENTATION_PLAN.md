@@ -1963,6 +1963,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     is unreviewed. This checkpoint does not validate property domains/references,
     proxy byte counts, application-group closure, CRUD, writes, or advance any
     entity to `Complete`.
+    M14.3y begins the CRUD kernel with one format- and dialect-aware encoder
+    for generated common-field descriptors. Borrowed edit values preserve six
+    distinct wire domains: exact raw text, handle, finite binary64, Int16,
+    Int32, and one bounded binary chunk. ASCII output uses minimal group-code
+    and numeric spelling, uppercase handle/chunk hexadecimal, and LF framing.
+    Binary output uses one-byte AC1009 group codes, the documented AC1009 XDATA
+    escape range, or R13-and-later little-endian two-byte codes, plus exact
+    little-endian payloads, NUL-terminated strings, and length-prefixed chunks.
+    Wire mismatch, non-finite doubles, framing bytes in exact text, over-128-
+    byte chunks, and group codes unavailable in a dialect fail typed; resource
+    exhaustion and cancellation remain fatal. Nine-dialect outputs strictly
+    reparse in both formats and exact-byte tests cover all six wire domains.
+    This checkpoint does not transcode Unicode into legacy code pages, create
+    sequence operations, choose insertion anchors, allocate handles/owners,
+    edit a source, build a transaction plan, or claim CRUD/writer completion.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
