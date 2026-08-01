@@ -2116,6 +2116,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     because applicability is still unreviewed. This checkpoint does not validate
     target record kinds, authoritative ownership, dictionary membership,
     pointer lifecycle, names, applicability, or reference-safe edits.
+    M14.3ak extends the closed named-symbol inventory with `LAYER` and `LTYPE`
+    records and projects the four exact-text common fields. Layer group 8 and
+    linetype group 6 use SHA-256-bounded exact same-document lookup followed by
+    byte comparison, retaining unique, missing, and duplicate-name outcomes.
+    Omitted linetype remains the reviewed schema `BYLAYER` default rather than a
+    fabricated table target. Layout group 410 and color-name group 430 pass
+    through their exact prior semantics as explicitly unreviewed. Paired
+    ASCII/Binary fixtures span all nine dialects and preserve wrong-section
+    inventory, field cardinality, raw provenance, source identity, cancellation,
+    and debug redaction. This checkpoint does not define case folding, symbol
+    character validity, XREF name policy, layout-object or color-book resolution,
+    applicability, or name-safe edits.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

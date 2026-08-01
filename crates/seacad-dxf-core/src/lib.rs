@@ -55,6 +55,7 @@ mod encoding;
 mod entity_common_field_domain;
 mod entity_common_field_domain_semantic;
 mod entity_common_handle_semantic;
+mod entity_common_text_semantic;
 mod entity_directory;
 mod entity_edit_session;
 mod entity_edit_verification;
@@ -412,6 +413,10 @@ pub use entity_common_handle_semantic::{
     DxfEntityCommonHandleDirectory, DxfEntityCommonHandleEntry, DxfEntityCommonHandleSemantics,
     DxfEntityCommonReferenceIssue, DxfEntityCommonReferenceSemanticValue,
     DxfEntityCommonReferenceValue,
+};
+pub use entity_common_text_semantic::{
+    DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue,
+    DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry, DxfEntityCommonTextSemantics,
 };
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,

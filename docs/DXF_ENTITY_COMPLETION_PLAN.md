@@ -664,6 +664,18 @@ and public-bound cases. Unique lookup is not target-kind compatibility,
 authoritative ownership, dictionary membership, pointer-lifecycle validity,
 applicability, or reference-safe CRUD.
 
+M14.3ak adds `LAYER` and `LTYPE` to the completely closed named-symbol table
+inventory, then projects all four exact-text common fields. Layer 8 and
+linetype 6 use a digest-bounded lookup with exact source-byte collision checks;
+zero, one, or multiple exact table-name matches remain typed. Linetype omission
+keeps the schema `BYLAYER` default without inventing a source span or target.
+Layout 410 and color-name 430 remain exact `Unreviewed` semantics. ASCII/Binary
+fixtures span AC1009 through AC1032 plus missing/duplicate names, duplicate
+fields, defaults, cancellation, source mismatch, wrong-section inventory, and
+public bounds. Case-insensitive policy, legal symbol characters, XREF naming,
+layout-object/color-book resolution, applicability, and edit validation remain
+later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

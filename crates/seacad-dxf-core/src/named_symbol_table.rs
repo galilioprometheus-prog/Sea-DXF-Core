@@ -15,6 +15,8 @@ pub enum DxfNamedSymbolTableKind {
     DimStyle,
     Style,
     BlockRecord,
+    Layer,
+    Linetype,
 }
 
 impl DxfNamedSymbolTableKind {
@@ -23,14 +25,18 @@ impl DxfNamedSymbolTableKind {
             Self::DimStyle => b"DIMSTYLE",
             Self::Style => b"STYLE",
             Self::BlockRecord => b"BLOCK_RECORD",
+            Self::Layer => b"LAYER",
+            Self::Linetype => b"LTYPE",
         }
     }
 }
 
-const TABLE_KINDS: [DxfNamedSymbolTableKind; 3] = [
+const TABLE_KINDS: [DxfNamedSymbolTableKind; 5] = [
     DxfNamedSymbolTableKind::DimStyle,
     DxfNamedSymbolTableKind::Style,
     DxfNamedSymbolTableKind::BlockRecord,
+    DxfNamedSymbolTableKind::Layer,
+    DxfNamedSymbolTableKind::Linetype,
 ];
 
 /// One exact uniquely named record admitted from a matching closed table.
@@ -58,7 +64,7 @@ impl DxfNamedSymbolTableEntry {
     }
 }
 
-/// Exact named DIMSTYLE, STYLE, and BLOCK_RECORD table membership evidence.
+/// Exact named records admitted from five reviewed symbol-table families.
 #[derive(Debug)]
 pub struct DxfNamedSymbolTableDirectory {
     source_id: DxfSourceId,

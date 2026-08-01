@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3aj can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ak can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -752,6 +752,18 @@ numeric target is lookup evidence only: target-kind compatibility,
 authoritative ownership, one-owner conformance, dictionary membership,
 lifecycle behavior, applicability, edit validation, full CRUD, and `Complete`
 support remain open.
+
+M14.3ak extends closed named-symbol membership to `LAYER` and `LTYPE` and adds
+a four-field common-text directory. Layer group 8 and linetype group 6 retain
+raw field states and perform duplicate-preserving exact source-byte lookup
+against their matching closed tables. A unique exact name carries its target;
+missing and multiple exact names are typed failures. Omitted linetype remains
+the schema-backed `BYLAYER` default. Layout 410 and color-name 430 remain exact
+unreviewed text. Paired ASCII/Binary tests cover all nine dialects, wrong-
+section table markers, missing/duplicate names, duplicate fields, defaults,
+source identity, cancellation, and public bounds. This does not claim AutoCAD
+case-folding, symbol-character validity, XREF name rules, layout or color-book
+resolution, applicability, name-safe CRUD, or `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
