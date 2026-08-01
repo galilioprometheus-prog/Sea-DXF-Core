@@ -1746,6 +1746,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     to unreviewed rows, wrong source kinds, and stale per-source receipts. This
     checkpoint does not scan records, validate section placement, gate writers,
     add fields or semantics, construct geometry, edit, or advance support.
+    M14.3i adds the unified source-anchored entity directory over completely
+    indexed raw records. Canonical topics, exact aliases, unknown records in
+    `BLOCKS`/`ENTITIES`, and reviewed names in other record-bearing sections
+    remain distinct; structural `BLOCK`/`ENDBLK` controls are excluded.
+    `DxfEntityRef` retains source identity, raw-record ordinal, exact marker,
+    section, classification, and an ordered slice of exact group-100 subclass
+    markers. Group-100 occurrences inside group-102 application envelopes are
+    excluded from the semantic subclass path without changing raw evidence.
+    ASCII/Binary parity covers all nine dialects, exact case sensitivity,
+    interrupted/unclosed sections, cancellation, source mismatch, and public
+    metadata bounds. This checkpoint does not add common fields, typed family
+    semantics, geometry, edit, write, or a support-state advancement.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3h can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3i can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -404,6 +404,18 @@ AC1024. The remaining 56 rows deliberately stay unreviewed. This matrix is
 metadata only: it does not validate record section placement, reject a parsed
 record or writer request, add entity fields/semantics/geometry/CRUD, or advance
 any entity to `Complete`.
+
+M14.3i adds one format-neutral `DxfEntityDirectory` over completely indexed
+record-bearing sections. Records in `BLOCKS` and `ENTITIES` are classified as
+canonical topic, exact alias, or unknown; reviewed entity names elsewhere are
+retained as typed wrong-section evidence. `BLOCK` and `ENDBLK` remain BLOCKS
+structure rather than unknown entities. Each `DxfEntityRef` retains source
+identity, raw-record ordinal and section, exact marker span, classification,
+and a source-order group-100 subclass range. Group-100 values inside group-102
+application envelopes do not enter that semantic path. All other groups and
+bytes remain authoritative and untouched. This is indexing infrastructure;
+common fields, family semantics, geometry, CRUD, writer gating, and support
+completion remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

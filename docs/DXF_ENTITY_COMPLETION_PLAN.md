@@ -339,6 +339,16 @@ names stay explicitly unreviewed. The registry is not yet a parser or writer
 gate and does not decide section legality, fields, semantics, geometry, CRUD,
 or support completion.
 
+M14.3i adds the common entity index required before more family-specific
+directories migrate. It classifies exact canonical, alias, unknown, and
+wrong-section occurrences without relying on group order; `BLOCK`/`ENDBLK`
+remain structural controls. Entity references preserve the source identity,
+raw record and exact marker plus a source-order group-100 subclass path.
+Application-control content is excluded from that path but never removed from
+the raw document. The index has ASCII/Binary parity for all nine dialects and
+does not yet expose common fields, family semantics, geometry, CRUD, or writer
+applicability gates.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

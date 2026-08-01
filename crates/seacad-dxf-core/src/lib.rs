@@ -52,6 +52,7 @@ mod ellipse_geometry;
 mod ellipse_geometry_card;
 mod ellipse_geometry_semantic;
 mod encoding;
+mod entity_directory;
 mod error;
 mod format_probe;
 #[allow(dead_code)]
@@ -370,6 +371,10 @@ pub use ellipse_geometry_semantic::{
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
     DxfTextEncodingReport, DxfTextEncodingResolution,
+};
+pub use entity_directory::{
+    DxfEntityClassification, DxfEntityDirectory, DxfEntityKnownClassification, DxfEntityRef,
+    DxfEntitySubclassMarker, DxfEntitySubclassRange,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
