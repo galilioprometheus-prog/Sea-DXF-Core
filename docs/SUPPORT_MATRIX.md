@@ -439,6 +439,15 @@ family-subclass collisions, and reviewed names in wrong sections are excluded.
 This layer does not decode values, apply defaults, validate references or
 proxy byte counts, edit, write, or advance entity support.
 
+M14.3l adds `DxfSplinePointTupleDirectory` over the existing SPLINE evidence
+cards. Control-point group 10/20/30 sequences and fit-point group 11/21/31
+sequences are paired by component-local ordinal, so arbitrary interleaving of
+different group codes does not change the result. Tuples retain compact member
+references, exact component counts, complete/partial shape, and underlying
+numeric failures. Missing Z is preserved as absence rather than silently
+defaulted. Weight, tangent, normal, relation, NURBS, HELIX, CRUD, and writer
+support remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

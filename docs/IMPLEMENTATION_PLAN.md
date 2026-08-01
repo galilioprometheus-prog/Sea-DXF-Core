@@ -1783,6 +1783,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     metadata bounds, and debug redaction are covered. This checkpoint does not
     decode values, apply defaults, validate domains/references/proxy byte
     counts, edit, write, or advance support.
+    M14.3l groups the retained SPLINE group-10/20/30 control-point and
+    group-11/21/31 fit-point sequences by the ordinal within each component
+    role. This produces two fixed entries per SPLINE record and compact tuples
+    that point back to exact evidence-card members without copying values.
+    Complete and every partial component shape remain explicit, including
+    missing X or Y and omitted Z; invalid numeric evidence remains attached.
+    Pairing is independent of how different group codes are interleaved.
+    Nine-dialect ASCII/Binary parity, empty sequences, cancellation, lookup
+    bounds, and compact public metadata are covered. This checkpoint does not
+    apply coordinate defaults, validate tuple/count relations, add weights or
+    tangent/normal vectors, construct NURBS geometry, process HELIX, edit,
+    write, or advance support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

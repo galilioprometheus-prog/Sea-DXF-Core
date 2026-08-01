@@ -368,6 +368,15 @@ family-specific code collisions. Unknown entities retain common evidence;
 wrong-section records do not become semantic entities. Value decoding,
 defaults, domain/reference checks, CRUD, and writes remain later checkpoints.
 
+M14.3l groups retained SPLINE control-point and fit-point coordinate evidence
+without depending on field interleaving. The nth X, Y, and Z occurrence within
+each role forms the nth compact tuple, and each component remains a reference
+to the exact evidence-card member. Component counts, empty sequences,
+complete tuples, partial tuples, and invalid numeric evidence stay explicit;
+no missing coordinate is defaulted. Weight association, tangent/normal
+vectors, point/count validation, analytic NURBS data, HELIX, CRUD, and writes
+remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
