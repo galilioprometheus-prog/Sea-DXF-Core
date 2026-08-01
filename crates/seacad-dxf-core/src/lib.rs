@@ -161,6 +161,7 @@ mod source;
 mod source_id;
 mod source_scan;
 mod source_span;
+mod spline_auxiliary;
 mod spline_card;
 mod spline_count_relation;
 mod spline_evidence;
@@ -765,6 +766,11 @@ pub use shape_wcs_orientation::{
 pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
 pub use source_id::DxfSourceId;
 pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
+pub use spline_auxiliary::{
+    DxfSplineAuxiliaryDirectory, DxfSplineVectorComponentState, DxfSplineVectorComponents,
+    DxfSplineVectorEntry, DxfSplineVectorKind, DxfSplineVectorState,
+    DxfSplineWeightCountDisposition, DxfSplineWeightEntry, DxfSplineWeightState,
+};
 pub use spline_card::{
     DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,
     DxfSplineCardState, DxfSplineFlags, DxfSplineFlagsSemantic, DxfSplineValueCard,

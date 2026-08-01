@@ -163,7 +163,7 @@ fn cancellation_lookup_and_public_traits_hold() -> Result<(), Box<dyn Error>> {
 
 fn assert_card_directory(directory: &DxfSplineCardDirectory) -> Result<(), Box<dyn Error>> {
     assert_eq!(directory.cards().len(), DXF_SPLINE_ROLES.len());
-    assert_eq!(directory.members().len(), 28);
+    assert_eq!(directory.members().len(), 30);
     assert_eq!(
         directory.source_id(),
         directory.evidence_directory().source_id()
@@ -190,6 +190,7 @@ fn assert_card_directory(directory: &DxfSplineCardDirectory) -> Result<(), Box<d
     );
     for role in [
         DxfSplineValueRole::KnotValue,
+        DxfSplineValueRole::Weight,
         DxfSplineValueRole::ControlPointX,
         DxfSplineValueRole::ControlPointY,
         DxfSplineValueRole::ControlPointZ,
@@ -210,6 +211,7 @@ fn assert_card_directory(directory: &DxfSplineCardDirectory) -> Result<(), Box<d
             .filter(|card| !matches!(
                 card.role(),
                 DxfSplineValueRole::KnotValue
+                    | DxfSplineValueRole::Weight
                     | DxfSplineValueRole::ControlPointX
                     | DxfSplineValueRole::ControlPointY
                     | DxfSplineValueRole::ControlPointZ
@@ -299,7 +301,7 @@ fn expected_evidence() -> Vec<Evidence> {
     values
 }
 
-fn double_values() -> [(DxfSplineValueRole, f64); 23] {
+fn double_values() -> [(DxfSplineValueRole, f64); 25] {
     use DxfSplineValueRole::*;
     [
         (KnotTolerance, 1.0e-7),
@@ -313,6 +315,8 @@ fn double_values() -> [(DxfSplineValueRole, f64); 23] {
         (EndTangentZ, 6.0),
         (KnotValue, 0.0),
         (KnotValue, 1.0),
+        (Weight, 1.0),
+        (Weight, 0.5),
         (ControlPointX, 1.0),
         (ControlPointY, 2.0),
         (ControlPointZ, 3.0),
@@ -330,7 +334,7 @@ fn double_values() -> [(DxfSplineValueRole, f64); 23] {
 
 fn ascii_fixture(version: &str) -> Vec<u8> {
     format!(
-        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nSPLINE\n70\n13\n71\n3\n72\n2\n73\n2\n74\n1\n42\n0.0000001\n43\n0.0000002\n44\n0.0000000003\n12\n-0\n22\n2\n32\n3\n13\n4\n23\n5\n33\n6\n40\n0\n40\n1\n10\n1\n20\n2\n30\n3\n10\n4\n20\n5\n30\n6\n11\n7\n21\n8\n31\n9\n210\n0\n220\n0\n230\n1\n0\nENDSEC\n0\nEOF\n"
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nSPLINE\n70\n13\n71\n3\n72\n2\n73\n2\n74\n1\n42\n0.0000001\n43\n0.0000002\n44\n0.0000000003\n12\n-0\n22\n2\n32\n3\n13\n4\n23\n5\n33\n6\n40\n0\n40\n1\n41\n1\n41\n0.5\n10\n1\n20\n2\n30\n3\n10\n4\n20\n5\n30\n6\n11\n7\n21\n8\n31\n9\n210\n0\n220\n0\n230\n1\n0\nENDSEC\n0\nEOF\n"
     )
     .into_bytes()
 }
@@ -353,8 +357,8 @@ fn binary_fixture(version: DxfAcadVersion) -> io::Result<Vec<u8>> {
         push_i16(&mut bytes, version, code, value)?;
     }
     for ((role, value), code) in double_values().into_iter().zip([
-        42, 43, 44, 12, 22, 32, 13, 23, 33, 40, 40, 10, 20, 30, 10, 20, 30, 11, 21, 31, 210, 220,
-        230,
+        42, 43, 44, 12, 22, 32, 13, 23, 33, 40, 40, 41, 41, 10, 20, 30, 10, 20, 30, 11, 21, 31,
+        210, 220, 230,
     ]) {
         let _ = role;
         push_double(&mut bytes, version, code, value)?;

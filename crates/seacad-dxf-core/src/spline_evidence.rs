@@ -27,6 +27,7 @@ pub enum DxfSplineValueRole {
     EndTangentY,
     EndTangentZ,
     KnotValue,
+    Weight,
     ControlPointX,
     ControlPointY,
     ControlPointZ,
@@ -272,6 +273,7 @@ fn append_values(
     cancellation: &DxfCancellationToken,
     values: &mut Vec<DxfSplineValue>,
 ) -> Result<(), DxfError> {
+    let mut spline_scope = true;
     for occurrence in record.marker_occurrence().saturating_add(1)..record.group_range().end() {
         ensure_not_cancelled(cancellation)?;
         if application_groups
@@ -283,6 +285,14 @@ fn append_values(
         let group = document
             .group(occurrence)
             .ok_or_else(invalid_internal_data)?;
+        if group.group_code().value() == 100 {
+            spline_scope =
+                document.raw_span_equals_exact(group.value_payload_span(), b"AcDbSpline")?;
+            continue;
+        }
+        if !spline_scope {
+            continue;
+        }
         let Some(role) = value_role(group.group_code().value()) else {
             continue;
         };
@@ -350,6 +360,7 @@ const fn value_role(group_code: i16) -> Option<DxfSplineValueRole> {
         23 => Some(EndTangentY),
         33 => Some(EndTangentZ),
         40 => Some(KnotValue),
+        41 => Some(Weight),
         10 => Some(ControlPointX),
         20 => Some(ControlPointY),
         30 => Some(ControlPointZ),

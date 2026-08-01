@@ -8,7 +8,7 @@ use crate::{
     DxfSplineNumericIssue, DxfSplineRecordEntry, DxfSplineValue, DxfSplineValueRole,
 };
 
-pub const DXF_SPLINE_ROLES: [DxfSplineValueRole; 24] = [
+pub const DXF_SPLINE_ROLES: [DxfSplineValueRole; 25] = [
     DxfSplineValueRole::Flags,
     DxfSplineValueRole::Degree,
     DxfSplineValueRole::KnotCount,
@@ -24,6 +24,7 @@ pub const DXF_SPLINE_ROLES: [DxfSplineValueRole; 24] = [
     DxfSplineValueRole::EndTangentY,
     DxfSplineValueRole::EndTangentZ,
     DxfSplineValueRole::KnotValue,
+    DxfSplineValueRole::Weight,
     DxfSplineValueRole::ControlPointX,
     DxfSplineValueRole::ControlPointY,
     DxfSplineValueRole::ControlPointZ,

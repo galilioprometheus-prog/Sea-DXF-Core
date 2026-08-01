@@ -1795,6 +1795,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     apply coordinate defaults, validate tuple/count relations, add weights or
     tangent/normal vectors, construct NURBS geometry, process HELIX, edit,
     write, or advance support.
+    M14.3m adds group-41 weight evidence to the fixed SPLINE role/card set and
+    projects one weight relation plus start-tangent, end-tangent, and normal
+    vector structure per record. Missing weights represent Autodesk's implicit
+    unit-weight sequence; explicit weight counts are compared with group-10
+    control-point anchors without validating their numeric domain. Each vector
+    component remains absent, unique with an exact card member, or duplicate
+    with a count; aggregate state is absent, present with an exact component
+    mask, or ambiguous without selecting a duplicate. The SPLINE evidence scan
+    now accepts only legacy pre-subclass or exact `AcDbSpline` scope, excluding
+    later subclass collisions. Nine-dialect ASCII/Binary parity, mismatch,
+    partial/duplicate/invalid evidence, cancellation, and public bounds are
+    covered. Vector defaults/domains, spline invariants, analytic NURBS data,
+    HELIX, CRUD, writes, and support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

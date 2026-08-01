@@ -377,6 +377,17 @@ no missing coordinate is defaulted. Weight association, tangent/normal
 vectors, point/count validation, analytic NURBS data, HELIX, CRUD, and writes
 remain later checkpoints.
 
+M14.3m retains group-41 weights in the SPLINE evidence/card layer and adds a
+compact auxiliary projection. Absent weights are represented as an implicit
+unit sequence for the observed group-10 control-point count; explicit sequence
+counts remain matched or mismatched and every raw numeric failure is retained.
+Start tangent, end tangent, and normal expose per-component absent, unique, or
+duplicate states plus aggregate absent/present/ambiguous structure. Scanning
+is limited to legacy or exact `AcDbSpline` scope so later subclass collisions
+are ignored without changing raw bytes. Numeric domain validation, effective
+vector defaults, invariants, NURBS geometry, HELIX, CRUD, and writes remain
+later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

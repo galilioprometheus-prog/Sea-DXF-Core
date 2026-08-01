@@ -448,6 +448,17 @@ numeric failures. Missing Z is preserved as absence rather than silently
 defaulted. Weight, tangent, normal, relation, NURBS, HELIX, CRUD, and writer
 support remain unclaimed.
 
+M14.3m adds group 41 to the SPLINE evidence/cards and introduces
+`DxfSplineAuxiliaryDirectory`. One weight entry per SPLINE record distinguishes
+Autodesk's implicit unit weights from explicit matched or mismatched counts
+against group-10 control-point anchors. Three vector entries retain each
+start-tangent, end-tangent, and normal component as absent, unique, or
+duplicate, with aggregate present-component or ambiguity masks. Evidence is
+limited to legacy pre-subclass and exact `AcDbSpline` scope. This layer does
+not validate weight/vector domains, derive effective vectors, evaluate spline
+invariants, construct NURBS data, process HELIX, edit, write, or advance
+entity support.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative
