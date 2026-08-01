@@ -686,6 +686,16 @@ hex, negative size, cancellation, source mismatch, and public bounds. Proxy
 payload semantics, applicability, sequence CRUD, clone/delete, and `Complete`
 support remain later work.
 
+M14.3am adds typed common transparency semantics for group 440. The public
+domain preserves ByLayer, ByBlock, and ByAlpha with ObjectARX alpha 0–255,
+rejects reserved payload bits and unknown method bytes, and composes with raw
+projection plus verified common-field edits. Autodesk documentation is joined
+with an AutoCAD 2027 CHPROP native receipt for exact method-byte placement.
+ASCII/Binary fixtures span all nine dialects; AC1009 retains exact absence and
+the existing wrong-dialect edit rejection. Effective inherited transparency,
+UI percentage conversion, rendering, applicability, family CRUD, and
+`Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

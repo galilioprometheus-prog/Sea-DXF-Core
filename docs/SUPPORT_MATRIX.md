@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3al can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3am can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -776,6 +776,18 @@ size, and first invalid chunk. Paired fixtures cover AC1009 through AC1032;
 AC1009 covers the representable zero-size/no-data relation. This does not claim
 payload decoding, rendering, inferred repair, applicability, sequence editing,
 clone/delete closure, or `Complete` support.
+
+M14.3am reviews common transparency group 440 as an exact Int32 domain.
+ByLayer is method byte 0 with no payload, ByBlock is method byte 1 with no
+payload, and ByAlpha is method byte 2 with alpha in the low byte; ObjectARX
+defines alpha 0 as clear and 255 as opaque. Reserved middle/payload bits and
+unknown method bytes remain typed invalid states with raw provenance. Valid
+edits pass through wire validation, strict semantic post-image verification,
+and byte-identical inverse restoration. Paired ASCII/Binary fixtures cover all
+nine dialects, with AC1009 retaining absence because group 440 is not
+expressible by its Binary group-code wire. Effective layer/block resolution,
+percentage rounding, rendering, applicability, and `Complete` support remain
+open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -2139,6 +2139,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     zero-size/no-data case. This checkpoint does not decode proxy graphics,
     infer a missing size, repair mismatches, validate version applicability,
     or add sequence edit/clone/delete support.
+    M14.3am reviews common transparency group 440. Public values distinguish
+    `ByLayer`, `ByBlock`, and `ByAlpha { alpha }`; alpha follows ObjectARX's
+    zero-clear to 255-opaque contract. Autodesk's method enumeration plus an
+    AutoCAD 2027 native CHPROP receipt establish method bytes 0, 1, and 2 in
+    the high byte, with alpha in the low byte. Reserved payload bits and other
+    method bytes fail typed. The domain composes with existing-document
+    semantics, edit admission, strict post-image verification, and exact
+    inverse restoration. ASCII/Binary fixtures cover every dialect; AC1009
+    retains absence and rejects inexpressible insertion through the existing
+    wire gate. This checkpoint does not resolve layer/block effective alpha,
+    map UI percentage rounding, render transparency, or claim applicability.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

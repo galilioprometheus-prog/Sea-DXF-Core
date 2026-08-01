@@ -7,9 +7,9 @@ use seacad_dxf_core::{
     DxfEntityCommonFieldDomainSemanticValue, DxfEntityCommonFieldDomainSemantics,
     DxfEntityCommonFieldDomainValue, DxfEntityField, DxfEntityFieldSemanticIssue,
     DxfEntityFieldSemantics, DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityShadowMode,
-    DxfEntitySpace, DxfEntityVisibility, DxfError, DxfMemorySource, DxfRawDocumentFormat,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValue, DxfSemanticValueState,
-    NoopDxfReadObserver,
+    DxfEntitySpace, DxfEntityTransparency, DxfEntityVisibility, DxfError, DxfMemorySource,
+    DxfRawDocumentFormat, DxfReadOptions, DxfResourceProfile, DxfSemanticValue,
+    DxfSemanticValueState, NoopDxfReadObserver,
 };
 
 #[test]
@@ -210,11 +210,21 @@ fn assert_valid_domains(
             reviewed(domains, entity, DxfEntityField::TRUE_COLOR)?.state(),
             DxfSemanticValueState::Absent
         );
+        assert_eq!(
+            reviewed(domains, entity, DxfEntityField::TRANSPARENCY)?.state(),
+            DxfSemanticValueState::Absent
+        );
     } else {
         assert_eq!(
             reviewed(domains, entity, DxfEntityField::LINEWEIGHT)?.value(),
             Some(&DxfEntityCommonFieldDomainValue::Lineweight(
                 DxfEntityLineweight::from_raw(211).ok_or(io::Error::other("lineweight"))?
+            ))
+        );
+        assert_eq!(
+            reviewed(domains, entity, DxfEntityField::TRANSPARENCY)?.value(),
+            Some(&DxfEntityCommonFieldDomainValue::Transparency(
+                DxfEntityTransparency::ByAlpha { alpha: 127 }
             ))
         );
         assert_eq!(
@@ -243,6 +253,7 @@ fn assert_invalid_domains(
         DxfEntityField::VISIBILITY,
         DxfEntityField::PROXY_GRAPHICS_SIZE,
         DxfEntityField::TRUE_COLOR,
+        DxfEntityField::TRANSPARENCY,
         DxfEntityField::SHADOW,
     ] {
         let value = reviewed(domains, entity, field)?;
@@ -259,6 +270,7 @@ fn assert_invalid_domains(
             | DxfEntityCommonFieldDomainIssue::UnsupportedInt32 { field, .. }
             | DxfEntityCommonFieldDomainIssue::InvalidDouble { field, .. }
             | DxfEntityCommonFieldDomainIssue::ValueKindMismatch { field, .. } => field,
+            DxfEntityCommonFieldDomainIssue::InvalidTransparency { field, .. } => field,
             _ => return Err(io::Error::other("unknown domain issue").into()),
         };
         assert_eq!(issue_field, field);
@@ -373,6 +385,7 @@ fn fixture(
             (60, Value::Int16(2)),
             (92, Value::Int32(-1)),
             (420, Value::Int32(0x01_00_00_00)),
+            (440, Value::Int32(0x0200_0100)),
             (284, Value::Int16(4)),
         ]),
     }
@@ -380,6 +393,7 @@ fn fixture(
         groups.extend([
             (370, Value::Int16(211)),
             (420, Value::Int32(0x12_34_56)),
+            (440, Value::Int32(0x0200_007f)),
             (284, Value::Int16(3)),
         ]);
     }

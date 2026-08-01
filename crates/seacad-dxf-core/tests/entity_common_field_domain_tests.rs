@@ -6,9 +6,10 @@ use seacad_dxf_core::{
     DxfEntityCommonFieldDomainOutcome, DxfEntityCommonFieldDomainValue, DxfEntityCommonFieldPatch,
     DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityEditValueKind,
     DxfEntityEditVerificationOutcome, DxfEntityField, DxfEntityIndexedColor, DxfEntityLineweight,
-    DxfEntityPatch, DxfEntityShadowMode, DxfEntitySpace, DxfEntityTrueColor, DxfEntityVisibility,
-    DxfError, DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityPatch, DxfEntityShadowMode, DxfEntitySpace, DxfEntityTransparency,
+    DxfEntityTransparencyIssue, DxfEntityTransparencyMethod, DxfEntityTrueColor,
+    DxfEntityVisibility, DxfError, DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView,
+    DxfReadOptions, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
     classify_entity_common_field_edit_domain,
 };
 
@@ -127,6 +128,39 @@ fn reviewed_scalar_boundaries_classify_to_typed_domains() -> Result<(), Box<dyn 
     assert!(DxfEntityTrueColor::from_raw(-1).is_none());
     assert!(DxfEntityTrueColor::from_raw(0x01_00_00_00).is_none());
 
+    for transparency in [
+        DxfEntityTransparency::ByLayer,
+        DxfEntityTransparency::ByBlock,
+        DxfEntityTransparency::ByAlpha { alpha: 0 },
+        DxfEntityTransparency::ByAlpha { alpha: 127 },
+        DxfEntityTransparency::ByAlpha { alpha: u8::MAX },
+    ] {
+        assert_eq!(
+            DxfEntityTransparency::from_raw(transparency.raw()),
+            Some(transparency)
+        );
+        assert!(matches!(
+            domain(DxfEntityField::TRANSPARENCY, int32(transparency.raw())),
+            DxfEntityCommonFieldDomainOutcome::Valid(
+                DxfEntityCommonFieldDomainValue::Transparency(observed)
+            ) if observed == transparency
+        ));
+    }
+    assert_eq!(
+        DxfEntityTransparency::ByLayer.method(),
+        DxfEntityTransparencyMethod::ByLayer
+    );
+    assert!(DxfEntityTransparency::ByLayer.is_by_layer());
+    assert!(DxfEntityTransparency::ByBlock.is_by_block());
+    assert!(DxfEntityTransparency::ByAlpha { alpha: 1 }.is_by_alpha());
+    assert!(DxfEntityTransparency::ByAlpha { alpha: 0 }.is_clear());
+    assert!(DxfEntityTransparency::ByAlpha { alpha: u8::MAX }.is_solid());
+    assert_eq!(
+        DxfEntityTransparency::ByAlpha { alpha: 127 }.alpha(),
+        Some(127)
+    );
+    assert_eq!(DxfEntityTransparency::ByBlock.alpha(), None);
+
     for (raw, mode) in [
         (0, DxfEntityShadowMode::CastsAndReceives),
         (1, DxfEntityShadowMode::Casts),
@@ -155,6 +189,47 @@ fn invalid_values_and_unreviewed_fields_stay_distinct() -> Result<(), Box<dyn Er
             DxfEntityCommonFieldDomainIssue::UnsupportedInt16 { field, value }
         );
     }
+    for (value, issue) in [
+        (
+            0x0000_0001,
+            DxfEntityTransparencyIssue::ReservedPayload {
+                method: 0,
+                payload: 1,
+            },
+        ),
+        (
+            0x0100_0001,
+            DxfEntityTransparencyIssue::ReservedPayload {
+                method: 1,
+                payload: 1,
+            },
+        ),
+        (
+            0x0200_0100,
+            DxfEntityTransparencyIssue::ReservedPayload {
+                method: 2,
+                payload: 0x100,
+            },
+        ),
+        (
+            0x0300_0000,
+            DxfEntityTransparencyIssue::UnsupportedMethod { method: 3 },
+        ),
+        (
+            -1,
+            DxfEntityTransparencyIssue::UnsupportedMethod { method: u8::MAX },
+        ),
+    ] {
+        assert_eq!(
+            invalid(domain(DxfEntityField::TRANSPARENCY, int32(value)))?,
+            DxfEntityCommonFieldDomainIssue::InvalidTransparency {
+                field: DxfEntityField::TRANSPARENCY,
+                value,
+                issue,
+            }
+        );
+        assert!(DxfEntityTransparency::from_raw(value).is_none());
+    }
     for (field, value) in [
         (DxfEntityField::PROXY_GRAPHICS_SIZE, -1_i32),
         (DxfEntityField::TRUE_COLOR, -1),
@@ -171,6 +246,14 @@ fn invalid_values_and_unreviewed_fields_stay_distinct() -> Result<(), Box<dyn Er
             field: DxfEntityField::VISIBILITY,
             expected: DxfEntityEditValueKind::Int16,
             observed: DxfEntityEditValueKind::Int32,
+        }
+    );
+    assert_eq!(
+        invalid(domain(DxfEntityField::TRANSPARENCY, int16(1)))?,
+        DxfEntityCommonFieldDomainIssue::ValueKindMismatch {
+            field: DxfEntityField::TRANSPARENCY,
+            expected: DxfEntityEditValueKind::Int32,
+            observed: DxfEntityEditValueKind::Int16,
         }
     );
     assert_eq!(
@@ -211,6 +294,7 @@ fn edit_session_rejects_invalid_domains_without_queueing() -> Result<(), Box<dyn
         (DxfEntityField::VISIBILITY, int16(2)),
         (DxfEntityField::PROXY_GRAPHICS_SIZE, int32(-1)),
         (DxfEntityField::TRUE_COLOR, int32(0x01_00_00_00)),
+        (DxfEntityField::TRANSPARENCY, int32(0x0200_0100)),
         (DxfEntityField::SHADOW, int16(4)),
     ] {
         assert!(matches!(
@@ -290,6 +374,7 @@ fn verify_document(
         for (field, value) in [
             (DxfEntityField::LINEWEIGHT, int16(211)),
             (DxfEntityField::TRUE_COLOR, int32(0x12_34_56)),
+            (DxfEntityField::TRANSPARENCY, int32(0x0200_007f)),
             (DxfEntityField::SHADOW, int16(3)),
         ] {
             applied(session.update(key, set(field, value))?)?;
@@ -298,7 +383,7 @@ fn verify_document(
     let expected_count = if version == DxfAcadVersion::Ac1009 {
         5
     } else {
-        8
+        9
     };
     assert_eq!(session.queued_edit_count(), expected_count);
     let plan = session.finish_verifiable()?;

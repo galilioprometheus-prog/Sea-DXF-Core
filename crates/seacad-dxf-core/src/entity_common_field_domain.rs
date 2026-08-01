@@ -2,7 +2,10 @@
 
 use std::num::NonZeroU8;
 
-use crate::{DxfDouble, DxfEntityEditValue, DxfEntityEditValueKind, DxfEntityField};
+use crate::{
+    DxfDouble, DxfEntityEditValue, DxfEntityEditValueKind, DxfEntityField, DxfEntityTransparency,
+    DxfEntityTransparencyIssue,
+};
 
 /// Model-space or paper-space placement encoded by common group 67.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -228,6 +231,7 @@ pub enum DxfEntityCommonFieldDomainValue {
     Visibility(DxfEntityVisibility),
     ProxyGraphicsSize(u32),
     TrueColor(DxfEntityTrueColor),
+    Transparency(DxfEntityTransparency),
     ShadowMode(DxfEntityShadowMode),
 }
 
@@ -247,6 +251,11 @@ pub enum DxfEntityCommonFieldDomainIssue {
     UnsupportedInt32 {
         field: DxfEntityField,
         value: i32,
+    },
+    InvalidTransparency {
+        field: DxfEntityField,
+        value: i32,
+        issue: DxfEntityTransparencyIssue,
     },
     InvalidDouble {
         field: DxfEntityField,
@@ -324,6 +333,23 @@ pub fn classify_entity_common_field_edit_domain(
             other => kind_mismatch(field, DxfEntityEditValueKind::Int32, other.kind()),
         };
     }
+    if field == DxfEntityField::TRANSPARENCY {
+        return match value {
+            DxfEntityEditValue::Int32(raw) => match DxfEntityTransparency::classify_raw(raw) {
+                Ok(transparency) => DxfEntityCommonFieldDomainOutcome::Valid(
+                    DxfEntityCommonFieldDomainValue::Transparency(transparency),
+                ),
+                Err(issue) => DxfEntityCommonFieldDomainOutcome::Invalid(
+                    DxfEntityCommonFieldDomainIssue::InvalidTransparency {
+                        field,
+                        value: raw,
+                        issue,
+                    },
+                ),
+            },
+            other => kind_mismatch(field, DxfEntityEditValueKind::Int32, other.kind()),
+        };
+    }
     if field == DxfEntityField::SHADOW {
         return classify_i16(field, value, |raw| {
             DxfEntityShadowMode::from_raw(raw).map(DxfEntityCommonFieldDomainValue::ShadowMode)
@@ -340,6 +366,7 @@ pub(crate) fn has_reviewed_entity_common_field_domain(field: DxfEntityField) -> 
         || field == DxfEntityField::VISIBILITY
         || field == DxfEntityField::PROXY_GRAPHICS_SIZE
         || field == DxfEntityField::TRUE_COLOR
+        || field == DxfEntityField::TRANSPARENCY
         || field == DxfEntityField::SHADOW
 }
 
