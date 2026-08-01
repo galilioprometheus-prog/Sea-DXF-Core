@@ -2079,6 +2079,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     reparse failure, and cleanup. This checkpoint does not add domain/reference
     validation, family patches, sequence/nested edits, entity insert/clone/
     delete, handle/owner assignment, or full CRUD support.
+    M14.3ah adds a pure common-field edit-domain classifier and admits it before
+    replacement/insertion planning. Autodesk-backed closed domains cover group
+    67 model/paper space, group 62 BYBLOCK/ACI/BYLAYER and negative layer-off
+    colors, public `AcDb::LineWeight` values, nonnegative group-48 linetype
+    scale, group-60 visibility, nonnegative group-92 proxy byte count, group-420
+    24-bit RGB, and group-284 shadow mode. Each valid result is a typed value;
+    wrong value kinds and out-of-domain scalars return typed issues, while
+    unreviewed fields remain explicitly classified as such. Invalid edits never
+    enter the session queue or produce a transaction. Boundary tests and paired
+    strict ASCII/Binary session tests cover all nine dialects and exact inverse
+    restoration. This checkpoint does not validate existing raw-domain values,
+    names, handles/references, transparency, proxy count/data agreement,
+    cross-field relations, applicability, or family-specific patches.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

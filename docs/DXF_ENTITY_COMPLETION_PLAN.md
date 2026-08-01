@@ -625,6 +625,22 @@ strict-reparse cleanup, semantic cleanup, and raw-mismatch cleanup. This does
 not add field-domain/reference validators, family patches, sequence/nested
 operations, insert/clone/delete, handle/owner assignment, or complete CRUD.
 
+M14.3ah classifies explicit common-field edit values before any raw planner is
+called. The reviewed scalar set is group 67 model/paper space, group 62 indexed
+color including BYBLOCK/BYLAYER and negative layer-off ACI, the public group
+370 lineweight enumeration, nonnegative group 48 linetype scale, group 60
+visibility, nonnegative group 92 proxy graphics size, group 420 RGB with a zero
+high byte, and group 284 shadow mode. Public domain types round-trip their wire
+values, invalid value kinds/ranges return typed issues, and unreviewed fields
+remain distinguishable rather than being called valid. The edit session checks
+this classifier after duplicate-target detection and before insertion or
+replacement, so rejected values leave the queue and source unchanged. Strict
+ASCII/Binary AC1009-through-AC1032 tests prove accepted edits, semantic
+postconditions, and exact inverse restoration. Existing raw-value domain
+projection, references/names, transparency, proxy size/data reconciliation,
+cross-field relations, version applicability, and family patches remain later
+work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

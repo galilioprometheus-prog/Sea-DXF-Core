@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ag can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ah can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -709,6 +709,23 @@ tampering separately proves strict-reparse cleanup, edited-field semantic
 cleanup, and unrelated raw-mismatch cleanup. Domain/reference validation,
 family patches, sequences/nested edits, entity insert/clone/delete, handle/
 owner assignment, applicability, and full CRUD/`Complete` support remain open.
+
+M14.3ah adds `classify_entity_common_field_edit_domain` and typed representations
+for eight reviewed scalar domains. Group 67 accepts model/paper values 0/1;
+group 62 accepts BYBLOCK, ACI 1-255, BYLAYER, and negative layer-off ACI values;
+group 370 accepts the public `AcDb::LineWeight` set from -3 through the discrete
+2.11 mm value; group 48 requires a finite nonnegative scale; group 60 accepts
+visible/invisible; group 92 requires a nonnegative byte count; group 420
+requires a zero high byte and exposes RGB channels; group 284 accepts its four
+documented shadow modes. Wrong value kinds and unsupported values are typed;
+all other common fields return `Unreviewed` rather than a false validity claim.
+`DxfEntityEditSession` rejects invalid reviewed domains before a planner runs,
+without queue growth or source mutation. Boundary tests and paired strict
+ASCII/Binary edits for AC1009 through AC1032 verify semantic postconditions and
+byte-identical inverse restoration. Existing raw-value domain projection,
+text/name and handle/reference validation, transparency, proxy byte-count/data
+agreement, cross-field relations, applicability, family patches, and full
+CRUD/`Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

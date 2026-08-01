@@ -4,7 +4,8 @@ use std::{fmt, io};
 
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditPlan,
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
+    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
@@ -58,6 +59,7 @@ pub enum DxfEntityEditIssue {
         key: DxfEntityKey,
         field: DxfEntityField,
     },
+    Domain(DxfEntityCommonFieldDomainIssue),
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
     Reset(DxfEntityFieldResetIssue),
@@ -191,6 +193,13 @@ impl<'document, 'evidence, 'cancellation>
         }
         match patch {
             DxfEntityCommonFieldPatch::SetExplicit { value, .. } => {
+                if let DxfEntityCommonFieldDomainOutcome::Invalid(issue) =
+                    crate::classify_entity_common_field_edit_domain(field, value)
+                {
+                    return Ok(DxfEntityEditOutcome::Unavailable(
+                        DxfEntityEditIssue::Domain(issue),
+                    ));
+                }
                 self.set_explicit(key, field, value)
             }
             DxfEntityCommonFieldPatch::ResetToDefault { .. } => self.reset(key, field),
