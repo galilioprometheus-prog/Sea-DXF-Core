@@ -2,10 +2,11 @@
 
 use std::{fmt, io};
 
+use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditValue,
-    DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue,
-    DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
+    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditPlan,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
+    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
     DxfEntityKey, DxfError, DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile,
     DxfSourceId, DxfTransactionPlan,
@@ -117,6 +118,7 @@ struct PendingEdit {
     write_order: u8,
     source_span: ByteSpan,
     replacement: Box<[u8]>,
+    expected: DxfEntityExpectedField,
 }
 
 /// Source-bound batch of entity edits that finishes as one immutable transaction.
@@ -196,7 +198,28 @@ impl<'document, 'evidence, 'cancellation>
     }
 
     /// Freezes every accepted update into one source-order transaction plan.
-    pub fn finish(mut self) -> Result<DxfTransactionPlan, DxfError> {
+    pub fn finish(self) -> Result<DxfTransactionPlan, DxfError> {
+        self.finish_parts().map(|(transaction, _)| transaction)
+    }
+
+    /// Freezes the transaction together with its semantic postconditions.
+    pub fn finish_verifiable(self) -> Result<DxfEntityEditPlan, DxfError> {
+        let (transaction, pending) = self.finish_parts()?;
+        let mut expectations = Vec::new();
+        expectations
+            .try_reserve_exact(pending.len())
+            .map_err(|_| out_of_memory())?;
+        for edit in pending {
+            expectations.push(DxfEntityEditExpectation::new(
+                edit.key.raw_record_ordinal(),
+                edit.field,
+                edit.expected,
+            ));
+        }
+        Ok(DxfEntityEditPlan::new(transaction, expectations))
+    }
+
+    fn finish_parts(mut self) -> Result<(DxfTransactionPlan, Vec<PendingEdit>), DxfError> {
         ensure_not_cancelled(self.cancellation)?;
         self.pending.sort_unstable_by_key(|edit| {
             (
@@ -225,7 +248,8 @@ impl<'document, 'evidence, 'cancellation>
             }
             cursor = end;
         }
-        builder.finish(self.cancellation)
+        let transaction = builder.finish(self.cancellation)?;
+        Ok((transaction, self.pending))
     }
 
     fn set_explicit(
@@ -247,6 +271,7 @@ impl<'document, 'evidence, 'cancellation>
                 field,
                 DxfEntityEditDisposition::Replaced,
                 plan.into_transaction(),
+                DxfEntityExpectedField::explicit(value)?,
             ),
             DxfEntityFieldReplacementOutcome::Unavailable(
                 DxfEntityFieldReplacementIssue::FieldAbsent { .. },
@@ -263,6 +288,7 @@ impl<'document, 'evidence, 'cancellation>
                     field,
                     DxfEntityEditDisposition::Inserted,
                     plan.into_transaction(),
+                    DxfEntityExpectedField::explicit(value)?,
                 ),
                 DxfEntityFieldInsertionOutcome::Unavailable(issue) => Ok(
                     DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Insertion(issue)),
@@ -297,6 +323,7 @@ impl<'document, 'evidence, 'cancellation>
                 field,
                 DxfEntityEditDisposition::Reset,
                 plan.into_transaction(),
+                DxfEntityExpectedField::Implicit,
             ),
             DxfEntityFieldResetOutcome::Unavailable(issue) => Ok(
                 DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Reset(issue)),
@@ -310,6 +337,7 @@ impl<'document, 'evidence, 'cancellation>
         field: DxfEntityField,
         disposition: DxfEntityEditDisposition,
         transaction: DxfTransactionPlan,
+        expected: DxfEntityExpectedField,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         transaction.validate_source_precondition(self.document)?;
         let [patch] = transaction.patches() else {
@@ -338,6 +366,7 @@ impl<'document, 'evidence, 'cancellation>
             write_order: descriptor.write_order().ordinal(),
             source_span: patch.source_span(),
             replacement: owned.into_boxed_slice(),
+            expected,
         });
         applied(key, field, disposition, self.pending.len())
     }

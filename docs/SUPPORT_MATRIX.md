@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ae can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3af can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -677,6 +677,22 @@ ambiguous partial plan. Topic-family patches, sequence/nested operations,
 domain/reference validation, entity insertion, handle/owner allocation,
 closed-set clone/delete, create-new verified writes, applicability, and full
 CRUD/`Complete` support remain open.
+
+M14.3af adds `DxfEntityEditPlan` and `finish_verifiable`. Every queued common-
+field singleton retains a payload-redacted postcondition keyed by raw record
+ordinal and field. Explicit expectations own exact text or retain typed handle,
+finite-double, Int16, and Int32 values; reset expects the optional card to be
+absent and its generated semantic state to be defaulted or absent. Verification
+first enforces the source and post-image envelope, then rebuilds common-field
+semantics and checks cardinality, semantic shape, state, and value. M11.1b raw
+verification and inverse materialization run only after the semantic checks.
+Strict ASCII/Binary AC1009-through-AC1032 tests prove typed semantic mismatch,
+unrelated raw-byte mismatch, source/length/cancellation failures, payload
+redaction, and byte-identical inverse restoration. This checkpoint does not
+invoke M12 create-new writing, clean a filesystem destination after semantic
+failure, validate field domains/references, add family patches or sequence/
+nested edits, insert entities, clone/delete closed sets, advance applicability,
+or establish full CRUD/`Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

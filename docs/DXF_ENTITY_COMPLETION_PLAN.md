@@ -597,6 +597,19 @@ byte-identical inverse restoration. Family-specific patches, nested/sequence
 operations, domain/reference validation, insert/clone/delete, and destination
 verification remain later checkpoints.
 
+M14.3af adds a verifiable finish path without weakening the fixed
+`finish() -> DxfTransactionPlan` API. `finish_verifiable` returns one
+`DxfEntityEditPlan` whose payload-redacted expectations identify every queued
+record ordinal/field and its explicit typed value or implicit reset. A fresh
+post-image must have the projected envelope, matching unique/absent
+cardinality, correct explicit/defaulted/absent state, and exact typed value.
+After those semantic postconditions pass, the existing raw verifier must match
+every transaction byte before an executable inverse journal escapes. Strict
+ASCII/Binary fixtures across all nine dialects distinguish field-value
+mismatch from unrelated raw-byte mismatch and restore byte-identical source.
+Create-new writer/cleanup integration, domain/reference validation, family
+patches, insert/clone/delete, and complete CRUD remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

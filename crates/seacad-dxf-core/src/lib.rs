@@ -54,6 +54,7 @@ mod ellipse_geometry_semantic;
 mod encoding;
 mod entity_directory;
 mod entity_edit_session;
+mod entity_edit_verification;
 mod entity_field_evidence;
 mod entity_field_insertion;
 mod entity_field_insertion_anchor;
@@ -400,6 +401,11 @@ pub use entity_directory::{
 pub use entity_edit_session::{
     DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
     DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityPatch,
+};
+pub use entity_edit_verification::{
+    DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,
+    DxfEntityEditVerificationJournal, DxfEntityEditVerificationOutcome,
+    DxfEntityEditVerificationReceipt,
 };
 pub use entity_field_evidence::{
     DxfEntityFieldCard, DxfEntityFieldCardMember, DxfEntityFieldCardMemberRange,

@@ -2052,6 +2052,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     restores byte-identical source. This checkpoint does not add topic-family
     patch variants, sequences/nested grammar, insert/clone/delete, domain or
     reference validators, or the create-new verified destination pipeline.
+    M14.3af adds `DxfEntityEditPlan` as the verifiable finish path for an edit
+    session. Each queued singleton retains its record ordinal, field, requested
+    explicit typed value or implicit reset state, while exact text is owned and
+    every `Debug` view remains payload-redacted. Verification requires the
+    source precondition and post-image format/length, resolves the same raw
+    record ordinal in a fresh common-field semantic directory, checks unique
+    explicit versus absent optional cardinality, checks explicit/defaulted/
+    absent state, and compares exact text, handle, finite double, Int16, or
+    Int32 values. Only then does M11.1b verify every raw output byte and publish
+    an executable inverse journal. Paired strict ASCII/Binary tests cover all
+    nine dialects; semantic value mismatch and unrelated raw-byte mismatch stay
+    distinct. This checkpoint does not call the M12 create-new writer, remove a
+    destination after semantic failure, validate domains/references, add family
+    patches, or establish broader CRUD support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
