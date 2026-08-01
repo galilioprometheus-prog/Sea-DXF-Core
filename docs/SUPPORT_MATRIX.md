@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ak can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3al can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -764,6 +764,18 @@ section table markers, missing/duplicate names, duplicate fields, defaults,
 source identity, cancellation, and public bounds. This does not claim AutoCAD
 case-folding, symbol-character validity, XREF name rules, layout or color-book
 resolution, applicability, name-safe CRUD, or `Complete` support.
+
+M14.3al adds an exact proxy-graphics size relation for every semantic entity.
+It compares reviewed group 92 with the complete opaque group-310 sequence.
+ASCII chunks must contain an even number of hexadecimal digits and contribute
+half their encoded length; Binary chunks contribute the validated payload span
+after their wire length prefix. The implementation scans bounded chunks,
+retains exact failure provenance, and never concatenates or interprets payload
+bytes. Typed states preserve absence, missing size, match, mismatch, invalid
+size, and first invalid chunk. Paired fixtures cover AC1009 through AC1032;
+AC1009 covers the representable zero-size/no-data relation. This does not claim
+payload decoding, rendering, inferred repair, applicability, sequence editing,
+clone/delete closure, or `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -2128,6 +2128,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and debug redaction. This checkpoint does not define case folding, symbol
     character validity, XREF name policy, layout-object or color-book resolution,
     applicability, or name-safe edits.
+    M14.3al reconciles the reviewed group-92 proxy byte count with the exact
+    opaque group-310 sequence. ASCII chunks are validated as hexadecimal and
+    counted by decoded byte length; Binary chunks use the validated payload
+    span after the wire length prefix. The projection never concatenates or
+    interprets payload data and retains the first malformed chunk's source
+    provenance. Typed states distinguish complete absence, missing size,
+    matched counts, mismatches, invalid size, and invalid ASCII chunks.
+    ASCII/Binary parity spans all nine dialects; AC1009 proves the expressible
+    zero-size/no-data case. This checkpoint does not decode proxy graphics,
+    infer a missing size, repair mismatches, validate version applicability,
+    or add sequence edit/clone/delete support.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

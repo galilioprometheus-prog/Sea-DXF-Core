@@ -676,6 +676,16 @@ public bounds. Case-insensitive policy, legal symbol characters, XREF naming,
 layout-object/color-book resolution, applicability, and edit validation remain
 later work.
 
+M14.3al adds a source-bound relation between common group 92 and the opaque
+group-310 sequence. ASCII hexadecimal chunks are checked and counted as
+decoded bytes; Binary chunks use their validated payload spans. No payload is
+joined, decoded, rendered, or synthesized. Absence, missing size, exact match,
+count mismatch, invalid size, and malformed ASCII chunk remain typed and keep
+raw evidence. Fixtures cover all nine dialects in ASCII/Binary plus malformed
+hex, negative size, cancellation, source mismatch, and public bounds. Proxy
+payload semantics, applicability, sequence CRUD, clone/delete, and `Complete`
+support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

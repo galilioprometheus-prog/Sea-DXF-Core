@@ -65,6 +65,7 @@ mod entity_field_insertion_anchor;
 mod entity_field_replacement;
 mod entity_field_reset;
 mod entity_field_semantic;
+mod entity_proxy_graphics_relation;
 mod entity_value_encoder;
 mod error;
 mod format_probe;
@@ -452,6 +453,10 @@ pub use entity_field_semantic::{
     DxfEntityFieldSemanticDirectory, DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue,
     DxfEntityFieldSemanticValue, DxfEntityFieldSemantics, DxfEntityFieldTextValue,
     DxfEntityFieldValue,
+};
+pub use entity_proxy_graphics_relation::{
+    DxfEntityProxyGraphicsChunkIssue, DxfEntityProxyGraphicsDirectory, DxfEntityProxyGraphicsEntry,
+    DxfEntityProxyGraphicsState,
 };
 pub use entity_value_encoder::{
     DXF_ENTITY_BINARY_CHUNK_MAX_BYTES, DxfEncodedEntityGroup, DxfEntityEditValue,
