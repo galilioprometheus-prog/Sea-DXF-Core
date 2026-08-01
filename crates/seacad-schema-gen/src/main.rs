@@ -130,6 +130,7 @@ struct EntityCommonField {
     cardinality: EntityFieldCardinality,
     default: EntityFieldDefault,
     scope: EntityFieldScope,
+    write_order: u8,
     coordinate_space: EntityCoordinateSpace,
     applicability: EntityFieldApplicability,
     source_id: String,
@@ -1025,6 +1026,7 @@ fn validate_entity_common_fields(
         .collect();
     let mut ids = BTreeSet::new();
     let mut group_codes = BTreeSet::new();
+    let mut write_orders = BTreeSet::new();
     let mut referenced_source = None;
     for (index, field) in common_fields.fields.iter().enumerate() {
         let entry = format!("fields[{index}]");
@@ -1061,6 +1063,22 @@ fn validate_entity_common_fields(
             ));
         }
         validate_common_field_shape(field, &path, &entry)?;
+        let expected_write_order = common_field_write_order(field.group_code).ok_or_else(|| {
+            SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_WRITE_ORDER",
+                &path,
+                format!("{entry}.write_order"),
+                "group code has no reviewed canonical write order",
+            )
+        })?;
+        if field.write_order != expected_write_order || !write_orders.insert(field.write_order) {
+            return Err(SchemaError::new(
+                "SCHEMA_ENTITY_COMMON_WRITE_ORDER",
+                &path,
+                format!("{entry}.write_order"),
+                "write order must be the unique reviewed Autodesk table position",
+            ));
+        }
         let expected_fact_prefix = format!("group:{}", field.group_code);
         if !field.source_fact.starts_with(&expected_fact_prefix) {
             return Err(SchemaError::new(
@@ -1171,6 +1189,31 @@ fn common_field_wire_type(group_code: i16) -> Option<EntityFieldWireType> {
         5 | 330 | 347 | 360 | 390 => Some(EntityFieldWireType::Handle),
         60 | 62 | 67 | 284 | 370 => Some(EntityFieldWireType::Int16),
         92 | 420 | 440 => Some(EntityFieldWireType::Int32),
+        _ => None,
+    }
+}
+
+fn common_field_write_order(group_code: i16) -> Option<u8> {
+    match group_code {
+        5 => Some(0),
+        360 => Some(1),
+        330 => Some(2),
+        67 => Some(3),
+        410 => Some(4),
+        8 => Some(5),
+        6 => Some(6),
+        347 => Some(7),
+        62 => Some(8),
+        370 => Some(9),
+        48 => Some(10),
+        60 => Some(11),
+        92 => Some(12),
+        310 => Some(13),
+        420 => Some(14),
+        430 => Some(15),
+        440 => Some(16),
+        390 => Some(17),
+        284 => Some(18),
         _ => None,
     }
 }
@@ -1904,8 +1947,9 @@ fn render_entity_common_fields(
     output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldScope {\n    EntityPreamble,\n    AcDbEntity,\n    ExtensionDictionaryApplicationGroup,\n}\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityCoordinateSpace {\n    NotApplicable,\n}\n\n");
     output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub enum DxfEntityFieldApplicability {\n    NotYetReviewed,\n}\n\n");
-    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct DxfEntityFieldDescriptor {\n    field: DxfEntityField,\n    id: &'static str,\n    group_code: i16,\n    wire_type: DxfEntityFieldWireType,\n    cardinality: DxfEntityFieldCardinality,\n    default: DxfEntityFieldDefault,\n    scope: DxfEntityFieldScope,\n    coordinate_space: DxfEntityCoordinateSpace,\n    applicability: DxfEntityFieldApplicability,\n    source_id: &'static str,\n    source_reference: &'static str,\n    source_facts_sha256: &'static str,\n    source_fact: &'static str,\n}\n\n");
-    output.push_str("impl DxfEntityFieldDescriptor {\n    #[must_use]\n    pub const fn field(self) -> DxfEntityField {\n        self.field\n    }\n\n    #[must_use]\n    pub const fn id(self) -> &'static str {\n        self.id\n    }\n\n    #[must_use]\n    pub const fn group_code(self) -> i16 {\n        self.group_code\n    }\n\n    #[must_use]\n    pub const fn wire_type(self) -> DxfEntityFieldWireType {\n        self.wire_type\n    }\n\n    #[must_use]\n    pub const fn cardinality(self) -> DxfEntityFieldCardinality {\n        self.cardinality\n    }\n\n    #[must_use]\n    pub const fn default(self) -> DxfEntityFieldDefault {\n        self.default\n    }\n\n    #[must_use]\n    pub const fn scope(self) -> DxfEntityFieldScope {\n        self.scope\n    }\n\n    #[must_use]\n    pub const fn coordinate_space(self) -> DxfEntityCoordinateSpace {\n        self.coordinate_space\n    }\n\n    #[must_use]\n    pub const fn applicability(self) -> DxfEntityFieldApplicability {\n        self.applicability\n    }\n\n    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n    #[must_use]\n    pub const fn source_reference(self) -> &'static str {\n        self.source_reference\n    }\n\n    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n\n    #[must_use]\n    pub const fn source_fact(self) -> &'static str {\n        self.source_fact\n    }\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]\npub struct DxfEntityFieldWriteOrder {\n    ordinal: u8,\n}\n\nimpl DxfEntityFieldWriteOrder {\n    #[must_use]\n    pub const fn ordinal(self) -> u8 {\n        self.ordinal\n    }\n}\n\n");
+    output.push_str("#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]\npub struct DxfEntityFieldDescriptor {\n    field: DxfEntityField,\n    id: &'static str,\n    group_code: i16,\n    wire_type: DxfEntityFieldWireType,\n    cardinality: DxfEntityFieldCardinality,\n    default: DxfEntityFieldDefault,\n    scope: DxfEntityFieldScope,\n    write_order: DxfEntityFieldWriteOrder,\n    coordinate_space: DxfEntityCoordinateSpace,\n    applicability: DxfEntityFieldApplicability,\n    source_id: &'static str,\n    source_reference: &'static str,\n    source_facts_sha256: &'static str,\n    source_fact: &'static str,\n}\n\n");
+    output.push_str("impl DxfEntityFieldDescriptor {\n    #[must_use]\n    pub const fn field(self) -> DxfEntityField {\n        self.field\n    }\n\n    #[must_use]\n    pub const fn id(self) -> &'static str {\n        self.id\n    }\n\n    #[must_use]\n    pub const fn group_code(self) -> i16 {\n        self.group_code\n    }\n\n    #[must_use]\n    pub const fn wire_type(self) -> DxfEntityFieldWireType {\n        self.wire_type\n    }\n\n    #[must_use]\n    pub const fn cardinality(self) -> DxfEntityFieldCardinality {\n        self.cardinality\n    }\n\n    #[must_use]\n    pub const fn default(self) -> DxfEntityFieldDefault {\n        self.default\n    }\n\n    #[must_use]\n    pub const fn scope(self) -> DxfEntityFieldScope {\n        self.scope\n    }\n\n    #[must_use]\n    pub const fn write_order(self) -> DxfEntityFieldWriteOrder {\n        self.write_order\n    }\n\n    #[must_use]\n    pub const fn coordinate_space(self) -> DxfEntityCoordinateSpace {\n        self.coordinate_space\n    }\n\n    #[must_use]\n    pub const fn applicability(self) -> DxfEntityFieldApplicability {\n        self.applicability\n    }\n\n    #[must_use]\n    pub const fn source_id(self) -> &'static str {\n        self.source_id\n    }\n\n    #[must_use]\n    pub const fn source_reference(self) -> &'static str {\n        self.source_reference\n    }\n\n    #[must_use]\n    pub const fn source_facts_sha256(self) -> &'static str {\n        self.source_facts_sha256\n    }\n\n    #[must_use]\n    pub const fn source_fact(self) -> &'static str {\n        self.source_fact\n    }\n}\n\n");
     output.push_str("pub const DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256: &str =\n");
     writeln!(output, "    {receipt:?};\n")?;
     output.push_str("pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[\n");
@@ -1945,6 +1989,11 @@ fn render_entity_common_fields(
             output,
             "        scope: DxfEntityFieldScope::{},",
             entity_field_scope_variant(field.scope)
+        )?;
+        writeln!(
+            output,
+            "        write_order: DxfEntityFieldWriteOrder {{ ordinal: {} }},",
+            field.write_order
         )?;
         output.push_str("        coordinate_space: DxfEntityCoordinateSpace::NotApplicable,\n");
         output.push_str("        applicability: DxfEntityFieldApplicability::NotYetReviewed,\n");
@@ -2548,6 +2597,16 @@ mod tests {
         assert_eq!(fields.fields[18].id, "shadow");
         assert_eq!(fields.fields[13].group_code, 310);
         assert_eq!(
+            fields
+                .fields
+                .iter()
+                .map(|field| field.write_order)
+                .collect::<Vec<_>>(),
+            [
+                0, 2, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+            ]
+        );
+        assert_eq!(
             fields.fields[6].default,
             EntityFieldDefault::ExactText("BYLAYER".to_string())
         );
@@ -2564,6 +2623,10 @@ mod tests {
         let mut invalid_default = fields.clone();
         invalid_default.fields[6].default = EntityFieldDefault::Int16(0);
         assert!(validate_entity_common_fields(&manifest, &sources, &invalid_default).is_err());
+
+        let mut invalid_write_order = fields.clone();
+        invalid_write_order.fields[2].write_order = invalid_write_order.fields[1].write_order;
+        assert!(validate_entity_common_fields(&manifest, &sources, &invalid_write_order).is_err());
         Ok(())
     }
 

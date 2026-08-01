@@ -7,8 +7,9 @@ use seacad_dxf_core::{
     DxfEntityAlias, DxfEntityAliasEvidence, DxfEntityApplicability, DxfEntityApplicabilityEvidence,
     DxfEntityCoordinateSpace, DxfEntityField, DxfEntityFieldApplicability,
     DxfEntityFieldCardinality, DxfEntityFieldDefault, DxfEntityFieldScope, DxfEntityFieldWireType,
-    DxfEntityNameClassification, DxfEntityTopic, classify_exact_dxf_entity_name,
-    dxf_entity_aliases, dxf_entity_applicability, dxf_entity_common_fields, dxf_entity_topics,
+    DxfEntityFieldWriteOrder, DxfEntityNameClassification, DxfEntityTopic,
+    classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_applicability,
+    dxf_entity_common_fields, dxf_entity_topics,
 };
 
 const EXPECTED_DXF_NAMES: [&str; 45] = [
@@ -295,31 +296,37 @@ fn common_field_registry_freezes_group_wire_cardinality_and_provenance()
     assert_eq!(fields.len(), 19);
     assert_eq!(DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256.len(), 64);
     let expected = [
-        ("handle", 5, DxfEntityFieldWireType::Handle),
-        ("owner", 330, DxfEntityFieldWireType::Handle),
-        ("extension_dictionary", 360, DxfEntityFieldWireType::Handle),
-        ("paper_space", 67, DxfEntityFieldWireType::Int16),
-        ("layout", 410, DxfEntityFieldWireType::ExactText),
-        ("layer", 8, DxfEntityFieldWireType::ExactText),
-        ("linetype", 6, DxfEntityFieldWireType::ExactText),
-        ("material", 347, DxfEntityFieldWireType::Handle),
-        ("color", 62, DxfEntityFieldWireType::Int16),
-        ("lineweight", 370, DxfEntityFieldWireType::Int16),
-        ("linetype_scale", 48, DxfEntityFieldWireType::Double),
-        ("visibility", 60, DxfEntityFieldWireType::Int16),
-        ("proxy_graphics_size", 92, DxfEntityFieldWireType::Int32),
+        ("handle", 5, DxfEntityFieldWireType::Handle, 0),
+        ("owner", 330, DxfEntityFieldWireType::Handle, 2),
+        (
+            "extension_dictionary",
+            360,
+            DxfEntityFieldWireType::Handle,
+            1,
+        ),
+        ("paper_space", 67, DxfEntityFieldWireType::Int16, 3),
+        ("layout", 410, DxfEntityFieldWireType::ExactText, 4),
+        ("layer", 8, DxfEntityFieldWireType::ExactText, 5),
+        ("linetype", 6, DxfEntityFieldWireType::ExactText, 6),
+        ("material", 347, DxfEntityFieldWireType::Handle, 7),
+        ("color", 62, DxfEntityFieldWireType::Int16, 8),
+        ("lineweight", 370, DxfEntityFieldWireType::Int16, 9),
+        ("linetype_scale", 48, DxfEntityFieldWireType::Double, 10),
+        ("visibility", 60, DxfEntityFieldWireType::Int16, 11),
+        ("proxy_graphics_size", 92, DxfEntityFieldWireType::Int32, 12),
         (
             "proxy_graphics_data",
             310,
             DxfEntityFieldWireType::BinaryChunk,
+            13,
         ),
-        ("true_color", 420, DxfEntityFieldWireType::Int32),
-        ("color_name", 430, DxfEntityFieldWireType::ExactText),
-        ("transparency", 440, DxfEntityFieldWireType::Int32),
-        ("plot_style", 390, DxfEntityFieldWireType::Handle),
-        ("shadow", 284, DxfEntityFieldWireType::Int16),
+        ("true_color", 420, DxfEntityFieldWireType::Int32, 14),
+        ("color_name", 430, DxfEntityFieldWireType::ExactText, 15),
+        ("transparency", 440, DxfEntityFieldWireType::Int32, 16),
+        ("plot_style", 390, DxfEntityFieldWireType::Handle, 17),
+        ("shadow", 284, DxfEntityFieldWireType::Int16, 18),
     ];
-    for (ordinal, (descriptor, (id, group_code, wire_type))) in
+    for (ordinal, (descriptor, (id, group_code, wire_type, write_order))) in
         fields.iter().zip(expected).enumerate()
     {
         let ordinal = u8::try_from(ordinal)?;
@@ -327,6 +334,7 @@ fn common_field_registry_freezes_group_wire_cardinality_and_provenance()
         assert_eq!(descriptor.id(), id);
         assert_eq!(descriptor.group_code(), group_code);
         assert_eq!(descriptor.wire_type(), wire_type);
+        assert_eq!(descriptor.write_order().ordinal(), write_order);
         assert_eq!(
             DxfEntityField::from_ordinal(ordinal),
             Some(descriptor.field())
@@ -358,6 +366,8 @@ fn common_field_registry_freezes_group_wire_cardinality_and_provenance()
     }
     assert_eq!(DxfEntityField::from_ordinal(19), None);
     assert_eq!(DxfEntityField::from_group_code(999), None);
+    assert_copy::<DxfEntityFieldWriteOrder>();
+    assert_send_sync::<DxfEntityFieldWriteOrder>();
     Ok(())
 }
 

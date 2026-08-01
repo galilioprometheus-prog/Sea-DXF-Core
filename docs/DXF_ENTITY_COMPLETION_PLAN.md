@@ -552,6 +552,15 @@ Canonical insertion anchors, whole nested-group edits, multi-patch sessions,
 domain/reference validation, verified destination writes, and full CRUD remain
 later checkpoints.
 
+M14.3ab adds a distinct canonical writer-order ordinal to every generated
+common-field descriptor. It follows the usual Autodesk common-code table
+presentation while deliberately remaining independent from stable registry
+ordinal: extension dictionary writes before owner even though their registry
+entries are reversed. Schema generation fails closed on missing, duplicate, or
+incorrect order values. Parsing remains order-independent and unknown groups
+remain lossless. Record-specific insertion anchors, subclass-envelope edits,
+field insertion, and broader CRUD support remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

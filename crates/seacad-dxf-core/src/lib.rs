@@ -423,9 +423,9 @@ pub use generated::entity_schema::{
     DxfEntityApplicabilityDescriptor, DxfEntityApplicabilityEvidence, DxfEntityCoordinateSpace,
     DxfEntityField, DxfEntityFieldApplicability, DxfEntityFieldCardinality, DxfEntityFieldDefault,
     DxfEntityFieldDescriptor, DxfEntityFieldScope, DxfEntityFieldWireType,
-    DxfEntityNameClassification, DxfEntityTopic, DxfEntityTopicDescriptor,
-    classify_exact_dxf_entity_name, dxf_entity_aliases, dxf_entity_applicability,
-    dxf_entity_common_fields, dxf_entity_topics,
+    DxfEntityFieldWriteOrder, DxfEntityNameClassification, DxfEntityTopic,
+    DxfEntityTopicDescriptor, classify_exact_dxf_entity_name, dxf_entity_aliases,
+    dxf_entity_applicability, dxf_entity_common_fields, dxf_entity_topics,
 };
 pub use handle::{
     DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,

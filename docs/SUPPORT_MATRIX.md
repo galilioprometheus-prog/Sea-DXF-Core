@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3aa can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ab can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -623,6 +623,15 @@ inverse restoring byte-identical source. This does not insert fields, delete a
 whole application group, batch edits, validate domains/references, write a
 destination, advance applicability, or establish full update/CRUD/`Complete`
 support.
+
+M14.3ab adds `DxfEntityFieldWriteOrder` to the generated 19-field common
+property registry. Its exact ordinals freeze a canonical writer policy derived
+from the usual Autodesk table presentation, independently of registry order;
+schema validation rejects omissions, duplicates, and reordered values. This
+metadata does not constrain parsing, which remains group-order independent and
+unknown-group preserving. It does not select a record-specific insertion
+anchor, insert or move a group, resolve subclass envelopes, advance
+applicability, or establish full update/CRUD/`Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

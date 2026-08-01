@@ -2005,6 +2005,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     byte-identical input. This checkpoint does not remove whole application
     groups, insert fields, combine patches, validate domains/references, write
     a destination, or claim complete entity update/CRUD support.
+    M14.3ab freezes a writer-only canonical order ordinal for all 19 generated
+    common-field descriptors. The order follows the usual presentation in the
+    reviewed Autodesk common entity-code table: handle, extension dictionary,
+    owner, then the remaining common properties. Generator validation rejects
+    missing, duplicate, or reordered ordinals, and the public descriptor keeps
+    registry ordinal and write order separate. Readers continue to accept
+    arbitrary group order and preserve unknown groups. This checkpoint does
+    not calculate record-specific insertion anchors, insert a group, mutate a
+    source, resolve subclass envelopes, or advance CRUD/support claims.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

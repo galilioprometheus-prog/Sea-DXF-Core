@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3aa. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ab. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -32,7 +32,10 @@ reviewed wrong-section markers in source order across `BLOCKS` and `ENTITIES`,
 while retaining exact subclass paths and all untouched raw groups.
 A generated common-field registry now exposes 19 Autodesk-backed property
 roles with wire type, cardinality, default, subclass/application scope,
-coordinate-space classification, version-review state, and provenance.
+coordinate-space classification, version-review state, provenance, and a
+separate canonical writer-order ordinal. The writer metadata follows the
+usual Autodesk common-code presentation while readers remain completely
+order-independent.
 A generic common-field evidence directory retains exact source occurrences and
 fixed per-entity cardinality cards without decoding or selecting duplicates.
 Typed common-field semantics now project all 19 roles through the shared
@@ -50,6 +53,10 @@ existing unique common-field singleton. The planner replaces exactly one raw
 group through the immutable transaction/inverse kernel; absent fields require
 a later insertion-anchor operation, duplicates are never selected, and opaque
 sequences require specialized edits.
+Optional singleton reset planning can also delete one exact unique raw group
+to restore its generated implicit default. Required fields, duplicates,
+sequences, and nested extension-dictionary members fail typed. Canonical
+insertion anchors and complete CRUD remain later checkpoints.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

@@ -1158,6 +1158,18 @@ pub enum DxfEntityFieldApplicability {
     NotYetReviewed,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct DxfEntityFieldWriteOrder {
+    ordinal: u8,
+}
+
+impl DxfEntityFieldWriteOrder {
+    #[must_use]
+    pub const fn ordinal(self) -> u8 {
+        self.ordinal
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct DxfEntityFieldDescriptor {
     field: DxfEntityField,
@@ -1167,6 +1179,7 @@ pub struct DxfEntityFieldDescriptor {
     cardinality: DxfEntityFieldCardinality,
     default: DxfEntityFieldDefault,
     scope: DxfEntityFieldScope,
+    write_order: DxfEntityFieldWriteOrder,
     coordinate_space: DxfEntityCoordinateSpace,
     applicability: DxfEntityFieldApplicability,
     source_id: &'static str,
@@ -1212,6 +1225,11 @@ impl DxfEntityFieldDescriptor {
     }
 
     #[must_use]
+    pub const fn write_order(self) -> DxfEntityFieldWriteOrder {
+        self.write_order
+    }
+
+    #[must_use]
     pub const fn coordinate_space(self) -> DxfEntityCoordinateSpace {
         self.coordinate_space
     }
@@ -1243,7 +1261,7 @@ impl DxfEntityFieldDescriptor {
 }
 
 pub const DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256: &str =
-    "77df4e5ed6ae77cfa2ad5e791a971f91bc26950e43cbafc6771ad8570519ece4";
+    "07cb39c740681eb7ee91897f4efef69389fb3420e32778f1f2fb6d2ae6b5ca11";
 
 pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
     DxfEntityFieldDescriptor {
@@ -1254,11 +1272,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::EntityPreamble,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 0 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:5",
     },
     DxfEntityFieldDescriptor {
@@ -1269,11 +1288,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::EntityPreamble,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 2 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:330:block_record_owner",
     },
     DxfEntityFieldDescriptor {
@@ -1284,11 +1304,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::ExtensionDictionaryApplicationGroup,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 1 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:360:acad_xdictionary",
     },
     DxfEntityFieldDescriptor {
@@ -1299,11 +1320,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::Int16(0),
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 3 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:67",
     },
     DxfEntityFieldDescriptor {
@@ -1314,11 +1336,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 4 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:410",
     },
     DxfEntityFieldDescriptor {
@@ -1329,11 +1352,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 5 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:8",
     },
     DxfEntityFieldDescriptor {
@@ -1344,11 +1368,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::ExactText("BYLAYER"),
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 6 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:6",
     },
     DxfEntityFieldDescriptor {
@@ -1359,11 +1384,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::ByLayer,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 7 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:347",
     },
     DxfEntityFieldDescriptor {
@@ -1374,11 +1400,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::Int16(256),
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 8 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:62",
     },
     DxfEntityFieldDescriptor {
@@ -1389,11 +1416,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 9 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:370",
     },
     DxfEntityFieldDescriptor {
@@ -1404,11 +1432,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::DoubleBits(1.0_f64.to_bits()),
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 10 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:48",
     },
     DxfEntityFieldDescriptor {
@@ -1419,11 +1448,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::Int16(0),
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 11 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:60",
     },
     DxfEntityFieldDescriptor {
@@ -1434,11 +1464,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 12 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:92",
     },
     DxfEntityFieldDescriptor {
@@ -1449,11 +1480,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSequence,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 13 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:310",
     },
     DxfEntityFieldDescriptor {
@@ -1464,11 +1496,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 14 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:420",
     },
     DxfEntityFieldDescriptor {
@@ -1479,11 +1512,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 15 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:430",
     },
     DxfEntityFieldDescriptor {
@@ -1494,11 +1528,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::OptionalSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 16 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:440",
     },
     DxfEntityFieldDescriptor {
@@ -1509,11 +1544,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 17 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:390",
     },
     DxfEntityFieldDescriptor {
@@ -1524,11 +1560,12 @@ pub static DXF_ENTITY_COMMON_FIELDS: &[DxfEntityFieldDescriptor] = &[
         cardinality: DxfEntityFieldCardinality::RequiredSingleton,
         default: DxfEntityFieldDefault::None,
         scope: DxfEntityFieldScope::AcDbEntity,
+        write_order: DxfEntityFieldWriteOrder { ordinal: 18 },
         coordinate_space: DxfEntityCoordinateSpace::NotApplicable,
         applicability: DxfEntityFieldApplicability::NotYetReviewed,
         source_id: "autodesk.common_entity_codes.2024",
         source_reference: "GUID-3610039E-27D1-4E23-B6D3-7E60B22BB5BD",
-        source_facts_sha256: "0e4534ff51e87471f08d60a9852e2c42149b0b08f9484790c413fed363623844",
+        source_facts_sha256: "3b765741812a08331eb9ab495677489a638e44a0628fc97ad5fc88019692bd9b",
         source_fact: "group:284",
     },
 ];
