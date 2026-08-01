@@ -1844,6 +1844,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     ASCII/Binary parity, degree/count/order edges, cancellation, lookup, and
     bounds are covered. Point values, analytic NURBS projection, HELIX, CRUD,
     writes, and support advancement remain unclaimed.
+    M14.3q1 materializes analytic-value sequences over the existing evidence.
+    Knots retain exact group-40 values and provenance. Control/fit tuples
+    require valid X/Y, use a behavioral zero default only for omitted Z, and
+    retain both tuple ordinal and explicit-Z state. Control weights become
+    implicit units or a fully matched positive explicit sequence. Knot,
+    control, fit, and weight failures accumulate without publishing partial
+    ranges. Nine-dialect ASCII/Binary parity, out-of-order component groups,
+    invalid/partial values, cancellation, lookup, and bounds are covered. Full
+    topology/count/multiplicity/parameter-domain and vector readiness remains
+    M14.3q2; HELIX, CRUD, writes, and support advancement remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

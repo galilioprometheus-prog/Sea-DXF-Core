@@ -418,6 +418,15 @@ undocumented equivalence. Declared count cards remain available through the
 existing count directory. Point values, analytic NURBS projection, HELIX,
 CRUD, and writes remain later checkpoints.
 
+M14.3q1 materializes source-backed analytic values without claiming a usable
+curve. Knot values retain their exact evidence. Control and fit tuples require
+valid X/Y, default omitted Z to zero while retaining an explicit-Z marker, and
+link back to the tuple ordinal. Control weights are implicit unit values or a
+fully matched positive explicit sequence. Knot, control, fit, and weight
+failures accumulate in one typed mask and publish no partial ranges. Full
+degree/count/order/multiplicity/domain and vector readiness composition remains
+M14.3q2; HELIX, CRUD, and writes remain later checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -417,15 +417,6 @@ bytes remain authoritative and untouched. This is indexing infrastructure;
 common fields, family semantics, geometry, CRUD, writer gating, and support
 completion remain unclaimed.
 
-M14.3p adds `DxfSplineTopologyDirectory`. It types degree domain, knot ordering
-and the first decreasing index, minimum control-point readiness, the defining
-NURBS knot-count equation, overflow, and every closed/periodic flag
-combination. Invalid sequence members make ordering unavailable rather than
-being skipped, and no flag combination is normalized. Declared-versus-observed
-group 72/73/74 states remain in `DxfSplineCountDirectory`. Point values,
-analytic NURBS data, HELIX, CRUD, writer, and support completion remain
-unclaimed.
-
 M14.3j adds a deterministic generated registry for 19 common entity-property
 roles from Autodesk's common entity-code table. Each descriptor exposes its
 stable field ordinal, exact group code, wire type, cardinality, documented
@@ -487,6 +478,24 @@ missing, explicit (including exact zero), or unavailable, while a nonplanar
 normal remains a typed unexpected observation. Point semantics,
 degree/knot/periodic invariants, NURBS data, HELIX, CRUD, writer, and support
 completion remain unclaimed.
+
+M14.3p adds `DxfSplineTopologyDirectory`. It types degree domain, knot ordering
+and the first decreasing index, minimum control-point readiness, the defining
+NURBS knot-count equation, overflow, and every closed/periodic flag
+combination. Invalid sequence members make ordering unavailable rather than
+being skipped, and no flag combination is normalized. Declared-versus-observed
+group 72/73/74 states remain in `DxfSplineCountDirectory`. Point values,
+analytic NURBS data, HELIX, CRUD, writer, and support completion remain
+unclaimed.
+
+M14.3q1 adds `DxfSplineAnalyticValueDirectory`. Exact knots, effective WCS
+control/fit points, explicit-Z provenance, and positive effective control
+weights are exposed through compact ranges only when every member is usable.
+Missing/invalid X or Y, invalid knot values, mismatched weights, and
+invalid/nonpositive weights accumulate in a typed mask without partial output.
+Omitted Z uses a behavioral zero default and remains distinguishable. Full
+topology/count/multiplicity/domain and vector readiness remains M14.3q2;
+HELIX, CRUD, writer, and support completion remain unclaimed.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
