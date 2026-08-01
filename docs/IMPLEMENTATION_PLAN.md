@@ -1865,6 +1865,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     ASCII/Binary parity, multi-issue failures, cancellation, lookup, and public
     bounds are covered. Evaluation, tessellation, HELIX, CRUD, writes, and
     support advancement remain unclaimed.
+    M14.3r begins HELIX with one source-anchored evidence directory over the
+    unified entity index. Sixteen Autodesk-defined `AcDbHelix` roles retain
+    exact groups and typed raw numeric results: two Int32 version fields, nine
+    WCS point/vector components, three double parameters, BooleanByte
+    handedness, and Int16 constraint type. Exact subclass transitions prevent
+    shared group codes such as 10 and 40 from colliding with embedded SPLINE
+    data; application groups, wrong sections, and near-match markers do not
+    enter the family projection. Duplicate and invalid values remain present
+    without selection. Nine-dialect ASCII/Binary parity accounts for the
+    AC1009 binary group-code limit; malformed/scope fixtures, cancellation,
+    lookup, and bounds are covered. HELIX cardinality, semantics, embedded
+    SPLINE composition, geometry, CRUD, writes, applicability advancement, and
+    support completion remain unclaimed.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

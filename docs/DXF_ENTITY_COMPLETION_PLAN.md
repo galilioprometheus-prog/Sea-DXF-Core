@@ -436,6 +436,16 @@ the active knot domain is positive. Malformed optional tangents and invalid
 planar-normal relations fail closed. Closed/periodic flags remain observations;
 no evaluator, tessellator, HELIX support, CRUD, or write claim is added.
 
+M14.3r adds exact source evidence for the 16 documented `AcDbHelix` roles:
+major/maintenance versions, three WCS triples, radius, turns, turn height,
+handedness, and constraint type. The projection consumes the unified entity
+index, admits canonical HELIX only from `BLOCKS` or `ENTITIES`, and changes
+scope only on exact subclass markers. Colliding SPLINE codes, application
+groups, unknown subclasses, duplicates, and invalid numerics remain explicit
+or excluded from the typed projection without changing raw data. Cardinality,
+defaults, domain/relationship validation, embedded SPLINE composition,
+geometry, CRUD, and writes remain later HELIX checkpoints.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

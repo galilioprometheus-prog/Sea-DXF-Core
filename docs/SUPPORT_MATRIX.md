@@ -508,6 +508,17 @@ normalization. Nine-dialect ASCII/Binary parity and malformed/cancellation
 coverage do not advance SPLINE to `Complete`; evaluation, tessellation, HELIX,
 CRUD, and writer support remain unclaimed.
 
+M14.3r adds `DxfHelixDirectory` with exact source evidence for all 16 public
+`AcDbHelix` roles. Canonical HELIX records are selected through the unified
+entity index in `BLOCKS` and `ENTITIES`; exact subclass scope prevents group
+10/40 collisions with embedded `AcDbSpline` data. Int32, Int16, BooleanByte,
+and double wire values retain exact groups and invalid ASCII numeric states.
+Duplicates remain source ordered, application groups and near-match markers
+are excluded, and unknown/raw groups remain lossless in the raw document.
+Nine-dialect ASCII/Binary evidence parity does not claim HELIX applicability
+in older dialects. Cardinality, semantics, embedded SPLINE composition,
+geometry, CRUD, writer support, and `Complete` status remain unclaimed.
+
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
 heights into typed scalar domains. It rejects unsupported type codes, negative

@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3q2. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3r. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle edits, writes verified preserve-patch outputs, and
@@ -39,6 +39,10 @@ weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar
 normal requirements. Failures accumulate as typed issues and never publish a
 partial curve; evaluation and tessellation remain out of scope.
+HELIX now has a source-anchored subclass evidence directory for all 16 public
+`AcDbHelix` roles. It preserves duplicates and invalid numbers without
+selection and prevents colliding SPLINE, application-group, unknown-subclass,
+or wrong-section values from entering HELIX evidence.
 Budget-aware development runs required quality/dependency gates locally and
 does not allocate hosted runners for pushes or pull requests. GitHub Actions
 retains a manual Windows x64 self-hosted diagnostic and the manual six-native
