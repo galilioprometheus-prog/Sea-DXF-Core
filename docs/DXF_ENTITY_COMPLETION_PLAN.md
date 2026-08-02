@@ -895,6 +895,15 @@ the exact descriptor provenance, identity, owner, handle, and reversible seed
 transaction. Record bytes, family payload validation, insertion, semantic
 postconditions, clone/delete, and `Complete` remain open.
 
+M14.3bc reviews canonical MESH applicability from Autodesk's statement that
+the newer MESH object type was implemented for AutoCAD 2010 subdivision
+surface workflows. The generated range therefore starts at AC1024 with no
+reviewed maximum: earlier supported dialects are `NotApplicable`, while
+AC1024/AC1027/AC1032 are `Applicable`. The source GUID and normalized facts
+receipt are generated into the descriptor, and the 59-name draft admission
+matrix now has four reviewed names and 55 `NotYetReviewed` names. This does not
+claim MESH payload/topology validity, CRUD, geometry, or `Complete` support.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

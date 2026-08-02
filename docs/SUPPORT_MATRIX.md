@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bb can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bc can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -979,6 +979,15 @@ and PDF underlay from AC1024; all other name ranges remain unavailable rather
 than guessed. Tests exercise all 59 names over all nine ASCII/Binary pairs.
 This is an admission gate only: it does not encode or insert record bytes,
 validate an underlay payload, or advance any entity to `Complete`.
+
+M14.3bc adds the first canonical-topic applicability receipt. Autodesk's MESH
+compatibility statement identifies the newer MESH object type with AutoCAD
+2010, so generated admission now marks canonical MESH applicable from AC1024
+and not applicable in the six earlier supported dialects. Its exact source
+GUID and normalized one-row SHA-256 are carried by the generated descriptor.
+Together with the three previously reviewed underlay aliases, four names now
+have reviewed ranges and 55 remain `NotYetReviewed`. This version receipt does
+not validate MESH topology, enable MESH insertion, or advance MESH support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

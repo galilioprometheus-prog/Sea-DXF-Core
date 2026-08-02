@@ -32,6 +32,12 @@
       "evidence_kind": "row"
     },
     {
+      "id": "autodesk.mesh.compatibility.2018",
+      "topic_id": "GUID-73981F72-60DD-46E7-BED1-BAF9692490A5",
+      "normalized_facts_sha256": "1c0f0b305dd3c6c70691569bac124e424b25cfe53bf8f14524b963f9a6563c28",
+      "evidence_kind": "applicability_list"
+    },
+    {
       "id": "autodesk.table.2025",
       "topic_id": "GUID-D8CCD2F0-18A3-42BB-A64D-539114A07DA0",
       "normalized_facts_sha256": "d7dc48f25513fa9da8543624faadf48b6e03ab470ee170098ac8c0af481c0947",

@@ -234,7 +234,7 @@ fn applicability_matrix_covers_every_reviewed_name_and_supported_dialect() {
 }
 
 #[test]
-fn official_underlay_ranges_are_typed_without_inventing_unreviewed_floors()
+fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
 -> Result<(), Box<dyn Error>> {
     let dgn = classify_exact_dxf_entity_name(b"DGNUNDERLAY")
         .applicability_descriptor()
@@ -268,6 +268,28 @@ fn official_underlay_ranges_are_typed_without_inventing_unreviewed_floors()
     );
     assert_eq!(
         pdf.applicability(DxfAcadVersion::Ac1032),
+        DxfEntityApplicability::Applicable
+    );
+
+    let mesh = classify_exact_dxf_entity_name(b"MESH")
+        .applicability_descriptor()
+        .ok_or("reviewed MESH topic is missing its applicability row")?;
+    assert_eq!(mesh.minimum_version(), Some(DxfAcadVersion::Ac1024));
+    assert_eq!(mesh.maximum_version(), None);
+    assert_eq!(
+        mesh.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        mesh.source_reference(),
+        Some("GUID-73981F72-60DD-46E7-BED1-BAF9692490A5")
+    );
+    assert_eq!(
+        mesh.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        mesh.applicability(DxfAcadVersion::Ac1024),
         DxfEntityApplicability::Applicable
     );
 

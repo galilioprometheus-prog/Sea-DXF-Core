@@ -2351,5 +2351,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     envelopes or payloads, insert records, verify inserted semantics, clone,
     delete, or complete any topic.
 
+    M14.3bc records the first canonical-topic applicability range. Autodesk
+    describes the newer MESH object type as implemented in the AutoCAD 2010
+    context for subdivision-surface workflows. The generated registry now
+    admits canonical MESH from AC1024 through the open-ended supported range
+    and returns `NotApplicable` for AC1009 through AC1021. Its source GUID and
+    normalized one-row facts receipt remain attached to the descriptor. Matrix
+    tests keep all 59 names and both physical formats closed: four names have
+    reviewed ranges and 55 remain `NotYetReviewed`. No MESH topology, family
+    payload, record encoding, insertion, semantic postcondition, or CRUD claim
+    changes in this evidence-only checkpoint.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

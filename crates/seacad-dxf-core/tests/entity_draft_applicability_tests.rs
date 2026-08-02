@@ -5,10 +5,10 @@ use seacad_dxf_core::{
     DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfEntityAlias,
     DxfEntityApplicability, DxfEntityApplicabilityEvidence, DxfEntityDraftApplicabilityIssue,
     DxfEntityDraftApplicabilityPlan, DxfEntityDraftIdentityIssue, DxfEntityDraftIdentityPlan,
-    DxfEntityDraftName, DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerOutcome, DxfError,
-    DxfHandle, DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
-    DxfNamedSymbolTableKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, NoopDxfReadObserver, dxf_entity_aliases, dxf_entity_topics,
+    DxfEntityDraftName, DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerOutcome,
+    DxfEntityTopic, DxfError, DxfHandle, DxfHandleReservationPlan, DxfHandleReservationPlanOutcome,
+    DxfMemorySource, DxfNamedSymbolTableKind, DxfRawDocumentFormat, DxfRawDocumentView,
+    DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver, dxf_entity_aliases, dxf_entity_topics,
 };
 
 #[test]
@@ -174,6 +174,9 @@ enum ExpectedApplicability {
 
 fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplicability {
     let minimum = match name {
+        DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::MESH => {
+            Some(DxfAcadVersion::Ac1024)
+        }
         DxfEntityDraftName::Alias(alias)
             if alias == DxfEntityAlias::DGNUNDERLAY || alias == DxfEntityAlias::DWFUNDERLAY =>
         {
