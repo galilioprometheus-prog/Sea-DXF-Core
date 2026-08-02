@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ao can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ap can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -816,6 +816,20 @@ gate; accepting an expressible AC1009 ASCII group does not establish dialect
 applicability. Handle remap, owner placement, dictionary membership, pointer
 lifecycle, cross-document clone/delete, applicability, family graphs, and
 `Complete` support remain open.
+
+M14.3ap validates common exact-text symbol edits before generic planning.
+Layer group 8 requires one exact same-document `LAYER` table name and linetype
+group 6 requires one exact `LTYPE` name, both from completely closed matching
+tables. Missing and duplicate exact names fail typed and never enter the
+session queue. Layout group 410 and color-name group 430 require future
+dedicated resolvers and are no longer accepted as unchecked generic text. One
+named-symbol directory is built lazily per session and reused; the exact-text
+resource ceiling is enforced before lookup. Paired ASCII/Binary AC1009-through-
+AC1032 tests prove admission, rejected no-op behavior, materialization, strict
+semantic verification, and byte-identical inverse restoration. Case folding,
+symbol-character validity, XREF naming, layout/color-book semantics, table-
+record creation, applicability, family graphs, and `Complete` support remain
+open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

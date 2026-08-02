@@ -121,7 +121,7 @@ impl DxfEntityCommonTextDirectory {
             if !is_common_text_field(source_entry.field()) {
                 continue;
             }
-            let semantics = match symbol_kind(source_entry.field()) {
+            let semantics = match reviewed_common_symbol_kind(source_entry.field()) {
                 Some(kind) => DxfEntityCommonTextSemantics::Symbol(project_symbol(
                     document,
                     &index,
@@ -352,7 +352,9 @@ fn project_exact_unreviewed(
     }
 }
 
-fn symbol_kind(field: DxfEntityField) -> Option<DxfNamedSymbolTableKind> {
+pub(crate) fn reviewed_common_symbol_kind(
+    field: DxfEntityField,
+) -> Option<DxfNamedSymbolTableKind> {
     if field == DxfEntityField::LAYER {
         Some(DxfNamedSymbolTableKind::Layer)
     } else if field == DxfEntityField::LINETYPE {

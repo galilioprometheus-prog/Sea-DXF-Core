@@ -4,16 +4,20 @@ use std::{fmt, io};
 
 use crate::entity_common_reference_edit::classify_with_identities;
 use crate::entity_common_reference_target::reviewed_common_reference_target_kind;
+use crate::entity_common_symbol_edit::classify_with_symbols;
+use crate::entity_common_text_semantic::reviewed_common_symbol_kind;
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
     ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
     DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
-    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome, DxfEntityEditPlan,
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
+    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation, DxfRawDocumentView,
-    DxfResource, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation,
+    DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
+    DxfTransactionPlan,
 };
 
 /// One typed common-field operation accepted by an entity edit session.
@@ -64,6 +68,7 @@ pub enum DxfEntityEditIssue {
     },
     Domain(DxfEntityCommonFieldDomainIssue),
     Reference(DxfEntityCommonReferenceEditIssue),
+    Symbol(DxfEntityCommonSymbolEditIssue),
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
     Reset(DxfEntityFieldResetIssue),
@@ -134,6 +139,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     profile: DxfResourceProfile,
     cancellation: &'cancellation DxfCancellationToken,
     handle_identities: Option<DxfHandleIdentityDirectory>,
+    named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
 }
 
@@ -165,6 +171,7 @@ impl<'document, 'evidence, 'cancellation>
             profile,
             cancellation,
             handle_identities: None,
+            named_symbols: None,
             pending: Vec::new(),
         })
     }
@@ -199,11 +206,19 @@ impl<'document, 'evidence, 'cancellation>
         }
         match patch {
             DxfEntityCommonFieldPatch::SetExplicit { value, .. } => {
+                enforce_exact_text_limit(self.profile, value)?;
                 if let DxfEntityCommonReferenceEditOutcome::Invalid(issue) =
                     self.classify_reference_edit(field, value)?
                 {
                     return Ok(DxfEntityEditOutcome::Unavailable(
                         DxfEntityEditIssue::Reference(issue),
+                    ));
+                }
+                if let DxfEntityCommonSymbolEditOutcome::Invalid(issue) =
+                    self.classify_symbol_edit(field, value)?
+                {
+                    return Ok(DxfEntityEditOutcome::Unavailable(
+                        DxfEntityEditIssue::Symbol(issue),
                     ));
                 }
                 if let DxfEntityCommonFieldDomainOutcome::Invalid(issue) =
@@ -234,6 +249,29 @@ impl<'document, 'evidence, 'cancellation>
         classify_with_identities(
             self.document,
             self.handle_identities.as_ref(),
+            field,
+            value,
+            self.cancellation,
+        )
+    }
+
+    fn classify_symbol_edit(
+        &mut self,
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'_>,
+    ) -> Result<DxfEntityCommonSymbolEditOutcome, DxfError> {
+        if reviewed_common_symbol_kind(field).is_some()
+            && matches!(value, DxfEntityEditValue::ExactRawText(_))
+            && self.named_symbols.is_none()
+        {
+            self.named_symbols = Some(
+                self.document
+                    .named_symbol_table_directory(self.cancellation)?,
+            );
+        }
+        classify_with_symbols(
+            self.document,
+            self.named_symbols.as_ref(),
             field,
             value,
             self.cancellation,
@@ -499,6 +537,26 @@ fn enforce_edit_limit(profile: DxfResourceProfile, observed: usize) -> Result<()
     if observed > limit {
         Err(DxfError::resource_limit(
             DxfResource::Records,
+            limit,
+            observed,
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+fn enforce_exact_text_limit(
+    profile: DxfResourceProfile,
+    value: DxfEntityEditValue<'_>,
+) -> Result<(), DxfError> {
+    let DxfEntityEditValue::ExactRawText(bytes) = value else {
+        return Ok(());
+    };
+    let observed = u64::try_from(bytes.len()).map_err(|_| invalid_internal_data())?;
+    let limit = profile.limits().max_value_bytes();
+    if observed > limit {
+        Err(DxfError::resource_limit(
+            DxfResource::ValueBytes,
             limit,
             observed,
         ))

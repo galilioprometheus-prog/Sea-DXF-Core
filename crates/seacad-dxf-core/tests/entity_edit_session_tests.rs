@@ -2,14 +2,14 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue,
-    DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityEditValue,
-    DxfEntityEditValueKind, DxfEntityField, DxfEntityFieldEvidenceDirectory,
-    DxfEntityFieldInsertionIssue, DxfEntityFieldReplacementIssue, DxfEntityFieldResetIssue,
-    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityFieldWireType,
-    DxfEntityGroupEncodeIssue, DxfEntityKey, DxfEntityPatch, DxfError, DxfMemorySource,
-    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResource, DxfResourceProfile,
-    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfCancellationToken, DxfEntityCommonFieldPatch, DxfEntityCommonSymbolEditIssue,
+    DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditReceipt,
+    DxfEntityEditSession, DxfEntityEditValue, DxfEntityEditValueKind, DxfEntityField,
+    DxfEntityFieldEvidenceDirectory, DxfEntityFieldReplacementIssue, DxfEntityFieldResetIssue,
+    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityKey, DxfEntityPatch, DxfError,
+    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawRecordSectionKind,
+    DxfReadOptions, DxfResource, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
+    NoopDxfReadObserver,
 };
 
 #[test]
@@ -149,12 +149,11 @@ fn duplicate_structural_and_encoding_failures_never_enter_the_batch() -> Result<
             keys[1],
             set(DxfEntityField::LINETYPE, DxfEntityEditValue::Int16(1)),
         )?,
-        DxfEntityEditIssue::Insertion(DxfEntityFieldInsertionIssue::Encoding(
-            DxfEntityGroupEncodeIssue::WireTypeMismatch {
-                expected: DxfEntityFieldWireType::ExactText,
-                observed: DxfEntityEditValueKind::Int16,
-            },
-        )),
+        DxfEntityEditIssue::Symbol(DxfEntityCommonSymbolEditIssue::ValueKindMismatch {
+            field: DxfEntityField::LINETYPE,
+            expected: DxfEntityEditValueKind::ExactRawText,
+            observed: DxfEntityEditValueKind::Int16,
+        }),
     )?;
     assert_eq!(session.queued_edit_count(), 0);
 
@@ -339,11 +338,14 @@ fn assert_text(
     expected: &[u8],
 ) -> Result<(), Box<dyn Error>> {
     let directory = view.entity_field_semantic_directory(&token())?;
-    let entity = *directory
+    let entity = directory
         .evidence_directory()
         .entity_directory()
         .entities()
-        .get(entity_index)
+        .iter()
+        .copied()
+        .filter(|entity| entity.record().section_kind() == DxfRawRecordSectionKind::Entities)
+        .nth(entity_index)
         .ok_or(io::Error::other("entity"))?;
     let entry = directory
         .entry_for_field(entity, field)?
@@ -390,11 +392,14 @@ fn singleton(
     field: DxfEntityField,
 ) -> Result<seacad_dxf_core::DxfEntityFieldSemanticValue, Box<dyn Error>> {
     let directory = view.entity_field_semantic_directory(&token())?;
-    let entity = *directory
+    let entity = directory
         .evidence_directory()
         .entity_directory()
         .entities()
-        .get(entity_index)
+        .iter()
+        .copied()
+        .filter(|entity| entity.record().section_kind() == DxfRawRecordSectionKind::Entities)
+        .nth(entity_index)
         .ok_or(io::Error::other("entity"))?;
     let entry = directory
         .entry_for_field(entity, field)?
@@ -457,9 +462,14 @@ fn assert_receipt(
 }
 
 fn keys(evidence: &DxfEntityFieldEvidenceDirectory) -> Result<[DxfEntityKey; 2], io::Error> {
-    let entities = evidence.entity_directory().entities();
-    let first = entities.first().copied().ok_or(io::Error::other("first"))?;
-    let second = entities.get(1).copied().ok_or(io::Error::other("second"))?;
+    let mut entities = evidence
+        .entity_directory()
+        .entities()
+        .iter()
+        .copied()
+        .filter(|entity| entity.record().section_kind() == DxfRawRecordSectionKind::Entities);
+    let first = entities.next().ok_or(io::Error::other("first"))?;
+    let second = entities.next().ok_or(io::Error::other("second"))?;
     Ok([first.key(), second.key()])
 }
 
@@ -503,11 +513,18 @@ fn fixture(
         (9, Value::Text(b"$ACADVER")),
         (1, Value::Text(version.code().as_bytes())),
         (0, Value::Text(b"ENDSEC")),
+    ];
+    groups.extend(symbol_table(
+        b"LAYER",
+        &[b"OLD", b"NEW", b"L2", b"QUEUED", b"SECRET"],
+    ));
+    groups.extend(symbol_table(b"LTYPE", &[b"DASHED", b"NEW"]));
+    groups.extend([
         (0, Value::Text(b"SECTION")),
         (2, Value::Text(b"ENTITIES")),
         (0, Value::Text(b"LINE")),
         (5, Value::Text(b"10")),
-    ];
+    ]);
     if version != DxfAcadVersion::Ac1009 {
         groups.extend([(330, Value::Text(b"1F")), (100, Value::Text(b"AcDbEntity"))]);
     }
@@ -545,6 +562,31 @@ fn fixture(
         DxfRawDocumentFormat::Binary => binary_groups(version, &groups),
         _ => Err(io::Error::other("format")),
     }
+}
+
+fn symbol_table(kind: &'static [u8], names: &[&'static [u8]]) -> Vec<(i16, Value<'static>)> {
+    let mut groups = vec![
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"TABLES")),
+        (0, Value::Text(b"TABLE")),
+        (2, Value::Text(kind)),
+    ];
+    for (index, name) in names.iter().enumerate() {
+        let handle = match index {
+            0 => b"A".as_slice(),
+            1 => b"B".as_slice(),
+            2 => b"C".as_slice(),
+            3 => b"D".as_slice(),
+            _ => b"E".as_slice(),
+        };
+        groups.extend([
+            (0, Value::Text(kind)),
+            (2, Value::Text(name)),
+            (5, Value::Text(handle)),
+        ]);
+    }
+    groups.extend([(0, Value::Text(b"ENDTAB")), (0, Value::Text(b"ENDSEC"))]);
+    groups
 }
 
 fn ascii_groups(groups: &[(i16, Value<'_>)]) -> Vec<u8> {

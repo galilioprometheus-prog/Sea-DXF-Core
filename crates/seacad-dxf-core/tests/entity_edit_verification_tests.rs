@@ -5,8 +5,8 @@ use seacad_dxf_core::{
     DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityEditVerificationIssue, DxfEntityEditVerificationJournal,
     DxfEntityEditVerificationOutcome, DxfEntityField, DxfEntityPatch, DxfError, DxfHandle,
-    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfTransactionPlan, NoopDxfReadObserver,
+    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawRecordSectionKind,
+    DxfReadOptions, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 #[test]
@@ -51,7 +51,7 @@ fn semantic_mismatch_is_typed_before_unrelated_raw_mismatch() -> Result<(), Box<
     let correct = materialize(&bytes, plan.transaction())?;
 
     let mut wrong_semantic = correct.clone();
-    replace_once(&mut wrong_semantic, b"NEW", b"BAD")?;
+    replace_last(&mut wrong_semantic, b"NEW", b"BAD")?;
     let wrong_source = DxfMemorySource::new(&wrong_semantic, DxfResourceProfile::Safe)?;
     let wrong = open_ascii(&wrong_source)?;
     assert!(matches!(
@@ -129,7 +129,7 @@ fn source_envelope_cancellation_traits_and_debug_redaction_fail_closed()
     ));
 
     let mut longer = correct;
-    let offset = find_once(&longer, b"SECRET")? + b"SECRET".len();
+    let offset = find_last(&longer, b"SECRET")? + b"SECRET".len();
     longer.insert(offset, b'X');
     let longer_source = DxfMemorySource::new(&longer, DxfResourceProfile::Safe)?;
     let longer_post = open_ascii(&longer_source)?;
@@ -201,7 +201,7 @@ fn assert_verified(
 
 fn verify_value_domains(bytes: &[u8], view: DxfRawDocumentView<'_>) -> Result<(), Box<dyn Error>> {
     let evidence = view.entity_field_evidence_directory(&token())?;
-    let key = evidence.entity_directory().entities()[0].key();
+    let key = entity_key(&evidence)?;
     let cancellation = token();
     let mut session =
         view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
@@ -259,7 +259,7 @@ fn standard_plan(
     layer: &[u8],
 ) -> Result<DxfEntityEditPlan, Box<dyn Error>> {
     let evidence = view.entity_field_evidence_directory(&token())?;
-    let key = evidence.entity_directory().entities()[0].key();
+    let key = entity_key(&evidence)?;
     let cancellation = token();
     let mut session =
         view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
@@ -283,6 +283,18 @@ fn standard_plan(
 
 fn set(field: DxfEntityField, value: DxfEntityEditValue<'_>) -> DxfEntityPatch<'_> {
     DxfEntityPatch::CommonField(DxfEntityCommonFieldPatch::SetExplicit { field, value })
+}
+
+fn entity_key(
+    evidence: &seacad_dxf_core::DxfEntityFieldEvidenceDirectory,
+) -> Result<seacad_dxf_core::DxfEntityKey, io::Error> {
+    evidence
+        .entity_directory()
+        .entities()
+        .iter()
+        .find(|entity| entity.record().section_kind() == DxfRawRecordSectionKind::Entities)
+        .map(|entity| entity.key())
+        .ok_or(io::Error::other("entity"))
 }
 
 const fn reset(field: DxfEntityField) -> DxfEntityPatch<'static> {
@@ -340,6 +352,18 @@ fn replace_once(bytes: &mut [u8], needle: &[u8], replacement: &[u8]) -> Result<(
     Ok(())
 }
 
+fn replace_last(bytes: &mut [u8], needle: &[u8], replacement: &[u8]) -> Result<(), io::Error> {
+    if needle.len() != replacement.len() {
+        return Err(io::Error::other("replacement length"));
+    }
+    let start = find_last(bytes, needle)?;
+    bytes
+        .get_mut(start..start + needle.len())
+        .ok_or(io::Error::other("replacement"))?
+        .copy_from_slice(replacement);
+    Ok(())
+}
+
 fn find_once(bytes: &[u8], needle: &[u8]) -> Result<usize, io::Error> {
     let mut matches = bytes
         .windows(needle.len())
@@ -351,6 +375,13 @@ fn find_once(bytes: &[u8], needle: &[u8]) -> Result<usize, io::Error> {
         return Err(io::Error::other("needle duplicate"));
     }
     Ok(first)
+}
+
+fn find_last(bytes: &[u8], needle: &[u8]) -> Result<usize, io::Error> {
+    bytes
+        .windows(needle.len())
+        .rposition(|window| window == needle)
+        .ok_or(io::Error::other("needle"))
 }
 
 #[derive(Clone, Copy)]
@@ -382,6 +413,11 @@ fn fixture(
             (0, Value::Text(b"ENDSEC")),
         ]);
     }
+    groups.extend(symbol_table(
+        b"LAYER",
+        &[b"OLD", b"NEW", b"DOMAIN", b"SECRET", b"DISCARD"],
+    ));
+    groups.extend(symbol_table(b"LTYPE", &[b"DASHED"]));
     groups.extend([
         (0, Value::Text(b"SECTION")),
         (2, Value::Text(b"ENTITIES")),
@@ -414,6 +450,26 @@ fn fixture(
         DxfRawDocumentFormat::Binary => binary_groups(version, &groups),
         _ => Err(io::Error::other("format")),
     }
+}
+
+fn symbol_table(kind: &'static [u8], names: &[&'static [u8]]) -> Vec<(i16, Value<'static>)> {
+    let handles = [b"A".as_slice(), b"B".as_slice(), b"C".as_slice()];
+    let mut groups = vec![
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"TABLES")),
+        (0, Value::Text(b"TABLE")),
+        (2, Value::Text(kind)),
+    ];
+    for (index, name) in names.iter().enumerate() {
+        let handle = handles.get(index).copied().unwrap_or(b"D");
+        groups.extend([
+            (0, Value::Text(kind)),
+            (2, Value::Text(name)),
+            (5, Value::Text(handle)),
+        ]);
+    }
+    groups.extend([(0, Value::Text(b"ENDTAB")), (0, Value::Text(b"ENDSEC"))]);
+    groups
 }
 
 fn ascii_groups(groups: &[(i16, Value<'_>)]) -> Vec<u8> {

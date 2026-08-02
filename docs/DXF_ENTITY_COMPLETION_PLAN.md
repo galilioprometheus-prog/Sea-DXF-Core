@@ -723,6 +723,18 @@ ASCII applicability is not inferred. Handle remap, owner placement,
 dictionary membership, lifecycle, cross-document clone/delete, applicability,
 and `Complete` support remain later work.
 
+M14.3ap makes common symbol-name editing source-bound. Explicit layer and
+linetype names require exactly one byte-identical entry in a completely closed
+matching `LAYER` or `LTYPE` table before a singleton patch enters the session.
+Missing and duplicate names remain typed and queue nothing. Layout and color-
+book names are now explicitly blocked behind their future dedicated resolvers.
+The session lazily builds and reuses one named-symbol directory, while its
+exact-text resource ceiling still precedes lookup. Paired ASCII/Binary tests
+span AC1009 through AC1032 with verified post-image semantics and byte-identical
+inverse restoration. Case folding, legal symbol characters, XREF rules,
+layout/color-book resolution, table-record insertion, applicability, family
+graphs, and `Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

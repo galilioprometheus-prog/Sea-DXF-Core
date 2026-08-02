@@ -10,8 +10,9 @@ use seacad_dxf_core::{
     DxfCancellationToken, DxfEntityCommonFieldPatch, DxfEntityEditOutcome, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityEditVerificationIssue, DxfEntityEditWriteJournal,
     DxfEntityEditWriteOutcome, DxfEntityField, DxfEntityPatch, DxfError, DxfIoOperation,
-    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadControl, DxfReadObserver,
-    DxfReadOptions, DxfReadProgress, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawRecordSectionKind,
+    DxfReadControl, DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfResourceProfile,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -266,7 +267,13 @@ fn verify_journal(
 
 fn edit_plan(view: DxfRawDocumentView<'_>) -> Result<DxfEntityEditPlan, Box<dyn Error>> {
     let evidence = view.entity_field_evidence_directory(&token())?;
-    let key = evidence.entity_directory().entities()[0].key();
+    let key = evidence
+        .entity_directory()
+        .entities()
+        .iter()
+        .find(|entity| entity.record().section_kind() == DxfRawRecordSectionKind::Entities)
+        .ok_or(io::Error::other("entity"))?
+        .key();
     let cancellation = token();
     let mut session =
         view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
@@ -376,18 +383,10 @@ fn tamper_once(path: &Path, from: &[u8], to: &[u8]) -> Result<(), io::Error> {
         return Err(io::Error::other("tamper length"));
     }
     let mut bytes = fs::read(path)?;
-    let mut matches = bytes
+    let start = bytes
         .windows(from.len())
-        .enumerate()
-        .filter_map(
-            |(index, value)| {
-                if value == from { Some(index) } else { None }
-            },
-        );
-    let start = matches.next().ok_or(io::Error::other("tamper source"))?;
-    if matches.next().is_some() {
-        return Err(io::Error::other("ambiguous tamper source"));
-    }
+        .rposition(|value| value == from)
+        .ok_or(io::Error::other("tamper source"))?;
     bytes
         .get_mut(start..start + from.len())
         .ok_or(io::Error::other("tamper range"))?
@@ -409,11 +408,15 @@ fn fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> Result<Vec<
         (9, Value::Text(b"$ACADVER")),
         (1, Value::Text(version.code().as_bytes())),
         (0, Value::Text(b"ENDSEC")),
+    ];
+    groups.extend(symbol_table(b"LAYER", &[b"OLD", b"NEW"]));
+    groups.extend(symbol_table(b"LTYPE", &[b"DASHED"]));
+    groups.extend([
         (0, Value::Text(b"SECTION")),
         (2, Value::Text(b"ENTITIES")),
         (0, Value::Text(b"LINE")),
         (5, Value::Text(b"10")),
-    ];
+    ]);
     if version != DxfAcadVersion::Ac1009 {
         groups.extend([(330, Value::Text(b"1F")), (100, Value::Text(b"AcDbEntity"))]);
     }
@@ -435,6 +438,26 @@ fn fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> Result<Vec<
         DxfRawDocumentFormat::Binary => binary_groups(version, &groups),
         _ => Err(io::Error::other("unsupported test format")),
     }
+}
+
+fn symbol_table(kind: &'static [u8], names: &[&'static [u8]]) -> Vec<(i16, Value<'static>)> {
+    let handles = [b"A".as_slice(), b"B".as_slice()];
+    let mut groups = vec![
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"TABLES")),
+        (0, Value::Text(b"TABLE")),
+        (2, Value::Text(kind)),
+    ];
+    for (index, name) in names.iter().enumerate() {
+        let handle = handles.get(index).copied().unwrap_or(b"C");
+        groups.extend([
+            (0, Value::Text(kind)),
+            (2, Value::Text(name)),
+            (5, Value::Text(handle)),
+        ]);
+    }
+    groups.extend([(0, Value::Text(b"ENDTAB")), (0, Value::Text(b"ENDSEC"))]);
+    groups
 }
 
 fn ascii_groups(groups: &[(i16, Value<'_>)]) -> Vec<u8> {

@@ -2178,6 +2178,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     unreviewed. This checkpoint does not implement handle remap, owner changes,
     dictionary membership, lifecycle, cross-document remap, applicability,
     clone/delete, or family graph CRUD.
+    M14.3ap applies exact named-symbol resolution before common exact-text edits
+    enter the session. Layer group 8 must match one `LAYER` table group-2 name;
+    linetype group 6 must match one `LTYPE` name. Matching remains exact and
+    case-sensitive because case-folding and legal-name policy are not reviewed.
+    Missing and duplicate table names fail typed without queueing. Layout group
+    410 and color-name group 430 now require dedicated layout/color-book
+    resolution rather than passing through generic raw-text replacement. The
+    named table directory is built lazily once per session and shared by layer
+    and linetype requests; oversized exact text still fails the resource gate
+    before lookup. Paired ASCII/Binary classification, materialization, strict
+    semantic verification, and exact inverse cover all nine dialects. This
+    checkpoint does not define name folding, XREF naming, symbol characters,
+    layout/color-book resolution, symbol-table record creation, applicability,
+    or family graph CRUD.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
