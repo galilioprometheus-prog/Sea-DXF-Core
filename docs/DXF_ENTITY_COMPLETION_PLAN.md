@@ -841,6 +841,21 @@ transaction builder and strict reparse. This checkpoint does not encode entity
 drafts, infer or validate group-330 owner, allocate a handle, or implement
 insert/clone/delete.
 
+M14.3ay adds `DxfHandleReservationPlan` for records that do not yet exist in
+the raw directory. It consumes the existing fail-closed allocation policy,
+retains the consecutive allocation proposal, and replaces the exact
+`$HANDSEED` payload with its uppercase-hex successor in one immutable
+transaction. Zero-count requests remain explicit empty transactions;
+unavailable policy, numeric exhaustion, source mismatch, record limits, and
+cancellation remain typed. The uppercase handle encoder is shared with M11.2b
+so assignment and reservation cannot drift. Paired AC1009-through-AC1032
+ASCII/Binary tests compose one reserved handle with each M14.3ax placement,
+insert an identified record, strict-reparse the new identity and successor
+seed, and restore the byte-identical source through one inverse. Reservation is
+source-bound optimistic planning rather than a cross-session lock. This
+checkpoint does not encode typed drafts, choose group-330 owner, or complete
+insert/clone/delete.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -97,6 +97,28 @@ pub fn parse_dxf_handle_hex(raw: &[u8]) -> Result<DxfHandle, DxfHandleParseIssue
     Ok(DxfHandle::from_u64(value))
 }
 
+pub(crate) fn encode_dxf_handle_upper_hex(
+    handle: DxfHandle,
+    destination: &mut [u8; DxfHandle::MAX_HEX_DIGITS],
+) -> &[u8] {
+    let mut value = handle.value();
+    let mut start = destination.len();
+    loop {
+        start -= 1;
+        let digit = (value & 0xF) as u8;
+        destination[start] = if digit < 10 {
+            b'0' + digit
+        } else {
+            b'A' + (digit - 10)
+        };
+        value >>= 4;
+        if value == 0 {
+            break;
+        }
+    }
+    &destination[start..]
+}
+
 #[cfg(test)]
 mod tests {
     use crate::DxfGroupCode;

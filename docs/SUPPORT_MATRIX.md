@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ax can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ay can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -928,6 +928,18 @@ to a future entity. All nine dialects have ASCII/Binary parity, and each ready
 anchor is executed through the bounded transaction builder and strict reparse.
 Draft encoding, handle allocation, group-330 owner selection/validation,
 semantic insertion verification, clone, and delete remain open.
+
+M14.3ay adds source-bound handle reservation for records that have not yet been
+inserted. A ready M11.2a policy yields a bounded consecutive range plus one
+transaction that advances the exact `$HANDSEED` payload to the uppercase-hex
+successor. Zero-count requests are empty; unavailable policy, exhaustion,
+source mismatch, limits, and cancellation fail typed. The encoder is shared
+with existing-record assignment. All nine dialects and both physical formats
+compose one reserved handle with an M14.3ax placement, strict-reparse the new
+record identity and successor seed, and execute a byte-identical inverse.
+Reservation is optimistic and source-bound, not a global/concurrent lock.
+Typed draft encoding, group-330 ownership, semantic insertion verification,
+clone, and delete remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

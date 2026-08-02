@@ -2295,5 +2295,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and strict-reparse the result. This checkpoint does not choose owner group
     330, allocate handles, encode drafts, or implement insert/clone/delete.
 
+    M14.3ay prepares handle ranges for records that are not yet present. A
+    source-bound `DxfHandleReservationPlan` retains the existing M11.2a
+    consecutive proposal and one transaction that advances the exact
+    `$HANDSEED` payload. Zero-count requests yield an empty transaction;
+    policy unavailability, exhaustion, source mismatch, resource limits, and
+    cancellation remain typed. M11.2b assignment and the reservation planner
+    now share one uppercase hexadecimal encoder. Across all nine dialects and
+    both physical formats, a reserved handle is composed with an M14.3ax
+    placement, an identified record is inserted, the post-image strict-reparses
+    with the expected identity and successor seed, and the composed inverse
+    restores the exact source. This is optimistic source-bound planning, not a
+    global/concurrent reservation lock. Typed draft encoding, owner group 330,
+    and insert/clone/delete remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

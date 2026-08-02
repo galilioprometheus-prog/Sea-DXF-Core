@@ -8,6 +8,7 @@ use crate::{
     DxfHandleAllocationPolicyState, DxfHandleAllocationProposal, DxfHandleIdentityState,
     DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, DxfRawRecord,
     DxfRawRecordSectionKind, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    handle::encode_dxf_handle_upper_hex,
 };
 
 /// Why one requested record set cannot receive new object identities.
@@ -176,7 +177,8 @@ impl DxfRawDocumentView<'_> {
                 .and_then(|occurrence| occurrence.value_span())
                 .ok_or_else(invalid_internal_data)?;
             let mut encoded_handseed = [0_u8; 16];
-            let encoded_handseed = encode_handle(allocation.next_handseed(), &mut encoded_handseed);
+            let encoded_handseed =
+                encode_dxf_handle_upper_hex(allocation.next_handseed(), &mut encoded_handseed);
             builder.replace_raw_span(handseed_span, encoded_handseed, cancellation)?;
         }
         let transaction = builder.finish(cancellation)?;
@@ -317,7 +319,7 @@ fn encode_identity_group(
         len: 0,
     };
     let mut handle_bytes = [0_u8; 16];
-    let handle_bytes = encode_handle(handle, &mut handle_bytes);
+    let handle_bytes = encode_dxf_handle_upper_hex(handle, &mut handle_bytes);
     match document.format() {
         DxfRawDocumentFormat::Ascii => {
             let ending = ascii_line_ending(document, target.anchor)?;
@@ -394,25 +396,6 @@ fn append_encoded(encoded: &mut EncodedIdentityGroup, fragment: &[u8]) -> Result
     destination.copy_from_slice(fragment);
     encoded.len = end;
     Ok(())
-}
-
-fn encode_handle(handle: DxfHandle, destination: &mut [u8; 16]) -> &[u8] {
-    let mut value = handle.value();
-    let mut start = destination.len();
-    loop {
-        start -= 1;
-        let digit = (value & 0xF) as u8;
-        destination[start] = if digit < 10 {
-            b'0' + digit
-        } else {
-            b'A' + (digit - 10)
-        };
-        value >>= 4;
-        if value == 0 {
-            break;
-        }
-    }
-    &destination[start..]
 }
 
 fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {

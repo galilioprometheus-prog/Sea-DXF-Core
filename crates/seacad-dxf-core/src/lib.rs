@@ -84,6 +84,7 @@ mod handle_assignment_plan;
 mod handle_context;
 mod handle_identity;
 mod handle_reference;
+mod handle_reservation_plan;
 mod handle_resolution;
 mod handle_role;
 mod handseed;
@@ -537,6 +538,7 @@ pub use handle_identity::{
     DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfHandleIdentityState,
 };
 pub use handle_reference::{DxfHandleReferenceDirectory, DxfHandleReferenceEntry};
+pub use handle_reservation_plan::{DxfHandleReservationPlan, DxfHandleReservationPlanOutcome};
 pub use handle_resolution::{
     DxfHandleResolutionDirectory, DxfHandleResolutionEntry, DxfHandleResolutionState,
 };
