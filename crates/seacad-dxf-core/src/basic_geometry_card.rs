@@ -9,13 +9,15 @@ use crate::{
     DxfSourceId,
 };
 
-const POINT_ROLES: [DxfBasicGeometryComponentRole; 6] = [
+const POINT_ROLES: [DxfBasicGeometryComponentRole; 8] = [
     DxfBasicGeometryComponentRole::WcsLocationOrStartX,
     DxfBasicGeometryComponentRole::WcsLocationOrStartY,
     DxfBasicGeometryComponentRole::WcsLocationOrStartZ,
+    DxfBasicGeometryComponentRole::Thickness,
     DxfBasicGeometryComponentRole::ExtrusionX,
     DxfBasicGeometryComponentRole::ExtrusionY,
     DxfBasicGeometryComponentRole::ExtrusionZ,
+    DxfBasicGeometryComponentRole::UcsXAxisAngle,
 ];
 
 const LINE_ROLES: [DxfBasicGeometryComponentRole; 9] = [
@@ -128,7 +130,7 @@ impl DxfBasicGeometryComponentCard {
 
 /// Immutable per-role cardinality index over M8.1a occurrence evidence.
 ///
-/// Every POINT receives six cards and every LINE receives nine cards in a
+/// Every POINT receives eight cards and every LINE receives nine cards in a
 /// stable role order. Members point back into the retained evidence directory;
 /// no component is copied, selected, defaulted, or transformed.
 #[derive(Debug)]

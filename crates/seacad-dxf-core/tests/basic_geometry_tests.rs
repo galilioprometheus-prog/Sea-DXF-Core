@@ -41,6 +41,11 @@ fn ascii_and_binary_preserve_point_line_component_order_and_bits() -> Result<(),
                     DxfBasicGeometryComponentRole::WcsLocationOrStartX,
                     4.0_f64.to_bits(),
                 ),
+                (
+                    DxfBasicGeometryComponentRole::UcsXAxisAngle,
+                    (-30.0_f64).to_bits(),
+                ),
+                (DxfBasicGeometryComponentRole::Thickness, 2.25_f64.to_bits()),
                 (DxfBasicGeometryComponentRole::ExtrusionX, 0.0_f64.to_bits()),
                 (DxfBasicGeometryComponentRole::ExtrusionZ, 1.0_f64.to_bits()),
             ],
@@ -107,7 +112,7 @@ fn ascii_and_binary_preserve_point_line_component_order_and_bits() -> Result<(),
 
 #[test]
 fn invalid_ascii_duplicates_and_absence_remain_explicit() -> Result<(), Box<dyn Error>> {
-    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n.\n10\n1e-9999\n20\n2\n0\nLINE\n8\nLayer\n0\nENDSEC\n0\nEOF\n";
+    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n.\n10\n1e-9999\n20\n2\n39\n.\n50\n1\n50\n2\n0\nLINE\n8\nLayer\n0\nENDSEC\n0\nEOF\n";
     let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
     let directory = document.basic_geometry_directory(&DxfCancellationToken::default())?;
@@ -118,7 +123,7 @@ fn invalid_ascii_duplicates_and_absence_remain_explicit() -> Result<(), Box<dyn 
     let point_components = directory
         .components_for_raw_record(point.record().ordinal())
         .ok_or(io::Error::other("point components"))?;
-    assert_eq!(point_components.len(), 3);
+    assert_eq!(point_components.len(), 6);
     assert_eq!(
         point_components[0].value(),
         Err(DxfBasicGeometryNumericIssue::InvalidAsciiNumber(
@@ -148,7 +153,7 @@ fn invalid_ascii_duplicates_and_absence_remain_explicit() -> Result<(), Box<dyn 
     let point_cards = cards
         .cards_for_raw_record(point.record().ordinal())
         .ok_or(io::Error::other("point cards"))?;
-    assert_eq!(point_cards.len(), 6);
+    assert_eq!(point_cards.len(), 8);
     assert_eq!(
         point_cards[0].state(),
         DxfBasicGeometryComponentCardState::Multiple {
@@ -162,6 +167,16 @@ fn invalid_ascii_duplicates_and_absence_remain_explicit() -> Result<(), Box<dyn 
     assert_eq!(
         point_cards[2].state(),
         DxfBasicGeometryComponentCardState::Absent
+    );
+    assert_eq!(
+        point_cards[3].state(),
+        DxfBasicGeometryComponentCardState::Unique
+    );
+    assert_eq!(
+        point_cards[7].state(),
+        DxfBasicGeometryComponentCardState::Multiple {
+            occurrence_count: 2
+        }
     );
     let invalid_members = cards
         .members_for_card(point_cards[0].ordinal())
@@ -244,8 +259,8 @@ fn assert_directory(directory: &DxfBasicGeometryDirectory) -> Result<(), Box<dyn
 }
 
 fn assert_card_directory(directory: &DxfBasicGeometryCardDirectory) -> Result<(), Box<dyn Error>> {
-    assert_eq!(directory.cards().len(), 15);
-    assert_eq!(directory.members().len(), 15);
+    assert_eq!(directory.cards().len(), 17);
+    assert_eq!(directory.members().len(), 17);
     assert_eq!(
         directory.source_id(),
         directory.evidence_directory().source_id()
@@ -260,7 +275,7 @@ fn assert_card_directory(directory: &DxfBasicGeometryCardDirectory) -> Result<()
     let line_cards = directory
         .cards_for_raw_record(line.record().ordinal())
         .ok_or(io::Error::other("line cards"))?;
-    assert_eq!(point_cards.len(), 6);
+    assert_eq!(point_cards.len(), 8);
     assert_eq!(line_cards.len(), 9);
 
     let point_x = directory
@@ -373,7 +388,7 @@ fn evidence(directory: &DxfBasicGeometryDirectory) -> Result<Vec<RecordEvidence>
 
 fn ascii_fixture(version: &str) -> Vec<u8> {
     format!(
-        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n-0\n20\n2.5\n30\n3\n10\n4\n210\n0\n230\n1\n0\nLINE\n10\n1\n20\n2\n30\n3\n11\n4\n21\n5\n31\n6\n210\n0\n220\n1\n230\n0\n0\npoint\n10\n99\n0\nENDSEC\n0\nSECTION\n2\nOBJECTS\n0\nPOINT\n10\n88\n0\nENDSEC\n0\nEOF\n"
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n-0\n20\n2.5\n30\n3\n10\n4\n50\n-30\n39\n2.25\n210\n0\n230\n1\n0\nLINE\n10\n1\n20\n2\n30\n3\n11\n4\n21\n5\n31\n6\n210\n0\n220\n1\n230\n0\n0\npoint\n10\n99\n0\nENDSEC\n0\nSECTION\n2\nOBJECTS\n0\nPOINT\n10\n88\n0\nENDSEC\n0\nEOF\n"
     )
     .into_bytes()
 }
@@ -393,6 +408,8 @@ fn binary_fixture(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
         (20, 2.5),
         (30, 3.0),
         (10, 4.0),
+        (50, -30.0),
+        (39, 2.25),
         (210, 0.0),
         (230, 1.0),
     ] {

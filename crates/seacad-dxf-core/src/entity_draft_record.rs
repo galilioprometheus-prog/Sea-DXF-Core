@@ -21,6 +21,9 @@ pub struct DxfPointDraft<'a> {
     layout: Option<&'a [u8]>,
     lineweight: Option<DxfEntityLineweight>,
     location: [DxfDouble; 3],
+    thickness: Option<DxfDouble>,
+    extrusion: Option<[DxfDouble; 3]>,
+    ucs_x_axis_angle: Option<DxfDouble>,
 }
 
 impl<'a> DxfPointDraft<'a> {
@@ -31,6 +34,9 @@ impl<'a> DxfPointDraft<'a> {
             layout: None,
             lineweight: None,
             location,
+            thickness: None,
+            extrusion: None,
+            ucs_x_axis_angle: None,
         }
     }
 
@@ -45,6 +51,27 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn with_lineweight(mut self, lineweight: DxfEntityLineweight) -> Self {
         self.lineweight = Some(lineweight);
+        self
+    }
+
+    /// Emits an explicit group 39 instead of the documented zero default.
+    #[must_use]
+    pub const fn with_thickness(mut self, thickness: DxfDouble) -> Self {
+        self.thickness = Some(thickness);
+        self
+    }
+
+    /// Emits the complete explicit group 210/220/230 direction tuple.
+    #[must_use]
+    pub const fn with_extrusion(mut self, extrusion: [DxfDouble; 3]) -> Self {
+        self.extrusion = Some(extrusion);
+        self
+    }
+
+    /// Emits the optional group 50 UCS X-axis angle in degrees.
+    #[must_use]
+    pub const fn with_ucs_x_axis_angle(mut self, angle: DxfDouble) -> Self {
+        self.ucs_x_axis_angle = Some(angle);
         self
     }
 
@@ -66,6 +93,21 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn location(self) -> [DxfDouble; 3] {
         self.location
+    }
+
+    #[must_use]
+    pub const fn thickness(self) -> Option<DxfDouble> {
+        self.thickness
+    }
+
+    #[must_use]
+    pub const fn extrusion(self) -> Option<[DxfDouble; 3]> {
+        self.extrusion
+    }
+
+    #[must_use]
+    pub const fn ucs_x_axis_angle(self) -> Option<DxfDouble> {
+        self.ucs_x_axis_angle
     }
 }
 
@@ -137,6 +179,7 @@ pub enum DxfEntityDraftRecordIssue {
     LineweightNotApplicable {
         version: DxfAcadVersion,
     },
+    ZeroExtrusion,
     LayerReference(DxfEntityCommonSymbolEditIssue),
     LayoutReference(DxfEntityCommonLayoutEditIssue),
     GroupEncode {
@@ -157,6 +200,9 @@ pub(crate) struct DxfPointDraftRecordExpectation {
     layout: Option<Box<[u8]>>,
     lineweight: Option<DxfEntityLineweight>,
     location: [DxfDouble; 3],
+    thickness: Option<DxfDouble>,
+    extrusion: Option<[DxfDouble; 3]>,
+    ucs_x_axis_angle: Option<DxfDouble>,
 }
 
 #[derive(Clone, Copy)]
@@ -212,6 +258,18 @@ impl DxfPointDraftRecordExpectation {
 
     pub(crate) const fn location(&self) -> [DxfDouble; 3] {
         self.location
+    }
+
+    pub(crate) const fn thickness(&self) -> Option<DxfDouble> {
+        self.thickness
+    }
+
+    pub(crate) const fn extrusion(&self) -> Option<[DxfDouble; 3]> {
+        self.extrusion
+    }
+
+    pub(crate) const fn ucs_x_axis_angle(&self) -> Option<DxfDouble> {
+        self.ucs_x_axis_angle
     }
 }
 
@@ -361,6 +419,9 @@ fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpe
         layout: draft.layout().map(copy_bytes).transpose()?,
         lineweight: draft.lineweight(),
         location: draft.location(),
+        thickness: draft.thickness(),
+        extrusion: draft.extrusion(),
+        ucs_x_axis_angle: draft.ucs_x_axis_angle(),
     })
 }
 
@@ -446,6 +507,12 @@ fn encode_point(
         }
         (false, None) => None,
     };
+    if draft
+        .extrusion()
+        .is_some_and(|extrusion| extrusion.iter().all(|component| component.to_f64() == 0.0))
+    {
+        return Ok(Err(DxfEntityDraftRecordIssue::ZeroExtrusion));
+    }
     let encoder = DxfEntityGroupEncoder::new(document.format(), context.version, profile);
     let mut record = PointRecordEncoder::new(encoder, profile);
     if let Some(issue) = record.push(
@@ -555,6 +622,38 @@ fn encode_point(
         )? {
             return Ok(Err(issue));
         }
+    }
+    if let Some(thickness) = draft.thickness()
+        && let Some(issue) = record.push(
+            39,
+            DxfEntityFieldWireType::Double,
+            DxfEntityEditValue::Double(thickness),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(extrusion) = draft.extrusion() {
+        for (group_code, value) in [210_i16, 220, 230].into_iter().zip(extrusion) {
+            if let Some(issue) = record.push(
+                group_code,
+                DxfEntityFieldWireType::Double,
+                DxfEntityEditValue::Double(value),
+                cancellation,
+            )? {
+                return Ok(Err(issue));
+            }
+        }
+    }
+    if let Some(angle) = draft.ucs_x_axis_angle()
+        && let Some(issue) = record.push(
+            50,
+            DxfEntityFieldWireType::Double,
+            DxfEntityEditValue::Double(angle),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
     }
     Ok(Ok(record.finish()))
 }

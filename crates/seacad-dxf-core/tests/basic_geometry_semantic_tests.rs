@@ -8,7 +8,7 @@ use seacad_dxf_core::{
     DxfResourceProfile, DxfSemanticValueState, NoopDxfReadObserver,
 };
 
-type TripleEvidence = [(DxfSemanticValueState, Option<u64>); 3];
+type ValueEvidence = (DxfSemanticValueState, Option<u64>);
 
 #[test]
 fn every_dialect_has_ascii_binary_semantic_and_default_parity() -> Result<(), Box<dyn Error>> {
@@ -88,6 +88,50 @@ fn missing_invalid_and_multiple_required_components_fail_closed() -> Result<(), 
 }
 
 #[test]
+fn point_optional_scalars_default_and_preserve_invalid_cardinality() -> Result<(), Box<dyn Error>> {
+    let bytes = b"0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n1\n20\n2\n30\n3\n0\nPOINT\n10\n4\n20\n5\n30\n6\n39\n.\n50\n1\n50\n2\n0\nENDSEC\n0\nEOF\n";
+    let source = DxfMemorySource::new(bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let directory = document.basic_geometry_semantic_directory(&DxfCancellationToken::default())?;
+
+    let defaulted = directory
+        .point_for_entry(directory.entries()[0])?
+        .ok_or_else(|| io::Error::other("defaulted POINT"))?;
+    assert_eq!(defaulted.thickness_value(), Some(DxfDouble::from_f64(0.0)));
+    assert_eq!(
+        defaulted.ucs_x_axis_angle_value(),
+        Some(DxfDouble::from_f64(0.0))
+    );
+    assert_eq!(
+        defaulted.thickness().state(),
+        DxfSemanticValueState::Defaulted
+    );
+    assert_eq!(
+        defaulted.ucs_x_axis_angle().state(),
+        DxfSemanticValueState::Defaulted
+    );
+
+    let invalid = directory
+        .point_for_entry(directory.entries()[1])?
+        .ok_or_else(|| io::Error::other("invalid POINT"))?;
+    assert_eq!(
+        invalid.thickness().invalid_issue(),
+        Some(&DxfBasicGeometrySemanticIssue::InvalidAsciiNumber(
+            DxfAsciiNumericIssue::InvalidSyntax { token_offset: 1 }
+        ))
+    );
+    assert!(invalid.thickness().raw_provenance().is_some());
+    assert_eq!(
+        invalid.ucs_x_axis_angle().invalid_issue(),
+        Some(&DxfBasicGeometrySemanticIssue::MultipleComponents {
+            occurrence_count: 2
+        })
+    );
+    assert!(invalid.ucs_x_axis_angle().raw_provenance().is_some());
+    Ok(())
+}
+
+#[test]
 fn cancellation_bounds_and_public_traits_remain_explicit() -> Result<(), Box<dyn Error>> {
     let bytes = ascii_fixture("AC1032");
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -128,6 +172,19 @@ fn assert_semantics(directory: &DxfBasicGeometrySemanticDirectory) -> Result<(),
     assert_eq!(
         point.extrusion_value().map(bits),
         Some([0.0_f64.to_bits(), 0.0_f64.to_bits(), 1.0_f64.to_bits()])
+    );
+    assert_eq!(
+        point.thickness_value().map(DxfDouble::to_bits),
+        Some(2.25_f64.to_bits())
+    );
+    assert_eq!(
+        point.ucs_x_axis_angle_value().map(DxfDouble::to_bits),
+        Some((-30.0_f64).to_bits())
+    );
+    assert_eq!(point.thickness().state(), DxfSemanticValueState::Explicit);
+    assert_eq!(
+        point.ucs_x_axis_angle().state(),
+        DxfSemanticValueState::Explicit
     );
     assert!(
         point
@@ -176,7 +233,13 @@ fn assert_semantics(directory: &DxfBasicGeometrySemanticDirectory) -> Result<(),
             _ => return Err(io::Error::other("unsupported semantic kind").into()),
         }
     }
-    for value in point.location().iter().chain(point.extrusion()) {
+    for value in point
+        .location()
+        .iter()
+        .chain([point.thickness()])
+        .chain(point.extrusion())
+        .chain([point.ucs_x_axis_angle()])
+    {
         assert_eq!(
             value.field_provenance().document_source_id(),
             directory.source_id()
@@ -195,7 +258,7 @@ fn assert_semantics(directory: &DxfBasicGeometrySemanticDirectory) -> Result<(),
 
 fn semantic_evidence(
     directory: &DxfBasicGeometrySemanticDirectory,
-) -> Result<Vec<(DxfBasicGeometryKind, Vec<TripleEvidence>)>, io::Error> {
+) -> Result<Vec<(DxfBasicGeometryKind, Vec<ValueEvidence>)>, io::Error> {
     directory
         .entries()
         .iter()
@@ -207,10 +270,14 @@ fn semantic_evidence(
             {
                 Ok((
                     DxfBasicGeometryKind::Point,
-                    vec![
-                        triple_evidence(point.location()),
-                        triple_evidence(point.extrusion()),
-                    ],
+                    point
+                        .location()
+                        .iter()
+                        .chain([point.thickness()])
+                        .chain(point.extrusion())
+                        .chain([point.ucs_x_axis_angle()])
+                        .map(value_evidence)
+                        .collect(),
                 ))
             } else if let Some(line) = directory
                 .line_for_entry(entry)
@@ -218,11 +285,12 @@ fn semantic_evidence(
             {
                 Ok((
                     DxfBasicGeometryKind::Line,
-                    vec![
-                        triple_evidence(line.start()),
-                        triple_evidence(line.endpoint()),
-                        triple_evidence(line.extrusion()),
-                    ],
+                    line.start()
+                        .iter()
+                        .chain(line.endpoint())
+                        .chain(line.extrusion())
+                        .map(value_evidence)
+                        .collect(),
                 ))
             } else {
                 Err(io::Error::other("unsupported semantic entry"))
@@ -231,13 +299,11 @@ fn semantic_evidence(
         .collect()
 }
 
-fn triple_evidence(values: &[seacad_dxf_core::DxfBasicGeometrySemanticValue; 3]) -> TripleEvidence {
-    values.map(|value| {
-        (
-            value.state(),
-            value.value().copied().map(DxfDouble::to_bits),
-        )
-    })
+fn value_evidence(value: &seacad_dxf_core::DxfBasicGeometrySemanticValue) -> ValueEvidence {
+    (
+        value.state(),
+        value.value().copied().map(DxfDouble::to_bits),
+    )
 }
 
 fn bits(values: [DxfDouble; 3]) -> [u64; 3] {
@@ -250,7 +316,7 @@ fn bits3(x: f64, y: f64, z: f64) -> [u64; 3] {
 
 fn ascii_fixture(version: &str) -> Vec<u8> {
     format!(
-        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n-0\n20\n2\n30\n3\n0\nLINE\n10\n1\n20\n2\n30\n3\n11\n4\n21\n5\n31\n6\n210\n2\n230\n3\n0\nENDSEC\n0\nEOF\n"
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{version}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n10\n-0\n20\n2\n30\n3\n39\n2.25\n50\n-30\n0\nLINE\n10\n1\n20\n2\n30\n3\n11\n4\n21\n5\n31\n6\n210\n2\n230\n3\n0\nENDSEC\n0\nEOF\n"
     )
     .into_bytes()
 }
@@ -265,7 +331,7 @@ fn binary_fixture(version: DxfAcadVersion) -> Result<Vec<u8>, io::Error> {
     push_string(&mut bytes, version, 0, b"SECTION")?;
     push_string(&mut bytes, version, 2, b"ENTITIES")?;
     push_string(&mut bytes, version, 0, b"POINT")?;
-    for (code, value) in [(10, -0.0), (20, 2.0), (30, 3.0)] {
+    for (code, value) in [(10, -0.0), (20, 2.0), (30, 3.0), (39, 2.25), (50, -30.0)] {
         push_double(&mut bytes, version, code, value)?;
     }
     push_string(&mut bytes, version, 0, b"LINE")?;

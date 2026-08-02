@@ -1025,8 +1025,22 @@ verifiable plan retains one family expectation per inserted handle. Three-
 record batches pass all nine ASCII/Binary dialect pairs with two raw patches,
 successor-seed `0x43`, strict semantic verification, and byte-identical inverse
 restoration. Invalid drafts do not consume handle ordinals; exhaustion remains
-typed. Mixed insert/update verification, other draft families, and POINT
-update/clone/delete remain open.
+typed. Mixed insert/update verification, optional POINT payload, other draft
+families, and POINT update/clone/delete remain open.
+
+M14.3bo closes the public POINT payload gap identified by Autodesk. The shared
+POINT/LINE evidence platform now retains POINT thickness `39` and UCS X-axis
+angle `50` alongside location and extrusion, gives POINT eight stable role
+cards, and projects the two optional scalars with documented zero defaults.
+Invalid and duplicate explicit values never fall back to defaults. The typed
+POINT draft adds optional thickness, complete extrusion, and angle values.
+Unspecified fields stay omitted; supplied fields are emitted after location in
+canonical `39`, `210/220/230`, `50` order, and a zero extrusion vector is
+rejected. Insert verification checks both exact binary64 values and whether
+each optional value remained explicit or defaulted. Minimal and all-explicit
+records pass all nine ASCII/Binary dialect pairs, while tampering of each new
+field fails typed and the inverse remains byte-identical. POINT update,
+clone/delete closure, mixed insert/update sessions, and `Complete` remain open.
 
 ## Milestone queue
 

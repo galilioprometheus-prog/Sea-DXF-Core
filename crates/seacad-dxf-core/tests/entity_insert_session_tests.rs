@@ -15,6 +15,13 @@ const LOCATION: [DxfDouble; 3] = [
     DxfDouble::from_bits((-2.5_f64).to_bits()),
     DxfDouble::from_bits(3.75_f64.to_bits()),
 ];
+const THICKNESS: DxfDouble = DxfDouble::from_bits(2.25_f64.to_bits());
+const EXTRUSION: [DxfDouble; 3] = [
+    DxfDouble::from_bits(0.25_f64.to_bits()),
+    DxfDouble::from_bits((-0.5_f64).to_bits()),
+    DxfDouble::from_bits(1.0_f64.to_bits()),
+];
+const UCS_X_AXIS_ANGLE: DxfDouble = DxfDouble::from_bits(37.5_f64.to_bits());
 
 #[test]
 fn session_inserts_and_verifies_point_across_every_dialect() -> Result<(), Box<dyn Error>> {
@@ -302,7 +309,10 @@ fn session_insert_rejects_foreign_placement_cancellation_and_record_error()
 }
 
 fn point_draft(version: DxfAcadVersion) -> DxfEntityDraft<'static> {
-    let point = DxfPointDraft::new(b"Layer0", LOCATION);
+    let point = DxfPointDraft::new(b"Layer0", LOCATION)
+        .with_thickness(THICKNESS)
+        .with_extrusion(EXTRUSION)
+        .with_ucs_x_axis_angle(UCS_X_AXIS_ANGLE);
     let point = if version >= DxfAcadVersion::Ac1015 {
         point
             .with_layout(b"Model")

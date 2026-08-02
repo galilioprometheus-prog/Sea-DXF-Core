@@ -23,6 +23,8 @@ pub enum DxfBasicGeometryComponentRole {
     WcsLocationOrStartX,
     WcsLocationOrStartY,
     WcsLocationOrStartZ,
+    Thickness,
+    UcsXAxisAngle,
     WcsEndpointX,
     WcsEndpointY,
     WcsEndpointZ,
@@ -301,13 +303,15 @@ const fn component_role(
     group_code: i16,
 ) -> Option<DxfBasicGeometryComponentRole> {
     use DxfBasicGeometryComponentRole::{
-        ExtrusionX, ExtrusionY, ExtrusionZ, WcsEndpointX, WcsEndpointY, WcsEndpointZ,
-        WcsLocationOrStartX, WcsLocationOrStartY, WcsLocationOrStartZ,
+        ExtrusionX, ExtrusionY, ExtrusionZ, Thickness, UcsXAxisAngle, WcsEndpointX, WcsEndpointY,
+        WcsEndpointZ, WcsLocationOrStartX, WcsLocationOrStartY, WcsLocationOrStartZ,
     };
     match (kind, group_code) {
         (_, 10) => Some(WcsLocationOrStartX),
         (_, 20) => Some(WcsLocationOrStartY),
         (_, 30) => Some(WcsLocationOrStartZ),
+        (DxfBasicGeometryKind::Point, 39) => Some(Thickness),
+        (DxfBasicGeometryKind::Point, 50) => Some(UcsXAxisAngle),
         (DxfBasicGeometryKind::Line, 11) => Some(WcsEndpointX),
         (DxfBasicGeometryKind::Line, 21) => Some(WcsEndpointY),
         (DxfBasicGeometryKind::Line, 31) => Some(WcsEndpointZ),

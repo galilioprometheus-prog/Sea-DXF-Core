@@ -28,6 +28,13 @@ const LOCATION: [DxfDouble; 3] = [
     DxfDouble::from_bits((-2.5_f64).to_bits()),
     DxfDouble::from_bits(3.75_f64.to_bits()),
 ];
+const THICKNESS: DxfDouble = DxfDouble::from_bits(2.25_f64.to_bits());
+const EXTRUSION: [DxfDouble; 3] = [
+    DxfDouble::from_bits(0.25_f64.to_bits()),
+    DxfDouble::from_bits((-0.5_f64).to_bits()),
+    DxfDouble::from_bits(1.0_f64.to_bits()),
+];
+const UCS_X_AXIS_ANGLE: DxfDouble = DxfDouble::from_bits(37.5_f64.to_bits());
 
 #[test]
 fn point_record_is_canonical_and_composes_across_every_dialect() -> Result<(), Box<dyn Error>> {
@@ -73,6 +80,9 @@ fn point_record_is_canonical_and_composes_across_every_dialect() -> Result<(), B
                 .point_for_entry(*entry)?
                 .ok_or_else(|| io::Error::other("POINT semantics"))?;
             assert_eq!(point.location_value(), Some(LOCATION));
+            assert_eq!(point.thickness_value(), Some(THICKNESS));
+            assert_eq!(point.extrusion_value(), Some(EXTRUSION));
+            assert_eq!(point.ucs_x_axis_angle_value(), Some(UCS_X_AXIS_ANGLE));
             if version >= DxfAcadVersion::Ac1015 {
                 assert_modern_common_fields(post)?;
             }
@@ -85,6 +95,56 @@ fn point_record_is_canonical_and_composes_across_every_dialect() -> Result<(), B
             assert_eq!(journal.receipt().edit_count(), 1);
             let inverse = journal.into_parts().1;
             assert_eq!(materialize(&output, &inverse)?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_optional_fields_omit_to_documented_defaults_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, 0x40)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let applicability =
+                admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
+            let record = match view.encode_entity_draft_record(
+                applicability,
+                DxfEntityDraft::point(minimal_point_draft(version, b"Layer0", LOCATION)),
+                DxfResourceProfile::Safe,
+                &token(),
+            )? {
+                Ok(record) => record,
+                Err(issue) => return Err(io::Error::other(format!("POINT: {issue:?}")).into()),
+            };
+            let insert =
+                view.plan_entity_draft_insert(record, DxfResourceProfile::Safe, &token())?;
+            let output = materialize(&bytes, insert.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let semantics = post.basic_geometry_semantic_directory(&token())?;
+            let point = semantics
+                .point_for_entry(semantics.entries()[0])?
+                .ok_or_else(|| io::Error::other("minimal POINT semantics"))?;
+            assert_eq!(point.thickness().state(), DxfSemanticValueState::Defaulted);
+            assert!(
+                point
+                    .extrusion()
+                    .iter()
+                    .all(|value| value.state() == DxfSemanticValueState::Defaulted)
+            );
+            assert_eq!(
+                point.ucs_x_axis_angle().state(),
+                DxfSemanticValueState::Defaulted
+            );
+            assert!(matches!(
+                insert.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                DxfEntityEditVerificationOutcome::Verified(_)
+            ));
         }
     }
     Ok(())
@@ -179,6 +239,27 @@ fn point_insert_verification_rejects_identity_family_common_and_geometry_tamperi
         DxfEntityEditVerificationIssue::InsertedPointLocationMismatch { handle: observed }
             if observed == handle(0x40)
     ));
+
+    let wrong_thickness = replace_once(&output, b"39\n2.25\n210\n", b"39\n2.35\n210\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_thickness)?,
+        DxfEntityEditVerificationIssue::InsertedPointThicknessMismatch { handle: observed }
+            if observed == handle(0x40)
+    ));
+
+    let wrong_extrusion = replace_once(&output, b"210\n0.25\n220\n", b"210\n0.35\n220\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_extrusion)?,
+        DxfEntityEditVerificationIssue::InsertedPointExtrusionMismatch { handle: observed }
+            if observed == handle(0x40)
+    ));
+
+    let wrong_angle = replace_once(&output, b"50\n37.5\n0\nENDSEC", b"50\n38.5\n0\nENDSEC")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_angle)?,
+        DxfEntityEditVerificationIssue::InsertedPointUcsXAxisAngleMismatch { handle: observed }
+            if observed == handle(0x40)
+    ));
     Ok(())
 }
 
@@ -235,7 +316,7 @@ fn point_record_uses_placement_specific_modern_common_envelope() -> Result<(), B
             let document = open_document(&source, format)?;
             let view = document.view();
             let applicability = admitted_block_plan(view)?;
-            let mut point = DxfPointDraft::new(b"Layer0", LOCATION);
+            let mut point = explicit_point_payload(DxfPointDraft::new(b"Layer0", LOCATION));
             if version >= DxfAcadVersion::Ac1015 {
                 point = point.with_lineweight(DxfEntityLineweight::BY_LAYER);
             }
@@ -266,6 +347,9 @@ fn point_record_uses_placement_specific_modern_common_envelope() -> Result<(), B
                 .point_for_entry(*entry)?
                 .ok_or_else(|| io::Error::other("block POINT semantics"))?;
             assert_eq!(point.location_value(), Some(LOCATION));
+            assert_eq!(point.thickness_value(), Some(THICKNESS));
+            assert_eq!(point.extrusion_value(), Some(EXTRUSION));
+            assert_eq!(point.ucs_x_axis_angle_value(), Some(UCS_X_AXIS_ANGLE));
             let DxfEntityEditVerificationOutcome::Verified(journal) =
                 insert.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
             else {
@@ -549,6 +633,41 @@ fn point_draft_rejects_name_layer_numeric_source_and_cancellation() -> Result<()
         })
     ));
 
+    let invalid_optional =
+        admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
+    assert!(matches!(
+        view.encode_entity_draft_record(
+            invalid_optional,
+            DxfEntityDraft::point(
+                point_draft(DxfAcadVersion::Ac1032, b"Layer0", LOCATION)
+                    .with_thickness(DxfDouble::from_f64(f64::INFINITY))
+            ),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        Err(DxfEntityDraftRecordIssue::GroupEncode {
+            group_code: 39,
+            issue: DxfEntityGroupEncodeIssue::NonFiniteDouble(_)
+        })
+    ));
+
+    let zero_extrusion = admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
+    assert!(matches!(
+        view.encode_entity_draft_record(
+            zero_extrusion,
+            DxfEntityDraft::point(
+                point_draft(DxfAcadVersion::Ac1032, b"Layer0", LOCATION).with_extrusion([
+                    DxfDouble::from_f64(0.0),
+                    DxfDouble::from_f64(-0.0),
+                    DxfDouble::from_f64(0.0),
+                ])
+            ),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        Err(DxfEntityDraftRecordIssue::ZeroExtrusion)
+    ));
+
     let cancelled_plan = admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
     let cancelled = token();
     cancelled.cancel();
@@ -619,6 +738,14 @@ fn point_draft(
     layer: &[u8],
     location: [DxfDouble; 3],
 ) -> DxfPointDraft<'_> {
+    explicit_point_payload(minimal_point_draft(version, layer, location))
+}
+
+fn minimal_point_draft(
+    version: DxfAcadVersion,
+    layer: &[u8],
+    location: [DxfDouble; 3],
+) -> DxfPointDraft<'_> {
     let draft = DxfPointDraft::new(layer, location);
     if version >= DxfAcadVersion::Ac1015 {
         draft
@@ -627,6 +754,13 @@ fn point_draft(
     } else {
         draft
     }
+}
+
+fn explicit_point_payload(draft: DxfPointDraft<'_>) -> DxfPointDraft<'_> {
+    draft
+        .with_thickness(THICKNESS)
+        .with_extrusion(EXTRUSION)
+        .with_ucs_x_axis_angle(UCS_X_AXIS_ANGLE)
 }
 
 fn admitted_plan(
@@ -730,6 +864,11 @@ fn expected_point(
         ExpectedGroup::Double(10, LOCATION[0]),
         ExpectedGroup::Double(20, LOCATION[1]),
         ExpectedGroup::Double(30, LOCATION[2]),
+        ExpectedGroup::Double(39, THICKNESS),
+        ExpectedGroup::Double(210, EXTRUSION[0]),
+        ExpectedGroup::Double(220, EXTRUSION[1]),
+        ExpectedGroup::Double(230, EXTRUSION[2]),
+        ExpectedGroup::Double(50, UCS_X_AXIS_ANGLE),
     ]);
     encode_expected(format, version, &groups)
 }
@@ -755,6 +894,11 @@ fn expected_block_point(
         ExpectedGroup::Double(10, LOCATION[0]),
         ExpectedGroup::Double(20, LOCATION[1]),
         ExpectedGroup::Double(30, LOCATION[2]),
+        ExpectedGroup::Double(39, THICKNESS),
+        ExpectedGroup::Double(210, EXTRUSION[0]),
+        ExpectedGroup::Double(220, EXTRUSION[1]),
+        ExpectedGroup::Double(230, EXTRUSION[2]),
+        ExpectedGroup::Double(50, UCS_X_AXIS_ANGLE),
     ]);
     encode_expected(format, version, &groups)
 }

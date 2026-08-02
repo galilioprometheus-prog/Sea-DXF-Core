@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bn can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bo can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1107,8 +1107,24 @@ transaction composition. Across all ASCII/Binary AC1009-through-AC1032 pairs,
 three records allocate `0x40`, `0x41`, and `0x42`, publish successor seed
 `0x43`, occupy one combined insertion patch plus one seed patch, satisfy all
 three POINT semantic expectations, and inverse to byte-identical source.
-Handle exhaustion remains typed. Mixed insert/update sessions, non-POINT draft
-families, clone/delete, and POINT `Complete` remain open.
+Handle exhaustion remains typed. Optional POINT payload, mixed insert/update
+sessions, non-POINT draft families, clone/delete, and POINT `Complete` remain
+open.
+
+M14.3bo adds the remaining public POINT payload to evidence, semantics, typed
+drafts, canonical encoding, and insertion verification. POINT records now
+retain thickness `39` and UCS X-axis angle `50` in source order alongside the
+existing WCS location and extrusion tuple. Eight fixed cards preserve absence,
+uniqueness, duplicates, invalid numerics, and raw provenance. Absent thickness
+and angle default to zero; absent extrusion components default to `(0, 0, 1)`;
+present invalid or duplicate evidence remains invalid. Drafts may explicitly
+emit thickness, a complete nonzero extrusion, and angle after location in
+Autodesk table order. Unspecified optional values remain omitted. The verifier
+checks exact values and explicit-versus-defaulted state, so replacing or
+silently omitting a requested field fails typed. Minimal and all-explicit
+records pass every ASCII/Binary Core dialect, and POINT batches retain the same
+strict-reparse/inverse guarantees. POINT update, clone/delete, mixed operation
+sessions, display behavior, and `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

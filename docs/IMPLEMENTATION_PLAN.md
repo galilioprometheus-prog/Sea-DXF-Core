@@ -2481,5 +2481,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     `0x43`, semantic verification, and byte-identical inverse restoration.
     Insert/update mixing and multi-family batches remain fail-closed.
 
+    M14.3bo completes the public POINT family payload on the read and insert
+    paths. Source-order evidence and fixed cards now include thickness `39` and
+    UCS X-axis angle `50`; typed semantics apply their documented zero defaults
+    only when absent and retain invalid/duplicate evidence. `DxfPointDraft`
+    accepts optional thickness, a complete nonzero extrusion direction, and
+    the optional angle. The writer omits absent defaults and emits explicit
+    values in canonical location/thickness/extrusion/angle order. Post-image
+    verification distinguishes explicit from defaulted state and checks exact
+    binary64 values for every field. Minimal and all-explicit ASCII/Binary
+    records pass all nine dialects, including typed tamper and inverse tests.
+    POINT update, clone/delete, and mixed insert/update sessions remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

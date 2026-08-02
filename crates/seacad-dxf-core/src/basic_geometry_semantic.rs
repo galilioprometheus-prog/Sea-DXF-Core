@@ -13,11 +13,8 @@ use crate::{
 
 const POINT_NAMESPACE: &str = "basic_geometry.point";
 const LINE_NAMESPACE: &str = "basic_geometry.line";
-const DEFAULT_EXTRUSION: [DxfDouble; 3] = [
-    DxfDouble::from_bits(0.0_f64.to_bits()),
-    DxfDouble::from_bits(0.0_f64.to_bits()),
-    DxfDouble::from_bits(1.0_f64.to_bits()),
-];
+const ZERO: DxfDouble = DxfDouble::from_bits(0.0_f64.to_bits());
+const DEFAULT_EXTRUSION: [DxfDouble; 3] = [ZERO, ZERO, DxfDouble::from_bits(1.0_f64.to_bits())];
 
 /// Why one reviewed basic-geometry component has no usable semantic value.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -36,7 +33,9 @@ pub type DxfBasicGeometrySemanticValue = DxfSemanticValue<DxfDouble, DxfBasicGeo
 pub struct DxfPointGeometrySemantics {
     record: DxfBasicGeometryRecordEntry,
     location: [DxfBasicGeometrySemanticValue; 3],
+    thickness: DxfBasicGeometrySemanticValue,
     extrusion: [DxfBasicGeometrySemanticValue; 3],
+    ucs_x_axis_angle: DxfBasicGeometrySemanticValue,
 }
 
 impl DxfPointGeometrySemantics {
@@ -56,6 +55,16 @@ impl DxfPointGeometrySemantics {
     }
 
     #[must_use]
+    pub const fn thickness(&self) -> &DxfBasicGeometrySemanticValue {
+        &self.thickness
+    }
+
+    #[must_use]
+    pub const fn ucs_x_axis_angle(&self) -> &DxfBasicGeometrySemanticValue {
+        &self.ucs_x_axis_angle
+    }
+
+    #[must_use]
     pub fn location_value(&self) -> Option<[DxfDouble; 3]> {
         triple_value(&self.location)
     }
@@ -63,6 +72,16 @@ impl DxfPointGeometrySemantics {
     #[must_use]
     pub fn extrusion_value(&self) -> Option<[DxfDouble; 3]> {
         triple_value(&self.extrusion)
+    }
+
+    #[must_use]
+    pub fn thickness_value(&self) -> Option<DxfDouble> {
+        self.thickness.value().copied()
+    }
+
+    #[must_use]
+    pub fn ucs_x_axis_angle_value(&self) -> Option<DxfDouble> {
+        self.ucs_x_axis_angle.value().copied()
     }
 }
 
@@ -299,7 +318,23 @@ fn point_semantics(
                 DxfBasicGeometryComponentRole::WcsLocationOrStartZ,
             ],
         )?,
+        thickness: semantic_component(
+            cards,
+            record,
+            DxfBasicGeometryComponentRole::Thickness,
+            POINT_NAMESPACE,
+            "thickness",
+            Some(ZERO),
+        )?,
         extrusion: extrusion_triple(cards, record, POINT_NAMESPACE)?,
+        ucs_x_axis_angle: semantic_component(
+            cards,
+            record,
+            DxfBasicGeometryComponentRole::UcsXAxisAngle,
+            POINT_NAMESPACE,
+            "ucs_x_axis_angle",
+            Some(ZERO),
+        )?,
     })
 }
 

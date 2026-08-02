@@ -13,6 +13,9 @@ use crate::{
     DxfTransactionWriteReceipt, NoopDxfReadObserver,
 };
 
+const ZERO: DxfDouble = DxfDouble::from_bits(0.0_f64.to_bits());
+const DEFAULT_EXTRUSION: [DxfDouble; 3] = [ZERO, ZERO, DxfDouble::from_bits(1.0_f64.to_bits())];
+
 pub(crate) enum DxfEntityExpectedValue {
     Double(DxfDouble),
     ExactText(Box<[u8]>),
@@ -138,6 +141,15 @@ pub enum DxfEntityEditVerificationIssue {
         handle: DxfHandle,
     },
     InsertedPointLocationMismatch {
+        handle: DxfHandle,
+    },
+    InsertedPointThicknessMismatch {
+        handle: DxfHandle,
+    },
+    InsertedPointExtrusionMismatch {
+        handle: DxfHandle,
+    },
+    InsertedPointUcsXAxisAngleMismatch {
         handle: DxfHandle,
     },
     MissingEntity {
@@ -721,7 +733,48 @@ fn verify_point_insert(
             },
         ));
     }
+    let thickness = expectation.point.thickness();
+    if point.thickness_value() != Some(thickness.unwrap_or(ZERO))
+        || point.thickness().state() != optional_state(thickness.is_some())
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointThicknessMismatch {
+                handle: expectation.handle,
+            },
+        ));
+    }
+    let extrusion = expectation.point.extrusion();
+    if point.extrusion_value() != Some(extrusion.unwrap_or(DEFAULT_EXTRUSION))
+        || point
+            .extrusion()
+            .iter()
+            .any(|value| value.state() != optional_state(extrusion.is_some()))
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointExtrusionMismatch {
+                handle: expectation.handle,
+            },
+        ));
+    }
+    let angle = expectation.point.ucs_x_axis_angle();
+    if point.ucs_x_axis_angle_value() != Some(angle.unwrap_or(ZERO))
+        || point.ucs_x_axis_angle().state() != optional_state(angle.is_some())
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointUcsXAxisAngleMismatch {
+                handle: expectation.handle,
+            },
+        ));
+    }
     Ok(None)
+}
+
+const fn optional_state(explicit: bool) -> DxfSemanticValueState {
+    if explicit {
+        DxfSemanticValueState::Explicit
+    } else {
+        DxfSemanticValueState::Defaulted
+    }
 }
 
 fn matches_placement(

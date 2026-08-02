@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bn. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bo. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -195,6 +195,14 @@ shared consecutive handle reservation for the whole batch. Records targeting
 the same zero-width anchor are emitted in caller/handle order as one insertion
 patch, and `$HANDSEED` advances once to the exact successor. Rejected drafts do
 not consume a handle. Insert/update mixing remains fail-closed.
+POINT drafts now cover the complete public family payload: optional thickness,
+extrusion direction, and UCS X-axis angle join the required WCS location.
+Readers retain out-of-order and duplicate evidence, apply only Autodesk's
+documented zero and `(0, 0, 1)` defaults, and keep invalid optional values
+typed. Writers omit unspecified defaults, emit explicitly requested values in
+canonical subclass order, reject zero extrusion, and verify explicit/defaulted
+state plus exact binary64 values after strict reparse. POINT update, clone, and
+delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar
