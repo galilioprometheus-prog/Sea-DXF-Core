@@ -159,6 +159,44 @@ pub(crate) struct DxfPointDraftRecordExpectation {
     location: [DxfDouble; 3],
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct DxfEntityDraftEncodingContext {
+    name: DxfEntityDraftName,
+    version: DxfAcadVersion,
+    handle: DxfHandle,
+    owner: DxfHandle,
+    placement: DxfEntityPlacementTarget,
+}
+
+impl DxfEntityDraftEncodingContext {
+    pub(crate) const fn new(
+        name: DxfEntityDraftName,
+        version: DxfAcadVersion,
+        handle: DxfHandle,
+        owner: DxfHandle,
+        placement: DxfEntityPlacementTarget,
+    ) -> Self {
+        Self {
+            name,
+            version,
+            handle,
+            owner,
+            placement,
+        }
+    }
+}
+
+pub(crate) struct DxfEncodedEntityDraftRecord {
+    bytes: Box<[u8]>,
+    expectation: DxfPointDraftRecordExpectation,
+}
+
+impl DxfEncodedEntityDraftRecord {
+    pub(crate) fn into_parts(self) -> (Box<[u8]>, DxfPointDraftRecordExpectation) {
+        (self.bytes, self.expectation)
+    }
+}
+
 impl DxfPointDraftRecordExpectation {
     pub(crate) fn layer(&self) -> &[u8] {
         &self.layer
@@ -256,38 +294,65 @@ impl DxfRawDocumentView<'_> {
         applicability
             .transaction()
             .validate_source_precondition(self)?;
-        if applicability.name() != draft.name() {
-            return Ok(Err(DxfEntityDraftRecordIssue::NameMismatch {
-                admitted: applicability.classification(),
-                draft: draft.name().classification(),
-            }));
-        }
-        if let Some(requested) = draft.owner()
-            && requested != applicability.identity().owner_handle()
-        {
-            return Ok(Err(DxfEntityDraftRecordIssue::OwnerMismatch {
-                admitted: applicability.identity().owner_handle(),
-                requested,
-            }));
-        }
-        let (bytes, expectation) = match draft {
-            DxfEntityDraft::Point { draft: point, .. } => {
-                let bytes = match encode_point(self, &applicability, point, profile, cancellation)?
-                {
-                    Ok(bytes) => bytes,
-                    Err(issue) => return Ok(Err(issue)),
-                };
-                let expectation = point_expectation(point)?;
-                (bytes, expectation)
-            }
-        };
+        let context = DxfEntityDraftEncodingContext::new(
+            applicability.name(),
+            applicability.version(),
+            applicability.handle(),
+            applicability.identity().owner_handle(),
+            applicability.identity().placement().target(),
+        );
+        let encoded =
+            match encode_entity_draft_record_parts(self, context, draft, profile, cancellation)? {
+                Ok(encoded) => encoded,
+                Err(issue) => return Ok(Err(issue)),
+            };
+        let (bytes, expectation) = encoded.into_parts();
         ensure_not_cancelled(cancellation)?;
         Ok(Ok(DxfEntityDraftRecordPlan {
             applicability,
-            bytes: bytes.into_boxed_slice(),
+            bytes,
             expectation,
         }))
     }
+}
+
+pub(crate) fn encode_entity_draft_record_parts(
+    document: DxfRawDocumentView<'_>,
+    context: DxfEntityDraftEncodingContext,
+    draft: DxfEntityDraft<'_>,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfEncodedEntityDraftRecord, DxfEntityDraftRecordIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    if context.name != draft.name() {
+        return Ok(Err(DxfEntityDraftRecordIssue::NameMismatch {
+            admitted: context.name.classification(),
+            draft: draft.name().classification(),
+        }));
+    }
+    if let Some(requested) = draft.owner()
+        && requested != context.owner
+    {
+        return Ok(Err(DxfEntityDraftRecordIssue::OwnerMismatch {
+            admitted: context.owner,
+            requested,
+        }));
+    }
+    let (bytes, expectation) = match draft {
+        DxfEntityDraft::Point { draft: point, .. } => {
+            let bytes = match encode_point(document, context, point, profile, cancellation)? {
+                Ok(bytes) => bytes,
+                Err(issue) => return Ok(Err(issue)),
+            };
+            let expectation = point_expectation(point)?;
+            (bytes, expectation)
+        }
+    };
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfEncodedEntityDraftRecord {
+        bytes: bytes.into_boxed_slice(),
+        expectation,
+    }))
 }
 
 fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpectation, DxfError> {
@@ -344,7 +409,7 @@ impl DxfBinaryRawDocument<'_> {
 
 fn encode_point(
     document: DxfRawDocumentView<'_>,
-    applicability: &DxfEntityDraftApplicabilityPlan,
+    context: DxfEntityDraftEncodingContext,
     draft: DxfPointDraft<'_>,
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
@@ -352,8 +417,8 @@ fn encode_point(
     if draft.layer().is_empty() {
         return Ok(Err(DxfEntityDraftRecordIssue::EmptyLayerName));
     }
-    let target = applicability.identity().placement().target();
-    let modern_common = applicability.version() >= DxfAcadVersion::Ac1015;
+    let target = context.placement;
+    let modern_common = context.version >= DxfAcadVersion::Ac1015;
     let layout = match (modern_common, target, draft.layout()) {
         (true, DxfEntityPlacementTarget::EntitiesSection { .. }, None) => {
             return Ok(Err(DxfEntityDraftRecordIssue::LayoutRequired { target }));
@@ -361,7 +426,7 @@ fn encode_point(
         (true, DxfEntityPlacementTarget::EntitiesSection { .. }, Some(layout)) => Some(layout),
         (false, _, Some(_)) | (true, DxfEntityPlacementTarget::BlockDefinition { .. }, Some(_)) => {
             return Ok(Err(DxfEntityDraftRecordIssue::LayoutNotApplicable {
-                version: applicability.version(),
+                version: context.version,
                 target,
             }));
         }
@@ -371,17 +436,17 @@ fn encode_point(
         (true, Some(lineweight)) => Some(lineweight),
         (true, None) => {
             return Ok(Err(DxfEntityDraftRecordIssue::LineweightRequired {
-                version: applicability.version(),
+                version: context.version,
             }));
         }
         (false, Some(_)) => {
             return Ok(Err(DxfEntityDraftRecordIssue::LineweightNotApplicable {
-                version: applicability.version(),
+                version: context.version,
             }));
         }
         (false, None) => None,
     };
-    let encoder = DxfEntityGroupEncoder::new(document.format(), applicability.version(), profile);
+    let encoder = DxfEntityGroupEncoder::new(document.format(), context.version, profile);
     let mut record = PointRecordEncoder::new(encoder, profile);
     if let Some(issue) = record.push(
         0,
@@ -394,16 +459,16 @@ fn encode_point(
     if let Some(issue) = record.push(
         5,
         DxfEntityFieldWireType::Handle,
-        DxfEntityEditValue::Handle(applicability.handle()),
+        DxfEntityEditValue::Handle(context.handle),
         cancellation,
     )? {
         return Ok(Err(issue));
     }
-    if applicability.version() >= DxfAcadVersion::Ac1012 {
+    if context.version >= DxfAcadVersion::Ac1012 {
         if let Some(issue) = record.push(
             330,
             DxfEntityFieldWireType::Handle,
-            DxfEntityEditValue::Handle(applicability.identity().owner_handle()),
+            DxfEntityEditValue::Handle(context.owner),
             cancellation,
         )? {
             return Ok(Err(issue));
@@ -471,7 +536,7 @@ fn encode_point(
     {
         return Ok(Err(issue));
     }
-    if applicability.version() >= DxfAcadVersion::Ac1012
+    if context.version >= DxfAcadVersion::Ac1012
         && let Some(issue) = record.push(
             100,
             DxfEntityFieldWireType::ExactText,

@@ -2469,5 +2469,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     fail-closed until one shared reservation and ordinal-independent verifier
     are implemented.
 
+    M14.3bn batches multiple POINT insert calls under one final handle
+    reservation. The session stores owned encoded records and expectations,
+    not caller references or cloned `$HANDSEED` transactions. Each admission
+    proposes the next handle from the exact source policy, so a rejected draft
+    leaves both queue length and the next successful handle unchanged. Finish
+    validates the final consecutive allocation, groups equal anchors in
+    handle/caller order, emits one insertion patch per anchor, and composes
+    those patches with one successor-seed update. Three-record ASCII/Binary
+    tests span all nine dialects, prove `0x40..0x42` identities and successor
+    `0x43`, semantic verification, and byte-identical inverse restoration.
+    Insert/update mixing and multi-family batches remain fail-closed.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

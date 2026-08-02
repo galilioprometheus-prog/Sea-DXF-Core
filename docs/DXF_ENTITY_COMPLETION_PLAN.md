@@ -1013,6 +1013,21 @@ verification. This first session checkpoint admits one insert and rejects
 insert/update mixing; multi-record reservation, mixed verification, optional
 POINT fields, and the remaining update/clone/delete ladder stay open.
 
+M14.3bn removes the one-record session limit without cloning reservation
+transactions or retaining caller borrows. Each successful POINT insert uses
+the source policy to propose its deterministic handle ordinal, validates and
+copies the complete encoded record plus semantic expectation into the session,
+and mutates the queue only after every check passes. At `finish`, one bounded
+reservation covers the entire consecutive handle range and advances
+`$HANDSEED` exactly once. Same-anchor records are grouped into one patch in
+caller/handle order; distinct anchors remain transaction source-ordered. The
+verifiable plan retains one family expectation per inserted handle. Three-
+record batches pass all nine ASCII/Binary dialect pairs with two raw patches,
+successor-seed `0x43`, strict semantic verification, and byte-identical inverse
+restoration. Invalid drafts do not consume handle ordinals; exhaustion remains
+typed. Mixed insert/update verification, other draft families, and POINT
+update/clone/delete remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

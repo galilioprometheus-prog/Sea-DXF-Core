@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bm. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bn. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -186,9 +186,15 @@ through the unified CRUD surface. The typed draft carries the caller-selected
 BLOCK_RECORD owner, and the session atomically performs owner binding, one
 handle reservation, dialect applicability, canonical record encoding, and the
 verified insertion plan. `finish` returns the raw transaction while
-`finish_verifiable` retains the POINT postcondition. A session currently admits
-one new record and rejects update/insert mixing until multi-record allocation
-and ordinal-independent mixed verification land.
+`finish_verifiable` retains the POINT postcondition. That checkpoint admitted
+one new record and rejected update/insert mixing pending multi-record
+allocation and ordinal-independent mixed verification.
+An edit session now admits multiple typed POINT drafts. Each successful call
+owns its encoded record and semantic expectation, while `finish` creates one
+shared consecutive handle reservation for the whole batch. Records targeting
+the same zero-width anchor are emitted in caller/handle order as one insertion
+patch, and `$HANDSEED` advances once to the exact successor. Rejected drafts do
+not consume a handle. Insert/update mixing remains fail-closed.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

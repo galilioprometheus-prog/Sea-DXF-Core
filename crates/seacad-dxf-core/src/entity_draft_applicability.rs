@@ -101,44 +101,61 @@ impl DxfRawDocumentView<'_> {
         ensure_not_cancelled(cancellation)?;
         ensure_source(self.source_id(), identity.source_id())?;
         identity.transaction().validate_source_precondition(self)?;
-        let version = match self.acad_version_report().state() {
-            DxfAcadVersionState::Supported(version) => version,
-            state => {
-                return Ok(Err(DxfEntityDraftApplicabilityIssue::VersionUnavailable {
-                    state,
-                }));
-            }
-        };
-        let classification = identity.name().classification();
-        let descriptor = classification
-            .applicability_descriptor()
-            .ok_or_else(invalid_internal_data)?;
-        if descriptor.classification() != classification {
-            return Err(invalid_internal_data());
-        }
-        match descriptor.applicability(version) {
-            DxfEntityApplicability::Applicable => {}
-            DxfEntityApplicability::NotApplicable => {
-                return Ok(Err(DxfEntityDraftApplicabilityIssue::NotApplicable {
-                    classification,
-                    version,
-                    minimum_version: descriptor.minimum_version(),
-                    maximum_version: descriptor.maximum_version(),
-                }));
-            }
-            DxfEntityApplicability::NotYetReviewed => {
-                return Ok(Err(DxfEntityDraftApplicabilityIssue::NotYetReviewed {
-                    classification,
-                    version,
-                }));
-            }
-        }
+        let (version, descriptor) =
+            match admit_entity_draft_name(identity.name(), self.acad_version_report().state())? {
+                Ok(admitted) => admitted,
+                Err(issue) => return Ok(Err(issue)),
+            };
         ensure_not_cancelled(cancellation)?;
         Ok(Ok(DxfEntityDraftApplicabilityPlan {
             identity,
             version,
             descriptor,
         }))
+    }
+}
+
+pub(crate) fn admit_entity_draft_name(
+    name: DxfEntityDraftName,
+    state: DxfAcadVersionState,
+) -> Result<
+    Result<
+        (DxfAcadVersion, &'static DxfEntityApplicabilityDescriptor),
+        DxfEntityDraftApplicabilityIssue,
+    >,
+    DxfError,
+> {
+    let version = match state {
+        DxfAcadVersionState::Supported(version) => version,
+        state => {
+            return Ok(Err(DxfEntityDraftApplicabilityIssue::VersionUnavailable {
+                state,
+            }));
+        }
+    };
+    let classification = name.classification();
+    let descriptor = classification
+        .applicability_descriptor()
+        .ok_or_else(invalid_internal_data)?;
+    if descriptor.classification() != classification {
+        return Err(invalid_internal_data());
+    }
+    match descriptor.applicability(version) {
+        DxfEntityApplicability::Applicable => Ok(Ok((version, descriptor))),
+        DxfEntityApplicability::NotApplicable => {
+            Ok(Err(DxfEntityDraftApplicabilityIssue::NotApplicable {
+                classification,
+                version,
+                minimum_version: descriptor.minimum_version(),
+                maximum_version: descriptor.maximum_version(),
+            }))
+        }
+        DxfEntityApplicability::NotYetReviewed => {
+            Ok(Err(DxfEntityDraftApplicabilityIssue::NotYetReviewed {
+                classification,
+                version,
+            }))
+        }
     }
 }
 

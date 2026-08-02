@@ -8,6 +8,10 @@ use crate::entity_common_reference_edit::classify_with_identities;
 use crate::entity_common_reference_target::reviewed_common_reference_target_kind;
 use crate::entity_common_symbol_edit::classify_with_symbols;
 use crate::entity_common_text_semantic::reviewed_common_symbol_kind;
+use crate::entity_draft_applicability::admit_entity_draft_name;
+use crate::entity_draft_record::{
+    DxfEntityDraftEncodingContext, DxfPointDraftRecordExpectation, encode_entity_draft_record_parts,
+};
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
@@ -17,12 +21,12 @@ use crate::{
     DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
     DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
     DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityDraft,
-    DxfEntityDraftApplicabilityIssue, DxfEntityDraftIdentityIssue, DxfEntityDraftName,
-    DxfEntityDraftRecordIssue, DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField,
-    DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome,
-    DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue,
-    DxfEntityFieldResetOutcome, DxfEntityKey, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
-    DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfError, DxfHandle,
+    DxfEntityDraftApplicabilityIssue, DxfEntityDraftName, DxfEntityDraftRecordIssue,
+    DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
+    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
+    DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
+    DxfEntityKey, DxfEntityPlacement, DxfEntityPlacementOwnerIssue, DxfEntityPlacementOwnerOutcome,
+    DxfEntityPlacementTarget, DxfError, DxfHandle, DxfHandleAllocationOutcome,
     DxfHandleAllocationPolicyState, DxfHandleIdentityDirectory, DxfHandleReservationPlanOutcome,
     DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
     DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
@@ -228,14 +232,12 @@ pub enum DxfEntityInsertIssue {
     UpdatePending {
         queued_update_count: u32,
     },
-    InsertAlreadyQueued,
     Owner(DxfEntityInsertOwnerIssue),
     HandlePolicy(DxfHandleAllocationPolicyState),
     HandleExhausted {
         handseed: DxfHandle,
         requested_count: u64,
     },
-    Identity(DxfEntityDraftIdentityIssue),
     Applicability(DxfEntityDraftApplicabilityIssue),
     Record(DxfEntityDraftRecordIssue),
 }
@@ -282,6 +284,15 @@ struct PendingEdit {
     expected: DxfEntityExpectedField,
 }
 
+struct PendingInsert {
+    handle: DxfHandle,
+    owner: DxfHandle,
+    version: DxfAcadVersion,
+    placement: DxfEntityPlacement,
+    bytes: Box<[u8]>,
+    expectation: DxfPointDraftRecordExpectation,
+}
+
 /// Source-bound batch of entity edits that finishes as one immutable transaction.
 pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     document: DxfRawDocumentView<'document>,
@@ -293,7 +304,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
-    pending_insert: Option<DxfEntityEditPlan>,
+    pending_inserts: Vec<PendingInsert>,
 }
 
 impl fmt::Debug for DxfEntityEditSession<'_, '_, '_> {
@@ -328,7 +339,7 @@ impl<'document, 'evidence, 'cancellation>
             layout_objects: None,
             named_symbols: None,
             pending: Vec::new(),
-            pending_insert: None,
+            pending_inserts: Vec::new(),
         })
     }
 
@@ -339,24 +350,20 @@ impl<'document, 'evidence, 'cancellation>
 
     #[must_use]
     pub fn queued_edit_count(&self) -> u64 {
-        self.pending.len() as u64 + u64::from(self.pending_insert.is_some())
+        self.pending.len() as u64 + self.pending_inserts.len() as u64
     }
 
     /// Adds one complete typed entity insertion without changing the source.
     ///
-    /// This checkpoint admits one insertion per session. Update/insert mixing
-    /// remains fail-closed until ordinal-independent mixed verification lands.
+    /// Every admitted draft is copied into session-owned encoded evidence.
+    /// Update/insert mixing remains fail-closed until ordinal-independent mixed
+    /// verification lands.
     pub fn insert(
         &mut self,
         placement: DxfEntityPlacement,
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if self.pending_insert.is_some() {
-            return Ok(DxfEntityInsertOutcome::Unavailable(
-                DxfEntityInsertIssue::InsertAlreadyQueued,
-            ));
-        }
         if !self.pending.is_empty() {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::UpdatePending {
@@ -384,19 +391,20 @@ impl<'document, 'evidence, 'cancellation>
         let policy = self
             .document
             .handle_allocation_policy_directory(self.cancellation)?;
-        let reservation = match self.document.plan_handle_reservation(
-            &policy,
-            1,
-            self.profile,
-            self.cancellation,
-        )? {
-            DxfHandleReservationPlanOutcome::Planned(plan) => plan,
-            DxfHandleReservationPlanOutcome::PolicyUnavailable { state } => {
+        let next_count = self
+            .pending_inserts
+            .len()
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        let requested_count = u64::try_from(next_count).map_err(|_| invalid_internal_data())?;
+        let allocation = match policy.propose_allocation(requested_count, self.profile)? {
+            DxfHandleAllocationOutcome::Proposed(allocation) => allocation,
+            DxfHandleAllocationOutcome::Unavailable { state } => {
                 return Ok(DxfEntityInsertOutcome::Unavailable(
                     DxfEntityInsertIssue::HandlePolicy(state),
                 ));
             }
-            DxfHandleReservationPlanOutcome::Exhausted {
+            DxfHandleAllocationOutcome::Exhausted {
                 handseed,
                 requested_count,
             } => {
@@ -408,34 +416,29 @@ impl<'document, 'evidence, 'cancellation>
                 ));
             }
         };
-        let identity = match self.document.prepare_entity_draft_identity(
-            draft.name(),
-            binding,
-            reservation,
-            self.cancellation,
-        )? {
-            Ok(plan) => plan,
-            Err(issue) => {
-                return Ok(DxfEntityInsertOutcome::Unavailable(
-                    DxfEntityInsertIssue::Identity(issue),
-                ));
-            }
-        };
-        let applicability = match self
-            .document
-            .prepare_entity_draft_applicability(identity, self.cancellation)?
-        {
-            Ok(plan) => plan,
-            Err(issue) => {
-                return Ok(DxfEntityInsertOutcome::Unavailable(
-                    DxfEntityInsertIssue::Applicability(issue),
-                ));
-            }
-        };
-        let handle = applicability.handle();
-        let name = applicability.name();
-        let record = match self.document.encode_entity_draft_record(
-            applicability,
+        let handle = allocation
+            .handle_at(requested_count - 1)
+            .ok_or_else(invalid_internal_data)?;
+        let name = draft.name();
+        let (version, _) =
+            match admit_entity_draft_name(name, self.document.acad_version_report().state())? {
+                Ok(admitted) => admitted,
+                Err(issue) => {
+                    return Ok(DxfEntityInsertOutcome::Unavailable(
+                        DxfEntityInsertIssue::Applicability(issue),
+                    ));
+                }
+            };
+        let context = DxfEntityDraftEncodingContext::new(
+            name,
+            version,
+            handle,
+            binding.owner_handle(),
+            placement.target(),
+        );
+        let encoded = match encode_entity_draft_record_parts(
+            self.document,
+            context,
             draft,
             self.profile,
             self.cancellation,
@@ -447,11 +450,19 @@ impl<'document, 'evidence, 'cancellation>
                 ));
             }
         };
-        let plan =
-            self.document
-                .plan_entity_draft_insert(record, self.profile, self.cancellation)?;
+        let (bytes, expectation) = encoded.into_parts();
+        self.pending_inserts
+            .try_reserve(1)
+            .map_err(|_| out_of_memory())?;
         ensure_not_cancelled(self.cancellation)?;
-        self.pending_insert = Some(plan);
+        self.pending_inserts.push(PendingInsert {
+            handle,
+            owner: binding.owner_handle(),
+            version,
+            placement,
+            bytes,
+            expectation,
+        });
         Ok(DxfEntityInsertOutcome::Applied(DxfEntityInsertReceipt {
             handle,
             name,
@@ -466,7 +477,7 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if self.pending_insert.is_some() {
+        if !self.pending_inserts.is_empty() {
             return Ok(DxfEntityEditOutcome::Unavailable(
                 DxfEntityEditIssue::InsertPending,
             ));
@@ -760,25 +771,19 @@ impl<'document, 'evidence, 'cancellation>
     }
 
     /// Freezes every accepted update into one source-order transaction plan.
-    pub fn finish(mut self) -> Result<DxfTransactionPlan, DxfError> {
-        if let Some(insert) = self.pending_insert.take() {
-            ensure_not_cancelled(self.cancellation)?;
-            if !self.pending.is_empty() {
-                return Err(invalid_internal_data());
-            }
-            return Ok(insert.into_transaction());
+    pub fn finish(self) -> Result<DxfTransactionPlan, DxfError> {
+        if !self.pending_inserts.is_empty() {
+            return self
+                .finish_insert_batch()
+                .map(DxfEntityEditPlan::into_transaction);
         }
         self.finish_parts().map(|(transaction, _)| transaction)
     }
 
     /// Freezes the transaction together with its semantic postconditions.
-    pub fn finish_verifiable(mut self) -> Result<DxfEntityEditPlan, DxfError> {
-        if let Some(insert) = self.pending_insert.take() {
-            ensure_not_cancelled(self.cancellation)?;
-            if !self.pending.is_empty() {
-                return Err(invalid_internal_data());
-            }
-            return Ok(insert);
+    pub fn finish_verifiable(self) -> Result<DxfEntityEditPlan, DxfError> {
+        if !self.pending_inserts.is_empty() {
+            return self.finish_insert_batch();
         }
         let (transaction, pending) = self.finish_parts()?;
         let mut expectations = Vec::new();
@@ -790,6 +795,91 @@ impl<'document, 'evidence, 'cancellation>
                 edit.key.raw_record_ordinal(),
                 edit.field,
                 edit.expected,
+            ));
+        }
+        Ok(DxfEntityEditPlan::new(transaction, expectations))
+    }
+
+    fn finish_insert_batch(mut self) -> Result<DxfEntityEditPlan, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        if !self.pending.is_empty() {
+            return Err(invalid_internal_data());
+        }
+        let handle_count =
+            u64::try_from(self.pending_inserts.len()).map_err(|_| invalid_internal_data())?;
+        let policy = self
+            .document
+            .handle_allocation_policy_directory(self.cancellation)?;
+        let reservation = match self.document.plan_handle_reservation(
+            &policy,
+            handle_count,
+            self.profile,
+            self.cancellation,
+        )? {
+            DxfHandleReservationPlanOutcome::Planned(plan) => plan,
+            DxfHandleReservationPlanOutcome::PolicyUnavailable { .. }
+            | DxfHandleReservationPlanOutcome::Exhausted { .. } => {
+                return Err(invalid_internal_data());
+            }
+        };
+        for (index, insert) in self.pending_inserts.iter().enumerate() {
+            let index = u64::try_from(index).map_err(|_| invalid_internal_data())?;
+            if reservation.allocation().handle_at(index) != Some(insert.handle) {
+                return Err(invalid_internal_data());
+            }
+        }
+
+        self.pending_inserts.sort_unstable_by_key(|insert| {
+            (
+                insert.placement.insertion_span().start(),
+                insert.placement.insertion_span().end(),
+                insert.handle.value(),
+            )
+        });
+        let mut builder = self.document.transaction_plan_builder(self.profile)?;
+        let mut cursor = 0_usize;
+        while cursor < self.pending_inserts.len() {
+            ensure_not_cancelled(self.cancellation)?;
+            let first = self
+                .pending_inserts
+                .get(cursor)
+                .ok_or_else(invalid_internal_data)?;
+            let span = first.placement.insertion_span();
+            let mut end = cursor + 1;
+            while self
+                .pending_inserts
+                .get(end)
+                .is_some_and(|insert| insert.placement.insertion_span() == span)
+            {
+                end += 1;
+            }
+            let mut fragments = Vec::new();
+            fragments
+                .try_reserve_exact(end - cursor)
+                .map_err(|_| out_of_memory())?;
+            for insert in &self.pending_inserts[cursor..end] {
+                fragments.push(insert.bytes.as_ref());
+            }
+            builder.replace_raw_span_fragments(span, &fragments, self.cancellation)?;
+            cursor = end;
+        }
+        let insertion = builder.finish(self.cancellation)?;
+        let transaction = self.document.compose_transaction_plans(
+            &[reservation.transaction(), &insertion],
+            self.profile,
+            self.cancellation,
+        )?;
+        let mut expectations = Vec::new();
+        expectations
+            .try_reserve_exact(self.pending_inserts.len())
+            .map_err(|_| out_of_memory())?;
+        for insert in self.pending_inserts {
+            let owner = (insert.version >= DxfAcadVersion::Ac1012).then_some(insert.owner);
+            expectations.push(DxfEntityEditExpectation::point_insert(
+                insert.handle,
+                owner,
+                insert.placement.target(),
+                insert.expectation,
             ));
         }
         Ok(DxfEntityEditPlan::new(transaction, expectations))

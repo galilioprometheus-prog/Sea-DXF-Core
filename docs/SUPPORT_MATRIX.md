@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bm can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bn can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1096,6 +1096,19 @@ AC1032. One insert is admitted per session; a second insert or any insert/update
 mixture is rejected without queue growth. Multi-record insertion, mixed
 ordinal-independent verification, optional POINT fields, clone/delete, and
 POINT `Complete` remain open.
+
+M14.3bn admits multiple POINT insertions in one unified session. Successful
+admission copies the encoded record and semantic expectation into owned,
+payload-redacted state and assigns a deterministic proposal handle; rejected
+drafts neither grow the queue nor consume a handle ordinal. Finish creates one
+shared consecutive reservation, verifies every proposed handle, advances
+`$HANDSEED` once, and groups same-anchor records in caller/handle order before
+transaction composition. Across all ASCII/Binary AC1009-through-AC1032 pairs,
+three records allocate `0x40`, `0x41`, and `0x42`, publish successor seed
+`0x43`, occupy one combined insertion patch plus one seed patch, satisfy all
+three POINT semantic expectations, and inverse to byte-identical source.
+Handle exhaustion remains typed. Mixed insert/update sessions, non-POINT draft
+families, clone/delete, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -5,9 +5,9 @@ use seacad_dxf_core::{
     DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditIssue,
     DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField, DxfEntityInsertIssue,
     DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch,
-    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfMemorySource, DxfPointDraft,
-    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
+    DxfMemorySource, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -29,40 +29,58 @@ fn session_inserts_and_verifies_point_across_every_dialect() -> Result<(), Box<d
             let cancellation = token();
             let mut session =
                 view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
-            let draft = point_draft(version).with_owner(handle(0x10));
-            assert_eq!(draft.owner(), Some(handle(0x10)));
-            let DxfEntityInsertOutcome::Applied(receipt) = session.insert(placement, draft)? else {
-                return Err(io::Error::other("session POINT insertion").into());
-            };
-            assert_eq!(receipt.handle(), handle(0x40));
-            assert_eq!(
-                receipt.name().canonical_topic(),
-                Some(DxfEntityTopic::POINT)
-            );
-            assert_eq!(receipt.placement(), placement.target());
-            assert_eq!(session.queued_edit_count(), 1);
+            for (index, expected_handle) in [0x40, 0x41, 0x42].into_iter().enumerate() {
+                let draft = point_draft(version).with_owner(handle(0x10));
+                assert_eq!(draft.owner(), Some(handle(0x10)));
+                let DxfEntityInsertOutcome::Applied(receipt) = session.insert(placement, draft)?
+                else {
+                    return Err(io::Error::other("session POINT insertion").into());
+                };
+                assert_eq!(receipt.handle(), handle(expected_handle));
+                assert_eq!(
+                    receipt.name().canonical_topic(),
+                    Some(DxfEntityTopic::POINT)
+                );
+                assert_eq!(receipt.placement(), placement.target());
+                assert_eq!(session.queued_edit_count(), index as u64 + 1);
+            }
             let debug = format!("{session:?}");
             assert!(!debug.contains("Layer0"));
             assert!(!debug.contains("Model"));
 
             let plan = session.finish_verifiable()?;
-            assert_eq!(plan.edit_count(), 1);
+            assert_eq!(plan.edit_count(), 3);
+            assert_eq!(plan.transaction().patches().len(), 2);
             let output = materialize(&bytes, plan.transaction())?;
             assert_eq!(bytes, fixture(format, version)?);
             let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
             let output_document = open_document(&output_source, format)?;
             let post = output_document.view();
             assert!(matches!(
-                post.handle_identity_directory(&token())?
-                    .lookup(handle(0x40)),
-                DxfHandleIdentityLookup::Unique(_)
+                post.handseed_report()
+                    .primary_occurrence()
+                    .map(|occurrence| occurrence.value()),
+                Some(DxfHandseedValue::Parsed(value)) if value == handle(0x43)
             ));
+            let identities = post.handle_identity_directory(&token())?;
+            let mut previous_ordinal = None;
+            for expected_handle in [0x40, 0x41, 0x42] {
+                let DxfHandleIdentityLookup::Unique(identity) =
+                    identities.lookup(handle(expected_handle))
+                else {
+                    return Err(io::Error::other("unique inserted handle").into());
+                };
+                if let Some(previous) = previous_ordinal {
+                    assert!(previous < identity.record().ordinal());
+                }
+                previous_ordinal = Some(identity.record().ordinal());
+            }
             let outcome = plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?;
             let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) = outcome
             else {
                 return Err(io::Error::other("verified session POINT insertion").into());
             };
-            assert_eq!(journal.receipt().edit_count(), 1);
+            assert_eq!(journal.receipt().edit_count(), 3);
             assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
         }
     }
@@ -147,10 +165,24 @@ fn session_insert_failures_do_not_queue_or_mix_operations() -> Result<(), Box<dy
     assert!(matches!(
         session.insert(
             placement,
-            point_draft(DxfAcadVersion::Ac1032).with_owner(handle(0x10))
+            DxfEntityDraft::point(
+                DxfPointDraft::new(b"Missing", LOCATION)
+                    .with_layout(b"Model")
+                    .with_lineweight(DxfEntityLineweight::BY_LAYER)
+            )
+            .with_owner(handle(0x10))
         )?,
-        DxfEntityInsertOutcome::Unavailable(DxfEntityInsertIssue::InsertAlreadyQueued)
+        DxfEntityInsertOutcome::Unavailable(DxfEntityInsertIssue::Record(_))
     ));
+    assert_eq!(session.queued_edit_count(), 1);
+    let DxfEntityInsertOutcome::Applied(second) = session.insert(
+        placement,
+        point_draft(DxfAcadVersion::Ac1032).with_owner(handle(0x10)),
+    )?
+    else {
+        return Err(io::Error::other("second session insert").into());
+    };
+    assert_eq!(second.handle(), handle(0x41));
     let key = existing_point_key(&evidence)?;
     assert!(matches!(
         session.update(
@@ -162,7 +194,7 @@ fn session_insert_failures_do_not_queue_or_mix_operations() -> Result<(), Box<dy
         )?,
         DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::InsertPending)
     ));
-    assert_eq!(session.queued_edit_count(), 1);
+    assert_eq!(session.queued_edit_count(), 2);
 
     let cancellation = token();
     let mut update_first =
@@ -241,6 +273,29 @@ fn session_insert_rejects_foreign_placement_cancellation_and_record_error()
         Err(DxfError::Cancelled)
     ));
     assert_eq!(cancelled_session.queued_edit_count(), 0);
+
+    let exhausted_bytes = fixture_with_handseed_ascii(u64::MAX);
+    let exhausted_source = DxfMemorySource::new(&exhausted_bytes, DxfResourceProfile::Safe)?;
+    let exhausted_document = open_ascii(&exhausted_source)?;
+    let exhausted_view = DxfRawDocumentView::from(&exhausted_document);
+    let exhausted_evidence = exhausted_view.entity_field_evidence_directory(&token())?;
+    let exhausted_cancellation = token();
+    let mut exhausted_session = exhausted_view.entity_edit_session(
+        &exhausted_evidence,
+        DxfResourceProfile::Safe,
+        &exhausted_cancellation,
+    )?;
+    assert!(matches!(
+        exhausted_session.insert(
+            only_placement(exhausted_view)?,
+            point_draft(DxfAcadVersion::Ac1032).with_owner(handle(0x10))
+        )?,
+        DxfEntityInsertOutcome::Unavailable(DxfEntityInsertIssue::HandleExhausted {
+            handseed,
+            requested_count: 1
+        }) if handseed == handle(u64::MAX)
+    ));
+    assert_eq!(exhausted_session.queued_edit_count(), 0);
     assert_copy::<DxfEntityInsertIssue>();
     assert_copy::<DxfEntityInsertOutcome>();
     Ok(())
