@@ -2283,5 +2283,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     This checkpoint does not encode entity drafts, choose placement/owner,
     reserve handles across sessions, or implement insert/clone/delete.
 
+    M14.3ax introduces a source-bound placement directory for the two entity-
+    bearing containers. Indexed `ENTITIES` sections use the byte before their
+    first content group (or exact `ENDSEC` when empty); closed BLOCK definitions
+    use the byte before their first member (or exact `ENDBLK` when empty).
+    Container-start insertion cannot split an existing entity sequence. Every
+    assessment retains its exact section or BLOCK-record target, and malformed
+    section closure, BLOCK closure, or orphan nonzero content fails typed
+    without guessing. AC1009-through-AC1032 paired ASCII/Binary fixtures apply
+    a minimal record at every anchor through the bounded transaction builder
+    and strict-reparse the result. This checkpoint does not choose owner group
+    330, allocate handles, encode drafts, or implement insert/clone/delete.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

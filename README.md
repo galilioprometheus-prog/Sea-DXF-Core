@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3aw. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ax. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -149,6 +149,12 @@ entity edit plans retain their semantic postconditions while absorbing raw
 handle, owner, or placement work; paired coverage proves existing M11 handle
 assignment and `$HANDSEED` replacement can commit atomically with an M14 field
 edit and one executable inverse.
+Entity-bearing containers now expose source-bound insertion placements. Each
+closed `ENTITIES` section anchors before its first content group, and each
+closed BLOCK definition anchors before its first member or exact `ENDBLK`.
+Interrupted/unclosed containers and orphan nonzero content fail typed instead
+of attaching unknown groups to a newly inserted entity. The placement contract
+selects no owner and emits no draft bytes yet.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

@@ -826,6 +826,21 @@ tests across all nine dialects prove M11 handle assignment plus successor
 This checkpoint does not yet encode a new entity draft, choose placement or
 owner, reserve handles across sessions, or implement insert/clone/delete.
 
+M14.3ax adds the source-bound `DxfEntityPlacementDirectory`. Every exact
+`ENTITIES` section and BLOCK definition receives one typed assessment in
+container source order. A completely indexed `ENTITIES` section anchors before
+its first content group, including exact `ENDSEC` for an empty section. A
+closed BLOCK definition anchors before its first member record or exact
+`ENDBLK` when empty. This container-start policy cannot split an existing
+POLYLINE or INSERT/ATTRIB sequence. Interrupted/unclosed sections, interrupted
+or unclosed BLOCK definitions, and orphan nonzero content groups remain typed
+and produce no placement. All anchors retain source identity, container target,
+section kind, following group occurrence, and a zero-width raw span. Paired
+fixtures for all nine dialects execute each ASCII/Binary anchor through the M11
+transaction builder and strict reparse. This checkpoint does not encode entity
+drafts, infer or validate group-330 owner, allocate a handle, or implement
+insert/clone/delete.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
