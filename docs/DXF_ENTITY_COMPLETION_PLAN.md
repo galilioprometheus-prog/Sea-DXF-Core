@@ -967,6 +967,22 @@ remain fail-closed. The page's separate `entmake` restriction for VIEWPORT is
 preserved as a nonclaim: applicability does not establish insertion, payload
 semantics, family CRUD, or `Complete` support.
 
+M14.3bk proves the first typed complete-record draft for canonical `POINT`.
+The encoder reuses the dialect-correct raw group encoder and composes exact
+group 0/name, reserved handle, caller-bound owner, reviewed subclass markers,
+placement-conditioned common properties, and finite WCS 10/20/30 values in
+canonical subclass order. Existing layer and modern `ENTITIES` layout names
+must resolve uniquely; AC1015+ lineweight is explicit because Autodesk gives
+group 370 no omission default. Layout is required for modern `ENTITIES` and
+rejected for BLOCK-local records, matching the distinct placement envelopes.
+All nine ASCII/Binary dialect pairs compose with handle reservation and a real
+insertion transaction, strict-reparse, publish POINT semantics, and invert to
+the byte-identical source. Typed negative coverage includes name mismatch,
+missing/inapplicable layout or lineweight, missing references, malformed exact
+text, non-finite values, cancellation, and foreign source identity. Unified
+session insertion, POINT update/clone/delete, optional POINT fields, common
+field applicability generation, and `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

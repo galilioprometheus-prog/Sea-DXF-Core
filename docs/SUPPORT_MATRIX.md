@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bj can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bk can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1054,6 +1054,19 @@ unreviewed. This is a wire-version receipt only. In particular, Autodesk's
 separate statement that `entmake` cannot create VIEWPORT entities is not
 overridden; family encoding, insertion policy, CRUD, and `Complete` remain
 open.
+
+M14.3bk encodes one typed canonical `POINT` record across ASCII and Binary
+AC1009 through AC1032. The plan is bound to the exact source, admitted POINT
+applicability, one reserved handle, caller-selected placement/BLOCK_RECORD
+owner, exact existing layer, and finite WCS location. R13+ output adds owner
+and `AcDbEntity`/`AcDbPoint`; AutoCAD 2000+ output requires an explicit public
+lineweight and, for `ENTITIES`, one exact same-document layout name. BLOCK-local
+output rejects and omits layout. Tests compose the record with `$HANDSEED` and
+the placement transaction, strict-reparse the result, recover POINT semantics,
+and apply an executable byte-identical inverse for every supported dialect and
+format. This checkpoint does not add the final edit-session insert operation,
+optional POINT fields, clone/delete, placement-aware generic common-field
+cardinality, or POINT `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -2427,5 +2427,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     payload validation, insertion policy, CRUD, and `Complete` state remain
     unchanged.
 
+    M14.3bk adds the first typed whole-record family draft. `DxfPointDraft`
+    carries an exact existing layer, finite WCS location, and the explicit
+    placement-conditioned common values required to emit canonical `POINT`
+    bytes. AC1009 uses its legacy envelope; AC1012+ adds owner and
+    `AcDbEntity`/`AcDbPoint`; AC1015+ requires an explicit reviewed lineweight,
+    while an `ENTITIES` placement additionally requires an exact uniquely
+    resolved same-document layout. BLOCK-local records reject layout and omit
+    group 410. ASCII/Binary tests cover all nine dialects, both placement
+    families where owner evidence is representable, strict post-image reparse,
+    POINT semantics, `$HANDSEED` composition, inverse byte identity, and typed
+    applicability/reference/lexical failures. This record plan does not yet
+    expose the final edit-session `insert`, clone/delete closure, or POINT
+    `Complete` support.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

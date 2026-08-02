@@ -64,6 +64,7 @@ mod entity_common_text_semantic;
 mod entity_directory;
 mod entity_draft_applicability;
 mod entity_draft_identity;
+mod entity_draft_record;
 mod entity_edit_session;
 mod entity_edit_verification;
 mod entity_field_evidence;
@@ -465,6 +466,9 @@ pub use entity_draft_applicability::{
 };
 pub use entity_draft_identity::{
     DxfEntityDraftIdentityIssue, DxfEntityDraftIdentityPlan, DxfEntityDraftName,
+};
+pub use entity_draft_record::{
+    DxfEntityDraft, DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfPointDraft,
 };
 pub use entity_edit_session::{
     DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityEditDisposition,

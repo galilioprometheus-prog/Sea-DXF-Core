@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bj. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bk. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -162,6 +162,16 @@ that have not been inserted yet and pair it with the exact successor
 not a global lock; composing it with an entity placement proves one new
 identified record, strict reparse, and byte-identical inverse across all
 dialects and both physical formats.
+The first typed family draft now emits a complete canonical `POINT` record for
+ASCII and Binary AC1009 through AC1032. It composes the reserved handle,
+caller-bound owner, placement-conditioned modern layout, exact existing layer,
+explicit AC1015+ lineweight, reviewed subclass envelope, and finite WCS
+location. `ENTITIES` layout and symbol references must resolve uniquely in the
+same document; BLOCK-local records omit layout. Successful record plans compose
+with insertion and `$HANDSEED`, strict-reparse in both physical formats, expose
+the expected POINT semantics, and restore the source byte-identically through
+their inverse. This proves POINT record creation, not the unified insert API or
+full POINT CRUD/`Complete` status.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

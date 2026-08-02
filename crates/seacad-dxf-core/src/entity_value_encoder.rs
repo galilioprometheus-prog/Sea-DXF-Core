@@ -138,15 +138,12 @@ impl DxfEntityGroupEncoder {
         value: DxfEntityEditValue<'_>,
         cancellation: &DxfCancellationToken,
     ) -> Result<Result<DxfEncodedEntityGroup, DxfEntityGroupEncodeIssue>, DxfError> {
-        ensure_not_cancelled(cancellation)?;
-        if let Err(issue) = validate_value(descriptor, value) {
-            return Ok(Err(issue));
-        }
-        let encoded = match self.format {
-            DxfRawDocumentFormat::Ascii => self.encode_ascii(descriptor, value, cancellation),
-            DxfRawDocumentFormat::Binary => self.encode_binary(descriptor, value, cancellation),
-        }?;
-        ensure_not_cancelled(cancellation)?;
+        let encoded = self.encode_raw(
+            descriptor.group_code(),
+            descriptor.wire_type(),
+            value,
+            cancellation,
+        )?;
         Ok(encoded.map(|bytes| DxfEncodedEntityGroup {
             descriptor,
             format: self.format,
@@ -155,9 +152,28 @@ impl DxfEntityGroupEncoder {
         }))
     }
 
+    pub(crate) fn encode_raw(
+        self,
+        group_code: i16,
+        wire_type: DxfEntityFieldWireType,
+        value: DxfEntityEditValue<'_>,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<Result<Vec<u8>, DxfEntityGroupEncodeIssue>, DxfError> {
+        ensure_not_cancelled(cancellation)?;
+        if let Err(issue) = validate_value(wire_type, value) {
+            return Ok(Err(issue));
+        }
+        let encoded = match self.format {
+            DxfRawDocumentFormat::Ascii => self.encode_ascii(group_code, value, cancellation),
+            DxfRawDocumentFormat::Binary => self.encode_binary(group_code, value, cancellation),
+        }?;
+        ensure_not_cancelled(cancellation)?;
+        Ok(encoded)
+    }
+
     fn encode_ascii(
         self,
-        descriptor: DxfEntityFieldDescriptor,
+        group_code: i16,
         value: DxfEntityEditValue<'_>,
         cancellation: &DxfCancellationToken,
     ) -> Result<Result<Vec<u8>, DxfEntityGroupEncodeIssue>, DxfError> {
@@ -185,7 +201,7 @@ impl DxfEntityGroupEncoder {
         let payload_len = payload.encoded_len()?;
         enforce_value_limit(self.profile, payload_len)?;
         let mut code = [0_u8; 6];
-        let code = encode_i16(descriptor.group_code(), &mut code);
+        let code = encode_i16(group_code, &mut code);
         let capacity = checked_sum(&[code.len(), 1, payload_len, 1])?;
         let mut bytes = reserve_bytes(capacity)?;
         bytes.extend_from_slice(code);
@@ -198,11 +214,10 @@ impl DxfEntityGroupEncoder {
 
     fn encode_binary(
         self,
-        descriptor: DxfEntityFieldDescriptor,
+        group_code: i16,
         value: DxfEntityEditValue<'_>,
         cancellation: &DxfCancellationToken,
     ) -> Result<Result<Vec<u8>, DxfEntityGroupEncodeIssue>, DxfError> {
-        let group_code = descriptor.group_code();
         let mut code = [0_u8; 3];
         let code_len = match binary_group_code(self.version, group_code, &mut code) {
             Ok(len) => len,
@@ -276,11 +291,11 @@ impl fmt::Write for FixedAscii {
 }
 
 fn validate_value(
-    descriptor: DxfEntityFieldDescriptor,
+    wire_type: DxfEntityFieldWireType,
     value: DxfEntityEditValue<'_>,
 ) -> Result<(), DxfEntityGroupEncodeIssue> {
     let matches = matches!(
-        (descriptor.wire_type(), value),
+        (wire_type, value),
         (
             DxfEntityFieldWireType::BinaryChunk,
             DxfEntityEditValue::BinaryChunk(_)
@@ -298,7 +313,7 @@ fn validate_value(
     );
     if !matches {
         return Err(DxfEntityGroupEncodeIssue::WireTypeMismatch {
-            expected: descriptor.wire_type(),
+            expected: wire_type,
             observed: value.kind(),
         });
     }
