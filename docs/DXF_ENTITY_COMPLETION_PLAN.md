@@ -775,6 +775,19 @@ core does not open `.acb` files, verify external color names/RGB mappings,
 admit color-book edits, infer applicability, or advance an entity to
 `Complete`.
 
+M14.3at moves color-book syntax and same-entity color relations into edit
+admission. The public source-bound classifier distinguishes non-color fields,
+wrong value kinds, every documented-envelope delimiter failure, unusable
+group-420/group-62 semantics, and a valid proposed book/color pair without
+copying its bytes. The shared session builds one common-domain directory lazily
+for group 430 and rejects invalid proposals without queueing. Valid modern
+ASCII/Binary edits use canonical replacement/insertion, strict reparse,
+structured color-book semantics, generic semantic/raw verification, and exact
+inverse restoration. AC1009 retains typed rejection because true color and
+group 430 are absent/unencodable in its Binary wire. External `.acb`
+resolution, name-to-RGB verification, pending multi-field tuple composition,
+applicability, family graphs, and `Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

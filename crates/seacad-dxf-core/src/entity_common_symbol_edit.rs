@@ -39,9 +39,6 @@ impl DxfEntityCommonSymbolEditValue {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityCommonSymbolEditIssue {
-    ColorBookResolutionRequired {
-        field: DxfEntityField,
-    },
     ValueKindMismatch {
         field: DxfEntityField,
         expected: DxfEntityEditValueKind,
@@ -125,11 +122,6 @@ pub(crate) fn classify_with_symbols(
     cancellation: &DxfCancellationToken,
 ) -> Result<DxfEntityCommonSymbolEditOutcome, DxfError> {
     ensure_not_cancelled(cancellation)?;
-    if field == DxfEntityField::COLOR_NAME {
-        return Ok(DxfEntityCommonSymbolEditOutcome::Invalid(
-            DxfEntityCommonSymbolEditIssue::ColorBookResolutionRequired { field },
-        ));
-    }
     let Some(kind) = reviewed_common_symbol_kind(field) else {
         return Ok(DxfEntityCommonSymbolEditOutcome::NotSymbol { field });
     };

@@ -52,6 +52,7 @@ mod ellipse_geometry;
 mod ellipse_geometry_card;
 mod ellipse_geometry_semantic;
 mod encoding;
+mod entity_common_color_book_edit;
 mod entity_common_field_domain;
 mod entity_common_field_domain_semantic;
 mod entity_common_handle_semantic;
@@ -404,6 +405,10 @@ pub use ellipse_geometry_semantic::{
 pub use encoding::{
     DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
     DxfTextEncodingReport, DxfTextEncodingResolution,
+};
+pub use entity_common_color_book_edit::{
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
+    DxfEntityCommonColorBookEditValue,
 };
 pub use entity_common_field_domain::{
     DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,

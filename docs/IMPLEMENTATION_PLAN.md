@@ -2232,5 +2232,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     checkpoint does not load color-book files, validate external mappings,
     admit group-430 edits, review applicability, or add family graph CRUD.
 
+    M14.3at admits a group-430 edit only after source-bound candidate syntax
+    and same-entity color relations succeed. The public classifier retains
+    typed non-color, value-kind, missing/empty/multiple separator, and unusable
+    related group-420/group-62 outcomes. The edit session lazily reuses one
+    common-domain directory and leaves its queue unchanged on rejection.
+    Accepted modern ASCII/Binary edits flow through canonical insertion or
+    replacement, strict reparse, structured color-book projection, generic
+    semantic/raw verification, and byte-identical inverse restoration. AC1009
+    proves typed rejection. This checkpoint does not access `.acb` files,
+    validate external mappings, compose pending 62/420/430 tuple edits, review
+    applicability, or add family graph CRUD.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

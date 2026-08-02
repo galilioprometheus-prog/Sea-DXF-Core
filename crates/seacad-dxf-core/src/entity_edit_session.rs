@@ -2,6 +2,7 @@
 
 use std::{fmt, io};
 
+use crate::entity_common_color_book_edit::classify_with_color_domains;
 use crate::entity_common_layout_edit::classify_with_layouts;
 use crate::entity_common_reference_edit::classify_with_identities;
 use crate::entity_common_reference_target::reviewed_common_reference_target_kind;
@@ -10,16 +11,17 @@ use crate::entity_common_text_semantic::reviewed_common_symbol_kind;
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
     ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
-    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
-    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
-    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
-    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityEditPlan,
-    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
-    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
-    DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation, DxfLayoutObjectDirectory,
-    DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
-    DxfTransactionPlan,
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
+    DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainIssue,
+    DxfEntityCommonFieldDomainOutcome, DxfEntityCommonLayoutEditIssue,
+    DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
+    DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
+    DxfEntityCommonSymbolEditOutcome, DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField,
+    DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome,
+    DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue,
+    DxfEntityFieldResetOutcome, DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation,
+    DxfLayoutObjectDirectory, DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource,
+    DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
 };
 
 /// One typed common-field operation accepted by an entity edit session.
@@ -69,6 +71,7 @@ pub enum DxfEntityEditIssue {
         field: DxfEntityField,
     },
     Domain(DxfEntityCommonFieldDomainIssue),
+    ColorBook(DxfEntityCommonColorBookEditIssue),
     Reference(DxfEntityCommonReferenceEditIssue),
     Layout(DxfEntityCommonLayoutEditIssue),
     Symbol(DxfEntityCommonSymbolEditIssue),
@@ -141,6 +144,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     evidence: &'evidence DxfEntityFieldEvidenceDirectory,
     profile: DxfResourceProfile,
     cancellation: &'cancellation DxfCancellationToken,
+    common_field_domains: Option<DxfEntityCommonFieldDomainDirectory>,
     handle_identities: Option<DxfHandleIdentityDirectory>,
     layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
@@ -174,6 +178,7 @@ impl<'document, 'evidence, 'cancellation>
             evidence,
             profile,
             cancellation,
+            common_field_domains: None,
             handle_identities: None,
             layout_objects: None,
             named_symbols: None,
@@ -224,6 +229,13 @@ impl<'document, 'evidence, 'cancellation>
                 {
                     return Ok(DxfEntityEditOutcome::Unavailable(
                         DxfEntityEditIssue::Layout(issue),
+                    ));
+                }
+                if let DxfEntityCommonColorBookEditOutcome::Invalid(issue) =
+                    self.classify_color_book_edit(key, field, value)?
+                {
+                    return Ok(DxfEntityEditOutcome::Unavailable(
+                        DxfEntityEditIssue::ColorBook(issue),
                     ));
                 }
                 if let DxfEntityCommonSymbolEditOutcome::Invalid(issue) =
@@ -284,6 +296,40 @@ impl<'document, 'evidence, 'cancellation>
         classify_with_symbols(
             self.document,
             self.named_symbols.as_ref(),
+            field,
+            value,
+            self.cancellation,
+        )
+    }
+
+    fn classify_color_book_edit(
+        &mut self,
+        key: DxfEntityKey,
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'_>,
+    ) -> Result<DxfEntityCommonColorBookEditOutcome, DxfError> {
+        let entity = if field == DxfEntityField::COLOR_NAME
+            && matches!(value, DxfEntityEditValue::ExactRawText(_))
+        {
+            self.evidence.entity_directory().entity_for_key(key)?
+        } else {
+            None
+        };
+        if entity.is_some() && self.common_field_domains.is_none() {
+            self.common_field_domains = Some(
+                self.document
+                    .entity_common_field_domain_directory(self.cancellation)?,
+            );
+        }
+        if field == DxfEntityField::COLOR_NAME
+            && matches!(value, DxfEntityEditValue::ExactRawText(_))
+            && entity.is_none()
+        {
+            return Ok(DxfEntityCommonColorBookEditOutcome::NotColorBook { field });
+        }
+        classify_with_color_domains(
+            self.common_field_domains.as_ref(),
+            entity,
             field,
             value,
             self.cancellation,

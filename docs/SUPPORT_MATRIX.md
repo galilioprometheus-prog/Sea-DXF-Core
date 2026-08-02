@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3as can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3at can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -868,6 +868,18 @@ Group order is irrelevant. ASCII/Binary fixtures span AC1009 through AC1032;
 AC1009 proves exact absence because its Binary group-code encoding cannot
 represent 430. External `.acb` loading, color-name/RGB verification, edit
 admission, applicability, family graphs, and `Complete` support remain open.
+
+M14.3at validates common color-book edits before generic singleton planning.
+The source-bound classifier requires the reviewed one-`$`, nonempty-component
+syntax and usable existing group-420/group-62 semantics on the exact entity.
+It preserves distinct value-kind, delimiter, relation, source, and cancellation
+failures. The session builds the common-domain directory lazily and queues
+nothing on rejection. Accepted AC1012-through-AC1032 ASCII/Binary edits pass
+canonical materialization, strict reparse, structured color-book semantics,
+semantic/raw verification, and byte-identical inverse restoration. AC1009
+remains rejected. External `.acb` resolution, name/RGB verification, atomic
+pending tuple edits, applicability, family graphs, and `Complete` support
+remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

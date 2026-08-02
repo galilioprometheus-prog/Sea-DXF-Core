@@ -103,12 +103,12 @@ fn missing_ambiguous_unreviewed_and_wrong_kind_fail_typed() -> Result<(), Box<dy
             }
         );
         assert_eq!(
-            invalid(view.classify_entity_common_symbol_edit(
+            view.classify_entity_common_symbol_edit(
                 DxfEntityField::COLOR_NAME,
                 DxfEntityEditValue::ExactRawText(b"Book$Color"),
                 &token(),
-            )?)?,
-            DxfEntityCommonSymbolEditIssue::ColorBookResolutionRequired {
+            )?,
+            DxfEntityCommonSymbolEditOutcome::NotSymbol {
                 field: DxfEntityField::COLOR_NAME,
             }
         );
@@ -154,16 +154,22 @@ fn rejected_symbols_never_queue_and_cancellation_precedes_scan() -> Result<(), B
                 DxfEntityField::LINETYPE,
                 DxfEntityEditValue::ExactRawText(b"Missing"),
             ),
-            (
-                DxfEntityField::COLOR_NAME,
-                DxfEntityEditValue::ExactRawText(b"Book$Color"),
-            ),
         ] {
             assert!(matches!(
                 session.update(key, set(field, value))?,
                 DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Symbol(_))
             ));
         }
+        assert!(matches!(
+            session.update(
+                key,
+                set(
+                    DxfEntityField::COLOR_NAME,
+                    DxfEntityEditValue::ExactRawText(b"Book$Color"),
+                ),
+            )?,
+            DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::ColorBook(_))
+        ));
         assert!(matches!(
             session.update(
                 key,
