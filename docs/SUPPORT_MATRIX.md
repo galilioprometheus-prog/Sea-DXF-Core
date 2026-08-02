@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bf can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bg can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1016,6 +1016,14 @@ not applicable in AC1009 through AC1015. Canonical `TABLE` remains
 `NotYetReviewed` rather than being treated as an interchangeable wire marker.
 Seven names now have reviewed ranges and 52 remain unreviewed. Cell grammar,
 style references, layout, CRUD, and `Complete` support remain open.
+
+M14.3bg adds canonical HELIX applicability. Autodesk's AutoCAD 2007 API history
+marks `IAcadHelix` and its public constraint/twist enums as new, while the
+Autodesk HELIX DXF page independently defines the exact HELIX entity and
+`AcDbHelix` subclass. Generated admission therefore marks HELIX applicable from
+AC1021 and not applicable in AC1009 through AC1018. Eight names now have
+reviewed ranges and 51 remain unreviewed. Existing typed HELIX evidence is not
+an analytic composition, writer, CRUD, or `Complete` support claim.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

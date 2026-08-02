@@ -2389,5 +2389,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     contain seven reviewed names and 52 fail-closed names. Cell grammar, style
     resolution, layout, encoding, CRUD, and `Complete` remain unchanged.
 
+    M14.3bg records canonical HELIX applicability. Autodesk's AutoCAD 2007 API
+    history marks `IAcadHelix`, its constraint enum, and its twist enum as new;
+    the normative HELIX DXF page separately defines HELIX entity fields and the
+    `AcDbHelix` subclass. The generated descriptor starts at AC1021 with the
+    API-history GUID and normalized facts receipt. Eight names now have reviewed
+    ranges and 51 stay fail-closed. Existing field evidence does not advance to
+    analytic composition, encoding, CRUD, or `Complete` in this checkpoint.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

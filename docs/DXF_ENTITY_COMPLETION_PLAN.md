@@ -929,6 +929,14 @@ name. Its generated range starts at AC1018 with no reviewed maximum. Canonical
 Seven of 59 names now have reviewed ranges and 52 remain fail-closed. Cell
 grammar, merges, styles, layout extents, CRUD, and `Complete` remain open.
 
+M14.3bg reviews canonical HELIX applicability. Autodesk's AutoCAD 2007 API
+history marks `IAcadHelix` and its public constraint/twist enums as new, while
+the normative HELIX DXF page independently defines the exact HELIX entity and
+`AcDbHelix` subclass. Its generated range starts at AC1021 with no reviewed
+maximum. Eight of 59 names now have reviewed ranges and 51 remain fail-closed.
+This receipt does not change existing HELIX field evidence or claim analytic
+composition, CRUD, writer support, or `Complete` status.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

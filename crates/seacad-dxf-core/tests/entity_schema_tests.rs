@@ -302,6 +302,28 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         DxfEntityApplicabilityEvidence::NotYetReviewed
     );
 
+    let helix = classify_exact_dxf_entity_name(b"HELIX")
+        .applicability_descriptor()
+        .ok_or("reviewed HELIX topic is missing its applicability row")?;
+    assert_eq!(helix.minimum_version(), Some(DxfAcadVersion::Ac1021));
+    assert_eq!(helix.maximum_version(), None);
+    assert_eq!(
+        helix.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        helix.source_reference(),
+        Some("GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B")
+    );
+    assert_eq!(
+        helix.applicability(DxfAcadVersion::Ac1018),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        helix.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::Applicable
+    );
+
     let light = classify_exact_dxf_entity_name(b"LIGHT")
         .applicability_descriptor()
         .ok_or("reviewed LIGHT topic is missing its applicability row")?;

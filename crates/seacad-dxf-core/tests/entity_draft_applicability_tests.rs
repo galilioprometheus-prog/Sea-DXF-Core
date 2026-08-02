@@ -174,6 +174,9 @@ enum ExpectedApplicability {
 
 fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplicability {
     let minimum = match name {
+        DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::HELIX => {
+            Some(DxfAcadVersion::Ac1021)
+        }
         DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::LIGHT => {
             Some(DxfAcadVersion::Ac1021)
         }

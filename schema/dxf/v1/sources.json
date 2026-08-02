@@ -32,6 +32,12 @@
       "evidence_kind": "row"
     },
     {
+      "id": "autodesk.helix.compatibility.2024",
+      "topic_id": "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B",
+      "normalized_facts_sha256": "65aa11c362793c3c6b6a66f2efb59c06831c643dec37a7ba1b7ebbfa3960d65f",
+      "evidence_kind": "applicability_list"
+    },
+    {
       "id": "autodesk.light.compatibility.2024",
       "topic_id": "GUID-CE870800-C598-483B-81A0-5AA0208F1851",
       "normalized_facts_sha256": "e561222f0c714d1347c10752a575f5f676e3442914d04be9f9dad1ab0c8c70cb",
