@@ -2,13 +2,15 @@
 
 use std::{fmt, io, path::Path};
 
+use crate::entity_draft_record::DxfPointDraftRecordExpectation;
 use crate::{
-    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfEntityEditValue,
-    DxfEntityField, DxfEntityFieldCardState, DxfEntityFieldDefault, DxfEntityFieldSemantics,
-    DxfEntityFieldValue, DxfError, DxfFileSource, DxfHandle, DxfIoOperation, DxfRawDocumentFormat,
-    DxfRawDocumentView, DxfReadMode, DxfReadObserver, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValueState, DxfSourceId, DxfTransactionPlan, DxfTransactionWriteReceipt,
-    NoopDxfReadObserver,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble,
+    DxfEntityClassification, DxfEntityEditValue, DxfEntityField, DxfEntityFieldCardState,
+    DxfEntityFieldDefault, DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityPlacementTarget,
+    DxfEntityTopic, DxfError, DxfFileSource, DxfHandle, DxfHandleIdentityLookup, DxfIoOperation,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadMode, DxfReadObserver, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValueState, DxfSourceId, DxfTransactionPlan,
+    DxfTransactionWriteReceipt, NoopDxfReadObserver,
 };
 
 pub(crate) enum DxfEntityExpectedValue {
@@ -45,13 +47,13 @@ impl DxfEntityExpectedField {
     }
 }
 
-pub(crate) struct DxfEntityEditExpectation {
+pub(crate) struct DxfEntityFieldEditExpectation {
     raw_record_ordinal: u64,
     field: DxfEntityField,
     expected: DxfEntityExpectedField,
 }
 
-impl DxfEntityEditExpectation {
+impl DxfEntityFieldEditExpectation {
     pub(crate) const fn new(
         raw_record_ordinal: u64,
         field: DxfEntityField,
@@ -62,6 +64,46 @@ impl DxfEntityEditExpectation {
             field,
             expected,
         }
+    }
+}
+
+pub(crate) struct DxfPointInsertExpectation {
+    handle: DxfHandle,
+    owner: Option<DxfHandle>,
+    placement: DxfEntityPlacementTarget,
+    point: DxfPointDraftRecordExpectation,
+}
+
+pub(crate) enum DxfEntityEditExpectation {
+    Field(DxfEntityFieldEditExpectation),
+    PointInsert(DxfPointInsertExpectation),
+}
+
+impl DxfEntityEditExpectation {
+    pub(crate) const fn field(
+        raw_record_ordinal: u64,
+        field: DxfEntityField,
+        expected: DxfEntityExpectedField,
+    ) -> Self {
+        Self::Field(DxfEntityFieldEditExpectation::new(
+            raw_record_ordinal,
+            field,
+            expected,
+        ))
+    }
+
+    pub(crate) const fn point_insert(
+        handle: DxfHandle,
+        owner: Option<DxfHandle>,
+        placement: DxfEntityPlacementTarget,
+        point: DxfPointDraftRecordExpectation,
+    ) -> Self {
+        Self::PointInsert(DxfPointInsertExpectation {
+            handle,
+            owner,
+            placement,
+            point,
+        })
     }
 }
 
@@ -77,6 +119,27 @@ pub enum DxfEntityEditExpectedState {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityEditVerificationIssue {
+    MissingInsertedEntity {
+        handle: DxfHandle,
+    },
+    AmbiguousInsertedEntity {
+        handle: DxfHandle,
+        candidate_count: u32,
+    },
+    InsertedEntityClassificationMismatch {
+        handle: DxfHandle,
+        observed: DxfEntityClassification,
+    },
+    InsertedEntityPlacementMismatch {
+        handle: DxfHandle,
+        expected: DxfEntityPlacementTarget,
+    },
+    InsertedPointSemanticsMissing {
+        handle: DxfHandle,
+    },
+    InsertedPointLocationMismatch {
+        handle: DxfHandle,
+    },
     MissingEntity {
         raw_record_ordinal: u64,
     },
@@ -231,6 +294,21 @@ impl DxfEntityEditPlan {
         }
     }
 
+    pub(crate) fn new_point_insert(
+        transaction: DxfTransactionPlan,
+        handle: DxfHandle,
+        owner: Option<DxfHandle>,
+        placement: DxfEntityPlacementTarget,
+        point: DxfPointDraftRecordExpectation,
+    ) -> Self {
+        Self {
+            transaction,
+            expectations: Box::new([DxfEntityEditExpectation::point_insert(
+                handle, owner, placement, point,
+            )]),
+        }
+    }
+
     #[must_use]
     pub const fn source_id(&self) -> DxfSourceId {
         self.transaction.source_id()
@@ -293,7 +371,9 @@ impl DxfEntityEditPlan {
         validate_post_image_envelope(&self.transaction, post_image)?;
         let semantics = post_image.entity_field_semantic_directory(cancellation)?;
         for expectation in &self.expectations {
-            if let Some(issue) = verify_expectation(post_image, &semantics, expectation)? {
+            if let Some(issue) =
+                verify_expectation(post_image, &semantics, expectation, cancellation)?
+            {
                 return Ok(DxfEntityEditVerificationOutcome::Unavailable(issue));
             }
             ensure_not_cancelled(cancellation)?;
@@ -448,6 +528,22 @@ fn verify_expectation(
     document: DxfRawDocumentView<'_>,
     semantics: &crate::DxfEntityFieldSemanticDirectory,
     expectation: &DxfEntityEditExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    match expectation {
+        DxfEntityEditExpectation::Field(expectation) => {
+            verify_field_expectation(document, semantics, expectation)
+        }
+        DxfEntityEditExpectation::PointInsert(expectation) => {
+            verify_point_insert(document, semantics, expectation, cancellation)
+        }
+    }
+}
+
+fn verify_field_expectation(
+    document: DxfRawDocumentView<'_>,
+    semantics: &crate::DxfEntityFieldSemanticDirectory,
+    expectation: &DxfEntityFieldEditExpectation,
 ) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
     let Some(entity) = semantics
         .evidence_directory()
@@ -523,6 +619,133 @@ fn verify_expectation(
         }
     }
     Ok(None)
+}
+
+fn verify_point_insert(
+    document: DxfRawDocumentView<'_>,
+    semantics: &crate::DxfEntityFieldSemanticDirectory,
+    expectation: &DxfPointInsertExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let identities = document.handle_identity_directory(cancellation)?;
+    let identity = match identities.lookup(expectation.handle) {
+        DxfHandleIdentityLookup::Missing => {
+            return Ok(Some(
+                DxfEntityEditVerificationIssue::MissingInsertedEntity {
+                    handle: expectation.handle,
+                },
+            ));
+        }
+        DxfHandleIdentityLookup::Ambiguous(candidates) => {
+            return Ok(Some(
+                DxfEntityEditVerificationIssue::AmbiguousInsertedEntity {
+                    handle: expectation.handle,
+                    candidate_count: u32::try_from(candidates.len())
+                        .map_err(|_| invalid_internal_data())?,
+                },
+            ));
+        }
+        DxfHandleIdentityLookup::Unique(identity) => identity,
+    };
+    let raw_record_ordinal = identity.record().ordinal();
+    let Some(entity) = semantics
+        .evidence_directory()
+        .entity_directory()
+        .entity_for_raw_ordinal(raw_record_ordinal)
+    else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::MissingInsertedEntity {
+                handle: expectation.handle,
+            },
+        ));
+    };
+    if entity.classification() != DxfEntityClassification::Canonical(DxfEntityTopic::POINT) {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedEntityClassificationMismatch {
+                handle: expectation.handle,
+                observed: entity.classification(),
+            },
+        ));
+    }
+    if !matches_placement(document, entity, expectation.placement, cancellation)? {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedEntityPlacementMismatch {
+                handle: expectation.handle,
+                expected: expectation.placement,
+            },
+        ));
+    }
+    for (field, value) in [
+        expectation
+            .owner
+            .map(|owner| (DxfEntityField::OWNER, DxfEntityEditValue::Handle(owner))),
+        Some((
+            DxfEntityField::LAYER,
+            DxfEntityEditValue::ExactRawText(expectation.point.layer()),
+        )),
+        expectation.point.layout().map(|layout| {
+            (
+                DxfEntityField::LAYOUT,
+                DxfEntityEditValue::ExactRawText(layout),
+            )
+        }),
+        expectation.point.lineweight().map(|lineweight| {
+            (
+                DxfEntityField::LINEWEIGHT,
+                DxfEntityEditValue::Int16(lineweight.raw()),
+            )
+        }),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        let expected = DxfEntityExpectedField::explicit(value)?;
+        let field_expectation =
+            DxfEntityFieldEditExpectation::new(raw_record_ordinal, field, expected);
+        if let Some(issue) = verify_field_expectation(document, semantics, &field_expectation)? {
+            return Ok(Some(issue));
+        }
+    }
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(raw_record_ordinal)? else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointSemanticsMissing {
+                handle: expectation.handle,
+            },
+        ));
+    };
+    if point.location_value() != Some(expectation.point.location()) {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointLocationMismatch {
+                handle: expectation.handle,
+            },
+        ));
+    }
+    Ok(None)
+}
+
+fn matches_placement(
+    document: DxfRawDocumentView<'_>,
+    entity: crate::DxfEntityRef,
+    placement: DxfEntityPlacementTarget,
+    cancellation: &DxfCancellationToken,
+) -> Result<bool, DxfError> {
+    Ok(match placement {
+        DxfEntityPlacementTarget::EntitiesSection {
+            structure_section_ordinal,
+        } => {
+            entity.record().section_kind() == crate::DxfRawRecordSectionKind::Entities
+                && entity.record().structure_section_ordinal() == structure_section_ordinal
+        }
+        DxfEntityPlacementTarget::BlockDefinition { raw_record_ordinal } => document
+            .block_definition_directory(cancellation)?
+            .members_for_block_raw_ordinal(raw_record_ordinal)
+            .is_some_and(|members| {
+                members
+                    .iter()
+                    .any(|member| member.ordinal() == entity.record().ordinal())
+            }),
+    })
 }
 
 fn explicit_value_matches(
@@ -606,7 +829,7 @@ fn validate_written_identities(
 }
 
 const fn unexpected_state(
-    expectation: &DxfEntityEditExpectation,
+    expectation: &DxfEntityFieldEditExpectation,
     expected: DxfEntityEditExpectedState,
     observed: DxfSemanticValueState,
 ) -> DxfEntityEditVerificationIssue {

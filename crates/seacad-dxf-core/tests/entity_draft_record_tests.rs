@@ -1,12 +1,18 @@
-use std::{error::Error, io};
+use std::{
+    error::Error,
+    fs, io,
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDouble, DxfEntityCommonLayoutEditIssue,
     DxfEntityCommonSymbolEditIssue, DxfEntityDraft, DxfEntityDraftApplicabilityIssue,
     DxfEntityDraftApplicabilityPlan, DxfEntityDraftIdentityIssue, DxfEntityDraftName,
-    DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfEntityField, DxfEntityFieldSemantics,
-    DxfEntityFieldValue, DxfEntityGroupEncodeIssue, DxfEntityLineweight,
+    DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfEntityEditVerificationIssue,
+    DxfEntityEditVerificationOutcome, DxfEntityEditWriteOutcome, DxfEntityField,
+    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityGroupEncodeIssue, DxfEntityLineweight,
     DxfEntityNameClassification, DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerOutcome,
     DxfEntityPlacementTarget, DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup,
     DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
@@ -14,6 +20,8 @@ use seacad_dxf_core::{
     DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
     NoopDxfReadObserver,
 };
+
+static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
 
 const LOCATION: [DxfDouble; 3] = [
     DxfDouble::from_bits(1.25_f64.to_bits()),
@@ -44,19 +52,10 @@ fn point_record_is_canonical_and_composes_across_every_dialect() -> Result<(), B
             assert!(!debug.contains("Layer0"));
             assert!(!debug.contains("Model"));
 
-            let mut insertion = view.transaction_plan_builder(DxfResourceProfile::Safe)?;
-            insertion.replace_raw_span(
-                plan.applicability().identity().placement().insertion_span(),
-                plan.bytes(),
-                &token(),
-            )?;
-            let insertion = insertion.finish(&token())?;
-            let composed = view.compose_transaction_plans(
-                &[plan.transaction(), &insertion],
-                DxfResourceProfile::Safe,
-                &token(),
-            )?;
-            let output = materialize(&bytes, &composed)?;
+            let insert = view.plan_entity_draft_insert(plan, DxfResourceProfile::Safe, &token())?;
+            assert_eq!(insert.edit_count(), 1);
+            assert_eq!(insert.transaction().patches().len(), 2);
+            let output = materialize(&bytes, insert.transaction())?;
             let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
             let output_document = open_document(&output_source, format)?;
             let post = output_document.view();
@@ -78,12 +77,13 @@ fn point_record_is_canonical_and_composes_across_every_dialect() -> Result<(), B
                 assert_modern_common_fields(post)?;
             }
 
-            let inverse = composed.materialize_inverse_plan(
-                view,
-                post,
-                DxfResourceProfile::Safe,
-                &token(),
-            )?;
+            let DxfEntityEditVerificationOutcome::Verified(journal) =
+                insert.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("POINT insert verification").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 1);
+            let inverse = journal.into_parts().1;
             assert_eq!(materialize(&output, &inverse)?, bytes);
         }
     }
@@ -125,6 +125,105 @@ fn assert_modern_common_fields(post: DxfRawDocumentView<'_>) -> Result<(), Box<d
 }
 
 #[test]
+fn point_insert_verification_rejects_identity_family_common_and_geometry_tampering()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, 0x40)?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let record = encode_point_plan(view, b"Layer0", LOCATION)?;
+    let insert = view.plan_entity_draft_insert(record, DxfResourceProfile::Safe, &token())?;
+    let output = materialize(&bytes, insert.transaction())?;
+
+    let missing = replace_once(&output, b"0\nPOINT\n5\n40\n", b"0\nPOINT\n5\n41\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &missing)?,
+        DxfEntityEditVerificationIssue::MissingInsertedEntity { handle: observed }
+            if observed == handle(0x40)
+    ));
+
+    let ambiguous = replace_once(
+        &output,
+        b"0\nLAYER\n5\n11\n2\nLayer0\n",
+        b"0\nLAYER\n5\n40\n2\nLayer0\n",
+    )?;
+    assert!(matches!(
+        verification_issue(&insert, view, &ambiguous)?,
+        DxfEntityEditVerificationIssue::AmbiguousInsertedEntity {
+            handle: observed,
+            candidate_count: 2
+        } if observed == handle(0x40)
+    ));
+
+    let wrong_family = replace_once(&output, b"0\nPOINT\n5\n40\n", b"0\nLINE \n5\n40\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_family)?,
+        DxfEntityEditVerificationIssue::InsertedEntityClassificationMismatch {
+            handle: observed,
+            ..
+        } if observed == handle(0x40)
+    ));
+
+    let wrong_layer = replace_once(&output, b"8\nLayer0\n370\n", b"8\nLayer1\n370\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_layer)?,
+        DxfEntityEditVerificationIssue::ValueMismatch {
+            field: DxfEntityField::LAYER,
+            ..
+        }
+    ));
+
+    let wrong_location = replace_once(&output, b"10\n1.25\n20\n", b"10\n1.26\n20\n")?;
+    assert!(matches!(
+        verification_issue(&insert, view, &wrong_location)?,
+        DxfEntityEditVerificationIssue::InsertedPointLocationMismatch { handle: observed }
+            if observed == handle(0x40)
+    ));
+    Ok(())
+}
+
+#[test]
+fn point_insert_uses_create_new_verified_write_pipeline_for_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new()?;
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, 0x40)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let record = encode_point_plan(view, b"Layer0", LOCATION)?;
+            let insert =
+                view.plan_entity_draft_insert(record, DxfResourceProfile::Safe, &token())?;
+            let suffix = match format {
+                DxfRawDocumentFormat::Ascii => "ascii",
+                DxfRawDocumentFormat::Binary => "binary",
+                _ => return Err(io::Error::other("format").into()),
+            };
+            let output = directory
+                .path()
+                .join(format!("{}-{suffix}.dxf", version.code()));
+            let mut observer = NoopDxfReadObserver;
+            let DxfEntityEditWriteOutcome::Written(journal) = insert
+                .write_reparse_verify_and_journal_to_new_file(
+                    view,
+                    &output,
+                    DxfResourceProfile::Safe,
+                    &token(),
+                    &mut observer,
+                )?
+            else {
+                return Err(io::Error::other("verified POINT write").into());
+            };
+            assert_eq!(journal.verification_receipt().edit_count(), 1);
+            let output_bytes = fs::read(&output)?;
+            assert_eq!(materialize(&output_bytes, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn point_record_uses_placement_specific_modern_common_envelope() -> Result<(), Box<dyn Error>> {
     for version in DxfAcadVersion::SUPPORTED
         .into_iter()
@@ -154,19 +253,8 @@ fn point_record_uses_placement_specific_modern_common_envelope() -> Result<(), B
                 expected_block_point(format, version, 0x40, 0x10)?
             );
 
-            let mut insertion = view.transaction_plan_builder(DxfResourceProfile::Safe)?;
-            insertion.replace_raw_span(
-                plan.applicability().identity().placement().insertion_span(),
-                plan.bytes(),
-                &token(),
-            )?;
-            let insertion = insertion.finish(&token())?;
-            let composed = view.compose_transaction_plans(
-                &[plan.transaction(), &insertion],
-                DxfResourceProfile::Safe,
-                &token(),
-            )?;
-            let output = materialize(&bytes, &composed)?;
+            let insert = view.plan_entity_draft_insert(plan, DxfResourceProfile::Safe, &token())?;
+            let output = materialize(&bytes, insert.transaction())?;
             let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
             let output_document = open_document(&output_source, format)?;
             let post = output_document.view();
@@ -178,12 +266,12 @@ fn point_record_uses_placement_specific_modern_common_envelope() -> Result<(), B
                 .point_for_entry(*entry)?
                 .ok_or_else(|| io::Error::other("block POINT semantics"))?;
             assert_eq!(point.location_value(), Some(LOCATION));
-            let inverse = composed.materialize_inverse_plan(
-                view,
-                post,
-                DxfResourceProfile::Safe,
-                &token(),
-            )?;
+            let DxfEntityEditVerificationOutcome::Verified(journal) =
+                insert.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("block POINT insert verification").into());
+            };
+            let inverse = journal.into_parts().1;
             assert_eq!(materialize(&output, &inverse)?, bytes);
 
             if version >= DxfAcadVersion::Ac1015 {
@@ -466,6 +554,20 @@ fn point_draft_rejects_name_layer_numeric_source_and_cancellation() -> Result<()
             DxfResourceProfile::Safe,
             &token()
         ),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+
+    let cancelled_record = encode_point_plan(view, b"Layer0", LOCATION)?;
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        view.plan_entity_draft_insert(cancelled_record, DxfResourceProfile::Safe, &cancelled),
+        Err(DxfError::Cancelled)
+    ));
+
+    let foreign_record = encode_point_plan(view, b"Layer0", LOCATION)?;
+    assert!(matches!(
+        other.plan_entity_draft_insert(foreign_record, DxfResourceProfile::Safe, &token()),
         Err(DxfError::SourceIdentityMismatch { .. })
     ));
     assert_send_sync::<DxfEntityDraftRecordPlan>();
@@ -862,6 +964,45 @@ fn materialize(source: &[u8], plan: &DxfTransactionPlan) -> Result<Vec<u8>, DxfE
     Ok(output)
 }
 
+fn verification_issue(
+    plan: &seacad_dxf_core::DxfEntityEditPlan,
+    source: DxfRawDocumentView<'_>,
+    post_bytes: &[u8],
+) -> Result<DxfEntityEditVerificationIssue, Box<dyn Error>> {
+    let post_source = DxfMemorySource::new(post_bytes, DxfResourceProfile::Safe)?;
+    let post_document = open_ascii(&post_source)?;
+    match plan.verify_post_image(
+        source,
+        DxfRawDocumentView::from(&post_document),
+        DxfResourceProfile::Safe,
+        &token(),
+    )? {
+        DxfEntityEditVerificationOutcome::Unavailable(issue) => Ok(issue),
+        DxfEntityEditVerificationOutcome::Verified(_) => {
+            Err(io::Error::other("expected unavailable insert verification").into())
+        }
+        _ => Err(io::Error::other("unknown insert verification outcome").into()),
+    }
+}
+
+fn replace_once(source: &[u8], from: &[u8], to: &[u8]) -> Result<Vec<u8>, io::Error> {
+    if from.len() != to.len() {
+        return Err(io::Error::other("same-length test replacement"));
+    }
+    let Some(offset) = source.windows(from.len()).position(|window| window == from) else {
+        return Err(io::Error::other("test replacement pattern"));
+    };
+    let mut output = source.to_vec();
+    let end = offset
+        .checked_add(to.len())
+        .ok_or_else(|| io::Error::other("test replacement range"))?;
+    output
+        .get_mut(offset..end)
+        .ok_or_else(|| io::Error::other("test replacement span"))?
+        .copy_from_slice(to);
+    Ok(output)
+}
+
 enum OpenedDocument<'a> {
     Ascii(DxfAsciiRawDocument<'a>),
     Binary(DxfBinaryRawDocument<'a>),
@@ -910,6 +1051,32 @@ fn invalid_test_data() -> DxfError {
         seacad_dxf_core::DxfIoOperation::Read,
         &io::Error::from(io::ErrorKind::InvalidData),
     )
+}
+
+struct TestDirectory {
+    path: PathBuf,
+}
+
+impl TestDirectory {
+    fn new() -> Result<Self, io::Error> {
+        let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "seacad-point-draft-insert-{}-{id}",
+            std::process::id()
+        ));
+        fs::create_dir(&path)?;
+        Ok(Self { path })
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for TestDirectory {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
 }
 
 fn assert_copy<T: Copy>() {}

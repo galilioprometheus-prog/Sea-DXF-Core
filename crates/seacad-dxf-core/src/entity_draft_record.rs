@@ -124,6 +124,32 @@ pub enum DxfEntityDraftRecordIssue {
 pub struct DxfEntityDraftRecordPlan {
     applicability: DxfEntityDraftApplicabilityPlan,
     bytes: Box<[u8]>,
+    expectation: DxfPointDraftRecordExpectation,
+}
+
+pub(crate) struct DxfPointDraftRecordExpectation {
+    layer: Box<[u8]>,
+    layout: Option<Box<[u8]>>,
+    lineweight: Option<DxfEntityLineweight>,
+    location: [DxfDouble; 3],
+}
+
+impl DxfPointDraftRecordExpectation {
+    pub(crate) fn layer(&self) -> &[u8] {
+        &self.layer
+    }
+
+    pub(crate) fn layout(&self) -> Option<&[u8]> {
+        self.layout.as_deref()
+    }
+
+    pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
+        self.lineweight
+    }
+
+    pub(crate) const fn location(&self) -> [DxfDouble; 3] {
+        self.location
+    }
 }
 
 impl DxfEntityDraftRecordPlan {
@@ -166,6 +192,16 @@ impl DxfEntityDraftRecordPlan {
     pub fn into_applicability(self) -> DxfEntityDraftApplicabilityPlan {
         self.applicability
     }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        DxfEntityDraftApplicabilityPlan,
+        Box<[u8]>,
+        DxfPointDraftRecordExpectation,
+    ) {
+        (self.applicability, self.bytes, self.expectation)
+    }
 }
 
 impl std::fmt::Debug for DxfEntityDraftRecordPlan {
@@ -201,20 +237,42 @@ impl DxfRawDocumentView<'_> {
                 draft: draft.name().classification(),
             }));
         }
-        let bytes = match draft {
+        let (bytes, expectation) = match draft {
             DxfEntityDraft::Point(point) => {
-                match encode_point(self, &applicability, point, profile, cancellation)? {
+                let bytes = match encode_point(self, &applicability, point, profile, cancellation)?
+                {
                     Ok(bytes) => bytes,
                     Err(issue) => return Ok(Err(issue)),
-                }
+                };
+                let expectation = point_expectation(point)?;
+                (bytes, expectation)
             }
         };
         ensure_not_cancelled(cancellation)?;
         Ok(Ok(DxfEntityDraftRecordPlan {
             applicability,
             bytes: bytes.into_boxed_slice(),
+            expectation,
         }))
     }
+}
+
+fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpectation, DxfError> {
+    Ok(DxfPointDraftRecordExpectation {
+        layer: copy_bytes(draft.layer())?,
+        layout: draft.layout().map(copy_bytes).transpose()?,
+        lineweight: draft.lineweight(),
+        location: draft.location(),
+    })
+}
+
+fn copy_bytes(bytes: &[u8]) -> Result<Box<[u8]>, DxfError> {
+    let mut owned = Vec::new();
+    owned
+        .try_reserve_exact(bytes.len())
+        .map_err(|_| out_of_memory())?;
+    owned.extend_from_slice(bytes);
+    Ok(owned.into_boxed_slice())
 }
 
 impl DxfAsciiRawDocument<'_> {

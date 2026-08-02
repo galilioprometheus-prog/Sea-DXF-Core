@@ -2441,5 +2441,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     expose the final edit-session `insert`, clone/delete closure, or POINT
     `Complete` support.
 
+    M14.3bl adds the first atomic typed entity insertion plan. The document
+    consumes one M14.3bk record, inserts its canonical bytes at the retained
+    placement anchor, and composes the insertion with its `$HANDSEED`
+    transaction. The result is the existing verified `DxfEntityEditPlan`, not
+    a parallel writer path. Its new family expectation resolves the allocated
+    handle, proves canonical POINT classification and exact ENTITIES/BLOCK
+    membership, checks the represented owner and explicit common fields, and
+    compares the WCS location. All nine ASCII/Binary dialect pairs pass direct
+    verification, create-new strict-reparse/write/journal, and byte-identical
+    inverse restoration; typed tamper cases cover missing/duplicate identity,
+    wrong family, common-field mismatch, and geometry mismatch. Unified
+    session insertion, multi-record reservation, optional POINT fields, and
+    the remaining CRUD ladder stay open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

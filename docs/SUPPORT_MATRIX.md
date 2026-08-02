@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bk can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bl can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1067,6 +1067,20 @@ and apply an executable byte-identical inverse for every supported dialect and
 format. This checkpoint does not add the final edit-session insert operation,
 optional POINT fields, clone/delete, placement-aware generic common-field
 cardinality, or POINT `Complete` support.
+
+M14.3bl consumes that typed record as one atomic insertion transaction. The
+planner combines the exact placement-anchor patch with the reserved successor
+`$HANDSEED` patch and returns a `DxfEntityEditPlan` carrying one logical POINT
+insert expectation. Verification requires a unique allocated handle, canonical
+POINT classification, the exact ENTITIES section or BLOCK definition, the
+represented owner, explicit layer/layout/lineweight fields, and the expected
+WCS location. The existing create-new writer then strict-reparses, verifies,
+removes failed destinations, and journals a byte-exact inverse. Direct and
+create-new coverage spans all nine ASCII/Binary dialect pairs; BLOCK placement
+spans every R13+ dialect, and tampering proves typed missing/ambiguous handle,
+family, common-field, and geometry failures. This is one prepared-record
+operation, not yet `DxfEntityEditSession::insert`, multi-record reservation,
+optional POINT payload support, clone/delete, or POINT `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

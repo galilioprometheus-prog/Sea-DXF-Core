@@ -558,7 +558,7 @@ impl<'document, 'evidence, 'cancellation>
             .try_reserve_exact(pending.len())
             .map_err(|_| out_of_memory())?;
         for edit in pending {
-            expectations.push(DxfEntityEditExpectation::new(
+            expectations.push(DxfEntityEditExpectation::field(
                 edit.key.raw_record_ordinal(),
                 edit.field,
                 edit.expected,

@@ -983,6 +983,21 @@ text, non-finite values, cancellation, and foreign source identity. Unified
 session insertion, POINT update/clone/delete, optional POINT fields, common
 field applicability generation, and `Complete` remain open.
 
+M14.3bl turns that source-bound record into one atomic, semantically verifiable
+insert plan. `plan_entity_draft_insert` places the exact encoded bytes at the
+admitted zero-width anchor and composes that patch with the retained successor
+`$HANDSEED` transaction. Its `DxfEntityEditPlan` expectation resolves the new
+handle uniquely, requires canonical POINT classification, checks the exact
+ENTITIES section or BLOCK definition, verifies the explicit owner where the
+dialect represents it, verifies layer/layout/lineweight fields, and compares
+the analytic WCS location. The standard create-new writer now strict-reparses,
+semantically verifies, cleans up on failure, and returns an executable inverse
+for POINT insertion across every ASCII/Binary Core dialect. Missing/ambiguous
+identity, wrong family or placement, common-field mismatch, and geometry
+mismatch remain typed. This does not yet expose session-level `insert`, batch
+multiple draft records, add optional POINT fields, or complete update/clone/
+delete and the POINT support ledger.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -64,6 +64,7 @@ mod entity_common_text_semantic;
 mod entity_directory;
 mod entity_draft_applicability;
 mod entity_draft_identity;
+mod entity_draft_insert;
 mod entity_draft_record;
 mod entity_edit_session;
 mod entity_edit_verification;
