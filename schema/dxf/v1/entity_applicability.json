@@ -23,7 +23,7 @@
     { "name_kind": "topic", "name_id": "mesh", "review_state": "applicable_range", "minimum_version": "AC1024", "maximum_version": null, "source_id": "autodesk.mesh.compatibility.2018" },
     { "name_kind": "topic", "name_id": "mline", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "topic", "name_id": "mleaderstyle", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "topic", "name_id": "mleader", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
+    { "name_kind": "topic", "name_id": "mleader", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.mleader.compatibility.2024" },
     { "name_kind": "topic", "name_id": "mtext", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "topic", "name_id": "oleframe", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "topic", "name_id": "ole2frame", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },

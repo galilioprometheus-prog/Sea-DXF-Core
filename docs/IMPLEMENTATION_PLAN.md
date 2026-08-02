@@ -2362,5 +2362,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     payload, record encoding, insertion, semantic postcondition, or CRUD claim
     changes in this evidence-only checkpoint.
 
+    M14.3bd records canonical MLEADER applicability from Autodesk's statement
+    that multileaders display as proxy objects in versions before AutoCAD 2008.
+    The generated descriptor starts at AC1021 and keeps its source GUID and
+    normalized one-row facts receipt. The separately classified behavioral
+    `MULTILEADER` wire alias remains `NotYetReviewed`: a family compatibility
+    statement is not treated as proof of that exact marker's version floor.
+    Matrix tests therefore contain five reviewed names and 54 fail-closed
+    names. Nested grammar, MLEADERSTYLE resolution, geometry, encoding,
+    insertion, and CRUD remain unchanged.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

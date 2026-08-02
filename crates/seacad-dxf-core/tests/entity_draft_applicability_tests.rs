@@ -177,6 +177,9 @@ fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplic
         DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::MESH => {
             Some(DxfAcadVersion::Ac1024)
         }
+        DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::MLEADER => {
+            Some(DxfAcadVersion::Ac1021)
+        }
         DxfEntityDraftName::Alias(alias)
             if alias == DxfEntityAlias::DGNUNDERLAY || alias == DxfEntityAlias::DWFUNDERLAY =>
         {

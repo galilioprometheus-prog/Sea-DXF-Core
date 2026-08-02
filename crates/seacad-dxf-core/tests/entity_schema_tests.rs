@@ -293,6 +293,37 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         DxfEntityApplicability::Applicable
     );
 
+    let mleader = classify_exact_dxf_entity_name(b"MLEADER")
+        .applicability_descriptor()
+        .ok_or("reviewed MLEADER topic is missing its applicability row")?;
+    assert_eq!(mleader.minimum_version(), Some(DxfAcadVersion::Ac1021));
+    assert_eq!(mleader.maximum_version(), None);
+    assert_eq!(
+        mleader.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        mleader.source_reference(),
+        Some("GUID-CE870800-C598-483B-81A0-5AA0208F1851")
+    );
+    assert_eq!(
+        mleader.applicability(DxfAcadVersion::Ac1018),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        mleader.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::Applicable
+    );
+
+    let multileader = classify_exact_dxf_entity_name(b"MULTILEADER")
+        .applicability_descriptor()
+        .ok_or("reviewed MULTILEADER alias is missing its applicability row")?;
+    assert_eq!(multileader.minimum_version(), None);
+    assert_eq!(
+        multileader.evidence(),
+        DxfEntityApplicabilityEvidence::NotYetReviewed
+    );
+
     let spline = classify_exact_dxf_entity_name(b"SPLINE")
         .applicability_descriptor()
         .ok_or("canonical SPLINE topic is missing its applicability row")?;

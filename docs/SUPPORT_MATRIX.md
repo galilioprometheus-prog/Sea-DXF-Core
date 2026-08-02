@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bc can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bd can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -988,6 +988,16 @@ GUID and normalized one-row SHA-256 are carried by the generated descriptor.
 Together with the three previously reviewed underlay aliases, four names now
 have reviewed ranges and 55 remain `NotYetReviewed`. This version receipt does
 not validate MESH topology, enable MESH insertion, or advance MESH support.
+
+M14.3bd adds canonical MLEADER applicability from Autodesk's earlier-version
+compatibility statement: multileaders are proxy objects before AutoCAD 2008.
+Generated admission therefore marks canonical MLEADER applicable from AC1021
+and not applicable in the five earlier supported dialects. The source GUID and
+normalized one-row SHA-256 remain attached to the descriptor. The behavioral
+`MULTILEADER` alias deliberately stays `NotYetReviewed`; the family statement
+does not prove the exact alias wire marker's minimum version. Five names now
+have reviewed ranges and 54 remain unreviewed. No nested MLEADER parsing,
+reference resolution, geometry, CRUD, or support claim changes here.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

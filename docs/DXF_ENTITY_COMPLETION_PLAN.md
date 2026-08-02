@@ -904,6 +904,15 @@ receipt are generated into the descriptor, and the 59-name draft admission
 matrix now has four reviewed names and 55 `NotYetReviewed` names. This does not
 claim MESH payload/topology validity, CRUD, geometry, or `Complete` support.
 
+M14.3bd reviews canonical MLEADER applicability from Autodesk's statement that
+multileaders display as proxies in versions before AutoCAD 2008. The generated
+range starts at AC1021 with no reviewed maximum. The source GUID and normalized
+facts receipt remain attached to the descriptor, while the behaviorally
+observed exact `MULTILEADER` alias stays `NotYetReviewed` rather than inheriting
+an unproved wire-version floor. Five of 59 names now have reviewed ranges and
+54 remain fail-closed. Nested contexts, content, lines, breaks, style/reference
+resolution, geometry, CRUD, and `Complete` support remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
