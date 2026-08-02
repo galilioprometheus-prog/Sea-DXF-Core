@@ -2372,5 +2372,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     names. Nested grammar, MLEADERSTYLE resolution, geometry, encoding,
     insertion, and CRUD remain unchanged.
 
+    M14.3be records canonical LIGHT applicability from Autodesk's conversion
+    boundary between pre-2007 lighting and the AutoCAD 2007/2008 lighting
+    format. The generated descriptor starts at AC1021 and carries the exact
+    compatibility-page GUID and normalized one-row facts receipt. Matrix tests
+    now contain six reviewed names and 53 fail-closed names. LIGHT fields,
+    type/vector relations, photometric settings, rendering, shadows, encoding,
+    insertion, CRUD, and `Complete` support remain unchanged.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

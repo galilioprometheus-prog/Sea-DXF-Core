@@ -271,6 +271,28 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         DxfEntityApplicability::Applicable
     );
 
+    let light = classify_exact_dxf_entity_name(b"LIGHT")
+        .applicability_descriptor()
+        .ok_or("reviewed LIGHT topic is missing its applicability row")?;
+    assert_eq!(light.minimum_version(), Some(DxfAcadVersion::Ac1021));
+    assert_eq!(light.maximum_version(), None);
+    assert_eq!(
+        light.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        light.source_reference(),
+        Some("GUID-CE870800-C598-483B-81A0-5AA0208F1851")
+    );
+    assert_eq!(
+        light.applicability(DxfAcadVersion::Ac1018),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        light.applicability(DxfAcadVersion::Ac1021),
+        DxfEntityApplicability::Applicable
+    );
+
     let mesh = classify_exact_dxf_entity_name(b"MESH")
         .applicability_descriptor()
         .ok_or("reviewed MESH topic is missing its applicability row")?;

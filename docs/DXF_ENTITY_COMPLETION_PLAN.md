@@ -913,6 +913,14 @@ an unproved wire-version floor. Five of 59 names now have reviewed ranges and
 54 remain fail-closed. Nested contexts, content, lines, breaks, style/reference
 resolution, geometry, CRUD, and `Complete` support remain open.
 
+M14.3be reviews canonical LIGHT applicability from Autodesk's documented
+conversion boundary: lighting created before AutoCAD 2007 must be converted to
+the AutoCAD 2007/2008 lighting format. The generated range starts at AC1021
+with no reviewed maximum and carries the source GUID plus normalized facts
+receipt. Six of 59 names now have reviewed ranges and 53 remain fail-closed.
+LIGHT field semantics, type/vector relations, photometric settings, rendering,
+shadows, CRUD, and `Complete` support remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

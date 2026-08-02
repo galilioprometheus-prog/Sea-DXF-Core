@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bd can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3be can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -998,6 +998,15 @@ normalized one-row SHA-256 remain attached to the descriptor. The behavioral
 does not prove the exact alias wire marker's minimum version. Five names now
 have reviewed ranges and 54 remain unreviewed. No nested MLEADER parsing,
 reference resolution, geometry, CRUD, or support claim changes here.
+
+M14.3be adds canonical LIGHT applicability. Autodesk requires lighting from
+versions before AutoCAD 2007 to be converted to the AutoCAD 2007/2008 lighting
+format, while its DXF reference defines the exact LIGHT entity. Generated
+admission therefore marks LIGHT applicable from AC1021 and not applicable in
+the five earlier supported dialects, with exact source GUID and normalized
+one-row receipt. Six names now have reviewed ranges and 53 remain unreviewed.
+This does not validate light types, vectors, photometric settings, rendering,
+shadows, family CRUD, or `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
