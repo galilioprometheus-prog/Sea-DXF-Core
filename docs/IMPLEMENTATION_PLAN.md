@@ -2416,5 +2416,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     unreviewed; payload semantics, modeler data, CRUD, and `Complete` do not
     advance.
 
+    M14.3bj records a shared AC1009 floor for the 16 canonical DXF names in
+    Autodesk's table of entities introduced before Release 13: `3DFACE`, `ARC`,
+    `ATTDEF`, `ATTRIB`, `CIRCLE`, `DIMENSION`, `INSERT`, `LINE`, `POINT`,
+    `POLYLINE`, `SEQEND`, `SHAPE`, `SOLID`, `TEXT`, `VERTEX`, and `VIEWPORT`.
+    The established dialect registry identifies AC1009 as Release 11/12, so
+    the range covers every Core 1.0 dialect without claiming older formats.
+    Thirty-one names now have reviewed ranges and 28 remain unreviewed.
+    VIEWPORT's separately documented `entmake` restriction and every family's
+    payload validation, insertion policy, CRUD, and `Complete` state remain
+    unchanged.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

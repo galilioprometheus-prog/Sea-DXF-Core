@@ -250,6 +250,45 @@ fn applicability_matrix_covers_every_reviewed_name_and_supported_dialect() {
 #[test]
 fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
 -> Result<(), Box<dyn Error>> {
+    for exact_name in [
+        b"3DFACE".as_slice(),
+        b"ARC".as_slice(),
+        b"ATTDEF".as_slice(),
+        b"ATTRIB".as_slice(),
+        b"CIRCLE".as_slice(),
+        b"DIMENSION".as_slice(),
+        b"INSERT".as_slice(),
+        b"LINE".as_slice(),
+        b"POINT".as_slice(),
+        b"POLYLINE".as_slice(),
+        b"SEQEND".as_slice(),
+        b"SHAPE".as_slice(),
+        b"SOLID".as_slice(),
+        b"TEXT".as_slice(),
+        b"VERTEX".as_slice(),
+        b"VIEWPORT".as_slice(),
+    ] {
+        let descriptor = classify_exact_dxf_entity_name(exact_name)
+            .applicability_descriptor()
+            .ok_or("reviewed pre-R13 entity is missing its applicability row")?;
+        assert_eq!(descriptor.minimum_version(), Some(DxfAcadVersion::Ac1009));
+        assert_eq!(descriptor.maximum_version(), None);
+        assert_eq!(
+            descriptor.evidence(),
+            DxfEntityApplicabilityEvidence::AutodeskCompatibility
+        );
+        assert_eq!(
+            descriptor.source_reference(),
+            Some("GUID-DFDAE6CD-E753-4D01-9D9B-4D1F66B1DE6E")
+        );
+        for version in DxfAcadVersion::SUPPORTED {
+            assert_eq!(
+                descriptor.applicability(version),
+                DxfEntityApplicability::Applicable
+            );
+        }
+    }
+
     let dgn = classify_exact_dxf_entity_name(b"DGNUNDERLAY")
         .applicability_descriptor()
         .ok_or("reviewed DGN alias is missing its applicability row")?;

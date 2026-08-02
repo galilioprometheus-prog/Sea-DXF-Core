@@ -174,6 +174,26 @@ enum ExpectedApplicability {
 
 fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplicability {
     let minimum = match name {
+        DxfEntityDraftName::Canonical(topic)
+            if topic == DxfEntityTopic::THREE_D_FACE
+                || topic == DxfEntityTopic::ARC
+                || topic == DxfEntityTopic::ATTDEF
+                || topic == DxfEntityTopic::ATTRIB
+                || topic == DxfEntityTopic::CIRCLE
+                || topic == DxfEntityTopic::DIMENSION
+                || topic == DxfEntityTopic::INSERT
+                || topic == DxfEntityTopic::LINE
+                || topic == DxfEntityTopic::POINT
+                || topic == DxfEntityTopic::POLYLINE
+                || topic == DxfEntityTopic::SEQEND
+                || topic == DxfEntityTopic::SHAPE
+                || topic == DxfEntityTopic::SOLID
+                || topic == DxfEntityTopic::TEXT
+                || topic == DxfEntityTopic::VERTEX
+                || topic == DxfEntityTopic::VIEWPORT =>
+        {
+            Some(DxfAcadVersion::Ac1009)
+        }
         DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::HELIX => {
             Some(DxfAcadVersion::Ac1021)
         }

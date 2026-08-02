@@ -956,6 +956,17 @@ group-0 records. Fifteen of 59 names now have reviewed ranges and 44 remain
 fail-closed. Payload semantics, proprietary modeler decoding, CRUD, and
 `Complete` remain open.
 
+M14.3bj reviews the 16 exact canonical names Autodesk lists as introduced
+before AutoCAD Release 13: `3DFACE`, `ARC`, `ATTDEF`, `ATTRIB`, `CIRCLE`,
+`DIMENSION`, `INSERT`, `LINE`, `POINT`, `POLYLINE`, `SEQEND`, `SHAPE`, `SOLID`,
+`TEXT`, `VERTEX`, and `VIEWPORT`. AC1009 is the shared Release 11/12 dialect
+and the lower bound of Core 1.0, so every supported dialect is applicable with
+no earlier-version claim. The generated receipt binds the exact 16 rows to the
+Autodesk page GUID. Thirty-one of 59 names now have reviewed ranges and 28
+remain fail-closed. The page's separate `entmake` restriction for VIEWPORT is
+preserved as a nonclaim: applicability does not establish insertion, payload
+semantics, family CRUD, or `Complete` support.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

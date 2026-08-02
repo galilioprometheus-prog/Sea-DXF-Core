@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bi can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bj can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1043,6 +1043,17 @@ and `SURFACE` remain `NotYetReviewed`; observed concrete aliases do not prove
 generic group-0 records. Fifteen names now have reviewed ranges and 44 remain
 unreviewed. Section/surface payloads, proprietary modeler data, CRUD, and
 `Complete` support remain open.
+
+M14.3bj admits the 16 exact canonical names Autodesk lists as introduced prior
+to Release 13 from AC1009 onward: `3DFACE`, `ARC`, `ATTDEF`, `ATTRIB`, `CIRCLE`,
+`DIMENSION`, `INSERT`, `LINE`, `POINT`, `POLYLINE`, `SEQEND`, `SHAPE`, `SOLID`,
+`TEXT`, `VERTEX`, and `VIEWPORT`. AC1009 is the existing reviewed Release 11/12
+dialect and the Core 1.0 minimum, so all nine supported versions are
+`Applicable`. Thirty-one of 59 names now have reviewed ranges and 28 remain
+unreviewed. This is a wire-version receipt only. In particular, Autodesk's
+separate statement that `entmake` cannot create VIEWPORT entities is not
+overridden; family encoding, insertion policy, CRUD, and `Complete` remain
+open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

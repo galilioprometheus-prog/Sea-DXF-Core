@@ -2299,7 +2299,7 @@ mod tests {
     use std::error::Error;
 
     use super::{
-        EXPECTED_ENTITY_ALIAS_COUNT, EXPECTED_ENTITY_APPLICABILITY_COUNT,
+        ApplicabilityReviewState, EXPECTED_ENTITY_ALIAS_COUNT, EXPECTED_ENTITY_APPLICABILITY_COUNT,
         EXPECTED_ENTITY_COMMON_FIELD_COUNT, EntityFieldDefault, EntityRegistryReceipts,
         EvidenceKind, MANIFEST_PATH, SchemaManifest, StorageKind, evidence_matches,
         load_entity_aliases, load_entity_applicability, load_entity_common_fields,
@@ -2686,7 +2686,12 @@ mod tests {
         assert_eq!(error.code, "SCHEMA_ENTITY_APPLICABILITY_ORDER");
 
         let mut invented = load_entity_applicability(&root, &manifest)?;
-        invented.entries[0].minimum_version = Some("AC1009".to_string());
+        let unreviewed = invented
+            .entries
+            .iter_mut()
+            .find(|entry| matches!(entry.review_state, ApplicabilityReviewState::NotYetReviewed))
+            .ok_or("fixture no longer contains an unreviewed applicability row")?;
+        unreviewed.minimum_version = Some("AC1009".to_string());
         let error =
             validate_entity_applicability(&manifest, &sources, &topics, &aliases, &invented)
                 .err()
