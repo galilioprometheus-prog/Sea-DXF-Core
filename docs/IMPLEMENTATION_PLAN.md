@@ -2337,5 +2337,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     draft payloads, record encoding, insertion, post-insert semantic checks,
     clone/delete, and full CRUD remain open.
 
+    M14.3bb adds a fail-closed dialect gate before any prepared draft can reach
+    record encoding. The identity, reservation transaction, and document must
+    retain one exact source identity, `$ACADVER` must be one supported value,
+    and the generated descriptor must classify the exact canonical or alias
+    name as `Applicable`. `NotApplicable`, `NotYetReviewed`, absent,
+    unsupported, invalid, and ambiguous version evidence remain distinct.
+    With the current reviewed registry, DGN/DWF underlay names are admitted
+    from AC1021 and PDF underlay from AC1024; the other 56 names fail closed
+    until their applicability ranges receive normative evidence. Paired tests
+    cover all 59 names over all nine ASCII/Binary dialects and retain the
+    reversible seed transaction. This checkpoint does not encode entity
+    envelopes or payloads, insert records, verify inserted semantics, clone,
+    delete, or complete any topic.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

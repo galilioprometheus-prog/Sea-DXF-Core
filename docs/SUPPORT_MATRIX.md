@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ba can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bb can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -967,6 +967,18 @@ transaction strict-reparses and inverses byte-identically. Registry admission
 does not establish version applicability or family support. No entity record
 bytes are encoded or inserted, and semantic verification, clone/delete graph
 closure, and `Complete` status remain open.
+
+M14.3bb adds fail-closed dialect admission for a prepared draft identity. The
+document must expose one supported `$ACADVER`, the identity and its reversible
+reservation transaction must still match that exact source, and the generated
+applicability descriptor must classify the selected name as `Applicable` for
+that dialect. `NotApplicable`, `NotYetReviewed`, and absent, unsupported,
+invalid, or ambiguous version states remain separate typed results. The
+current reviewed matrix therefore admits DGN/DWF underlay aliases from AC1021
+and PDF underlay from AC1024; all other name ranges remain unavailable rather
+than guessed. Tests exercise all 59 names over all nine ASCII/Binary pairs.
+This is an admission gate only: it does not encode or insert record bytes,
+validate an underlay payload, or advance any entity to `Complete`.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

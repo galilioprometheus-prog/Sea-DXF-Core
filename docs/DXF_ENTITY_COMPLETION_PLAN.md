@@ -883,6 +883,18 @@ HANDSEED reparse plus byte-identical inverse. Name admission does not imply
 dialect applicability or family support. Draft fields, record encoding,
 insertion, semantic verification, clone/delete, and `Complete` remain open.
 
+M14.3bb consumes that identity only after fail-closed dialect admission. One
+supported `$ACADVER` must remain bound to the same exact source and the
+generated applicability descriptor must return `Applicable`; absent,
+unsupported, invalid, ambiguous, `NotApplicable`, and `NotYetReviewed` states
+remain typed. The currently reviewed matrix admits only DGN/DWF underlay from
+AC1021 and PDF underlay from AC1024, so the other 56 registered names cannot be
+encoded until their ranges have normative evidence. All 59 names are checked
+against all nine paired ASCII/Binary dialect fixtures. The admitted plan keeps
+the exact descriptor provenance, identity, owner, handle, and reversible seed
+transaction. Record bytes, family payload validation, insertion, semantic
+postconditions, clone/delete, and `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

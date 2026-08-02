@@ -62,6 +62,7 @@ mod entity_common_reference_target;
 mod entity_common_symbol_edit;
 mod entity_common_text_semantic;
 mod entity_directory;
+mod entity_draft_applicability;
 mod entity_draft_identity;
 mod entity_edit_session;
 mod entity_edit_verification;
@@ -458,6 +459,9 @@ pub use entity_common_text_semantic::{
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,
     DxfEntityRef, DxfEntitySubclassMarker, DxfEntitySubclassRange,
+};
+pub use entity_draft_applicability::{
+    DxfEntityDraftApplicabilityIssue, DxfEntityDraftApplicabilityPlan,
 };
 pub use entity_draft_identity::{
     DxfEntityDraftIdentityIssue, DxfEntityDraftIdentityPlan, DxfEntityDraftName,
