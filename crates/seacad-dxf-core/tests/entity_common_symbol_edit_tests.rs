@@ -93,12 +93,12 @@ fn missing_ambiguous_unreviewed_and_wrong_kind_fail_typed() -> Result<(), Box<dy
             DxfEntityCommonSymbolEditIssue::ValueKindMismatch { .. }
         ));
         assert_eq!(
-            invalid(view.classify_entity_common_symbol_edit(
+            view.classify_entity_common_symbol_edit(
                 DxfEntityField::LAYOUT,
                 DxfEntityEditValue::ExactRawText(b"Model"),
                 &token(),
-            )?)?,
-            DxfEntityCommonSymbolEditIssue::LayoutResolutionRequired {
+            )?,
+            DxfEntityCommonSymbolEditOutcome::NotSymbol {
                 field: DxfEntityField::LAYOUT,
             }
         );
@@ -155,10 +155,6 @@ fn rejected_symbols_never_queue_and_cancellation_precedes_scan() -> Result<(), B
                 DxfEntityEditValue::ExactRawText(b"Missing"),
             ),
             (
-                DxfEntityField::LAYOUT,
-                DxfEntityEditValue::ExactRawText(b"Model"),
-            ),
-            (
                 DxfEntityField::COLOR_NAME,
                 DxfEntityEditValue::ExactRawText(b"Book$Color"),
             ),
@@ -168,6 +164,16 @@ fn rejected_symbols_never_queue_and_cancellation_precedes_scan() -> Result<(), B
                 DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Symbol(_))
             ));
         }
+        assert!(matches!(
+            session.update(
+                key,
+                set(
+                    DxfEntityField::LAYOUT,
+                    DxfEntityEditValue::ExactRawText(b"Model"),
+                ),
+            )?,
+            DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Layout(_))
+        ));
         assert_eq!(session.queued_edit_count(), 0);
 
         let cancelled = token();

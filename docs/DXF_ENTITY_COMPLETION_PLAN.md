@@ -748,6 +748,20 @@ byte-exact and case-sensitive. Layout edit admission, reciprocal block-record
 ownership, name folding/validity, color-book resolution, applicability,
 lifecycle, family graphs, and `Complete` support remain later work.
 
+M14.3ar moves exact layout resolution into common-field edit admission. A
+public source-bound classifier returns non-layout, wrong-value, missing,
+ambiguous, or one exact target state without mutating the document. The shared
+edit session lazily builds one layout directory only for an exact group-410
+proposal and keeps the existing value-byte ceiling ahead of lookup. Valid
+modern ASCII/Binary edits use canonical insertion/replacement, strict reparse,
+target-bearing semantic verification, raw verification, and byte-identical
+inverse restoration; rejected edits queue nothing. Classifier parity covers
+all nine dialects. AC1009 Binary cannot physically encode group 410 and fails
+typed at the existing wire gate. Matching remains byte-exact and case-
+sensitive. Reciprocal block-record ownership, layout lifecycle, legal-name/
+case policy, color books, applicability, family graphs, and `Complete` support
+remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

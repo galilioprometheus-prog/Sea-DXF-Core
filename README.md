@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3aq. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ar. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -124,10 +124,12 @@ Layer and linetype edits now require one exact same-document name in a closed
 matching symbol table. Missing or duplicate names fail before planning.
 Layout and color-book names remain locked behind dedicated resolvers instead
 of being accepted as unchecked raw text.
-The read-side layout resolver is now present. It ignores plot-settings group 1,
+The layout resolver ignores plot-settings group 1,
 application groups, wrong subclasses, wrong sections, and malformed layout-name
-cardinality while retaining their evidence. Edit admission remains locked until
-the next checkpoint composes this directory with the transaction session.
+cardinality while retaining their evidence. Layout edits now enter the session
+only after one exact same-document layout object resolves; rejected edits queue
+nothing, while accepted edits use strict semantic verification and exact inverse
+restoration. Color-book names remain locked behind their dedicated resolver.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

@@ -2,6 +2,7 @@
 
 use std::{fmt, io};
 
+use crate::entity_common_layout_edit::classify_with_layouts;
 use crate::entity_common_reference_edit::classify_with_identities;
 use crate::entity_common_reference_target::reviewed_common_reference_target_kind;
 use crate::entity_common_symbol_edit::classify_with_symbols;
@@ -10,12 +11,13 @@ use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpecte
 use crate::{
     ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
     DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
+    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
     DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
     DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityEditPlan,
     DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation,
+    DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation, DxfLayoutObjectDirectory,
     DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
     DxfTransactionPlan,
 };
@@ -68,6 +70,7 @@ pub enum DxfEntityEditIssue {
     },
     Domain(DxfEntityCommonFieldDomainIssue),
     Reference(DxfEntityCommonReferenceEditIssue),
+    Layout(DxfEntityCommonLayoutEditIssue),
     Symbol(DxfEntityCommonSymbolEditIssue),
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
@@ -139,6 +142,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     profile: DxfResourceProfile,
     cancellation: &'cancellation DxfCancellationToken,
     handle_identities: Option<DxfHandleIdentityDirectory>,
+    layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
 }
@@ -171,6 +175,7 @@ impl<'document, 'evidence, 'cancellation>
             profile,
             cancellation,
             handle_identities: None,
+            layout_objects: None,
             named_symbols: None,
             pending: Vec::new(),
         })
@@ -212,6 +217,13 @@ impl<'document, 'evidence, 'cancellation>
                 {
                     return Ok(DxfEntityEditOutcome::Unavailable(
                         DxfEntityEditIssue::Reference(issue),
+                    ));
+                }
+                if let DxfEntityCommonLayoutEditOutcome::Invalid(issue) =
+                    self.classify_layout_edit(field, value)?
+                {
+                    return Ok(DxfEntityEditOutcome::Unavailable(
+                        DxfEntityEditIssue::Layout(issue),
                     ));
                 }
                 if let DxfEntityCommonSymbolEditOutcome::Invalid(issue) =
@@ -272,6 +284,26 @@ impl<'document, 'evidence, 'cancellation>
         classify_with_symbols(
             self.document,
             self.named_symbols.as_ref(),
+            field,
+            value,
+            self.cancellation,
+        )
+    }
+
+    fn classify_layout_edit(
+        &mut self,
+        field: DxfEntityField,
+        value: DxfEntityEditValue<'_>,
+    ) -> Result<DxfEntityCommonLayoutEditOutcome, DxfError> {
+        if field == DxfEntityField::LAYOUT
+            && matches!(value, DxfEntityEditValue::ExactRawText(_))
+            && self.layout_objects.is_none()
+        {
+            self.layout_objects = Some(self.document.layout_object_directory(self.cancellation)?);
+        }
+        classify_with_layouts(
+            self.document,
+            self.layout_objects.as_ref(),
             field,
             value,
             self.cancellation,

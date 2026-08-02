@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3aq can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ar can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -844,6 +844,19 @@ Matching is still byte-exact and case-sensitive. Layout edit admission,
 reciprocal block-record ownership, legal-name/case policy, color-book
 resolution, applicability, lifecycle, family graphs, and `Complete` support
 remain open.
+
+M14.3ar validates common layout-name edits before generic singleton planning.
+The public classifier distinguishes non-layout fields, wrong value kinds,
+missing exact names, ambiguous exact names, and one same-document layout-object
+target. `DxfEntityEditSession` constructs that directory lazily only for an
+exact group-410 proposal and enforces the existing value-byte ceiling first.
+Accepted modern ASCII/Binary edits use canonical insertion/replacement, strict
+reparse, target-bearing layout semantics, semantic/raw verification, and exact
+inverse restoration; rejected proposals queue nothing. Classifier parity spans
+AC1009 through AC1032. AC1009 Binary group 410 remains unencodable and fails at
+the typed wire gate. Matching is byte-exact and case-sensitive. Reciprocal
+block-record ownership, layout lifecycle, case/legal-name policy, color-book
+resolution, applicability, family graphs, and `Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -55,6 +55,7 @@ mod encoding;
 mod entity_common_field_domain;
 mod entity_common_field_domain_semantic;
 mod entity_common_handle_semantic;
+mod entity_common_layout_edit;
 mod entity_common_reference_edit;
 mod entity_common_reference_target;
 mod entity_common_symbol_edit;
@@ -419,6 +420,10 @@ pub use entity_common_handle_semantic::{
     DxfEntityCommonHandleDirectory, DxfEntityCommonHandleEntry, DxfEntityCommonHandleSemantics,
     DxfEntityCommonReferenceIssue, DxfEntityCommonReferenceSemanticValue,
     DxfEntityCommonReferenceValue,
+};
+pub use entity_common_layout_edit::{
+    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
+    DxfEntityCommonLayoutEditValue,
 };
 pub use entity_common_reference_edit::{
     DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,

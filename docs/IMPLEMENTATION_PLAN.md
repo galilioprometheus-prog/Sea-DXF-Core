@@ -2206,6 +2206,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     admit layout edits, validate reciprocal block-record ownership, define case
     folding or legal names, resolve color books, claim applicability, or add
     layout lifecycle and family graph CRUD.
+    M14.3ar composes the exact layout-object directory with common-field edit
+    admission. `classify_entity_common_layout_edit` distinguishes non-layout
+    fields, wrong value kinds, missing names, ambiguous names, and one exact
+    same-document target without changing source bytes. The edit session builds
+    and reuses the layout directory lazily, after the existing exact-text
+    resource ceiling. Accepted modern ASCII/Binary edits flow through canonical
+    insertion/replacement, strict reparse, target-bearing layout semantics,
+    semantic/raw verification, and byte-identical inverse restoration. Public
+    classifier parity spans all nine dialects; AC1009 Binary remains physically
+    unable to encode group 410 and fails typed without queueing. Matching stays
+    byte-exact and case-sensitive. This checkpoint does not validate reciprocal
+    block-record ownership, layout lifecycle, case folding, legal names,
+    color-book resolution, applicability, or family graph CRUD.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
