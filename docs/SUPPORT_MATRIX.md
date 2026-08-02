@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bl can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bm can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1081,6 +1081,21 @@ spans every R13+ dialect, and tampering proves typed missing/ambiguous handle,
 family, common-field, and geometry failures. This is one prepared-record
 operation, not yet `DxfEntityEditSession::insert`, multi-record reservation,
 optional POINT payload support, clone/delete, or POINT `Complete` support.
+
+M14.3bm adds the public unified-session POINT insertion operation with the
+planned `insert(placement, draft)` shape. The typed draft carries an explicit
+caller-selected BLOCK_RECORD owner; the session validates it, reserves one
+handle, applies the generated dialect gate, encodes the record, and retains the
+M14.3bl transaction and semantic expectation. The source remains immutable.
+`finish` returns the composed insertion/`$HANDSEED` transaction, while
+`finish_verifiable` also requires the inserted POINT postcondition before an
+inverse is released. Compact receipts/issues preserve handle, entity name,
+placement, owner, allocation, applicability, and record failure states without
+payload bytes. Direct session coverage spans ASCII/Binary AC1009 through
+AC1032. One insert is admitted per session; a second insert or any insert/update
+mixture is rejected without queue growth. Multi-record insertion, mixed
+ordinal-independent verification, optional POINT fields, clone/delete, and
+POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

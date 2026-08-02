@@ -487,6 +487,25 @@ fn point_draft_rejects_name_layer_numeric_source_and_cancellation() -> Result<()
                 && draft == DxfEntityNameClassification::Canonical(DxfEntityTopic::POINT)
     ));
 
+    let wrong_owner = admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
+    assert!(matches!(
+        view.encode_entity_draft_record(
+            wrong_owner,
+            DxfEntityDraft::point(point_draft(
+                DxfAcadVersion::Ac1032,
+                b"Layer0",
+                LOCATION
+            ))
+            .with_owner(handle(0x11)),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        Err(DxfEntityDraftRecordIssue::OwnerMismatch {
+            admitted,
+            requested
+        }) if admitted == handle(0x10) && requested == handle(0x11)
+    ));
+
     let empty = admitted_plan(view, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?;
     assert!(matches!(
         view.encode_entity_draft_record(

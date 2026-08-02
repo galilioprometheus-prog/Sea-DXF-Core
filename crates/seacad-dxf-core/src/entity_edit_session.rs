@@ -11,17 +11,22 @@ use crate::entity_common_text_semantic::reviewed_common_symbol_kind;
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
-    DxfCancellationToken, DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
-    DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainIssue,
-    DxfEntityCommonFieldDomainOutcome, DxfEntityCommonLayoutEditIssue,
-    DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
-    DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
-    DxfEntityCommonSymbolEditOutcome, DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField,
+    DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityCommonColorBookEditIssue,
+    DxfEntityCommonColorBookEditOutcome, DxfEntityCommonFieldDomainDirectory,
+    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
+    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
+    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityDraft,
+    DxfEntityDraftApplicabilityIssue, DxfEntityDraftIdentityIssue, DxfEntityDraftName,
+    DxfEntityDraftRecordIssue, DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField,
     DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome,
     DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue,
-    DxfEntityFieldResetOutcome, DxfEntityKey, DxfError, DxfHandleIdentityDirectory, DxfIoOperation,
-    DxfLayoutObjectDirectory, DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource,
-    DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    DxfEntityFieldResetOutcome, DxfEntityKey, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
+    DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfError, DxfHandle,
+    DxfHandleAllocationPolicyState, DxfHandleIdentityDirectory, DxfHandleReservationPlanOutcome,
+    DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
+    DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
+    DxfTransactionPlan,
 };
 
 /// One atomic replacement of the common indexed/true/color-book tuple.
@@ -131,6 +136,7 @@ pub enum DxfEntityEditIssue {
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
     Reset(DxfEntityFieldResetIssue),
+    InsertPending,
 }
 
 /// Effect of one accepted update request.
@@ -183,6 +189,90 @@ pub enum DxfEntityEditOutcome {
     Unavailable(DxfEntityEditIssue),
 }
 
+/// Compact placement-owner failure retained by a whole-entity insert request.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityInsertOwnerIssue {
+    PlacementUnavailable {
+        target: DxfEntityPlacementTarget,
+    },
+    NullOwner,
+    OwnerMissing {
+        handle: DxfHandle,
+    },
+    OwnerAmbiguous {
+        handle: DxfHandle,
+        target_count: u32,
+    },
+    OwnerNotBlockRecord {
+        handle: DxfHandle,
+        raw_record_ordinal: u64,
+    },
+    BlockOwnerCardinality {
+        state: DxfCommonOwnerCandidateState,
+    },
+    BlockOwnerResolution {
+        state: DxfHandleResolutionState,
+    },
+    BlockOwnerMismatch {
+        declared: DxfHandle,
+        requested: DxfHandle,
+    },
+}
+
+/// Typed reason why a whole-entity insert was not admitted to the session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityInsertIssue {
+    OwnerRequired,
+    UpdatePending {
+        queued_update_count: u32,
+    },
+    InsertAlreadyQueued,
+    Owner(DxfEntityInsertOwnerIssue),
+    HandlePolicy(DxfHandleAllocationPolicyState),
+    HandleExhausted {
+        handseed: DxfHandle,
+        requested_count: u64,
+    },
+    Identity(DxfEntityDraftIdentityIssue),
+    Applicability(DxfEntityDraftApplicabilityIssue),
+    Record(DxfEntityDraftRecordIssue),
+}
+
+/// Non-payload receipt for one admitted whole-entity insertion.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityInsertReceipt {
+    handle: DxfHandle,
+    name: DxfEntityDraftName,
+    placement: DxfEntityPlacementTarget,
+}
+
+impl DxfEntityInsertReceipt {
+    #[must_use]
+    pub const fn handle(self) -> DxfHandle {
+        self.handle
+    }
+
+    #[must_use]
+    pub const fn name(self) -> DxfEntityDraftName {
+        self.name
+    }
+
+    #[must_use]
+    pub const fn placement(self) -> DxfEntityPlacementTarget {
+        self.placement
+    }
+}
+
+/// Result of adding one whole-entity insertion to an edit session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityInsertOutcome {
+    Applied(DxfEntityInsertReceipt),
+    Unavailable(DxfEntityInsertIssue),
+}
+
 struct PendingEdit {
     key: DxfEntityKey,
     field: DxfEntityField,
@@ -203,6 +293,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
+    pending_insert: Option<DxfEntityEditPlan>,
 }
 
 impl fmt::Debug for DxfEntityEditSession<'_, '_, '_> {
@@ -211,7 +302,7 @@ impl fmt::Debug for DxfEntityEditSession<'_, '_, '_> {
             .debug_struct("DxfEntityEditSession")
             .field("source_id", &self.document.source_id())
             .field("format", &self.document.format())
-            .field("queued_edit_count", &self.pending.len())
+            .field("queued_edit_count", &self.queued_edit_count())
             .finish()
     }
 }
@@ -237,6 +328,7 @@ impl<'document, 'evidence, 'cancellation>
             layout_objects: None,
             named_symbols: None,
             pending: Vec::new(),
+            pending_insert: None,
         })
     }
 
@@ -247,7 +339,124 @@ impl<'document, 'evidence, 'cancellation>
 
     #[must_use]
     pub fn queued_edit_count(&self) -> u64 {
-        self.pending.len() as u64
+        self.pending.len() as u64 + u64::from(self.pending_insert.is_some())
+    }
+
+    /// Adds one complete typed entity insertion without changing the source.
+    ///
+    /// This checkpoint admits one insertion per session. Update/insert mixing
+    /// remains fail-closed until ordinal-independent mixed verification lands.
+    pub fn insert(
+        &mut self,
+        placement: DxfEntityPlacement,
+        draft: DxfEntityDraft<'_>,
+    ) -> Result<DxfEntityInsertOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        if self.pending_insert.is_some() {
+            return Ok(DxfEntityInsertOutcome::Unavailable(
+                DxfEntityInsertIssue::InsertAlreadyQueued,
+            ));
+        }
+        if !self.pending.is_empty() {
+            return Ok(DxfEntityInsertOutcome::Unavailable(
+                DxfEntityInsertIssue::UpdatePending {
+                    queued_update_count: u32::try_from(self.pending.len())
+                        .map_err(|_| invalid_internal_data())?,
+                },
+            ));
+        }
+        let Some(owner) = draft.owner() else {
+            return Ok(DxfEntityInsertOutcome::Unavailable(
+                DxfEntityInsertIssue::OwnerRequired,
+            ));
+        };
+        let owners = self
+            .document
+            .entity_placement_owner_directory(self.cancellation)?;
+        let binding = match owners.bind(placement, owner, self.cancellation)? {
+            DxfEntityPlacementOwnerOutcome::Bound(binding) => binding,
+            DxfEntityPlacementOwnerOutcome::Rejected(issue) => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::Owner(compact_owner_issue(issue)),
+                ));
+            }
+        };
+        let policy = self
+            .document
+            .handle_allocation_policy_directory(self.cancellation)?;
+        let reservation = match self.document.plan_handle_reservation(
+            &policy,
+            1,
+            self.profile,
+            self.cancellation,
+        )? {
+            DxfHandleReservationPlanOutcome::Planned(plan) => plan,
+            DxfHandleReservationPlanOutcome::PolicyUnavailable { state } => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::HandlePolicy(state),
+                ));
+            }
+            DxfHandleReservationPlanOutcome::Exhausted {
+                handseed,
+                requested_count,
+            } => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::HandleExhausted {
+                        handseed,
+                        requested_count,
+                    },
+                ));
+            }
+        };
+        let identity = match self.document.prepare_entity_draft_identity(
+            draft.name(),
+            binding,
+            reservation,
+            self.cancellation,
+        )? {
+            Ok(plan) => plan,
+            Err(issue) => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::Identity(issue),
+                ));
+            }
+        };
+        let applicability = match self
+            .document
+            .prepare_entity_draft_applicability(identity, self.cancellation)?
+        {
+            Ok(plan) => plan,
+            Err(issue) => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::Applicability(issue),
+                ));
+            }
+        };
+        let handle = applicability.handle();
+        let name = applicability.name();
+        let record = match self.document.encode_entity_draft_record(
+            applicability,
+            draft,
+            self.profile,
+            self.cancellation,
+        )? {
+            Ok(plan) => plan,
+            Err(issue) => {
+                return Ok(DxfEntityInsertOutcome::Unavailable(
+                    DxfEntityInsertIssue::Record(issue),
+                ));
+            }
+        };
+        let plan =
+            self.document
+                .plan_entity_draft_insert(record, self.profile, self.cancellation)?;
+        ensure_not_cancelled(self.cancellation)?;
+        self.pending_insert = Some(plan);
+        Ok(DxfEntityInsertOutcome::Applied(DxfEntityInsertReceipt {
+            handle,
+            name,
+            placement: placement.target(),
+        }))
     }
 
     /// Adds one typed update without changing the source document.
@@ -257,6 +466,11 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
+        if self.pending_insert.is_some() {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::InsertPending,
+            ));
+        }
         match patch {
             DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
             DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
@@ -546,12 +760,26 @@ impl<'document, 'evidence, 'cancellation>
     }
 
     /// Freezes every accepted update into one source-order transaction plan.
-    pub fn finish(self) -> Result<DxfTransactionPlan, DxfError> {
+    pub fn finish(mut self) -> Result<DxfTransactionPlan, DxfError> {
+        if let Some(insert) = self.pending_insert.take() {
+            ensure_not_cancelled(self.cancellation)?;
+            if !self.pending.is_empty() {
+                return Err(invalid_internal_data());
+            }
+            return Ok(insert.into_transaction());
+        }
         self.finish_parts().map(|(transaction, _)| transaction)
     }
 
     /// Freezes the transaction together with its semantic postconditions.
-    pub fn finish_verifiable(self) -> Result<DxfEntityEditPlan, DxfError> {
+    pub fn finish_verifiable(mut self) -> Result<DxfEntityEditPlan, DxfError> {
+        if let Some(insert) = self.pending_insert.take() {
+            ensure_not_cancelled(self.cancellation)?;
+            if !self.pending.is_empty() {
+                return Err(invalid_internal_data());
+            }
+            return Ok(insert);
+        }
         let (transaction, pending) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
@@ -782,6 +1010,44 @@ fn combine_insertions(pending: &[PendingEdit]) -> Result<Vec<u8>, DxfError> {
         combined.extend_from_slice(&edit.replacement);
     }
     Ok(combined)
+}
+
+fn compact_owner_issue(issue: DxfEntityPlacementOwnerIssue) -> DxfEntityInsertOwnerIssue {
+    match issue {
+        DxfEntityPlacementOwnerIssue::PlacementUnavailable { target } => {
+            DxfEntityInsertOwnerIssue::PlacementUnavailable { target }
+        }
+        DxfEntityPlacementOwnerIssue::NullOwner => DxfEntityInsertOwnerIssue::NullOwner,
+        DxfEntityPlacementOwnerIssue::OwnerMissing { handle } => {
+            DxfEntityInsertOwnerIssue::OwnerMissing { handle }
+        }
+        DxfEntityPlacementOwnerIssue::OwnerAmbiguous {
+            handle,
+            target_count,
+        } => DxfEntityInsertOwnerIssue::OwnerAmbiguous {
+            handle,
+            target_count,
+        },
+        DxfEntityPlacementOwnerIssue::OwnerNotBlockRecord { target } => {
+            DxfEntityInsertOwnerIssue::OwnerNotBlockRecord {
+                handle: target.handle(),
+                raw_record_ordinal: target.record().ordinal(),
+            }
+        }
+        DxfEntityPlacementOwnerIssue::BlockOwnerCardinality { state } => {
+            DxfEntityInsertOwnerIssue::BlockOwnerCardinality { state }
+        }
+        DxfEntityPlacementOwnerIssue::BlockOwnerResolution { state } => {
+            DxfEntityInsertOwnerIssue::BlockOwnerResolution { state }
+        }
+        DxfEntityPlacementOwnerIssue::BlockOwnerMismatch {
+            declared,
+            requested,
+        } => DxfEntityInsertOwnerIssue::BlockOwnerMismatch {
+            declared: declared.handle(),
+            requested: requested.handle(),
+        },
+    }
 }
 
 fn applied(

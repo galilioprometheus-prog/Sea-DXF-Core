@@ -2455,5 +2455,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     session insertion, multi-record reservation, optional POINT fields, and
     the remaining CRUD ladder stay open.
 
+    M14.3bm adds `DxfEntityEditSession::insert(placement, draft)` for canonical
+    POINT. `DxfEntityDraft` now optionally retains the exact caller-selected
+    BLOCK_RECORD owner; session insertion requires it and never infers space
+    from layout or group 67. Admission composes owner validation, one handle
+    reservation, generated dialect applicability, typed record encoding, and
+    the M14.3bl verified insert plan without changing the source. `finish`
+    releases its raw transaction and `finish_verifiable` releases the family
+    postcondition. Compact typed outcomes cover owner, allocation,
+    applicability, record, duplicate-insert, and mixed-update failures. Paired
+    ASCII/Binary tests span all nine dialects and strict semantic/inverse
+    verification. Multi-record inserts and mixed insert/update sessions remain
+    fail-closed until one shared reservation and ordinal-independent verifier
+    are implemented.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

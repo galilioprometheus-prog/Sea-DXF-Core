@@ -73,19 +73,40 @@ impl<'a> DxfPointDraft<'a> {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityDraft<'a> {
-    Point(DxfPointDraft<'a>),
+    Point {
+        draft: DxfPointDraft<'a>,
+        owner: Option<DxfHandle>,
+    },
 }
 
 impl<'a> DxfEntityDraft<'a> {
     #[must_use]
     pub const fn point(draft: DxfPointDraft<'a>) -> Self {
-        Self::Point(draft)
+        Self::Point { draft, owner: None }
+    }
+
+    /// Supplies the exact BLOCK_RECORD owner selected by the caller.
+    #[must_use]
+    pub const fn with_owner(self, owner: DxfHandle) -> Self {
+        match self {
+            Self::Point { draft, .. } => Self::Point {
+                draft,
+                owner: Some(owner),
+            },
+        }
+    }
+
+    #[must_use]
+    pub const fn owner(self) -> Option<DxfHandle> {
+        match self {
+            Self::Point { owner, .. } => owner,
+        }
     }
 
     #[must_use]
     pub const fn name(self) -> DxfEntityDraftName {
         match self {
-            Self::Point(_) => DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+            Self::Point { .. } => DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
         }
     }
 }
@@ -99,6 +120,10 @@ pub enum DxfEntityDraftRecordIssue {
         draft: DxfEntityNameClassification,
     },
     EmptyLayerName,
+    OwnerMismatch {
+        admitted: DxfHandle,
+        requested: DxfHandle,
+    },
     LayoutRequired {
         target: DxfEntityPlacementTarget,
     },
@@ -237,8 +262,16 @@ impl DxfRawDocumentView<'_> {
                 draft: draft.name().classification(),
             }));
         }
+        if let Some(requested) = draft.owner()
+            && requested != applicability.identity().owner_handle()
+        {
+            return Ok(Err(DxfEntityDraftRecordIssue::OwnerMismatch {
+                admitted: applicability.identity().owner_handle(),
+                requested,
+            }));
+        }
         let (bytes, expectation) = match draft {
-            DxfEntityDraft::Point(point) => {
+            DxfEntityDraft::Point { draft: point, .. } => {
                 let bytes = match encode_point(self, &applicability, point, profile, cancellation)?
                 {
                     Ok(bytes) => bytes,

@@ -998,6 +998,21 @@ mismatch remain typed. This does not yet expose session-level `insert`, batch
 multiple draft records, add optional POINT fields, or complete update/clone/
 delete and the POINT support ledger.
 
+M14.3bm exposes the first exact roadmap signature on the unified CRUD surface:
+`DxfEntityEditSession::insert(DxfEntityPlacement, DxfEntityDraft)`. The typed
+draft retains the caller's explicit BLOCK_RECORD owner instead of deriving
+model/paper space. Without mutating the source, the session validates the
+placement-owner pair, reserves one handle, admits generated applicability,
+encodes the canonical POINT record, and queues the M14.3bl verified insertion.
+`finish` returns the atomic insertion/`$HANDSEED` transaction and
+`finish_verifiable` retains its family postcondition. Receipt and compact typed
+issues expose the allocated handle, name, placement, missing/invalid owner,
+allocation policy, applicability, and record failures without retaining raw
+payload. All nine ASCII/Binary dialect pairs pass strict semantic/inverse
+verification. This first session checkpoint admits one insert and rejects
+insert/update mixing; multi-record reservation, mixed verification, optional
+POINT fields, and the remaining update/clone/delete ladder stay open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

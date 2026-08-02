@@ -474,7 +474,8 @@ pub use entity_draft_record::{
 pub use entity_edit_session::{
     DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityEditDisposition,
     DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession,
-    DxfEntityPatch,
+    DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
+    DxfEntityInsertReceipt, DxfEntityPatch,
 };
 pub use entity_edit_verification::{
     DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,

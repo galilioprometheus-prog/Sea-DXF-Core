@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bl. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bm. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -181,6 +181,14 @@ fields plus the WCS location before releasing an inverse. The same plan uses
 the create-new write, strict-reparse, cleanup, and journal pipeline for all
 nine ASCII/Binary dialect pairs. Session-level insert batching and the rest of
 POINT CRUD remain later checkpoints.
+`DxfEntityEditSession::insert(placement, draft)` now exposes that POINT path
+through the unified CRUD surface. The typed draft carries the caller-selected
+BLOCK_RECORD owner, and the session atomically performs owner binding, one
+handle reservation, dialect applicability, canonical record encoding, and the
+verified insertion plan. `finish` returns the raw transaction while
+`finish_verifiable` retains the POINT postcondition. A session currently admits
+one new record and rejects update/insert mixing until multi-record allocation
+and ordinal-independent mixed verification land.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar
