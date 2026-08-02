@@ -173,6 +173,20 @@ fn reviewed_aliases_map_to_canonical_topics_with_distinct_evidence() {
             "autocad.entity.inventory.2027"
         ))
     );
+    assert_eq!(
+        DxfEntityAlias::SECTIONOBJECT.descriptor().map(|value| (
+            value.topic(),
+            value.evidence(),
+            value.source_id(),
+            value.source_reference()
+        )),
+        Some((
+            DxfEntityTopic::SECTION,
+            DxfEntityAliasEvidence::Normative,
+            "autodesk.entity_dxf_names.2024",
+            "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D"
+        ))
+    );
 }
 
 #[test]
@@ -420,6 +434,48 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         multileader.evidence(),
         DxfEntityApplicabilityEvidence::NotYetReviewed
     );
+
+    for exact_name in [
+        b"SECTIONOBJECT".as_slice(),
+        b"EXTRUDEDSURFACE".as_slice(),
+        b"LOFTEDSURFACE".as_slice(),
+        b"PLANESURFACE".as_slice(),
+        b"REVOLVEDSURFACE".as_slice(),
+        b"SWEPTSURFACE".as_slice(),
+    ] {
+        let descriptor = classify_exact_dxf_entity_name(exact_name)
+            .applicability_descriptor()
+            .ok_or("reviewed AutoCAD 2007 alias is missing its applicability row")?;
+        assert_eq!(descriptor.minimum_version(), Some(DxfAcadVersion::Ac1021));
+        assert_eq!(descriptor.maximum_version(), None);
+        assert_eq!(
+            descriptor.evidence(),
+            DxfEntityApplicabilityEvidence::AutodeskCompatibility
+        );
+        assert_eq!(
+            descriptor.source_reference(),
+            Some("GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B")
+        );
+        assert_eq!(
+            descriptor.applicability(DxfAcadVersion::Ac1018),
+            DxfEntityApplicability::NotApplicable
+        );
+        assert_eq!(
+            descriptor.applicability(DxfAcadVersion::Ac1021),
+            DxfEntityApplicability::Applicable
+        );
+    }
+
+    for exact_topic in [b"SECTION".as_slice(), b"SURFACE".as_slice()] {
+        let descriptor = classify_exact_dxf_entity_name(exact_topic)
+            .applicability_descriptor()
+            .ok_or("canonical topic is missing its applicability row")?;
+        assert_eq!(descriptor.minimum_version(), None);
+        assert_eq!(
+            descriptor.evidence(),
+            DxfEntityApplicabilityEvidence::NotYetReviewed
+        );
+    }
 
     let spline = classify_exact_dxf_entity_name(b"SPLINE")
         .applicability_descriptor()

@@ -4,8 +4,14 @@
     {
       "id": "autocad.entity.inventory.2027",
       "topic_id": "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-      "normalized_facts_sha256": "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+      "normalized_facts_sha256": "377c7af5f38531e128f5f89e4d3442614199cdcb4b8696bd18b809e9b3d4f3f2",
       "evidence_kind": "oracle_inventory"
+    },
+    {
+      "id": "autodesk.autocad2007.entities.compatibility.2024",
+      "topic_id": "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B",
+      "normalized_facts_sha256": "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9",
+      "evidence_kind": "applicability_list"
     },
     {
       "id": "autodesk.common_entity_codes.2024",
@@ -18,6 +24,12 @@
       "topic_id": "GUID-7D07C886-FD1D-4A0C-A7AB-B4D21F18E484",
       "normalized_facts_sha256": "a7d540ad9109768edd57db100743148756c21966854b634dc04450066fd3e4f7",
       "evidence_kind": "topic_list"
+    },
+    {
+      "id": "autodesk.entity_dxf_names.2024",
+      "topic_id": "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+      "normalized_facts_sha256": "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
+      "evidence_kind": "alias_list"
     },
     {
       "id": "autodesk.hatch.2025",

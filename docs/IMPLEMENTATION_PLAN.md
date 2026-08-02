@@ -2406,5 +2406,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     fail-closed. Existing semantic/geometry coverage does not establish entity
     insertion, full CRUD, writer closure, or `Complete`.
 
+    M14.3bi moves `SECTIONOBJECT`, `EXTRUDEDSURFACE`, `LOFTEDSURFACE`,
+    `PLANESURFACE`, `REVOLVEDSURFACE`, and `SWEPTSURFACE` from AutoCAD-oracle
+    alias provenance to Autodesk's valid-DXF-name inventory. AutoCAD 2007 API
+    history independently marks their public Section/Surface classes as new,
+    so exact alias admission begins at AC1021. Canonical `SECTION` and
+    `SURFACE` remain fail-closed because neither topic label is assumed to be a
+    concrete group-0 marker. Fifteen names now have reviewed ranges and 44 stay
+    unreviewed; payload semantics, modeler data, CRUD, and `Complete` do not
+    advance.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

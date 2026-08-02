@@ -946,6 +946,16 @@ of 59 names now have reviewed ranges and 50 remain fail-closed. Existing
 LWPOLYLINE semantics and geometry do not imply insert/CRUD/writer closure or
 `Complete` status.
 
+M14.3bi replaces behavioral-only provenance for `SECTIONOBJECT` and the five
+surface-specialization aliases with Autodesk's valid-DXF-name inventory, then
+reviews their shared AutoCAD 2007 introduction boundary. The generated ranges
+start at AC1021 with no reviewed maximum and retain the API-history GUID plus
+normalized six-row receipt. Canonical `SECTION` and `SURFACE` remain
+`NotYetReviewed`: observed files contain the concrete aliases, not generic
+group-0 records. Fifteen of 59 names now have reviewed ranges and 44 remain
+fail-closed. Payload semantics, proprietary modeler decoding, CRUD, and
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

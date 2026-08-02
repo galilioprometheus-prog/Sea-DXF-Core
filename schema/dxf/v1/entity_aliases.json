@@ -10,11 +10,11 @@
     { "id": "arc_dimension", "dxf_name": "ARC_DIMENSION", "topic_id": "dimension", "source_id": "autocad.entity.inventory.2027" },
     { "id": "large_radial_dimension", "dxf_name": "LARGE_RADIAL_DIMENSION", "topic_id": "dimension", "source_id": "autocad.entity.inventory.2027" },
     { "id": "multileader", "dxf_name": "MULTILEADER", "topic_id": "mleader", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "sectionobject", "dxf_name": "SECTIONOBJECT", "topic_id": "section", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "extrudedsurface", "dxf_name": "EXTRUDEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "loftedsurface", "dxf_name": "LOFTEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "planesurface", "dxf_name": "PLANESURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "revolvedsurface", "dxf_name": "REVOLVEDSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" },
-    { "id": "sweptsurface", "dxf_name": "SWEPTSURFACE", "topic_id": "surface", "source_id": "autocad.entity.inventory.2027" }
+    { "id": "sectionobject", "dxf_name": "SECTIONOBJECT", "topic_id": "section", "source_id": "autodesk.entity_dxf_names.2024" },
+    { "id": "extrudedsurface", "dxf_name": "EXTRUDEDSURFACE", "topic_id": "surface", "source_id": "autodesk.entity_dxf_names.2024" },
+    { "id": "loftedsurface", "dxf_name": "LOFTEDSURFACE", "topic_id": "surface", "source_id": "autodesk.entity_dxf_names.2024" },
+    { "id": "planesurface", "dxf_name": "PLANESURFACE", "topic_id": "surface", "source_id": "autodesk.entity_dxf_names.2024" },
+    { "id": "revolvedsurface", "dxf_name": "REVOLVEDSURFACE", "topic_id": "surface", "source_id": "autodesk.entity_dxf_names.2024" },
+    { "id": "sweptsurface", "dxf_name": "SWEPTSURFACE", "topic_id": "surface", "source_id": "autodesk.entity_dxf_names.2024" }
   ]
 }

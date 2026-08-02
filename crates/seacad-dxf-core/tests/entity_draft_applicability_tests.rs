@@ -200,6 +200,16 @@ fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplic
         DxfEntityDraftName::Alias(alias) if alias == DxfEntityAlias::PDFUNDERLAY => {
             Some(DxfAcadVersion::Ac1024)
         }
+        DxfEntityDraftName::Alias(alias)
+            if alias == DxfEntityAlias::SECTIONOBJECT
+                || alias == DxfEntityAlias::EXTRUDEDSURFACE
+                || alias == DxfEntityAlias::LOFTEDSURFACE
+                || alias == DxfEntityAlias::PLANESURFACE
+                || alias == DxfEntityAlias::REVOLVEDSURFACE
+                || alias == DxfEntityAlias::SWEPTSURFACE =>
+        {
+            Some(DxfAcadVersion::Ac1021)
+        }
         _ => None,
     };
     match minimum {

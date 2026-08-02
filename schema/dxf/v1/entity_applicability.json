@@ -55,11 +55,11 @@
     { "name_kind": "alias", "name_id": "arc_dimension", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "alias", "name_id": "large_radial_dimension", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "alias", "name_id": "multileader", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "sectionobject", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "extrudedsurface", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "loftedsurface", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "planesurface", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "revolvedsurface", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "sweptsurface", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null }
+    { "name_kind": "alias", "name_id": "sectionobject", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" },
+    { "name_kind": "alias", "name_id": "extrudedsurface", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" },
+    { "name_kind": "alias", "name_id": "loftedsurface", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" },
+    { "name_kind": "alias", "name_id": "planesurface", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" },
+    { "name_kind": "alias", "name_id": "revolvedsurface", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" },
+    { "name_kind": "alias", "name_id": "sweptsurface", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.autocad2007.entities.compatibility.2024" }
   ]
 }

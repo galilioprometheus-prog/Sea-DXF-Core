@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bh can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bi can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1033,6 +1033,16 @@ The Autodesk LWPOLYLINE DXF page independently defines the exact entity and
 applicable from AC1014 and not applicable in AC1009/AC1012. Nine names now have
 reviewed ranges and 50 remain unreviewed. Existing field, segment, width, bulge,
 OCS/WCS, and geometry coverage is not insert/CRUD/writer or `Complete` support.
+
+M14.3bi promotes exact-name provenance for `SECTIONOBJECT` and the five surface
+specializations from an AutoCAD inventory oracle to Autodesk's valid DXF object
+name table. Autodesk's AutoCAD 2007 API history separately marks the matching
+Section and Surface classes as new, so generated admission marks all six aliases
+applicable from AC1021 and not applicable through AC1018. Canonical `SECTION`
+and `SURFACE` remain `NotYetReviewed`; observed concrete aliases do not prove
+generic group-0 records. Fifteen names now have reviewed ranges and 44 remain
+unreviewed. Section/surface payloads, proprietary modeler data, CRUD, and
+`Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

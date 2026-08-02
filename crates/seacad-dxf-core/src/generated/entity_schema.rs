@@ -330,7 +330,7 @@ pub const DXF_ENTITY_TOPIC_SCHEMA_SHA256: &str =
     "7a492812fa00c44ca58016753dd5aba682b09a1951dfd7e885e251d9be10d68e";
 
 pub const DXF_ENTITY_ALIAS_SCHEMA_SHA256: &str =
-    "c95364127df561284a935f0fc989eff13bf7fc813a9e381a00e7e986d27829eb";
+    "c29c95a847bdf0f08c68eea1d9c3f2605814cbd43622d530c3e2d668d549421c";
 
 pub static DXF_ENTITY_TOPICS: &[DxfEntityTopicDescriptor] = &[
     DxfEntityTopicDescriptor {
@@ -759,7 +759,7 @@ pub static DXF_ENTITY_ALIASES: &[DxfEntityAliasDescriptor] = &[
         evidence: DxfEntityAliasEvidence::BehavioralOracle,
         source_id: "autocad.entity.inventory.2027",
         source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        source_facts_sha256: "377c7af5f38531e128f5f89e4d3442614199cdcb4b8696bd18b809e9b3d4f3f2",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::LARGE_RADIAL_DIMENSION,
@@ -769,7 +769,7 @@ pub static DXF_ENTITY_ALIASES: &[DxfEntityAliasDescriptor] = &[
         evidence: DxfEntityAliasEvidence::BehavioralOracle,
         source_id: "autocad.entity.inventory.2027",
         source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        source_facts_sha256: "377c7af5f38531e128f5f89e4d3442614199cdcb4b8696bd18b809e9b3d4f3f2",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::MULTILEADER,
@@ -779,67 +779,67 @@ pub static DXF_ENTITY_ALIASES: &[DxfEntityAliasDescriptor] = &[
         evidence: DxfEntityAliasEvidence::BehavioralOracle,
         source_id: "autocad.entity.inventory.2027",
         source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        source_facts_sha256: "377c7af5f38531e128f5f89e4d3442614199cdcb4b8696bd18b809e9b3d4f3f2",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::SECTIONOBJECT,
         id: "sectionobject",
         dxf_name: "SECTIONOBJECT",
         topic: DxfEntityTopic::SECTION,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::EXTRUDEDSURFACE,
         id: "extrudedsurface",
         dxf_name: "EXTRUDEDSURFACE",
         topic: DxfEntityTopic::SURFACE,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::LOFTEDSURFACE,
         id: "loftedsurface",
         dxf_name: "LOFTEDSURFACE",
         topic: DxfEntityTopic::SURFACE,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::PLANESURFACE,
         id: "planesurface",
         dxf_name: "PLANESURFACE",
         topic: DxfEntityTopic::SURFACE,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::REVOLVEDSURFACE,
         id: "revolvedsurface",
         dxf_name: "REVOLVEDSURFACE",
         topic: DxfEntityTopic::SURFACE,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
     DxfEntityAliasDescriptor {
         alias: DxfEntityAlias::SWEPTSURFACE,
         id: "sweptsurface",
         dxf_name: "SWEPTSURFACE",
         topic: DxfEntityTopic::SURFACE,
-        evidence: DxfEntityAliasEvidence::BehavioralOracle,
-        source_id: "autocad.entity.inventory.2027",
-        source_reference: "SHA256-C413731DBBFCD74D25CEAF0AFB435DDFD44D1149EC5587150A1D65510C2F1870",
-        source_facts_sha256: "7a8329c3173c747fce4feca8c17a56a9e5c6c841ff3abdecc474c54458d7aea8",
+        evidence: DxfEntityAliasEvidence::Normative,
+        source_id: "autodesk.entity_dxf_names.2024",
+        source_reference: "GUID-ECB6F2FF-6680-4514-86A7-7AD5551E378D",
+        source_facts_sha256: "35319d08d265d9cbb3aed819d012f15b4bf19249bb39df04c557b461645645ef",
     },
 ];
 
@@ -975,7 +975,7 @@ impl DxfEntityNameClassification {
 }
 
 pub const DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256: &str =
-    "d7628a186a3acee3b2355f5a6df498ca738e95ae841685f3952538b31ba16e42";
+    "4b499021f3ad793a8f0d9ff6e1a622220953cfab8a8ca19a781b09bb3ff8ca02";
 
 #[rustfmt::skip]
 pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
@@ -1032,12 +1032,12 @@ pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::ARC_DIMENSION)),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::LARGE_RADIAL_DIMENSION)),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::MULTILEADER)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::SECTIONOBJECT)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::EXTRUDEDSURFACE)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::LOFTEDSURFACE)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::PLANESURFACE)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::REVOLVEDSURFACE)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::SWEPTSURFACE)),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::SECTIONOBJECT), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::EXTRUDEDSURFACE), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::LOFTEDSURFACE), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::PLANESURFACE), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::REVOLVEDSURFACE), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::SWEPTSURFACE), DxfAcadVersion::Ac1021, None, "autodesk.autocad2007.entities.compatibility.2024", "GUID-CC6BE90C-5ABE-4DE5-9390-B36FDCFF798B", "4bc579a7aa48678e7588de1b98e9c3eb3383461ab14d78a7a0334d5a8f167eb9"),
 ];
 
 #[must_use]
