@@ -801,6 +801,18 @@ payload-redacted. External `.acb` validation, name/RGB mapping, reset of the
 whole tuple, applicability beyond the parity restriction, family graphs, and
 `Complete` support remain later work.
 
+M14.3av adds the inverse correlated operation through
+`ResetCommonColorBook`. It attempts groups 62, 420, and 430 in canonical field
+order, deletes every unique explicit singleton, and treats an absent optional
+member as already implicit. The resulting semantics restore indexed color to
+the reviewed BYLAYER value 256 while true color and color name remain absent.
+Any duplicate or structural reset failure truncates only components added by
+the request; earlier unrelated pending edits remain intact. Because deletion
+does not encode a new group, the same operation covers ASCII and Binary across
+all nine dialects, including AC1009. External `.acb` access, applicability,
+family graphs, entity insertion/clone/delete, and `Complete` support remain
+later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

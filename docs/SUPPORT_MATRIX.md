@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3au can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3av can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -891,6 +891,18 @@ three generic semantic/raw postconditions, and restore the exact source via
 the inverse journal. Debug output records only name byte count. External
 color-book resolution, mapping verification, composite reset, reviewed
 applicability, family graphs, and `Complete` support remain open.
+
+M14.3av adds `DxfEntityPatch::ResetCommonColorBook`, the correlated inverse of
+M14.3au. Unique explicit groups 62, 420, and 430 are deleted as one logical
+request; absent members are already implicit, and a wholly absent tuple queues
+no edit. Post-image semantics expose indexed color as the reviewed BYLAYER
+default 256 and true color/color name as absent. Failure in a later component
+truncates earlier tuple deletions from that request while retaining unrelated
+pending edits. Paired ASCII/Binary fixtures cover complete, partial, and
+implicit tuples for AC1009 through AC1032, strict generic postconditions, and
+byte-identical inverse restoration. External color-book resolution,
+applicability, family graphs, entity insert/clone/delete, and `Complete`
+support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

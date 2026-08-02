@@ -4,10 +4,11 @@ use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
     DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityCommonTextSemantics,
-    DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityEditVerificationOutcome,
-    DxfEntityField, DxfEntityIndexedColor, DxfEntityPatch, DxfEntityTrueColor, DxfError,
-    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValue, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditValue,
+    DxfEntityEditVerificationOutcome, DxfEntityField, DxfEntityFieldSemantics, DxfEntityFieldValue,
+    DxfEntityIndexedColor, DxfEntityPatch, DxfEntityTrueColor, DxfError, DxfMemorySource,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValue,
+    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const PROPOSED: &[u8] = b"RAL CLASSIC$RAL 1004";
@@ -347,6 +348,161 @@ fn atomic_tuple_updates_insert_replace_rollback_and_restore() -> Result<(), Box<
     Ok(())
 }
 
+#[test]
+fn atomic_tuple_reset_defaults_absence_rollback_and_inverse() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for relation in [
+                Relation::Valid,
+                Relation::ValidWithoutName,
+                Relation::MissingTrueColor,
+                Relation::NoTuple,
+            ] {
+                let bytes = fixture(format, version, relation)?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let key = only_entity(view)?.key();
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                let outcome = session.update(key, DxfEntityPatch::ResetCommonColorBook)?;
+                let expected_count = reset_member_count(version, relation);
+                assert!(matches!(
+                    outcome,
+                    DxfEntityEditOutcome::Applied(receipt)
+                        if receipt.disposition() == if expected_count == 0 {
+                            DxfEntityEditDisposition::AlreadyImplicit
+                        } else {
+                            DxfEntityEditDisposition::Composite
+                        }
+                ));
+                assert_eq!(session.queued_edit_count(), expected_count);
+                let plan = session.finish_verifiable()?;
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let post_document = open_document(&output_source, format)?;
+                let post = post_document.view();
+                assert_reset_tuple_semantics(post)?;
+                let DxfEntityEditVerificationOutcome::Verified(journal) =
+                    plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+                else {
+                    return Err(io::Error::other("verified tuple reset").into());
+                };
+                assert_eq!(journal.receipt().edit_count(), expected_count);
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+
+    for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        let bytes = fixture(format, DxfAcadVersion::Ac1032, Relation::DuplicateTrueColor)?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_document(&source, format)?;
+        let view = document.view();
+        let evidence = view.entity_field_evidence_directory(&token())?;
+        let key = only_entity(view)?.key();
+        let cancellation = token();
+        let mut session =
+            view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+        assert!(matches!(
+            session.update(
+                key,
+                DxfEntityPatch::CommonField(DxfEntityCommonFieldPatch::SetExplicit {
+                    field: DxfEntityField::VISIBILITY,
+                    value: DxfEntityEditValue::Int16(1),
+                })
+            )?,
+            DxfEntityEditOutcome::Applied(_)
+        ));
+        assert!(matches!(
+            session.update(key, DxfEntityPatch::ResetCommonColorBook)?,
+            DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Reset(_))
+        ));
+        assert_eq!(session.queued_edit_count(), 1);
+    }
+
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        Relation::Valid,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_document(&source, DxfRawDocumentFormat::Ascii)?;
+    let view = document.view();
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = only_entity(view)?.key();
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::CommonField(DxfEntityCommonFieldPatch::SetExplicit {
+                field: DxfEntityField::COLOR,
+                value: DxfEntityEditValue::Int16(7),
+            })
+        )?,
+        DxfEntityEditOutcome::Applied(_)
+    ));
+    assert!(matches!(
+        session.update(key, DxfEntityPatch::ResetCommonColorBook)?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::DuplicateFieldEdit {
+            field: DxfEntityField::COLOR,
+            ..
+        })
+    ));
+    assert_eq!(session.queued_edit_count(), 1);
+    Ok(())
+}
+
+fn reset_member_count(version: DxfAcadVersion, relation: Relation) -> u64 {
+    if version == DxfAcadVersion::Ac1009 {
+        return 1;
+    }
+    match relation {
+        Relation::Valid => 3,
+        Relation::ValidWithoutName | Relation::MissingTrueColor => 2,
+        Relation::NoTuple => 0,
+        Relation::InvalidTrueColor
+        | Relation::DuplicateIndexedColor
+        | Relation::DuplicateTrueColor => 0,
+    }
+}
+
+fn assert_reset_tuple_semantics(view: DxfRawDocumentView<'_>) -> Result<(), Box<dyn Error>> {
+    let directory = view.entity_field_semantic_directory(&token())?;
+    let entity = only_entity(view)?;
+    for (field, expected_state, expected_value) in [
+        (
+            DxfEntityField::COLOR,
+            DxfSemanticValueState::Defaulted,
+            Some(DxfEntityFieldValue::Int16(256)),
+        ),
+        (
+            DxfEntityField::TRUE_COLOR,
+            DxfSemanticValueState::Absent,
+            None,
+        ),
+        (
+            DxfEntityField::COLOR_NAME,
+            DxfSemanticValueState::Absent,
+            None,
+        ),
+    ] {
+        let entry = directory
+            .entry_for_field(entity, field)?
+            .ok_or(io::Error::other("tuple field"))?;
+        let DxfEntityFieldSemantics::Singleton(value) = entry.semantics() else {
+            return Err(io::Error::other("tuple singleton").into());
+        };
+        assert_eq!(value.state(), expected_state);
+        assert_eq!(value.value(), expected_value.as_ref());
+    }
+    Ok(())
+}
+
 fn invalid(
     outcome: DxfEntityCommonColorBookEditOutcome,
 ) -> Result<DxfEntityCommonColorBookEditIssue, io::Error> {
@@ -413,6 +569,7 @@ fn fixture(
     ];
     if version != DxfAcadVersion::Ac1009 {
         groups.push((100, Value::Text(b"AcDbEntity")));
+        groups.push((60, Value::Int16(0)));
         if !matches!(relation, Relation::ValidWithoutName | Relation::NoTuple) {
             groups.push((430, Value::Text(b"RAL CLASSIC$RAL 1003")));
         }
@@ -437,6 +594,7 @@ fn fixture(
         }
         groups.push((100, Value::Text(b"AcDbLine")));
     } else {
+        groups.push((60, Value::Int16(0)));
         groups.push((62, Value::Int16(40)));
     }
     groups.extend([(0, Value::Text(b"ENDSEC")), (0, Value::Text(b"EOF"))]);

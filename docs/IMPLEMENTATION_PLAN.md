@@ -2257,5 +2257,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     mappings, reset a complete tuple, review broader applicability, or add
     family graph CRUD.
 
+    M14.3av adds `ResetCommonColorBook` as the atomic inverse of the composite
+    set operation. Each unique explicit 62/420/430 singleton becomes an exact
+    deletion, absent optional members remain no-ops, and a wholly implicit
+    tuple reports `AlreadyImplicit`. Indexed color then exposes the reviewed
+    BYLAYER default 256 while true color and color name expose absence. A
+    duplicate or other component failure rolls the request back to its exact
+    queue checkpoint and preserves earlier unrelated edits. Paired fixtures
+    cover complete, partial, and absent tuples in ASCII/Binary across all nine
+    dialects, strict generic semantic verification, and exact inverse. This
+    checkpoint does not access `.acb` data, review applicability, add family
+    patch CRUD, or implement entity insert/clone/delete graphs.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

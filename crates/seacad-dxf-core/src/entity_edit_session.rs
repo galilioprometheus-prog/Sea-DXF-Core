@@ -101,6 +101,8 @@ impl DxfEntityCommonFieldPatch<'_> {
 pub enum DxfEntityPatch<'a> {
     CommonField(DxfEntityCommonFieldPatch<'a>),
     CommonColorBook(DxfEntityCommonColorBookPatch<'a>),
+    /// Removes every explicit member of the common 62/420/430 color-book tuple.
+    ResetCommonColorBook,
 }
 
 impl<'a> DxfEntityPatch<'a> {
@@ -108,7 +110,7 @@ impl<'a> DxfEntityPatch<'a> {
     pub const fn common_field(self) -> Option<DxfEntityCommonFieldPatch<'a>> {
         match self {
             Self::CommonField(patch) => Some(patch),
-            Self::CommonColorBook(_) => None,
+            Self::CommonColorBook(_) | Self::ResetCommonColorBook => None,
         }
     }
 }
@@ -258,6 +260,7 @@ impl<'document, 'evidence, 'cancellation>
         match patch {
             DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
             DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
+            DxfEntityPatch::ResetCommonColorBook => self.reset_color_book(key),
         }
     }
 
@@ -394,6 +397,52 @@ impl<'document, 'evidence, 'cancellation>
             key,
             DxfEntityField::COLOR_NAME,
             DxfEntityEditDisposition::Composite,
+            self.pending.len(),
+        )
+    }
+
+    fn reset_color_book(&mut self, key: DxfEntityKey) -> Result<DxfEntityEditOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        let fields = [
+            DxfEntityField::COLOR,
+            DxfEntityField::TRUE_COLOR,
+            DxfEntityField::COLOR_NAME,
+        ];
+        for field in fields {
+            if self
+                .pending
+                .iter()
+                .any(|edit| edit.key == key && edit.field == field)
+            {
+                return Ok(DxfEntityEditOutcome::Unavailable(
+                    DxfEntityEditIssue::DuplicateFieldEdit { key, field },
+                ));
+            }
+        }
+
+        let checkpoint = self.pending.len();
+        for field in fields {
+            match self.reset(key, field) {
+                Ok(DxfEntityEditOutcome::Applied(_)) => {}
+                Ok(unavailable @ DxfEntityEditOutcome::Unavailable(_)) => {
+                    self.pending.truncate(checkpoint);
+                    return Ok(unavailable);
+                }
+                Err(error) => {
+                    self.pending.truncate(checkpoint);
+                    return Err(error);
+                }
+            }
+        }
+        let disposition = if self.pending.len() == checkpoint {
+            DxfEntityEditDisposition::AlreadyImplicit
+        } else {
+            DxfEntityEditDisposition::Composite
+        };
+        applied(
+            key,
+            DxfEntityField::COLOR_NAME,
+            disposition,
             self.pending.len(),
         )
     }
