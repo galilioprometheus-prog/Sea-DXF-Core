@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3az can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ba can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -954,6 +954,19 @@ absence in both formats rather than inventing an unencodable Binary group 330.
 This admission does not review version applicability, encode or insert a
 draft, update ownership graphs, implement clone/delete, or advance any entity
 to `Complete`.
+
+M14.3ba adds typed draft identity preparation for the complete generated
+name registry: 45 canonical topics and 14 reviewed aliases. Unknown/custom
+names cannot enter the typed draft-name API. One exact-source M14.3az owner
+binding is combined with one exact-source M14.3ay handle reservation, and the
+reservation must contain exactly one handle. The prepared value retains the
+exact wire name, canonical-topic relation, handle, placement, admitted owner
+BLOCK_RECORD, allocation, and successor `$HANDSEED` transaction. Every one of
+the 59 names is prepared for all nine ASCII/Binary dialect pairs; the seed
+transaction strict-reparses and inverses byte-identically. Registry admission
+does not establish version applicability or family support. No entity record
+bytes are encoded or inserted, and semantic verification, clone/delete graph
+closure, and `Complete` status remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

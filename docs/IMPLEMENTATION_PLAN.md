@@ -2323,5 +2323,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     source-bound preparation value only. Applicability, draft encoding,
     insertion bytes, clone/delete graphs, and full CRUD remain open.
 
+    M14.3ba introduces `DxfEntityDraftName` and a source-bound identity
+    preparation plan. Only the generated 45 canonical topics and 14 reviewed
+    aliases can be selected; unknown/custom names cannot enter this typed path.
+    Preparation joins one exact M14.3az placement-owner binding with an M14.3ay
+    reservation from the same document and requires reservation cardinality
+    exactly one. The result retains the chosen exact wire name, canonical topic
+    relation, reserved handle, placement, owner BLOCK_RECORD, and successor
+    `$HANDSEED` transaction. All 59 names are exercised across nine dialects
+    and both physical formats; one plan per pair strict-reparses the advanced
+    seed and materializes an exact inverse. This is registry and identity
+    preparation, not applicability or semantic support for all names. Family
+    draft payloads, record encoding, insertion, post-insert semantic checks,
+    clone/delete, and full CRUD remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

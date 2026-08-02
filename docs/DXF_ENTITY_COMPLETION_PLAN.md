@@ -870,6 +870,19 @@ physical formats because its Binary wire cannot represent group 330. This
 checkpoint binds placement preparation only. Draft encoding, applicability,
 new-record insertion, clone/delete closure, and `Complete` support remain open.
 
+M14.3ba adds typed draft-identity preparation without exposing arbitrary
+group-zero input. `DxfEntityDraftName` admits exactly the generated 45
+canonical topics and 14 reviewed aliases, preserving each alias's canonical
+topic mapping and exact wire spelling. A preparation consumes one M14.3ay
+reservation and one M14.3az placement-owner binding from the same exact source;
+zero or multi-handle reservations fail with typed cardinality before encoding.
+The prepared plan retains the exact name, reserved handle, placement, owner
+BLOCK_RECORD, allocation, and `$HANDSEED` transaction. Tests exercise all 59
+names for every AC1009-through-AC1032 ASCII/Binary pair and prove strict
+HANDSEED reparse plus byte-identical inverse. Name admission does not imply
+dialect applicability or family support. Draft fields, record encoding,
+insertion, semantic verification, clone/delete, and `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
