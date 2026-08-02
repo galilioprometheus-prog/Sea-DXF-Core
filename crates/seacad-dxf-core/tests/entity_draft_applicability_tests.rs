@@ -180,6 +180,9 @@ fn expected(name: DxfEntityDraftName, version: DxfAcadVersion) -> ExpectedApplic
         DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::LIGHT => {
             Some(DxfAcadVersion::Ac1021)
         }
+        DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::LWPOLYLINE => {
+            Some(DxfAcadVersion::Ac1014)
+        }
         DxfEntityDraftName::Canonical(topic) if topic == DxfEntityTopic::MESH => {
             Some(DxfAcadVersion::Ac1024)
         }

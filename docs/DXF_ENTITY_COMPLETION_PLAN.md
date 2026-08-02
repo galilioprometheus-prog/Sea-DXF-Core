@@ -937,6 +937,15 @@ maximum. Eight of 59 names now have reviewed ranges and 51 remain fail-closed.
 This receipt does not change existing HELIX field evidence or claim analytic
 composition, CRUD, writer support, or `Complete` status.
 
+M14.3bh reviews canonical LWPOLYLINE applicability. Autodesk states that 2D
+polylines are created as lightweight polyline entities as of Release 14 and
+that earlier-release 2D polylines convert when opened, while the normative
+LWPOLYLINE DXF page independently defines the exact entity and `AcDbPolyline`
+subclass. Its generated range starts at AC1014 with no reviewed maximum. Nine
+of 59 names now have reviewed ranges and 50 remain fail-closed. Existing
+LWPOLYLINE semantics and geometry do not imply insert/CRUD/writer closure or
+`Complete` status.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

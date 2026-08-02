@@ -2397,5 +2397,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     ranges and 51 stay fail-closed. Existing field evidence does not advance to
     analytic composition, encoding, CRUD, or `Complete` in this checkpoint.
 
+    M14.3bh records canonical LWPOLYLINE applicability. Autodesk's legacy
+    polyline guidance states that 2D polylines are created as lightweight
+    entities from Release 14 and converts earlier-release 2D polylines on open;
+    the normative LWPOLYLINE DXF page separately defines `AcDbPolyline` fields.
+    The generated descriptor starts at AC1014 with the guidance GUID and
+    normalized facts receipt. Nine names now have reviewed ranges and 50 stay
+    fail-closed. Existing semantic/geometry coverage does not establish entity
+    insertion, full CRUD, writer closure, or `Complete`.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

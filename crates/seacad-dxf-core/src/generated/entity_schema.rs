@@ -975,7 +975,7 @@ impl DxfEntityNameClassification {
 }
 
 pub const DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256: &str =
-    "d43a6badd9bae0c80e8706556393be66c5ebb1a6cf6242da90fa5df578d61cc7";
+    "d7628a186a3acee3b2355f5a6df498ca738e95ae841685f3952538b31ba16e42";
 
 #[rustfmt::skip]
 pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
@@ -996,7 +996,7 @@ pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LEADER)),
     DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Canonical(DxfEntityTopic::LIGHT), DxfAcadVersion::Ac1021, None, "autodesk.light.compatibility.2024", "GUID-CE870800-C598-483B-81A0-5AA0208F1851", "e561222f0c714d1347c10752a575f5f676e3442914d04be9f9dad1ab0c8c70cb"),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LINE)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::LWPOLYLINE)),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Canonical(DxfEntityTopic::LWPOLYLINE), DxfAcadVersion::Ac1014, None, "autodesk.lwpolyline.compatibility.2026", "GUID-0A3004D1-1BF6-468A-9F69-4D0BA88857F2", "1d9f7f455305cb2e7861e77e50f823c21d7c0198f53cf342e56ec3d39109699e"),
     DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Canonical(DxfEntityTopic::MESH), DxfAcadVersion::Ac1024, None, "autodesk.mesh.compatibility.2018", "GUID-73981F72-60DD-46E7-BED1-BAF9692490A5", "1c0f0b305dd3c6c70691569bac124e424b25cfe53bf8f14524b963f9a6563c28"),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MLINE)),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::MLEADERSTYLE)),

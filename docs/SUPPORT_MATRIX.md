@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bg can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bh can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1024,6 +1024,15 @@ Autodesk HELIX DXF page independently defines the exact HELIX entity and
 AC1021 and not applicable in AC1009 through AC1018. Eight names now have
 reviewed ranges and 51 remain unreviewed. Existing typed HELIX evidence is not
 an analytic composition, writer, CRUD, or `Complete` support claim.
+
+M14.3bh adds canonical LWPOLYLINE applicability. Autodesk's lightweight versus
+old-style polyline guidance says 2D polylines are created as lightweight
+entities as of Release 14 and earlier-release 2D polylines convert when opened.
+The Autodesk LWPOLYLINE DXF page independently defines the exact entity and
+`AcDbPolyline` subclass. Generated admission therefore marks LWPOLYLINE
+applicable from AC1014 and not applicable in AC1009/AC1012. Nine names now have
+reviewed ranges and 50 remain unreviewed. Existing field, segment, width, bulge,
+OCS/WCS, and geometry coverage is not insert/CRUD/writer or `Complete` support.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

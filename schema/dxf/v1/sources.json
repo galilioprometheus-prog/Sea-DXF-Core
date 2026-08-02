@@ -44,6 +44,12 @@
       "evidence_kind": "applicability_list"
     },
     {
+      "id": "autodesk.lwpolyline.compatibility.2026",
+      "topic_id": "GUID-0A3004D1-1BF6-468A-9F69-4D0BA88857F2",
+      "normalized_facts_sha256": "1d9f7f455305cb2e7861e77e50f823c21d7c0198f53cf342e56ec3d39109699e",
+      "evidence_kind": "applicability_list"
+    },
+    {
       "id": "autodesk.mesh.compatibility.2018",
       "topic_id": "GUID-73981F72-60DD-46E7-BED1-BAF9692490A5",
       "normalized_facts_sha256": "1c0f0b305dd3c6c70691569bac124e424b25cfe53bf8f14524b963f9a6563c28",

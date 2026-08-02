@@ -346,6 +346,28 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         DxfEntityApplicability::Applicable
     );
 
+    let lwpolyline = classify_exact_dxf_entity_name(b"LWPOLYLINE")
+        .applicability_descriptor()
+        .ok_or("reviewed LWPOLYLINE topic is missing its applicability row")?;
+    assert_eq!(lwpolyline.minimum_version(), Some(DxfAcadVersion::Ac1014));
+    assert_eq!(lwpolyline.maximum_version(), None);
+    assert_eq!(
+        lwpolyline.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        lwpolyline.source_reference(),
+        Some("GUID-0A3004D1-1BF6-468A-9F69-4D0BA88857F2")
+    );
+    assert_eq!(
+        lwpolyline.applicability(DxfAcadVersion::Ac1012),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        lwpolyline.applicability(DxfAcadVersion::Ac1014),
+        DxfEntityApplicability::Applicable
+    );
+
     let mesh = classify_exact_dxf_entity_name(b"MESH")
         .applicability_descriptor()
         .ok_or("reviewed MESH topic is missing its applicability row")?;

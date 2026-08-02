@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bg. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bh. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -24,9 +24,10 @@ signatures, and final Core 1.0 authorization remain open M13 evidence.
 The generated schema freezes the complete reviewed HEADER inventory, all 45
 canonical Autodesk entity topics, and 14 reviewed alias/specialization wire
 names. A generated 59-name by nine-dialect applicability matrix keeps
-unreviewed ranges explicit; Autodesk-sourced ACAD_TABLE, HELIX, LIGHT, MESH,
-MLEADER, and three underlay ranges are currently classified as applicable or
-not applicable. None of this inventory metadata implies semantic support.
+unreviewed ranges explicit; Autodesk-sourced ACAD_TABLE, HELIX, LIGHT,
+LWPOLYLINE, MESH, MLEADER, and three underlay ranges are currently classified
+as applicable or not applicable. None of this inventory metadata implies
+semantic support.
 The unified entity directory indexes exact canonical, alias, unknown, and
 reviewed wrong-section markers in source order across `BLOCKS` and `ENTITIES`,
 while retaining exact subclass paths and all untouched raw groups.
