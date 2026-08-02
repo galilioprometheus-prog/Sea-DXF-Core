@@ -160,6 +160,7 @@ mod planar_face_geometry_card;
 mod planar_face_geometry_semantic;
 mod planar_face_geometry_semantic_value;
 mod planar_face_wcs_geometry;
+mod point_edit;
 mod polyline_family_semantic;
 mod polyline_polyface_face;
 mod polyline_polyface_geometry;
@@ -475,7 +476,7 @@ pub use entity_edit_session::{
     DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityEditDisposition,
     DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession,
     DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
-    DxfEntityInsertReceipt, DxfEntityPatch,
+    DxfEntityInsertReceipt, DxfEntityPatch, DxfPointEditReceipt,
 };
 pub use entity_edit_verification::{
     DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,
@@ -818,6 +819,7 @@ pub use planar_face_wcs_geometry::{
     DxfPlanarFaceWcsGeometry, DxfPlanarFaceWcsGeometryDirectory, DxfPlanarFaceWcsGeometryEntry,
     DxfPlanarFaceWcsGeometryIssue,
 };
+pub use point_edit::{DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind};
 pub use polyline_family_semantic::{
     DxfPolylineFamily, DxfPolylineFamilySemanticDirectory, DxfPolylineFamilySemantics,
     DxfPolylineFamilyState, DxfPolylineVertexFamily, DxfPolylineVertexFamilyComparison,

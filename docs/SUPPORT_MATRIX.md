@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bo can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bp can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1125,6 +1125,20 @@ silently omitting a requested field fails typed. Minimal and all-explicit
 records pass every ASCII/Binary Core dialect, and POINT batches retain the same
 strict-reparse/inverse guarantees. POINT update, clone/delete, mixed operation
 sessions, display behavior, and `Complete` remain open.
+
+M14.3bp adds the first typed POINT-family update to the unified edit session.
+`DxfPointPatch::SetLocation` requires a canonical POINT with exactly one
+existing WCS group `10/20/30` component, encodes three finite doubles in the
+source ASCII/Binary dialect, and queues the tuple as one logical edit backed by
+three atomic raw replacements. One POINT location update may compose with
+independent common-property edits; insert/update mixing remains rejected.
+Strict post-image verification resolves the same raw-record ordinal and
+requires the exact typed location before releasing the inverse journal. Paired
+fixtures span AC1009 through AC1032 and prove out-of-order source groups,
+duplicate/missing components, wrong families, non-finite values, duplicate
+patches, cancellation, tampering, common-field composition, strict reparse,
+and byte-identical inverse restoration. Thickness, extrusion, angle, reset,
+clone/delete, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

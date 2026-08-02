@@ -13,6 +13,7 @@ use crate::entity_draft_record::{
     DxfEntityDraftEncodingContext, DxfPointDraftRecordExpectation, encode_entity_draft_record_parts,
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
+use crate::point_edit::plan_point_location_edit;
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
     DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityCommonColorBookEditIssue,
@@ -29,8 +30,8 @@ use crate::{
     DxfEntityPlacementTarget, DxfError, DxfHandle, DxfHandleAllocationOutcome,
     DxfHandleAllocationPolicyState, DxfHandleIdentityDirectory, DxfHandleReservationPlanOutcome,
     DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
-    DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
-    DxfTransactionPlan,
+    DxfNamedSymbolTableDirectory, DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind,
+    DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
 };
 
 /// One atomic replacement of the common indexed/true/color-book tuple.
@@ -112,6 +113,7 @@ pub enum DxfEntityPatch<'a> {
     CommonColorBook(DxfEntityCommonColorBookPatch<'a>),
     /// Removes every explicit member of the common 62/420/430 color-book tuple.
     ResetCommonColorBook,
+    Point(DxfPointPatch),
 }
 
 impl<'a> DxfEntityPatch<'a> {
@@ -119,7 +121,7 @@ impl<'a> DxfEntityPatch<'a> {
     pub const fn common_field(self) -> Option<DxfEntityCommonFieldPatch<'a>> {
         match self {
             Self::CommonField(patch) => Some(patch),
-            Self::CommonColorBook(_) | Self::ResetCommonColorBook => None,
+            Self::CommonColorBook(_) | Self::ResetCommonColorBook | Self::Point(_) => None,
         }
     }
 }
@@ -140,6 +142,7 @@ pub enum DxfEntityEditIssue {
     Insertion(DxfEntityFieldInsertionIssue),
     Replacement(DxfEntityFieldReplacementIssue),
     Reset(DxfEntityFieldResetIssue),
+    Point(DxfPointEditIssue),
     InsertPending,
 }
 
@@ -190,7 +193,33 @@ impl DxfEntityEditReceipt {
 #[non_exhaustive]
 pub enum DxfEntityEditOutcome {
     Applied(DxfEntityEditReceipt),
+    PointApplied(DxfPointEditReceipt),
     Unavailable(DxfEntityEditIssue),
+}
+
+/// Payload-free receipt for one accepted POINT-family update.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfPointEditReceipt {
+    key: DxfEntityKey,
+    kind: DxfPointPatchKind,
+    queued_edit_count: u32,
+}
+
+impl DxfPointEditReceipt {
+    #[must_use]
+    pub const fn key(self) -> DxfEntityKey {
+        self.key
+    }
+
+    #[must_use]
+    pub const fn kind(self) -> DxfPointPatchKind {
+        self.kind
+    }
+
+    #[must_use]
+    pub const fn queued_edit_count(self) -> u64 {
+        self.queued_edit_count as u64
+    }
 }
 
 /// Compact placement-owner failure retained by a whole-entity insert request.
@@ -293,6 +322,12 @@ struct PendingInsert {
     expectation: DxfPointDraftRecordExpectation,
 }
 
+struct PendingPointLocation {
+    key: DxfEntityKey,
+    transaction: DxfTransactionPlan,
+    location: [crate::DxfDouble; 3],
+}
+
 /// Source-bound batch of entity edits that finishes as one immutable transaction.
 pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     document: DxfRawDocumentView<'document>,
@@ -304,6 +339,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
+    pending_point_locations: Vec<PendingPointLocation>,
     pending_inserts: Vec<PendingInsert>,
 }
 
@@ -339,6 +375,7 @@ impl<'document, 'evidence, 'cancellation>
             layout_objects: None,
             named_symbols: None,
             pending: Vec::new(),
+            pending_point_locations: Vec::new(),
             pending_inserts: Vec::new(),
         })
     }
@@ -350,7 +387,9 @@ impl<'document, 'evidence, 'cancellation>
 
     #[must_use]
     pub fn queued_edit_count(&self) -> u64 {
-        self.pending.len() as u64 + self.pending_inserts.len() as u64
+        self.pending.len() as u64
+            + self.pending_point_locations.len() as u64
+            + self.pending_inserts.len() as u64
     }
 
     /// Adds one complete typed entity insertion without changing the source.
@@ -364,10 +403,10 @@ impl<'document, 'evidence, 'cancellation>
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() {
+        if !self.pending.is_empty() || !self.pending_point_locations.is_empty() {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::UpdatePending {
-                    queued_update_count: u32::try_from(self.pending.len())
+                    queued_update_count: u32::try_from(self.queued_update_len()?)
                         .map_err(|_| invalid_internal_data())?,
                 },
             ));
@@ -486,7 +525,65 @@ impl<'document, 'evidence, 'cancellation>
             DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
             DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
             DxfEntityPatch::ResetCommonColorBook => self.reset_color_book(key),
+            DxfEntityPatch::Point(patch) => self.update_point(key, patch),
         }
+    }
+
+    fn update_point(
+        &mut self,
+        key: DxfEntityKey,
+        patch: DxfPointPatch,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        let kind = patch.kind();
+        if self
+            .pending_point_locations
+            .iter()
+            .any(|edit| edit.key == key)
+        {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::Point(DxfPointEditIssue::DuplicatePatch { key, kind }),
+            ));
+        }
+        let DxfPointPatch::SetLocation { location } = patch;
+        let plan = match plan_point_location_edit(
+            self.document,
+            self.evidence,
+            key,
+            location,
+            self.profile,
+            self.cancellation,
+        )? {
+            Ok(plan) => plan,
+            Err(issue) => {
+                return Ok(DxfEntityEditOutcome::Unavailable(
+                    DxfEntityEditIssue::Point(issue),
+                ));
+            }
+        };
+        let (transaction, location) = plan.into_parts();
+        transaction.validate_source_precondition(self.document)?;
+        if transaction.patches().len() != 3 {
+            return Err(invalid_internal_data());
+        }
+        let next_count = self
+            .queued_update_len()?
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        enforce_edit_limit(self.profile, next_count)?;
+        self.pending_point_locations
+            .try_reserve(1)
+            .map_err(|_| out_of_memory())?;
+        ensure_not_cancelled(self.cancellation)?;
+        self.pending_point_locations.push(PendingPointLocation {
+            key,
+            transaction,
+            location,
+        });
+        Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
+            key,
+            kind,
+            queued_edit_count: u32::try_from(next_count).map_err(|_| invalid_internal_data())?,
+        }))
     }
 
     fn update_common_field(
@@ -612,6 +709,10 @@ impl<'document, 'evidence, 'cancellation>
                     self.pending.truncate(checkpoint);
                     return Ok(unavailable);
                 }
+                Ok(DxfEntityEditOutcome::PointApplied(_)) => {
+                    self.pending.truncate(checkpoint);
+                    return Err(invalid_internal_data());
+                }
                 Err(error) => {
                     self.pending.truncate(checkpoint);
                     return Err(error);
@@ -622,7 +723,7 @@ impl<'document, 'evidence, 'cancellation>
             key,
             DxfEntityField::COLOR_NAME,
             DxfEntityEditDisposition::Composite,
-            self.pending.len(),
+            self.queued_update_len()?,
         )
     }
 
@@ -653,6 +754,10 @@ impl<'document, 'evidence, 'cancellation>
                     self.pending.truncate(checkpoint);
                     return Ok(unavailable);
                 }
+                Ok(DxfEntityEditOutcome::PointApplied(_)) => {
+                    self.pending.truncate(checkpoint);
+                    return Err(invalid_internal_data());
+                }
                 Err(error) => {
                     self.pending.truncate(checkpoint);
                     return Err(error);
@@ -668,7 +773,7 @@ impl<'document, 'evidence, 'cancellation>
             key,
             DxfEntityField::COLOR_NAME,
             disposition,
-            self.pending.len(),
+            self.queued_update_len()?,
         )
     }
 
@@ -777,7 +882,7 @@ impl<'document, 'evidence, 'cancellation>
                 .finish_insert_batch()
                 .map(DxfEntityEditPlan::into_transaction);
         }
-        self.finish_parts().map(|(transaction, _)| transaction)
+        self.finish_parts().map(|(transaction, _, _)| transaction)
     }
 
     /// Freezes the transaction together with its semantic postconditions.
@@ -785,10 +890,15 @@ impl<'document, 'evidence, 'cancellation>
         if !self.pending_inserts.is_empty() {
             return self.finish_insert_batch();
         }
-        let (transaction, pending) = self.finish_parts()?;
+        let (transaction, pending, point_locations) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
-            .try_reserve_exact(pending.len())
+            .try_reserve_exact(
+                pending
+                    .len()
+                    .checked_add(point_locations.len())
+                    .ok_or_else(invalid_internal_data)?,
+            )
             .map_err(|_| out_of_memory())?;
         for edit in pending {
             expectations.push(DxfEntityEditExpectation::field(
@@ -797,12 +907,18 @@ impl<'document, 'evidence, 'cancellation>
                 edit.expected,
             ));
         }
+        for edit in point_locations {
+            expectations.push(DxfEntityEditExpectation::point_location(
+                edit.key.raw_record_ordinal(),
+                edit.location,
+            ));
+        }
         Ok(DxfEntityEditPlan::new(transaction, expectations))
     }
 
     fn finish_insert_batch(mut self) -> Result<DxfEntityEditPlan, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() {
+        if !self.pending.is_empty() || !self.pending_point_locations.is_empty() {
             return Err(invalid_internal_data());
         }
         let handle_count =
@@ -885,7 +1001,16 @@ impl<'document, 'evidence, 'cancellation>
         Ok(DxfEntityEditPlan::new(transaction, expectations))
     }
 
-    fn finish_parts(mut self) -> Result<(DxfTransactionPlan, Vec<PendingEdit>), DxfError> {
+    fn finish_parts(
+        mut self,
+    ) -> Result<
+        (
+            DxfTransactionPlan,
+            Vec<PendingEdit>,
+            Vec<PendingPointLocation>,
+        ),
+        DxfError,
+    > {
         ensure_not_cancelled(self.cancellation)?;
         self.pending.sort_unstable_by_key(|edit| {
             (
@@ -914,8 +1039,24 @@ impl<'document, 'evidence, 'cancellation>
             }
             cursor = end;
         }
-        let transaction = builder.finish(self.cancellation)?;
-        Ok((transaction, self.pending))
+        let common = builder.finish(self.cancellation)?;
+        let transaction = if self.pending_point_locations.is_empty() {
+            common
+        } else {
+            let mut plans = Vec::new();
+            plans
+                .try_reserve_exact(self.pending_point_locations.len().saturating_add(1))
+                .map_err(|_| out_of_memory())?;
+            if !common.patches().is_empty() {
+                plans.push(&common);
+            }
+            for edit in &self.pending_point_locations {
+                plans.push(&edit.transaction);
+            }
+            self.document
+                .compose_transaction_plans(&plans, self.profile, self.cancellation)?
+        };
+        Ok((transaction, self.pending, self.pending_point_locations))
     }
 
     fn set_explicit(
@@ -982,7 +1123,7 @@ impl<'document, 'evidence, 'cancellation>
                 key,
                 field,
                 DxfEntityEditDisposition::AlreadyImplicit,
-                self.pending.len(),
+                self.queued_update_len()?,
             ),
             DxfEntityFieldResetOutcome::Planned(plan) => self.queue_transaction(
                 key,
@@ -1013,8 +1154,7 @@ impl<'document, 'evidence, 'cancellation>
             .replacement_bytes_for_patch_ordinal(patch.ordinal())
             .ok_or_else(invalid_internal_data)?;
         let next_count = self
-            .pending
-            .len()
+            .queued_update_len()?
             .checked_add(1)
             .ok_or_else(invalid_internal_data)?;
         enforce_edit_limit(self.profile, next_count)?;
@@ -1034,7 +1174,14 @@ impl<'document, 'evidence, 'cancellation>
             replacement: owned.into_boxed_slice(),
             expected,
         });
-        applied(key, field, disposition, self.pending.len())
+        applied(key, field, disposition, self.queued_update_len()?)
+    }
+
+    fn queued_update_len(&self) -> Result<usize, DxfError> {
+        self.pending
+            .len()
+            .checked_add(self.pending_point_locations.len())
+            .ok_or_else(invalid_internal_data)
     }
 }
 

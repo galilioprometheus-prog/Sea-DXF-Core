@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bo. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bp. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -203,6 +203,15 @@ typed. Writers omit unspecified defaults, emit explicitly requested values in
 canonical subclass order, reject zero extrusion, and verify explicit/defaulted
 state plus exact binary64 values after strict reparse. POINT update, clone, and
 delete remain open.
+Canonical POINT locations can now be replaced atomically through
+`DxfEntityEditSession::update`. The family patch requires one unique existing
+group `10/20/30` tuple, encodes all three finite WCS components for the source
+dialect and format, and composes with independent common-property edits.
+Post-image verification resolves the same raw-record ordinal, checks the exact
+typed location, and releases the existing byte-identical inverse journal.
+Duplicate family patches, incomplete/duplicate tuples, wrong families,
+non-finite values, cancellation, and insert/update mixing fail closed. Other
+POINT fields, clone, and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

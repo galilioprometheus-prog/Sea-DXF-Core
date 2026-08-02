@@ -1,0 +1,180 @@
+//! Atomic typed edits for canonical POINT family fields.
+
+use std::io;
+
+use crate::{
+    DxfAcadVersionState, DxfBasicGeometryComponentCardState, DxfBasicGeometryComponentRole,
+    DxfCancellationToken, DxfDouble, DxfEntityClassification, DxfEntityFieldEvidenceDirectory,
+    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder, DxfEntityKey,
+    DxfEntityTopic, DxfError, DxfIoOperation, DxfRawDocumentView, DxfResourceProfile,
+    DxfTransactionPlan,
+};
+
+/// One typed POINT-family update.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfPointPatch {
+    SetLocation { location: [DxfDouble; 3] },
+}
+
+impl DxfPointPatch {
+    #[must_use]
+    pub const fn set_location(location: [DxfDouble; 3]) -> Self {
+        Self::SetLocation { location }
+    }
+
+    #[must_use]
+    pub const fn kind(self) -> DxfPointPatchKind {
+        match self {
+            Self::SetLocation { .. } => DxfPointPatchKind::Location,
+        }
+    }
+}
+
+/// Payload-free identity of one POINT patch.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfPointPatchKind {
+    Location,
+}
+
+/// Typed reason why a POINT-family update was rejected.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfPointEditIssue {
+    DuplicatePatch {
+        key: DxfEntityKey,
+        kind: DxfPointPatchKind,
+    },
+    MissingEntity {
+        key: DxfEntityKey,
+    },
+    WrongClassification {
+        key: DxfEntityKey,
+        observed: DxfEntityClassification,
+    },
+    VersionUnavailable {
+        state: DxfAcadVersionState,
+    },
+    MissingLocationComponent {
+        role: DxfBasicGeometryComponentRole,
+    },
+    DuplicateLocationComponent {
+        role: DxfBasicGeometryComponentRole,
+        occurrence_count: u32,
+    },
+    Encoding {
+        group_code: i16,
+        issue: DxfEntityGroupEncodeIssue,
+    },
+}
+
+pub(crate) struct DxfPointLocationEditPlan {
+    transaction: DxfTransactionPlan,
+    location: [DxfDouble; 3],
+}
+
+impl DxfPointLocationEditPlan {
+    pub(crate) fn into_parts(self) -> (DxfTransactionPlan, [DxfDouble; 3]) {
+        (self.transaction, self.location)
+    }
+}
+
+pub(crate) fn plan_point_location_edit(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    location: [DxfDouble; 3],
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointLocationEditPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    if evidence.source_id() != document.source_id() {
+        return Err(DxfError::SourceIdentityMismatch {
+            expected: document.source_id(),
+            observed: evidence.source_id(),
+        });
+    }
+    let Some(entity) = evidence.entity_directory().entity_for_key(key)? else {
+        return Ok(Err(DxfPointEditIssue::MissingEntity { key }));
+    };
+    if entity.classification() != DxfEntityClassification::Canonical(DxfEntityTopic::POINT) {
+        return Ok(Err(DxfPointEditIssue::WrongClassification {
+            key,
+            observed: entity.classification(),
+        }));
+    }
+    let version = match document.acad_version_report().state() {
+        DxfAcadVersionState::Supported(version) => version,
+        state => return Ok(Err(DxfPointEditIssue::VersionUnavailable { state })),
+    };
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let roles = [
+        DxfBasicGeometryComponentRole::WcsLocationOrStartX,
+        DxfBasicGeometryComponentRole::WcsLocationOrStartY,
+        DxfBasicGeometryComponentRole::WcsLocationOrStartZ,
+    ];
+    let group_codes = [10_i16, 20, 30];
+    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
+    let mut builder = document.transaction_plan_builder(profile)?;
+    for ((role, group_code), value) in roles.into_iter().zip(group_codes).zip(location) {
+        ensure_not_cancelled(cancellation)?;
+        let card = cards
+            .card_for_role(entity.record().ordinal(), role)
+            .ok_or_else(invalid_internal_data)?;
+        match card.state() {
+            DxfBasicGeometryComponentCardState::Absent => {
+                return Ok(Err(DxfPointEditIssue::MissingLocationComponent { role }));
+            }
+            DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+                return Ok(Err(DxfPointEditIssue::DuplicateLocationComponent {
+                    role,
+                    occurrence_count,
+                }));
+            }
+            DxfBasicGeometryComponentCardState::Unique => {}
+        }
+        let members = cards
+            .members_for_card(card.ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let [member] = members else {
+            return Err(invalid_internal_data());
+        };
+        let component = cards
+            .component_for_member(*member)
+            .ok_or_else(invalid_internal_data)?;
+        let encoded = match encoder.encode_raw(
+            group_code,
+            DxfEntityFieldWireType::Double,
+            crate::DxfEntityEditValue::Double(value),
+            cancellation,
+        )? {
+            Ok(encoded) => encoded,
+            Err(issue) => {
+                return Ok(Err(DxfPointEditIssue::Encoding { group_code, issue }));
+            }
+        };
+        builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+    }
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointLocationEditPlan {
+        transaction,
+        location,
+    }))
+}
+
+fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
+    if cancellation.is_cancelled() {
+        Err(DxfError::Cancelled)
+    } else {
+        Ok(())
+    }
+}
+
+fn invalid_internal_data() -> DxfError {
+    DxfError::from_io(
+        DxfIoOperation::Read,
+        &io::Error::from(io::ErrorKind::InvalidData),
+    )
+}

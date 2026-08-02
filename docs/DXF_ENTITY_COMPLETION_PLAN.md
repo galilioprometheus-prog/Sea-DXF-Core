@@ -1042,6 +1042,19 @@ records pass all nine ASCII/Binary dialect pairs, while tampering of each new
 field fails typed and the inverse remains byte-identical. POINT update,
 clone/delete closure, mixed insert/update sessions, and `Complete` remain open.
 
+M14.3bp introduces the first typed existing-record POINT update. One
+`DxfPointPatch::SetLocation` replaces the unique source-backed WCS `10/20/30`
+tuple as a single logical session edit without selecting duplicate
+occurrences. All three components are encoded for the original physical
+format and dialect and compose atomically with independent common-property
+updates. The verifiable plan checks the same raw-record ordinal and exact typed
+location after strict reparse before exposing its byte-identical inverse.
+Missing or duplicate tuple members, wrong classification, non-finite input,
+duplicate patch admission, cancellation, tampering, and insert/update mixing
+remain typed fail-closed outcomes across all nine ASCII/Binary dialect pairs.
+Thickness, extrusion, angle, reset, clone/delete, and POINT `Complete` remain
+open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

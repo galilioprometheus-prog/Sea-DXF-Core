@@ -2493,5 +2493,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     records pass all nine dialects, including typed tamper and inverse tests.
     POINT update, clone/delete, and mixed insert/update sessions remain open.
 
+    M14.3bp adds atomic WCS-location replacement for an existing canonical
+    POINT through the unified `DxfEntityPatch` surface. Admission requires
+    unique source-backed groups `10`, `20`, and `30`; missing or duplicate
+    components, a wrong family, duplicate family patch, non-finite encoding,
+    resource limits, and cancellation leave the session unchanged. The three
+    raw replacements count as one logical edit and compose with independent
+    common-property updates. Verification reparses the output, resolves the
+    same raw-record ordinal, checks the exact typed location, and returns the
+    byte-identical inverse journal. Paired ASCII/Binary tests cover every Core
+    dialect. Other POINT fields, reset, clone/delete, and mixed insert/update
+    sessions remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

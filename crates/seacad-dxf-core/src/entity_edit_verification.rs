@@ -77,9 +77,15 @@ pub(crate) struct DxfPointInsertExpectation {
     point: DxfPointDraftRecordExpectation,
 }
 
+pub(crate) struct DxfPointLocationEditExpectation {
+    raw_record_ordinal: u64,
+    location: [DxfDouble; 3],
+}
+
 pub(crate) enum DxfEntityEditExpectation {
     Field(DxfEntityFieldEditExpectation),
     PointInsert(DxfPointInsertExpectation),
+    PointLocation(DxfPointLocationEditExpectation),
 }
 
 impl DxfEntityEditExpectation {
@@ -106,6 +112,13 @@ impl DxfEntityEditExpectation {
             owner,
             placement,
             point,
+        })
+    }
+
+    pub(crate) const fn point_location(raw_record_ordinal: u64, location: [DxfDouble; 3]) -> Self {
+        Self::PointLocation(DxfPointLocationEditExpectation {
+            raw_record_ordinal,
+            location,
         })
     }
 }
@@ -151,6 +164,12 @@ pub enum DxfEntityEditVerificationIssue {
     },
     InsertedPointUcsXAxisAngleMismatch {
         handle: DxfHandle,
+    },
+    UpdatedPointSemanticsMissing {
+        raw_record_ordinal: u64,
+    },
+    UpdatedPointLocationMismatch {
+        raw_record_ordinal: u64,
     },
     MissingEntity {
         raw_record_ordinal: u64,
@@ -549,7 +568,33 @@ fn verify_expectation(
         DxfEntityEditExpectation::PointInsert(expectation) => {
             verify_point_insert(document, semantics, expectation, cancellation)
         }
+        DxfEntityEditExpectation::PointLocation(expectation) => {
+            verify_point_location(document, expectation, cancellation)
+        }
     }
+}
+
+fn verify_point_location(
+    document: DxfRawDocumentView<'_>,
+    expectation: &DxfPointLocationEditExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(expectation.raw_record_ordinal)? else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointSemanticsMissing {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    };
+    if point.location_value() != Some(expectation.location) {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointLocationMismatch {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    }
+    Ok(None)
 }
 
 fn verify_field_expectation(
