@@ -3,7 +3,7 @@
 use std::io;
 
 use crate::{
-    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
+    DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
     DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainSemanticValue,
     DxfEntityCommonFieldDomainSemantics, DxfEntityCommonFieldDomainValue, DxfEntityEditValue,
     DxfEntityEditValueKind, DxfEntityField, DxfEntityIndexedColor, DxfEntityRef,
@@ -52,6 +52,10 @@ impl DxfEntityCommonColorBookEditValue {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityCommonColorBookEditIssue {
+    DialectWireUnsupported {
+        field: DxfEntityField,
+        version: DxfAcadVersion,
+    },
     ValueKindMismatch {
         field: DxfEntityField,
         expected: DxfEntityEditValueKind,
@@ -162,7 +166,7 @@ pub(crate) fn classify_with_color_domains(
             },
         ));
     };
-    let separator_offset = match split_proposed(proposed, cancellation)? {
+    let separator_offset = match validate_proposed_name(proposed, cancellation)? {
         Ok(offset) => offset,
         Err(issue) => return Ok(DxfEntityCommonColorBookEditOutcome::Invalid(issue)),
     };
@@ -202,7 +206,7 @@ pub(crate) fn classify_with_color_domains(
     }
 }
 
-fn split_proposed(
+pub(crate) fn validate_proposed_name(
     proposed: &[u8],
     cancellation: &DxfCancellationToken,
 ) -> Result<Result<usize, DxfEntityCommonColorBookEditIssue>, DxfError> {

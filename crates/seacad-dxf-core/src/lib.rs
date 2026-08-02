@@ -455,8 +455,9 @@ pub use entity_directory::{
     DxfEntityRef, DxfEntitySubclassMarker, DxfEntitySubclassRange,
 };
 pub use entity_edit_session::{
-    DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
-    DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityPatch,
+    DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityEditDisposition,
+    DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession,
+    DxfEntityPatch,
 };
 pub use entity_edit_verification::{
     DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,

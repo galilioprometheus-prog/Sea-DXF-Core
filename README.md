@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3at. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3au. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -136,8 +136,10 @@ restoration. Color-book edits now require the documented one-separator envelope
 and usable existing group-420/group-62 semantics on the exact target entity.
 Accepted modern edits use the same strict semantic verification and exact
 inverse pipeline. The resolver does not load or validate an external `.acb`
-file, and atomic replacement of the complete 62/420/430 tuple remains later
-specialized CRUD.
+file. A typed composite patch can now insert or replace the complete
+62/420/430 tuple atomically; failure rolls the session queue back to its exact
+prior state, and accepted modern tuples pass strict semantic verification and
+byte-identical inverse restoration.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

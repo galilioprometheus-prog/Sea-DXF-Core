@@ -2244,5 +2244,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     validate external mappings, compose pending 62/420/430 tuple edits, review
     applicability, or add family graph CRUD.
 
+    M14.3au introduces a typed composite common color-book patch for atomic
+    groups 62/420/430 CRUD. The operation validates name syntax and pending-
+    field conflicts before planning, uses reviewed indexed/true-color types,
+    and rolls back every newly queued component if any later component fails.
+    AC1009 rejects the tuple consistently in ASCII and Binary because the
+    pre-R13 Binary group-code wire cannot encode it. Modern paired fixtures
+    prove full insertion and replacement, strict structured semantics, generic
+    three-field verification, exact inverse, duplicate-source rollback,
+    duplicate-pending rejection, cancellation/resource inheritance, and debug
+    redaction. This checkpoint does not access `.acb` data, validate external
+    mappings, reset a complete tuple, review broader applicability, or add
+    family graph CRUD.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

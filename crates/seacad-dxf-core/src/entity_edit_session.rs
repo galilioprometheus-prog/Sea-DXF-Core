@@ -10,8 +10,8 @@ use crate::entity_common_symbol_edit::classify_with_symbols;
 use crate::entity_common_text_semantic::reviewed_common_symbol_kind;
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
-    DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
+    ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
+    DxfCancellationToken, DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
     DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainIssue,
     DxfEntityCommonFieldDomainOutcome, DxfEntityCommonLayoutEditIssue,
     DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
@@ -23,6 +23,55 @@ use crate::{
     DxfLayoutObjectDirectory, DxfNamedSymbolTableDirectory, DxfRawDocumentView, DxfResource,
     DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
 };
+
+/// One atomic replacement of the common indexed/true/color-book tuple.
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+pub struct DxfEntityCommonColorBookPatch<'a> {
+    name: &'a [u8],
+    indexed_color: crate::DxfEntityIndexedColor,
+    true_color: crate::DxfEntityTrueColor,
+}
+
+impl fmt::Debug for DxfEntityCommonColorBookPatch<'_> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("DxfEntityCommonColorBookPatch")
+            .field("name_byte_count", &self.name.len())
+            .field("indexed_color", &self.indexed_color)
+            .field("true_color", &self.true_color)
+            .finish()
+    }
+}
+
+impl<'a> DxfEntityCommonColorBookPatch<'a> {
+    #[must_use]
+    pub const fn new(
+        name: &'a [u8],
+        indexed_color: crate::DxfEntityIndexedColor,
+        true_color: crate::DxfEntityTrueColor,
+    ) -> Self {
+        Self {
+            name,
+            indexed_color,
+            true_color,
+        }
+    }
+
+    #[must_use]
+    pub const fn name(self) -> &'a [u8] {
+        self.name
+    }
+
+    #[must_use]
+    pub const fn indexed_color(self) -> crate::DxfEntityIndexedColor {
+        self.indexed_color
+    }
+
+    #[must_use]
+    pub const fn true_color(self) -> crate::DxfEntityTrueColor {
+        self.true_color
+    }
+}
 
 /// One typed common-field operation accepted by an entity edit session.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -51,13 +100,15 @@ impl DxfEntityCommonFieldPatch<'_> {
 #[non_exhaustive]
 pub enum DxfEntityPatch<'a> {
     CommonField(DxfEntityCommonFieldPatch<'a>),
+    CommonColorBook(DxfEntityCommonColorBookPatch<'a>),
 }
 
 impl<'a> DxfEntityPatch<'a> {
     #[must_use]
-    pub const fn common_field(self) -> DxfEntityCommonFieldPatch<'a> {
+    pub const fn common_field(self) -> Option<DxfEntityCommonFieldPatch<'a>> {
         match self {
-            Self::CommonField(patch) => patch,
+            Self::CommonField(patch) => Some(patch),
+            Self::CommonColorBook(_) => None,
         }
     }
 }
@@ -88,6 +139,7 @@ pub enum DxfEntityEditDisposition {
     Inserted,
     Replaced,
     Reset,
+    Composite,
 }
 
 /// Non-payload receipt for one accepted update request.
@@ -203,7 +255,17 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        let patch = patch.common_field();
+        match patch {
+            DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
+            DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
+        }
+    }
+
+    fn update_common_field(
+        &mut self,
+        key: DxfEntityKey,
+        patch: DxfEntityCommonFieldPatch<'_>,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
         let field = patch.field();
         if self
             .pending
@@ -256,6 +318,84 @@ impl<'document, 'evidence, 'cancellation>
             }
             DxfEntityCommonFieldPatch::ResetToDefault { .. } => self.reset(key, field),
         }
+    }
+
+    fn update_color_book(
+        &mut self,
+        key: DxfEntityKey,
+        patch: DxfEntityCommonColorBookPatch<'_>,
+    ) -> Result<DxfEntityEditOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        enforce_exact_text_limit(self.profile, DxfEntityEditValue::ExactRawText(patch.name()))?;
+        if self.document.acad_version_report().state()
+            == DxfAcadVersionState::Supported(DxfAcadVersion::Ac1009)
+        {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::ColorBook(
+                    DxfEntityCommonColorBookEditIssue::DialectWireUnsupported {
+                        field: DxfEntityField::COLOR_NAME,
+                        version: DxfAcadVersion::Ac1009,
+                    },
+                ),
+            ));
+        }
+        if let Err(issue) = crate::entity_common_color_book_edit::validate_proposed_name(
+            patch.name(),
+            self.cancellation,
+        )? {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::ColorBook(issue),
+            ));
+        }
+        for field in [
+            DxfEntityField::COLOR,
+            DxfEntityField::TRUE_COLOR,
+            DxfEntityField::COLOR_NAME,
+        ] {
+            if self
+                .pending
+                .iter()
+                .any(|edit| edit.key == key && edit.field == field)
+            {
+                return Ok(DxfEntityEditOutcome::Unavailable(
+                    DxfEntityEditIssue::DuplicateFieldEdit { key, field },
+                ));
+            }
+        }
+        let checkpoint = self.pending.len();
+        let values = [
+            (
+                DxfEntityField::COLOR,
+                DxfEntityEditValue::Int16(patch.indexed_color().raw()),
+            ),
+            (
+                DxfEntityField::TRUE_COLOR,
+                DxfEntityEditValue::Int32(patch.true_color().raw()),
+            ),
+            (
+                DxfEntityField::COLOR_NAME,
+                DxfEntityEditValue::ExactRawText(patch.name()),
+            ),
+        ];
+        for (field, value) in values {
+            match self.set_explicit(key, field, value) {
+                Ok(DxfEntityEditOutcome::Applied(_)) => {}
+                Ok(unavailable @ DxfEntityEditOutcome::Unavailable(_)) => {
+                    self.pending.truncate(checkpoint);
+                    return Ok(unavailable);
+                }
+                Err(error) => {
+                    self.pending.truncate(checkpoint);
+                    return Err(error);
+                }
+            }
+        }
+        applied(
+            key,
+            DxfEntityField::COLOR_NAME,
+            DxfEntityEditDisposition::Composite,
+            self.pending.len(),
+        )
     }
 
     fn classify_reference_edit(

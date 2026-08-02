@@ -788,6 +788,19 @@ group 430 are absent/unencodable in its Binary wire. External `.acb`
 resolution, name-to-RGB verification, pending multi-field tuple composition,
 applicability, family graphs, and `Complete` support remain later work.
 
+M14.3au adds the first correlated common-property CRUD operation. A typed
+`CommonColorBook` patch carries exact raw name input plus already validated
+indexed and true-color values, then inserts or replaces groups 62, 420, and 430
+as one logical session update. Syntax and duplicate-pending fields fail before
+mutation; any insertion/replacement failure while materializing the tuple
+truncates the pending queue to its exact checkpoint. AC1009 is rejected for
+both physical formats because its Binary wire cannot represent the tuple;
+modern ASCII/Binary insert and replace paths strict-reparse to structured
+color-book semantics and inverse to the byte-identical source. Patch debug is
+payload-redacted. External `.acb` validation, name/RGB mapping, reset of the
+whole tuple, applicability beyond the parity restriction, family graphs, and
+`Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
