@@ -2269,5 +2269,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     checkpoint does not access `.acb` data, review applicability, add family
     patch CRUD, or implement entity insert/clone/delete graphs.
 
+    M14.3aw introduces `compose_transaction_plans` over exact source-bound M11
+    plans. It validates every input against one raw document before rebuilding
+    all patches through the existing resource-bounded builder, which preserves
+    source order and rejects cross-plan overlap or duplicate insertion anchors.
+    Empty input is an empty plan; plan count, replacement size, cancellation,
+    and source mismatch remain typed. The composed transaction captures fresh
+    inverse bytes from the unchanged source. A verifiable entity edit plan can
+    absorb supplemental raw plans without losing its field postconditions.
+    Paired AC1009-through-AC1032 ASCII/Binary fixtures compose M11 handle
+    assignment and `$HANDSEED` advancement with an M14 field reset, then
+    strict-reparse, verify semantics/raw bytes, and restore the exact source.
+    This checkpoint does not encode entity drafts, choose placement/owner,
+    reserve handles across sessions, or implement insert/clone/delete.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

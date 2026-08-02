@@ -251,6 +251,34 @@ impl DxfEntityEditPlan {
         self.transaction
     }
 
+    /// Composes raw supplemental work while retaining this plan's semantic
+    /// field postconditions.
+    ///
+    /// This is the bridge for source-bound handle, owner, and placement work
+    /// whose byte patches must commit with the entity-field transaction.
+    pub fn compose_supplemental_transactions(
+        mut self,
+        source_document: DxfRawDocumentView<'_>,
+        supplemental: &[&DxfTransactionPlan],
+        profile: DxfResourceProfile,
+        cancellation: &DxfCancellationToken,
+    ) -> Result<Self, DxfError> {
+        let plan_count = supplemental
+            .len()
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        let mut plans = Vec::new();
+        plans
+            .try_reserve_exact(plan_count)
+            .map_err(|_| out_of_memory())?;
+        plans.push(&self.transaction);
+        plans.extend_from_slice(supplemental);
+        let transaction =
+            source_document.compose_transaction_plans(&plans, profile, cancellation)?;
+        self.transaction = transaction;
+        Ok(self)
+    }
+
     /// Verifies requested field semantics, exact post-image bytes, and inverse.
     pub fn verify_post_image(
         &self,

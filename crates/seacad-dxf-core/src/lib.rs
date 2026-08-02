@@ -217,6 +217,7 @@ mod tolerance_dimstyle_resolution;
 mod tolerance_wcs_placement;
 mod transaction_inverse;
 mod transaction_plan;
+mod transaction_plan_composition;
 mod transaction_write;
 mod verbatim;
 

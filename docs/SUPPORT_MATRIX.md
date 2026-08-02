@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3av can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3aw can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -903,6 +903,20 @@ implicit tuples for AC1009 through AC1032, strict generic postconditions, and
 byte-identical inverse restoration. External color-book resolution,
 applicability, family graphs, entity insert/clone/delete, and `Complete`
 support remain open.
+
+M14.3aw adds atomic composition of independently built source-bound transaction
+plans. Each input must match the exact raw document; its patches are replayed
+through the M11 builder so cross-plan conflicts, duplicate insertion points,
+resource limits, plan-count limits, and cancellation fail typed before a
+composed plan escapes. Result patches are in source order regardless of input
+plan order and retain freshly captured inverse bytes. Verifiable entity plans
+can absorb supplemental raw transactions without discarding field semantic
+postconditions. Across all nine dialects and both physical formats, fixtures
+compose M11 identity insertion and successor `$HANDSEED` replacement with an
+M14 common-color reset, strict-reparse the result, verify the assigned handle,
+seed, field default, raw transaction, and byte-identical inverse. Entity-draft
+encoding, placement/owner selection, reservation, insert, clone, and delete
+remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

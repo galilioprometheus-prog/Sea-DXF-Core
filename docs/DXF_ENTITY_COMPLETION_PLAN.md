@@ -813,6 +813,19 @@ all nine dialects, including AC1009. External `.acb` access, applicability,
 family graphs, entity insertion/clone/delete, and `Complete` support remain
 later work.
 
+M14.3aw adds atomic source-bound transaction composition for the unified CRUD
+pipeline. Every input plan must match the exact document identity, length, and
+physical format; all patches are replayed through the bounded M11 builder so
+cross-plan overlaps, duplicate insertion offsets, source limits, value limits,
+plan counts, and cancellation remain typed. Source-order is independent of
+caller plan order, and the composed plan captures a fresh exact inverse.
+`DxfEntityEditPlan::compose_supplemental_transactions` retains existing field
+postconditions while attaching handle, owner, or placement byte work. Paired
+tests across all nine dialects prove M11 handle assignment plus successor
+`$HANDSEED` and M14 common-field reset commit and verify as one transaction.
+This checkpoint does not yet encode a new entity draft, choose placement or
+owner, reserve handles across sessions, or implement insert/clone/delete.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
