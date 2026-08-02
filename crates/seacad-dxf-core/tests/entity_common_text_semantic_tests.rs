@@ -2,12 +2,13 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue,
-    DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue,
-    DxfEntityCommonTextDirectory, DxfEntityCommonTextSemantics, DxfEntityField,
-    DxfEntityFieldSemanticIssue, DxfEntityFieldValue, DxfError, DxfLayoutObjectNameState,
-    DxfMemorySource, DxfNamedSymbolTableKind, DxfRawDocumentFormat, DxfReadOptions,
-    DxfResourceProfile, DxfSemanticValue, DxfSemanticValueState, NoopDxfReadObserver,
+    DxfCancellationToken, DxfEntityCommonColorBookIssue, DxfEntityCommonColorBookSemanticValue,
+    DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue, DxfEntityCommonSymbolIssue,
+    DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue, DxfEntityCommonTextDirectory,
+    DxfEntityCommonTextSemantics, DxfEntityField, DxfEntityFieldSemanticIssue, DxfError,
+    DxfLayoutObjectNameState, DxfMemorySource, DxfNamedSymbolTableKind, DxfRawDocumentFormat,
+    DxfReadOptions, DxfResourceProfile, DxfSemanticValue, DxfSemanticValueState,
+    NoopDxfReadObserver,
 };
 
 #[test]
@@ -88,7 +89,8 @@ fn layout_names_are_subclass_aware_and_keep_cardinality() -> Result<(), Box<dyn 
 }
 
 #[test]
-fn field_failures_bylayer_default_and_unreviewed_text_stay_exact() -> Result<(), Box<dyn Error>> {
+fn field_failures_bylayer_default_and_invalid_color_book_stay_typed() -> Result<(), Box<dyn Error>>
+{
     let groups = field_failure_groups();
     let bytes = encode(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, &groups)?;
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -120,12 +122,70 @@ fn field_failures_bylayer_default_and_unreviewed_text_stay_exact() -> Result<(),
     );
     assert!(matches!(
         entry(&texts, entity, DxfEntityField::COLOR_NAME)?.semantics(),
-        DxfEntityCommonTextSemantics::ExactUnreviewed(DxfSemanticValue::Explicit {
-            value: DxfEntityFieldValue::ExactText(_),
+        DxfEntityCommonTextSemantics::ColorBook(DxfSemanticValue::Invalid {
+            issue: DxfEntityCommonColorBookIssue::MissingSeparator,
             ..
         })
     ));
     assert!(!format!("{texts:?}").contains("SECRET"));
+    Ok(())
+}
+
+#[test]
+fn color_book_syntax_and_related_color_failures_remain_distinct() -> Result<(), Box<dyn Error>> {
+    for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        let groups = color_book_failure_groups();
+        let bytes = encode(format, DxfAcadVersion::Ac1032, &groups)?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let values: Vec<_> = match format {
+            DxfRawDocumentFormat::Ascii => {
+                color_book_values(&open_ascii(&source)?.entity_common_text_directory(&token())?)?
+            }
+            DxfRawDocumentFormat::Binary => {
+                color_book_values(&open_binary(&source)?.entity_common_text_directory(&token())?)?
+            }
+            _ => return Err(io::Error::other("test format").into()),
+        };
+        assert_eq!(values.len(), 6);
+        assert_eq!(
+            values[0].invalid_issue(),
+            Some(&DxfEntityCommonColorBookIssue::EmptyBookName)
+        );
+        assert_eq!(
+            values[1].invalid_issue(),
+            Some(&DxfEntityCommonColorBookIssue::EmptyColorName)
+        );
+        assert_eq!(
+            values[2].invalid_issue(),
+            Some(&DxfEntityCommonColorBookIssue::MultipleSeparators { separator_count: 2 })
+        );
+        assert!(matches!(
+            values[3].invalid_issue(),
+            Some(DxfEntityCommonColorBookIssue::TrueColor(
+                DxfSemanticValue::Absent { .. }
+            ))
+        ));
+        assert!(matches!(
+            values[4].invalid_issue(),
+            Some(DxfEntityCommonColorBookIssue::TrueColor(
+                DxfSemanticValue::Invalid { .. }
+            ))
+        ));
+        assert!(matches!(
+            values[5].invalid_issue(),
+            Some(DxfEntityCommonColorBookIssue::IndexedColor(
+                DxfSemanticValue::Invalid {
+                    issue: seacad_dxf_core::DxfEntityCommonFieldDomainSemanticIssue::Field(
+                        DxfEntityFieldSemanticIssue::MultipleValues {
+                            occurrence_count: 2
+                        }
+                    ),
+                    ..
+                }
+            ))
+        ));
+        assert!(values.iter().all(|value| value.raw_provenance().is_some()));
+    }
     Ok(())
 }
 
@@ -157,6 +217,10 @@ fn cancellation_source_bound_lookup_and_public_bounds_fail_closed() -> Result<()
     );
     assert_eq!(
         texts.layout_object_directory().source_id(),
+        document.source_id()
+    );
+    assert_eq!(
+        texts.common_field_domain_directory().source_id(),
         document.source_id()
     );
     assert_eq!(texts.entries().len(), 4);
@@ -193,7 +257,7 @@ fn assert_valid(
         assert_eq!(text.source_id(), texts.source_id());
         assert_eq!(value.state(), DxfSemanticValueState::Explicit);
     }
-    let color_name = exact(texts, entity, DxfEntityField::COLOR_NAME)?;
+    let color_name = color_book(texts, entity)?;
     if version == DxfAcadVersion::Ac1009 {
         assert!(matches!(
             layout(texts, entity)?,
@@ -210,6 +274,14 @@ fn assert_valid(
         assert_eq!(layout.state(), DxfSemanticValueState::Explicit);
         assert!(layout.value().is_some());
         assert_eq!(color_name.state(), DxfSemanticValueState::Explicit);
+        let value = color_name
+            .value()
+            .ok_or_else(|| io::Error::other("color-book value"))?;
+        assert_eq!(value.indexed_color().raw(), 40);
+        assert_eq!(value.true_color().raw(), 16_235_019);
+        assert!(!value.book_name_span().is_empty());
+        assert!(!value.color_name_span().is_empty());
+        assert_eq!(value.text().source_id(), texts.source_id());
     }
     Ok(())
 }
@@ -253,7 +325,7 @@ fn signature(texts: &DxfEntityCommonTextDirectory) -> Result<Signature, Box<dyn 
                 (value.state() as u8, kind)
             }
             DxfEntityCommonTextSemantics::Layout(value) => (value.state() as u8, None),
-            DxfEntityCommonTextSemantics::ExactUnreviewed(value) => (value.state() as u8, None),
+            DxfEntityCommonTextSemantics::ColorBook(value) => (value.state() as u8, None),
             _ => return Err(io::Error::other("unknown common text semantics").into()),
         };
         result.push((entry.field(), state, kind));
@@ -282,15 +354,29 @@ fn symbol(
     }
 }
 
-fn exact(
+fn color_book(
     texts: &DxfEntityCommonTextDirectory,
     entity: seacad_dxf_core::DxfEntityRef,
-    field: DxfEntityField,
-) -> Result<seacad_dxf_core::DxfEntityFieldSemanticValue, Box<dyn Error>> {
-    match entry(texts, entity, field)?.semantics() {
-        DxfEntityCommonTextSemantics::ExactUnreviewed(value) => Ok(value),
-        _ => Err(io::Error::other("exact semantics").into()),
+) -> Result<DxfEntityCommonColorBookSemanticValue, Box<dyn Error>> {
+    match entry(texts, entity, DxfEntityField::COLOR_NAME)?.semantics() {
+        DxfEntityCommonTextSemantics::ColorBook(value) => Ok(value),
+        _ => Err(io::Error::other("color-book semantics").into()),
     }
+}
+
+fn color_book_values(
+    texts: &DxfEntityCommonTextDirectory,
+) -> Result<Vec<DxfEntityCommonColorBookSemanticValue>, Box<dyn Error>> {
+    texts
+        .entries()
+        .iter()
+        .copied()
+        .filter(|entry| entry.field() == DxfEntityField::COLOR_NAME)
+        .map(|entry| match entry.semantics() {
+            DxfEntityCommonTextSemantics::ColorBook(value) => Ok(value),
+            _ => Err(io::Error::other("color-book semantics").into()),
+        })
+        .collect()
 }
 
 fn entry(
@@ -322,6 +408,8 @@ fn only_entity(
 #[derive(Clone, Copy)]
 enum Value<'a> {
     Text(&'a [u8]),
+    Int16(i16),
+    Int32(i32),
 }
 
 fn valid_fixture(
@@ -337,7 +425,9 @@ fn valid_fixture(
         groups.extend([
             (100, Value::Text(b"AcDbEntity")),
             (410, Value::Text(b"SECRET_LAYOUT")),
-            (430, Value::Text(b"SECRET_COLOR")),
+            (430, Value::Text(b"RAL CLASSIC$RAL 1003")),
+            (62, Value::Int16(40)),
+            (420, Value::Int32(16_235_019)),
         ]);
     }
     groups.extend([(8, Value::Text(b"LayerA")), (6, Value::Text(b"Dash"))]);
@@ -385,6 +475,43 @@ fn field_failure_groups() -> Vec<(i16, Value<'static>)> {
         (0, Value::Text(b"ENDSEC")),
         (0, Value::Text(b"EOF")),
     ]);
+    groups
+}
+
+fn color_book_failure_groups() -> Vec<(i16, Value<'static>)> {
+    let mut groups = header(DxfAcadVersion::Ac1032);
+    groups.extend([(0, Value::Text(b"SECTION")), (2, Value::Text(b"ENTITIES"))]);
+    for (handle, name, colors) in [
+        (b"10".as_slice(), b"$RAL".as_slice(), 0_u8),
+        (b"11".as_slice(), b"RAL$".as_slice(), 0),
+        (b"12".as_slice(), b"RAL$A$B".as_slice(), 0),
+        (b"13".as_slice(), b"RAL$A".as_slice(), 1),
+        (b"14".as_slice(), b"RAL$A".as_slice(), 2),
+        (b"15".as_slice(), b"RAL$A".as_slice(), 3),
+    ] {
+        groups.extend([
+            (0, Value::Text(b"LINE")),
+            (5, Value::Text(handle)),
+            (100, Value::Text(b"AcDbEntity")),
+            (430, Value::Text(name)),
+        ]);
+        if colors != 1 {
+            groups.push((
+                420,
+                Value::Int32(if colors == 2 {
+                    0x01_00_00_00
+                } else {
+                    0x12_34_56
+                }),
+            ));
+        }
+        groups.push((62, Value::Int16(40)));
+        if colors == 3 {
+            groups.push((62, Value::Int16(41)));
+        }
+        groups.push((100, Value::Text(b"AcDbLine")));
+    }
+    groups.extend([(0, Value::Text(b"ENDSEC")), (0, Value::Text(b"EOF"))]);
     groups
 }
 
@@ -491,10 +618,14 @@ fn encode(
 
 fn ascii_groups(groups: &[(i16, Value<'_>)]) -> Vec<u8> {
     let mut bytes = Vec::new();
-    for (code, Value::Text(value)) in groups {
+    for (code, value) in groups {
         bytes.extend_from_slice(code.to_string().as_bytes());
         bytes.extend_from_slice(b"\r\n");
-        bytes.extend_from_slice(value);
+        match value {
+            Value::Text(value) => bytes.extend_from_slice(value),
+            Value::Int16(value) => bytes.extend_from_slice(value.to_string().as_bytes()),
+            Value::Int32(value) => bytes.extend_from_slice(value.to_string().as_bytes()),
+        }
         bytes.extend_from_slice(b"\r\n");
     }
     bytes
@@ -505,14 +636,20 @@ fn binary_groups(
     groups: &[(i16, Value<'_>)],
 ) -> Result<Vec<u8>, io::Error> {
     let mut bytes = DXF_BINARY_SENTINEL.to_vec();
-    for (code, Value::Text(value)) in groups {
+    for (code, value) in groups {
         if version == DxfAcadVersion::Ac1009 {
             bytes.push(u8::try_from(*code).map_err(|_| io::Error::other("AC1009 code"))?);
         } else {
             bytes.extend_from_slice(&code.to_le_bytes());
         }
-        bytes.extend_from_slice(value);
-        bytes.push(0);
+        match value {
+            Value::Text(value) => {
+                bytes.extend_from_slice(value);
+                bytes.push(0);
+            }
+            Value::Int16(value) => bytes.extend_from_slice(&value.to_le_bytes()),
+            Value::Int32(value) => bytes.extend_from_slice(&value.to_le_bytes()),
+        }
     }
     Ok(bytes)
 }

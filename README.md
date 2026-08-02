@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ar. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3as. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -99,7 +99,10 @@ closed `LAYER` and `LTYPE` tables; missing and ambiguous names are typed, while
 linetype omission remains the schema `BYLAYER` default. Layout group 410 now
 resolves exactly against group 1 in the `AcDbLayout` subclass of closed
 `OBJECTS`/`LAYOUT` records; missing, duplicate, and ambiguous target names stay
-typed. Color name remains exact unreviewed text without invented policy.
+typed. Color-name group 430 now parses the documented exact
+`colorbook$colorname` envelope into two source spans, rejects missing, empty,
+or multiple separators without guessing, and composes with the reviewed group
+420 true-color and group 62 indexed-color semantics.
 Proxy graphics now have a source-bound size relation. Group 310 stays opaque;
 ASCII hex is validated and counted as decoded bytes, while Binary uses its
 already-framed raw payload length. The projection distinguishes absence,
@@ -129,7 +132,8 @@ application groups, wrong subclasses, wrong sections, and malformed layout-name
 cardinality while retaining their evidence. Layout edits now enter the session
 only after one exact same-document layout object resolves; rejected edits queue
 nothing, while accepted edits use strict semantic verification and exact inverse
-restoration. Color-book names remain locked behind their dedicated resolver.
+restoration. Color-book editing remains locked behind its dedicated admission
+resolver; read semantics do not load or validate an external `.acb` file.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

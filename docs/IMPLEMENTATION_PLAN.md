@@ -2220,5 +2220,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     block-record ownership, layout lifecycle, case folding, legal names,
     color-book resolution, applicability, or family graph CRUD.
 
+    M14.3as replaces the final unreviewed common exact-text projection with a
+    typed color-book envelope. Group 430 requires exactly one `$` and nonempty
+    book/color components, returned as source-backed spans. Structured
+    semantics additionally require usable reviewed group-420 true color and
+    group-62 indexed color states from the same entity; related absence,
+    cardinality, decode, and domain failures remain typed without selecting or
+    repairing values. Parsing is group-order independent and cancellation-
+    aware. Paired ASCII/Binary fixtures span AC1009 through AC1032 and cover
+    delimiter, relation, provenance, source, and bound failures. This
+    checkpoint does not load color-book files, validate external mappings,
+    admit group-430 edits, review applicability, or add family graph CRUD.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

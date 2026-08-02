@@ -439,9 +439,11 @@ pub use entity_common_symbol_edit::{
     DxfEntityCommonSymbolEditValue,
 };
 pub use entity_common_text_semantic::{
-    DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue, DxfEntityCommonLayoutValue,
-    DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue,
-    DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry, DxfEntityCommonTextSemantics,
+    DxfEntityCommonColorBookIssue, DxfEntityCommonColorBookSemanticValue,
+    DxfEntityCommonColorBookValue, DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue,
+    DxfEntityCommonLayoutValue, DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue,
+    DxfEntityCommonSymbolValue, DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry,
+    DxfEntityCommonTextSemantics,
 };
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,

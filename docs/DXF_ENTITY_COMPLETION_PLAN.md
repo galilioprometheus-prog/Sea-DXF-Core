@@ -762,6 +762,19 @@ sensitive. Reciprocal block-record ownership, layout lifecycle, legal-name/
 case policy, color books, applicability, family graphs, and `Complete` support
 remain later work.
 
+M14.3as reviews common color-book names on the read side. Explicit group 430
+must contain exactly one `$` with nonempty book and color components; both are
+retained as exact source spans and no separator occurrence is guessed. A
+structured value is published only when the same entity also has usable
+reviewed group-420 true color and group-62 indexed color semantics. Missing or
+invalid related scalars remain embedded typed relation failures with group-430
+provenance. Paired ASCII/Binary fixtures cover all nine dialects, including
+absence in AC1009, out-of-order groups, every delimiter failure, duplicate and
+out-of-domain related scalars, cancellation, source identity, and bounds. The
+core does not open `.acb` files, verify external color names/RGB mappings,
+admit color-book edits, infer applicability, or advance an entity to
+`Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

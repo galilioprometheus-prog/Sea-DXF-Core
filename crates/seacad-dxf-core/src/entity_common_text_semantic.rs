@@ -4,12 +4,14 @@ use std::io;
 
 use crate::{
     ByteSpan, DXF_ENTITY_COMMON_FIELDS, DxfAsciiRawDocument, DxfBinaryRawDocument,
-    DxfCancellationToken, DxfEntityField, DxfEntityFieldSemanticDirectory,
-    DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue, DxfEntityFieldSemanticValue,
-    DxfEntityFieldSemantics, DxfEntityFieldTextValue, DxfEntityFieldValue, DxfEntityRef, DxfError,
-    DxfIoOperation, DxfLayoutObjectDirectory, DxfLayoutObjectEntry, DxfLayoutObjectNameState,
-    DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
-    DxfRawDocumentView, DxfSemanticValue, DxfSourceId,
+    DxfCancellationToken, DxfEntityCommonFieldDomainDirectory,
+    DxfEntityCommonFieldDomainSemanticValue, DxfEntityCommonFieldDomainSemantics,
+    DxfEntityCommonFieldDomainValue, DxfEntityField, DxfEntityFieldSemanticDirectory,
+    DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue, DxfEntityFieldSemantics,
+    DxfEntityFieldTextValue, DxfEntityFieldValue, DxfEntityIndexedColor, DxfEntityRef,
+    DxfEntityTrueColor, DxfError, DxfIoOperation, DxfLayoutObjectDirectory, DxfLayoutObjectEntry,
+    DxfLayoutObjectNameState, DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry,
+    DxfNamedSymbolTableKind, DxfRawDocumentView, DxfSemanticValue, DxfSourceId,
     source_span::{sha256_span, spans_equal},
 };
 
@@ -69,13 +71,66 @@ pub enum DxfEntityCommonLayoutIssue {
 pub type DxfEntityCommonLayoutSemanticValue =
     DxfSemanticValue<DxfEntityCommonLayoutValue, DxfEntityCommonLayoutIssue>;
 
-/// Reviewed symbol reference or exact pass-through text whose policy is open.
+/// A source-backed Autodesk `colorbook$colorname` value and its color tuple.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityCommonColorBookValue {
+    text: DxfEntityFieldTextValue,
+    book_name_span: ByteSpan,
+    color_name_span: ByteSpan,
+    indexed_color: DxfEntityIndexedColor,
+    true_color: DxfEntityTrueColor,
+}
+
+impl DxfEntityCommonColorBookValue {
+    #[must_use]
+    pub const fn text(self) -> DxfEntityFieldTextValue {
+        self.text
+    }
+
+    #[must_use]
+    pub const fn book_name_span(self) -> ByteSpan {
+        self.book_name_span
+    }
+
+    #[must_use]
+    pub const fn color_name_span(self) -> ByteSpan {
+        self.color_name_span
+    }
+
+    #[must_use]
+    pub const fn indexed_color(self) -> DxfEntityIndexedColor {
+        self.indexed_color
+    }
+
+    #[must_use]
+    pub const fn true_color(self) -> DxfEntityTrueColor {
+        self.true_color
+    }
+}
+
+/// Exact syntax or related scalar reason a color-book tuple is unusable.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityCommonColorBookIssue {
+    Field(DxfEntityFieldSemanticIssue),
+    MissingSeparator,
+    EmptyBookName,
+    EmptyColorName,
+    MultipleSeparators { separator_count: u32 },
+    IndexedColor(DxfEntityCommonFieldDomainSemanticValue),
+    TrueColor(DxfEntityCommonFieldDomainSemanticValue),
+}
+
+pub type DxfEntityCommonColorBookSemanticValue =
+    DxfSemanticValue<DxfEntityCommonColorBookValue, DxfEntityCommonColorBookIssue>;
+
+/// Reviewed symbol, layout, or color-book semantics for common exact text.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityCommonTextSemantics {
     Symbol(DxfEntityCommonSymbolSemanticValue),
     Layout(DxfEntityCommonLayoutSemanticValue),
-    ExactUnreviewed(DxfEntityFieldSemanticValue),
+    ColorBook(DxfEntityCommonColorBookSemanticValue),
 }
 
 /// One of the four exact-text fields in the generated common-field schema.
@@ -133,6 +188,7 @@ pub struct DxfEntityCommonTextDirectory {
     source: DxfEntityFieldSemanticDirectory,
     named: DxfNamedSymbolTableDirectory,
     layouts: DxfLayoutObjectDirectory,
+    domains: DxfEntityCommonFieldDomainDirectory,
     entries: Box<[DxfEntityCommonTextEntry]>,
 }
 
@@ -145,7 +201,13 @@ impl DxfEntityCommonTextDirectory {
         let source = document.entity_field_semantic_directory(cancellation)?;
         let named = document.named_symbol_table_directory(cancellation)?;
         let layouts = document.layout_object_directory(cancellation)?;
-        for observed in [source.source_id(), named.source_id(), layouts.source_id()] {
+        let domains = document.entity_common_field_domain_directory(cancellation)?;
+        for observed in [
+            source.source_id(),
+            named.source_id(),
+            layouts.source_id(),
+            domains.source_id(),
+        ] {
             ensure_source(document.source_id(), observed)?;
         }
         let index = build_name_index(document, &named, cancellation)?;
@@ -170,6 +232,13 @@ impl DxfEntityCommonTextDirectory {
                     source_entry,
                     cancellation,
                 )?)
+            } else if source_entry.field() == DxfEntityField::COLOR_NAME {
+                DxfEntityCommonTextSemantics::ColorBook(project_color_book(
+                    document,
+                    &domains,
+                    source_entry,
+                    cancellation,
+                )?)
             } else if let Some(kind) = reviewed_common_symbol_kind(source_entry.field()) {
                 DxfEntityCommonTextSemantics::Symbol(project_symbol(
                     document,
@@ -179,7 +248,7 @@ impl DxfEntityCommonTextDirectory {
                     cancellation,
                 )?)
             } else {
-                project_exact_unreviewed(source_entry)?
+                return Err(invalid_internal_data());
             };
             entries.push(DxfEntityCommonTextEntry {
                 ordinal: compact_len(entries.len())?,
@@ -196,6 +265,7 @@ impl DxfEntityCommonTextDirectory {
             source,
             named,
             layouts,
+            domains,
             entries: entries.into_boxed_slice(),
         })
     }
@@ -218,6 +288,11 @@ impl DxfEntityCommonTextDirectory {
     #[must_use]
     pub const fn layout_object_directory(&self) -> &DxfLayoutObjectDirectory {
         &self.layouts
+    }
+
+    #[must_use]
+    pub const fn common_field_domain_directory(&self) -> &DxfEntityCommonFieldDomainDirectory {
+        &self.domains
     }
 
     #[must_use]
@@ -480,22 +555,131 @@ fn exact_matches(
     Ok((first, count))
 }
 
-fn project_exact_unreviewed(
+fn project_color_book(
+    document: DxfRawDocumentView<'_>,
+    domains: &DxfEntityCommonFieldDomainDirectory,
     source: DxfEntityFieldSemanticEntry,
-) -> Result<DxfEntityCommonTextSemantics, DxfError> {
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfEntityCommonColorBookSemanticValue, DxfError> {
     let DxfEntityFieldSemantics::Singleton(value) = source.semantics() else {
         return Err(invalid_internal_data());
     };
-    if matches!(
-        value.value(),
-        Some(DxfEntityFieldValue::ExactText(_))
-            | Some(DxfEntityFieldValue::SchemaExactText(_))
-            | None
-    ) {
-        Ok(DxfEntityCommonTextSemantics::ExactUnreviewed(value))
-    } else {
-        Err(invalid_internal_data())
+    Ok(match value {
+        DxfSemanticValue::Explicit {
+            value: DxfEntityFieldValue::ExactText(text),
+            field,
+            raw,
+        } => match split_color_book(document, text.value_span(), cancellation)? {
+            Err(issue) => DxfSemanticValue::invalid(issue, field, Some(raw)),
+            Ok((book_name_span, color_name_span)) => {
+                let true_color =
+                    related_color(domains, source.entity(), DxfEntityField::TRUE_COLOR)?;
+                let indexed_color = related_color(domains, source.entity(), DxfEntityField::COLOR)?;
+                match (true_color, indexed_color) {
+                    (
+                        Ok(DxfEntityCommonFieldDomainValue::TrueColor(true_color)),
+                        Ok(DxfEntityCommonFieldDomainValue::IndexedColor(indexed_color)),
+                    ) => DxfSemanticValue::explicit(
+                        DxfEntityCommonColorBookValue {
+                            text,
+                            book_name_span,
+                            color_name_span,
+                            indexed_color,
+                            true_color,
+                        },
+                        field,
+                        raw,
+                    ),
+                    (Err(value), _) => DxfSemanticValue::invalid(
+                        DxfEntityCommonColorBookIssue::TrueColor(value),
+                        field,
+                        Some(raw),
+                    ),
+                    (_, Err(value)) => DxfSemanticValue::invalid(
+                        DxfEntityCommonColorBookIssue::IndexedColor(value),
+                        field,
+                        Some(raw),
+                    ),
+                    _ => return Err(invalid_internal_data()),
+                }
+            }
+        },
+        DxfSemanticValue::Absent { field } => DxfSemanticValue::absent(field),
+        DxfSemanticValue::Invalid { issue, field, raw } => {
+            DxfSemanticValue::invalid(DxfEntityCommonColorBookIssue::Field(issue), field, raw)
+        }
+        DxfSemanticValue::Explicit { .. } | DxfSemanticValue::Defaulted { .. } => {
+            return Err(invalid_internal_data());
+        }
+    })
+}
+
+fn related_color(
+    domains: &DxfEntityCommonFieldDomainDirectory,
+    entity: DxfEntityRef,
+    field: DxfEntityField,
+) -> Result<
+    Result<DxfEntityCommonFieldDomainValue, DxfEntityCommonFieldDomainSemanticValue>,
+    DxfError,
+> {
+    let Some(entry) = domains.entry_for_field(entity, field)? else {
+        return Err(invalid_internal_data());
+    };
+    let DxfEntityCommonFieldDomainSemantics::Reviewed(value) = entry.semantics() else {
+        return Err(invalid_internal_data());
+    };
+    match value.value().copied() {
+        Some(value) => Ok(Ok(value)),
+        None => Ok(Err(value)),
     }
+}
+
+fn split_color_book(
+    document: DxfRawDocumentView<'_>,
+    span: ByteSpan,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<(ByteSpan, ByteSpan), DxfEntityCommonColorBookIssue>, DxfError> {
+    let mut separator = None;
+    let mut separator_count = 0_u32;
+    let mut offset = span.start();
+    let mut buffer = [0_u8; 4096];
+    while offset < span.end() {
+        ensure_not_cancelled(cancellation)?;
+        let remaining = span.end() - offset;
+        let take = usize::try_from(remaining.min(buffer.len() as u64))
+            .map_err(|_| invalid_internal_data())?;
+        let part =
+            ByteSpan::from_start_and_len(offset, take as u64).ok_or_else(invalid_internal_data)?;
+        document.read_span(part, &mut buffer[..take])?;
+        for (index, byte) in buffer[..take].iter().copied().enumerate() {
+            if byte == b'$' {
+                separator_count = separator_count
+                    .checked_add(1)
+                    .ok_or_else(invalid_internal_data)?;
+                separator.get_or_insert(offset + index as u64);
+            }
+        }
+        offset = part.end();
+    }
+    let Some(separator) = separator else {
+        return Ok(Err(DxfEntityCommonColorBookIssue::MissingSeparator));
+    };
+    if separator_count != 1 {
+        return Ok(Err(DxfEntityCommonColorBookIssue::MultipleSeparators {
+            separator_count,
+        }));
+    }
+    if separator == span.start() {
+        return Ok(Err(DxfEntityCommonColorBookIssue::EmptyBookName));
+    }
+    let color_start = separator.checked_add(1).ok_or_else(invalid_internal_data)?;
+    if color_start == span.end() {
+        return Ok(Err(DxfEntityCommonColorBookIssue::EmptyColorName));
+    }
+    Ok(Ok((
+        ByteSpan::new(span.start(), separator).ok_or_else(invalid_internal_data)?,
+        ByteSpan::new(color_start, span.end()).ok_or_else(invalid_internal_data)?,
+    )))
 }
 
 pub(crate) fn reviewed_common_symbol_kind(

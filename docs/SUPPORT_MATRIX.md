@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ar can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3as can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -857,6 +857,17 @@ AC1009 through AC1032. AC1009 Binary group 410 remains unencodable and fails at
 the typed wire gate. Matching is byte-exact and case-sensitive. Reciprocal
 block-record ownership, layout lifecycle, case/legal-name policy, color-book
 resolution, applicability, family graphs, and `Complete` support remain open.
+
+M14.3as parses common color-name group 430 as the Autodesk-documented
+`colorbook$colorname` envelope. Exactly one separator and two nonempty
+components are required; valid components remain exact source spans. The
+projection composes group 430 with the same entity's reviewed group-420
+24-bit true color and group-62 indexed color, while preserving missing,
+duplicate, malformed, and out-of-domain relation states as typed failures.
+Group order is irrelevant. ASCII/Binary fixtures span AC1009 through AC1032;
+AC1009 proves exact absence because its Binary group-code encoding cannot
+represent 430. External `.acb` loading, color-name/RGB verification, edit
+admission, applicability, family graphs, and `Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
