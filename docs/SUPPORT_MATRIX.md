@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3be can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bf can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1007,6 +1007,15 @@ the five earlier supported dialects, with exact source GUID and normalized
 one-row receipt. Six names now have reviewed ranges and 53 remain unreviewed.
 This does not validate light types, vectors, photometric settings, rendering,
 shadows, family CRUD, or `Complete` support.
+
+M14.3bf adds exact ACAD_TABLE alias applicability. Autodesk's AutoCAD 2005 API
+history marks the Table entity/API and `acTable` enum value as new; the existing
+Autodesk TABLE DXF receipt independently fixes group 0 to `ACAD_TABLE`.
+Generated admission therefore marks only ACAD_TABLE applicable from AC1018 and
+not applicable in AC1009 through AC1015. Canonical `TABLE` remains
+`NotYetReviewed` rather than being treated as an interchangeable wire marker.
+Seven names now have reviewed ranges and 52 remain unreviewed. Cell grammar,
+style references, layout, CRUD, and `Complete` support remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

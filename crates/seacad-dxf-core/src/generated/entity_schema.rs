@@ -975,7 +975,7 @@ impl DxfEntityNameClassification {
 }
 
 pub const DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256: &str =
-    "5fbc2fcbcfcffbe6200fc789a9c0b194ada1ddf1acd61a98aa87ea79d1ec7a4a";
+    "8295f0e33bd11d244b5b6a9b505ddf0fc2264bb08dd105f87d171564669cf34a";
 
 #[rustfmt::skip]
 pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
@@ -1025,7 +1025,7 @@ pub static DXF_ENTITY_APPLICABILITY: &[DxfEntityApplicabilityDescriptor] = &[
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::WIPEOUT)),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Canonical(DxfEntityTopic::XLINE)),
     DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::MPOLYGON)),
-    DxfEntityApplicabilityDescriptor::not_yet_reviewed(DxfEntityNameClassification::Alias(DxfEntityAlias::ACAD_TABLE)),
+    DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::ACAD_TABLE), DxfAcadVersion::Ac1018, None, "autodesk.table.compatibility.2021", "GUID-4570302D-8416-402B-902C-5948068B4B7E", "a5ec56f22f08d5110191e796d2b147ed5d34573b0a7dd742bb7872236b546e13"),
     DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::DGNUNDERLAY), DxfAcadVersion::Ac1021, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),
     DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::DWFUNDERLAY), DxfAcadVersion::Ac1021, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),
     DxfEntityApplicabilityDescriptor::autodesk_compatibility(DxfEntityNameClassification::Alias(DxfEntityAlias::PDFUNDERLAY), DxfAcadVersion::Ac1024, None, "autodesk.underlay.compatibility.2020", "GUID-BF215599-C96C-4FFF-A2DB-21DEFFAC71C0", "1f8904aba0b1891d9d7faf3c0d3a9ce7a1d99ec815d268f60c7425c69b7cdaea"),

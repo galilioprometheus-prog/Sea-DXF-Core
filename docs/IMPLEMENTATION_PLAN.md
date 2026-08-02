@@ -2380,5 +2380,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     type/vector relations, photometric settings, rendering, shadows, encoding,
     insertion, CRUD, and `Complete` support remain unchanged.
 
+    M14.3bf records exact ACAD_TABLE alias applicability. Autodesk's AutoCAD
+    2005 API history marks the Table entity/API as new, and the normative TABLE
+    DXF page separately fixes its group-0 marker as `ACAD_TABLE`. The generated
+    descriptor starts at AC1018 with the API-history GUID and normalized facts
+    receipt. Canonical `TABLE` remains `NotYetReviewed`; the documentation topic
+    is not assumed to be an interchangeable exact marker. Matrix tests now
+    contain seven reviewed names and 52 fail-closed names. Cell grammar, style
+    resolution, layout, encoding, CRUD, and `Complete` remain unchanged.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

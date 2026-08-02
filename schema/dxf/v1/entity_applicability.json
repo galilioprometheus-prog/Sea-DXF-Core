@@ -48,7 +48,7 @@
     { "name_kind": "topic", "name_id": "wipeout", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "topic", "name_id": "xline", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
     { "name_kind": "alias", "name_id": "mpolygon", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
-    { "name_kind": "alias", "name_id": "acad_table", "review_state": "not_yet_reviewed", "minimum_version": null, "maximum_version": null, "source_id": null },
+    { "name_kind": "alias", "name_id": "acad_table", "review_state": "applicable_range", "minimum_version": "AC1018", "maximum_version": null, "source_id": "autodesk.table.compatibility.2021" },
     { "name_kind": "alias", "name_id": "dgnunderlay", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.underlay.compatibility.2020" },
     { "name_kind": "alias", "name_id": "dwfunderlay", "review_state": "applicable_range", "minimum_version": "AC1021", "maximum_version": null, "source_id": "autodesk.underlay.compatibility.2020" },
     { "name_kind": "alias", "name_id": "pdfunderlay", "review_state": "applicable_range", "minimum_version": "AC1024", "maximum_version": null, "source_id": "autodesk.underlay.compatibility.2020" },

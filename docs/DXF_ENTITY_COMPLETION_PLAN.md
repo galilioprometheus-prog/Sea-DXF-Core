@@ -921,6 +921,14 @@ receipt. Six of 59 names now have reviewed ranges and 53 remain fail-closed.
 LIGHT field semantics, type/vector relations, photometric settings, rendering,
 shadows, CRUD, and `Complete` support remain open.
 
+M14.3bf reviews exact ACAD_TABLE alias applicability. Autodesk's AutoCAD 2005
+API history identifies the Table entity/API as new, while the normative TABLE
+DXF page independently identifies `ACAD_TABLE` as the exact group-0 entity
+name. Its generated range starts at AC1018 with no reviewed maximum. Canonical
+`TABLE` stays `NotYetReviewed` rather than inheriting an unproved wire identity.
+Seven of 59 names now have reviewed ranges and 52 remain fail-closed. Cell
+grammar, merges, styles, layout extents, CRUD, and `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

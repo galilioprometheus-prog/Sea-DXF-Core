@@ -271,6 +271,37 @@ fn official_reviewed_ranges_are_typed_without_inventing_unreviewed_floors()
         DxfEntityApplicability::Applicable
     );
 
+    let acad_table = classify_exact_dxf_entity_name(b"ACAD_TABLE")
+        .applicability_descriptor()
+        .ok_or("reviewed ACAD_TABLE alias is missing its applicability row")?;
+    assert_eq!(acad_table.minimum_version(), Some(DxfAcadVersion::Ac1018));
+    assert_eq!(acad_table.maximum_version(), None);
+    assert_eq!(
+        acad_table.evidence(),
+        DxfEntityApplicabilityEvidence::AutodeskCompatibility
+    );
+    assert_eq!(
+        acad_table.source_reference(),
+        Some("GUID-4570302D-8416-402B-902C-5948068B4B7E")
+    );
+    assert_eq!(
+        acad_table.applicability(DxfAcadVersion::Ac1015),
+        DxfEntityApplicability::NotApplicable
+    );
+    assert_eq!(
+        acad_table.applicability(DxfAcadVersion::Ac1018),
+        DxfEntityApplicability::Applicable
+    );
+
+    let table_topic = classify_exact_dxf_entity_name(b"TABLE")
+        .applicability_descriptor()
+        .ok_or("reviewed TABLE topic is missing its applicability row")?;
+    assert_eq!(table_topic.minimum_version(), None);
+    assert_eq!(
+        table_topic.evidence(),
+        DxfEntityApplicabilityEvidence::NotYetReviewed
+    );
+
     let light = classify_exact_dxf_entity_name(b"LIGHT")
         .applicability_descriptor()
         .ok_or("reviewed LIGHT topic is missing its applicability row")?;

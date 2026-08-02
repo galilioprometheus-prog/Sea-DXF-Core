@@ -56,6 +56,12 @@
       "evidence_kind": "alias_list"
     },
     {
+      "id": "autodesk.table.compatibility.2021",
+      "topic_id": "GUID-4570302D-8416-402B-902C-5948068B4B7E",
+      "normalized_facts_sha256": "a5ec56f22f08d5110191e796d2b147ed5d34573b0a7dd742bb7872236b546e13",
+      "evidence_kind": "applicability_list"
+    },
+    {
       "id": "autodesk.underlay.2025",
       "topic_id": "GUID-3EC8FBCC-A85A-4B0B-93CD-C6C785959077",
       "normalized_facts_sha256": "ee2c1d8556dcc14708a61acee622eb81cd82f9ac8219056bbca3e2c6c28fa724",
