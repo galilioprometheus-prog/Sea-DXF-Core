@@ -2,11 +2,12 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue,
-    DxfEntityCommonSymbolValue, DxfEntityCommonTextDirectory, DxfEntityCommonTextSemantics,
-    DxfEntityField, DxfEntityFieldSemanticIssue, DxfEntityFieldValue, DxfError, DxfMemorySource,
-    DxfNamedSymbolTableKind, DxfRawDocumentFormat, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValue, DxfSemanticValueState, NoopDxfReadObserver,
+    DxfCancellationToken, DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue,
+    DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue,
+    DxfEntityCommonTextDirectory, DxfEntityCommonTextSemantics, DxfEntityField,
+    DxfEntityFieldSemanticIssue, DxfEntityFieldValue, DxfError, DxfLayoutObjectNameState,
+    DxfMemorySource, DxfNamedSymbolTableKind, DxfRawDocumentFormat, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValue, DxfSemanticValueState, NoopDxfReadObserver,
 };
 
 #[test]
@@ -51,6 +52,42 @@ fn missing_and_ambiguous_exact_symbol_names_remain_distinct() -> Result<(), Box<
 }
 
 #[test]
+fn layout_names_are_subclass_aware_and_keep_cardinality() -> Result<(), Box<dyn Error>> {
+    for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        let groups = layout_cardinality_groups();
+        let bytes = encode(format, DxfAcadVersion::Ac1032, &groups)?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let states: Vec<_> = match format {
+            DxfRawDocumentFormat::Ascii => open_ascii(&source)?
+                .layout_object_directory(&token())?
+                .entries()
+                .iter()
+                .map(|entry| entry.name())
+                .collect(),
+            DxfRawDocumentFormat::Binary => open_binary(&source)?
+                .layout_object_directory(&token())?
+                .entries()
+                .iter()
+                .map(|entry| entry.name())
+                .collect(),
+            _ => return Err(io::Error::other("test format").into()),
+        };
+        assert_eq!(states.len(), 4);
+        assert!(matches!(states[0], DxfLayoutObjectNameState::Unique(_)));
+        assert_eq!(states[1], DxfLayoutObjectNameState::Missing);
+        assert!(matches!(
+            states[2],
+            DxfLayoutObjectNameState::Duplicate {
+                occurrence_count: 2,
+                ..
+            }
+        ));
+        assert!(matches!(states[3], DxfLayoutObjectNameState::Unique(_)));
+    }
+    Ok(())
+}
+
+#[test]
 fn field_failures_bylayer_default_and_unreviewed_text_stay_exact() -> Result<(), Box<dyn Error>> {
     let groups = field_failure_groups();
     let bytes = encode(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, &groups)?;
@@ -77,15 +114,17 @@ fn field_failures_bylayer_default_and_unreviewed_text_stay_exact() -> Result<(),
         symbol(&texts, entity, DxfEntityField::LINETYPE)?.value(),
         Some(&DxfEntityCommonSymbolValue::ByLayer)
     );
-    for field in [DxfEntityField::LAYOUT, DxfEntityField::COLOR_NAME] {
-        assert!(matches!(
-            entry(&texts, entity, field)?.semantics(),
-            DxfEntityCommonTextSemantics::ExactUnreviewed(DxfSemanticValue::Explicit {
-                value: DxfEntityFieldValue::ExactText(_),
-                ..
-            })
-        ));
-    }
+    assert_eq!(
+        layout(&texts, entity)?.state(),
+        DxfSemanticValueState::Explicit
+    );
+    assert!(matches!(
+        entry(&texts, entity, DxfEntityField::COLOR_NAME)?.semantics(),
+        DxfEntityCommonTextSemantics::ExactUnreviewed(DxfSemanticValue::Explicit {
+            value: DxfEntityFieldValue::ExactText(_),
+            ..
+        })
+    ));
     assert!(!format!("{texts:?}").contains("SECRET"));
     Ok(())
 }
@@ -114,6 +153,10 @@ fn cancellation_source_bound_lookup_and_public_bounds_fail_closed() -> Result<()
     assert_eq!(texts.source_directory().source_id(), document.source_id());
     assert_eq!(
         texts.named_symbol_table_directory().source_id(),
+        document.source_id()
+    );
+    assert_eq!(
+        texts.layout_object_directory().source_id(),
         document.source_id()
     );
     assert_eq!(texts.entries().len(), 4);
@@ -150,19 +193,22 @@ fn assert_valid(
         assert_eq!(text.source_id(), texts.source_id());
         assert_eq!(value.state(), DxfSemanticValueState::Explicit);
     }
-    let layout = exact(texts, entity, DxfEntityField::LAYOUT)?;
     let color_name = exact(texts, entity, DxfEntityField::COLOR_NAME)?;
     if version == DxfAcadVersion::Ac1009 {
         assert!(matches!(
-            layout,
+            layout(texts, entity)?,
             DxfSemanticValue::Invalid {
-                issue: DxfEntityFieldSemanticIssue::MissingRequired,
+                issue: DxfEntityCommonLayoutIssue::Field(
+                    DxfEntityFieldSemanticIssue::MissingRequired
+                ),
                 ..
             }
         ));
         assert_eq!(color_name.state(), DxfSemanticValueState::Absent);
     } else {
+        let layout = layout(texts, entity)?;
         assert_eq!(layout.state(), DxfSemanticValueState::Explicit);
+        assert!(layout.value().is_some());
         assert_eq!(color_name.state(), DxfSemanticValueState::Explicit);
     }
     Ok(())
@@ -182,6 +228,12 @@ fn assert_name_failures(texts: &DxfEntityCommonTextDirectory) -> Result<(), Box<
         Some(&DxfEntityCommonSymbolIssue::Missing)
     );
     assert!(linetype.raw_provenance().is_some());
+    let layout = layout(texts, entity)?;
+    assert_eq!(
+        layout.invalid_issue(),
+        Some(&DxfEntityCommonLayoutIssue::Ambiguous { target_count: 2 })
+    );
+    assert!(layout.raw_provenance().is_some());
     Ok(())
 }
 
@@ -200,12 +252,23 @@ fn signature(texts: &DxfEntityCommonTextDirectory) -> Result<Signature, Box<dyn 
                 };
                 (value.state() as u8, kind)
             }
+            DxfEntityCommonTextSemantics::Layout(value) => (value.state() as u8, None),
             DxfEntityCommonTextSemantics::ExactUnreviewed(value) => (value.state() as u8, None),
             _ => return Err(io::Error::other("unknown common text semantics").into()),
         };
         result.push((entry.field(), state, kind));
     }
     Ok(result)
+}
+
+fn layout(
+    texts: &DxfEntityCommonTextDirectory,
+    entity: seacad_dxf_core::DxfEntityRef,
+) -> Result<DxfEntityCommonLayoutSemanticValue, Box<dyn Error>> {
+    match entry(texts, entity, DxfEntityField::LAYOUT)?.semantics() {
+        DxfEntityCommonTextSemantics::Layout(value) => Ok(value),
+        _ => Err(io::Error::other("layout semantics").into()),
+    }
 }
 
 fn symbol(
@@ -268,6 +331,7 @@ fn valid_fixture(
     let mut groups = header(version);
     groups.extend(symbol_table(b"LAYER", &[(b"LayerA", b"A")]));
     groups.extend(symbol_table(b"LTYPE", &[(b"Dash", b"B")]));
+    groups.extend(layout_objects(&[b"SECRET_LAYOUT"]));
     groups.extend(entity_start());
     if version != DxfAcadVersion::Ac1009 {
         groups.extend([
@@ -291,6 +355,7 @@ fn negative_name_groups() -> Vec<(i16, Value<'static>)> {
         &[(b"LayerA", b"A"), (b"LayerA", b"B")],
     ));
     groups.extend(symbol_table(b"LTYPE", &[(b"Other", b"C")]));
+    groups.extend(layout_objects(&[b"SECRET_LAYOUT", b"SECRET_LAYOUT"]));
     groups.extend(entity_start());
     groups.extend([
         (100, Value::Text(b"AcDbEntity")),
@@ -308,6 +373,7 @@ fn field_failure_groups() -> Vec<(i16, Value<'static>)> {
     let mut groups = header(DxfAcadVersion::Ac1032);
     groups.extend(symbol_table(b"LAYER", &[(b"LayerA", b"A")]));
     groups.extend(symbol_table(b"LTYPE", &[(b"Dash", b"B")]));
+    groups.extend(layout_objects(&[b"SECRET_LAYOUT"]));
     groups.extend(entity_start());
     groups.extend([
         (100, Value::Text(b"AcDbEntity")),
@@ -350,6 +416,55 @@ fn symbol_table(
         ]);
     }
     groups.extend([(0, Value::Text(b"ENDTAB")), (0, Value::Text(b"ENDSEC"))]);
+    groups
+}
+
+fn layout_objects(names: &[&'static [u8]]) -> Vec<(i16, Value<'static>)> {
+    let mut groups = vec![(0, Value::Text(b"SECTION")), (2, Value::Text(b"OBJECTS"))];
+    for name in names {
+        groups.extend([
+            (0, Value::Text(b"LAYOUT")),
+            (100, Value::Text(b"AcDbPlotSettings")),
+            (1, Value::Text(b"PAGE_SETUP")),
+            (100, Value::Text(b"AcDbLayout")),
+            (1, Value::Text(name)),
+        ]);
+    }
+    groups.extend([(0, Value::Text(b"ENDSEC"))]);
+    groups
+}
+
+fn layout_cardinality_groups() -> Vec<(i16, Value<'static>)> {
+    let mut groups = header(DxfAcadVersion::Ac1032);
+    groups.extend([
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"OBJECTS")),
+        (0, Value::Text(b"LAYOUT")),
+        (100, Value::Text(b"AcDbPlotSettings")),
+        (1, Value::Text(b"NOT_THE_LAYOUT_NAME")),
+        (100, Value::Text(b"AcDbLayout")),
+        (1, Value::Text(b"Model")),
+        (0, Value::Text(b"LAYOUT")),
+        (100, Value::Text(b"AcDbLayout")),
+        (0, Value::Text(b"LAYOUT")),
+        (100, Value::Text(b"AcDbLayout")),
+        (1, Value::Text(b"First")),
+        (1, Value::Text(b"Second")),
+        (0, Value::Text(b"LAYOUT")),
+        (100, Value::Text(b"AcDbLayout")),
+        (102, Value::Text(b"{APP")),
+        (1, Value::Text(b"APPLICATION_DATA")),
+        (102, Value::Text(b"}")),
+        (1, Value::Text(b"Paper")),
+        (0, Value::Text(b"ENDSEC")),
+        (0, Value::Text(b"SECTION")),
+        (2, Value::Text(b"ENTITIES")),
+        (0, Value::Text(b"LAYOUT")),
+        (100, Value::Text(b"AcDbLayout")),
+        (1, Value::Text(b"WRONG_SECTION")),
+        (0, Value::Text(b"ENDSEC")),
+        (0, Value::Text(b"EOF")),
+    ]);
     groups
 }
 

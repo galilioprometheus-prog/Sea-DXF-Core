@@ -2192,6 +2192,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     checkpoint does not define name folding, XREF naming, symbol characters,
     layout/color-book resolution, symbol-table record creation, applicability,
     or family graph CRUD.
+    M14.3aq adds a source-bound `OBJECTS`/`LAYOUT` directory and resolves common
+    group 410 on the read side. Layout names come only from group 1 inside the
+    exact `AcDbLayout` subclass; group 1 inherited from `AcDbPlotSettings`,
+    application-group content, wrong subclasses, wrong sections, and unclosed
+    sections cannot become targets. Each layout record retains typed missing,
+    unique, or duplicate name cardinality. Common layout semantics then retain
+    raw field failures and distinguish absent, exact unique, missing, and
+    ambiguous target names without selecting an occurrence. ASCII/Binary
+    fixtures span all nine dialects plus subclass collision, application-group,
+    wrong-section, cancellation, source identity, and public-bound cases. Name
+    matching remains byte-exact and case-sensitive. This checkpoint does not
+    admit layout edits, validate reciprocal block-record ownership, define case
+    folding or legal names, resolve color books, claim applicability, or add
+    layout lifecycle and family graph CRUD.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

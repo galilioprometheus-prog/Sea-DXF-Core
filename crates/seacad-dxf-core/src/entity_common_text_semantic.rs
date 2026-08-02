@@ -7,8 +7,9 @@ use crate::{
     DxfCancellationToken, DxfEntityField, DxfEntityFieldSemanticDirectory,
     DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue, DxfEntityFieldSemanticValue,
     DxfEntityFieldSemantics, DxfEntityFieldTextValue, DxfEntityFieldValue, DxfEntityRef, DxfError,
-    DxfIoOperation, DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry,
-    DxfNamedSymbolTableKind, DxfRawDocumentView, DxfSemanticValue, DxfSourceId,
+    DxfIoOperation, DxfLayoutObjectDirectory, DxfLayoutObjectEntry, DxfLayoutObjectNameState,
+    DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
+    DxfRawDocumentView, DxfSemanticValue, DxfSourceId,
     source_span::{sha256_span, spans_equal},
 };
 
@@ -37,11 +38,43 @@ pub enum DxfEntityCommonSymbolIssue {
 pub type DxfEntityCommonSymbolSemanticValue =
     DxfSemanticValue<DxfEntityCommonSymbolValue, DxfEntityCommonSymbolIssue>;
 
+/// One common group-410 name resolved to an exact layout object.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityCommonLayoutValue {
+    text: DxfEntityFieldTextValue,
+    target: DxfLayoutObjectEntry,
+}
+
+impl DxfEntityCommonLayoutValue {
+    #[must_use]
+    pub const fn text(self) -> DxfEntityFieldTextValue {
+        self.text
+    }
+
+    #[must_use]
+    pub const fn target(self) -> DxfLayoutObjectEntry {
+        self.target
+    }
+}
+
+/// Raw-field invalidity or exact layout-object lookup failure.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityCommonLayoutIssue {
+    Field(DxfEntityFieldSemanticIssue),
+    Missing,
+    Ambiguous { target_count: u32 },
+}
+
+pub type DxfEntityCommonLayoutSemanticValue =
+    DxfSemanticValue<DxfEntityCommonLayoutValue, DxfEntityCommonLayoutIssue>;
+
 /// Reviewed symbol reference or exact pass-through text whose policy is open.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityCommonTextSemantics {
     Symbol(DxfEntityCommonSymbolSemanticValue),
+    Layout(DxfEntityCommonLayoutSemanticValue),
     ExactUnreviewed(DxfEntityFieldSemanticValue),
 }
 
@@ -87,12 +120,19 @@ struct NameIndexEntry {
     target: DxfNamedSymbolTableEntry,
 }
 
+#[derive(Clone, Copy)]
+struct LayoutIndexEntry {
+    digest: NameDigest,
+    target: DxfLayoutObjectEntry,
+}
+
 /// Source-bound projection for common entity exact-text fields.
 #[derive(Debug)]
 pub struct DxfEntityCommonTextDirectory {
     source_id: DxfSourceId,
     source: DxfEntityFieldSemanticDirectory,
     named: DxfNamedSymbolTableDirectory,
+    layouts: DxfLayoutObjectDirectory,
     entries: Box<[DxfEntityCommonTextEntry]>,
 }
 
@@ -104,10 +144,12 @@ impl DxfEntityCommonTextDirectory {
         ensure_not_cancelled(cancellation)?;
         let source = document.entity_field_semantic_directory(cancellation)?;
         let named = document.named_symbol_table_directory(cancellation)?;
-        for observed in [source.source_id(), named.source_id()] {
+        let layouts = document.layout_object_directory(cancellation)?;
+        for observed in [source.source_id(), named.source_id(), layouts.source_id()] {
             ensure_source(document.source_id(), observed)?;
         }
         let index = build_name_index(document, &named, cancellation)?;
+        let layout_index = build_layout_index(document, &layouts, cancellation)?;
         let entity_count = source.entries().len() / DXF_ENTITY_COMMON_FIELDS.len();
         let capacity = entity_count
             .checked_mul(4)
@@ -121,15 +163,23 @@ impl DxfEntityCommonTextDirectory {
             if !is_common_text_field(source_entry.field()) {
                 continue;
             }
-            let semantics = match reviewed_common_symbol_kind(source_entry.field()) {
-                Some(kind) => DxfEntityCommonTextSemantics::Symbol(project_symbol(
+            let semantics = if source_entry.field() == DxfEntityField::LAYOUT {
+                DxfEntityCommonTextSemantics::Layout(project_layout(
+                    document,
+                    &layout_index,
+                    source_entry,
+                    cancellation,
+                )?)
+            } else if let Some(kind) = reviewed_common_symbol_kind(source_entry.field()) {
+                DxfEntityCommonTextSemantics::Symbol(project_symbol(
                     document,
                     &index,
                     source_entry,
                     kind,
                     cancellation,
-                )?),
-                None => project_exact_unreviewed(source_entry)?,
+                )?)
+            } else {
+                project_exact_unreviewed(source_entry)?
             };
             entries.push(DxfEntityCommonTextEntry {
                 ordinal: compact_len(entries.len())?,
@@ -145,6 +195,7 @@ impl DxfEntityCommonTextDirectory {
             source_id: document.source_id(),
             source,
             named,
+            layouts,
             entries: entries.into_boxed_slice(),
         })
     }
@@ -162,6 +213,11 @@ impl DxfEntityCommonTextDirectory {
     #[must_use]
     pub const fn named_symbol_table_directory(&self) -> &DxfNamedSymbolTableDirectory {
         &self.named
+    }
+
+    #[must_use]
+    pub const fn layout_object_directory(&self) -> &DxfLayoutObjectDirectory {
+        &self.layouts
     }
 
     #[must_use]
@@ -253,6 +309,96 @@ fn build_name_index(
     }
     index.sort_unstable_by_key(|entry| (entry.kind, entry.digest, entry.target.record().ordinal()));
     Ok(index.into_boxed_slice())
+}
+
+fn build_layout_index(
+    document: DxfRawDocumentView<'_>,
+    layouts: &DxfLayoutObjectDirectory,
+    cancellation: &DxfCancellationToken,
+) -> Result<Box<[LayoutIndexEntry]>, DxfError> {
+    let mut index = Vec::new();
+    index
+        .try_reserve_exact(layouts.entries().len())
+        .map_err(|_| out_of_memory())?;
+    for target in layouts.entries().iter().copied() {
+        ensure_not_cancelled(cancellation)?;
+        let DxfLayoutObjectNameState::Unique(name) = target.name() else {
+            continue;
+        };
+        index.push(LayoutIndexEntry {
+            digest: sha256_span(document, name.value_span(), cancellation)?,
+            target,
+        });
+    }
+    index.sort_unstable_by_key(|entry| (entry.digest, entry.target.record().ordinal()));
+    Ok(index.into_boxed_slice())
+}
+
+fn project_layout(
+    document: DxfRawDocumentView<'_>,
+    index: &[LayoutIndexEntry],
+    source: DxfEntityFieldSemanticEntry,
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfEntityCommonLayoutSemanticValue, DxfError> {
+    let DxfEntityFieldSemantics::Singleton(value) = source.semantics() else {
+        return Err(invalid_internal_data());
+    };
+    Ok(match value {
+        DxfSemanticValue::Explicit {
+            value: DxfEntityFieldValue::ExactText(text),
+            field,
+            raw,
+        } => {
+            let (target, count) =
+                exact_layout_matches(document, index, text.value_span(), cancellation)?;
+            match (target, count) {
+                (None, 0) => {
+                    DxfSemanticValue::invalid(DxfEntityCommonLayoutIssue::Missing, field, Some(raw))
+                }
+                (Some(target), 1) => DxfSemanticValue::explicit(
+                    DxfEntityCommonLayoutValue { text, target },
+                    field,
+                    raw,
+                ),
+                (Some(_), target_count) => DxfSemanticValue::invalid(
+                    DxfEntityCommonLayoutIssue::Ambiguous { target_count },
+                    field,
+                    Some(raw),
+                ),
+                (None, _) => return Err(invalid_internal_data()),
+            }
+        }
+        DxfSemanticValue::Absent { field } => DxfSemanticValue::absent(field),
+        DxfSemanticValue::Invalid { issue, field, raw } => {
+            DxfSemanticValue::invalid(DxfEntityCommonLayoutIssue::Field(issue), field, raw)
+        }
+        DxfSemanticValue::Explicit { .. } | DxfSemanticValue::Defaulted { .. } => {
+            return Err(invalid_internal_data());
+        }
+    })
+}
+
+fn exact_layout_matches(
+    document: DxfRawDocumentView<'_>,
+    index: &[LayoutIndexEntry],
+    span: ByteSpan,
+    cancellation: &DxfCancellationToken,
+) -> Result<(Option<DxfLayoutObjectEntry>, u32), DxfError> {
+    let digest = sha256_span(document, span, cancellation)?;
+    let start = index.partition_point(|entry| entry.digest < digest);
+    let end = index.partition_point(|entry| entry.digest <= digest);
+    let mut first = None;
+    let mut count = 0_u32;
+    for candidate in index.get(start..end).ok_or_else(invalid_internal_data)? {
+        let DxfLayoutObjectNameState::Unique(name) = candidate.target.name() else {
+            return Err(invalid_internal_data());
+        };
+        if spans_equal(document, span, name.value_span(), cancellation)? {
+            count = count.checked_add(1).ok_or_else(invalid_internal_data)?;
+            first.get_or_insert(candidate.target);
+        }
+    }
+    Ok((first, count))
 }
 
 fn project_symbol(

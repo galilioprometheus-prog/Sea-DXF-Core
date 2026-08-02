@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ap. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3aq. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -96,8 +96,10 @@ not promoted to target-kind, ownership, dictionary, or lifecycle validity.
 The four common exact-text fields now have one source-bound projection. Layer
 and linetype perform duplicate-preserving exact lookup against completely
 closed `LAYER` and `LTYPE` tables; missing and ambiguous names are typed, while
-linetype omission remains the schema `BYLAYER` default. Layout and color name
-remain exact unreviewed text without invented name policy.
+linetype omission remains the schema `BYLAYER` default. Layout group 410 now
+resolves exactly against group 1 in the `AcDbLayout` subclass of closed
+`OBJECTS`/`LAYOUT` records; missing, duplicate, and ambiguous target names stay
+typed. Color name remains exact unreviewed text without invented policy.
 Proxy graphics now have a source-bound size relation. Group 310 stays opaque;
 ASCII hex is validated and counted as decoded bytes, while Binary uses its
 already-framed raw payload length. The projection distinguishes absence,
@@ -122,6 +124,10 @@ Layer and linetype edits now require one exact same-document name in a closed
 matching symbol table. Missing or duplicate names fail before planning.
 Layout and color-book names remain locked behind dedicated resolvers instead
 of being accepted as unchecked raw text.
+The read-side layout resolver is now present. It ignores plot-settings group 1,
+application groups, wrong subclasses, wrong sections, and malformed layout-name
+cardinality while retaining their evidence. Edit admission remains locked until
+the next checkpoint composes this directory with the transaction session.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

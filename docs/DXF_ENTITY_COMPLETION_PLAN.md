@@ -735,6 +735,19 @@ inverse restoration. Case folding, legal symbol characters, XREF rules,
 layout/color-book resolution, table-record insertion, applicability, family
 graphs, and `Complete` support remain later work.
 
+M14.3aq resolves common layout names on the read side. A source-bound directory
+indexes only exact `LAYOUT` records from completely closed `OBJECTS` sections
+and reads group 1 only while the exact `AcDbLayout` subclass is active. The
+inherited plot-settings group 1, application groups, wrong subclasses, wrong
+sections, and interrupted/unclosed sections cannot become layout targets.
+Every layout object retains missing, unique, or duplicate name cardinality;
+common group 410 then projects exact unique, missing, or ambiguous target state
+without choosing an occurrence. Paired ASCII/Binary fixtures cover all nine
+dialects plus subclass collision and malformed cardinality. Matching remains
+byte-exact and case-sensitive. Layout edit admission, reciprocal block-record
+ownership, name folding/validity, color-book resolution, applicability,
+lifecycle, family graphs, and `Complete` support remain later work.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

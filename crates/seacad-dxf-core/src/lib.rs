@@ -119,6 +119,7 @@ mod insert_record_value;
 mod insert_target_eligibility;
 mod insert_transform;
 mod johab;
+mod layout_object;
 mod lightweight_polyline;
 mod lightweight_polyline_integer;
 mod lightweight_polyline_record_card;
@@ -433,6 +434,7 @@ pub use entity_common_symbol_edit::{
     DxfEntityCommonSymbolEditValue,
 };
 pub use entity_common_text_semantic::{
+    DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue, DxfEntityCommonLayoutValue,
     DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue, DxfEntityCommonSymbolValue,
     DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry, DxfEntityCommonTextSemantics,
 };
@@ -651,6 +653,7 @@ pub use insert_transform::{
     DxfInsertAffineTransform, DxfInsertTransformApplicationIssue, DxfInsertTransformDirectory,
     DxfInsertTransformEntry, DxfInsertTransformInput, DxfInsertTransformIssue,
 };
+pub use layout_object::{DxfLayoutObjectDirectory, DxfLayoutObjectEntry, DxfLayoutObjectNameState};
 pub use lightweight_polyline::{
     DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
     DxfLightweightPolylineRecordEntry, DxfLightweightPolylineValue,

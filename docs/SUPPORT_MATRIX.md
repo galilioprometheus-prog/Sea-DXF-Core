@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ap can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3aq can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -830,6 +830,20 @@ semantic verification, and byte-identical inverse restoration. Case folding,
 symbol-character validity, XREF naming, layout/color-book semantics, table-
 record creation, applicability, family graphs, and `Complete` support remain
 open.
+
+M14.3aq resolves common group-410 layout names on the read side. The new
+source-bound directory admits only exact `OBJECTS`/`LAYOUT` records from
+completely closed sections and selects group 1 only inside the exact
+`AcDbLayout` subclass. It retains missing, unique, and duplicate name
+cardinality while excluding inherited plot-settings names, application-group
+content, wrong subclasses, wrong sections, and incomplete sections. Common
+layout semantics preserve raw field failures and distinguish absent, unique,
+missing, and ambiguous exact targets without selecting an occurrence. Paired
+ASCII/Binary fixtures span AC1009 through AC1032 and malformed structure.
+Matching is still byte-exact and case-sensitive. Layout edit admission,
+reciprocal block-record ownership, legal-name/case policy, color-book
+resolution, applicability, lifecycle, family graphs, and `Complete` support
+remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
