@@ -856,6 +856,20 @@ source-bound optimistic planning rather than a cross-session lock. This
 checkpoint does not encode typed drafts, choose group-330 owner, or complete
 insert/clone/delete.
 
+M14.3az adds the source-bound `DxfEntityPlacementOwnerDirectory`. A requested
+non-null handle must resolve uniquely to an exact named record admitted from a
+completely closed `BLOCK_RECORD` table. `ENTITIES` placements retain the
+caller's explicit owner choice. A placement inside a BLOCK additionally
+requires exactly one common owner candidate on its `BLOCK` marker, a unique
+target, and equality with the requested BLOCK_RECORD; missing, duplicate,
+invalid, null, dangling, ambiguous, wrong-kind, and mismatched states remain
+typed. The validator never chooses model/paper space from group 67 or layout
+410 and never treats a uniquely resolved non-BLOCK_RECORD as compatible.
+Paired fixtures cover all nine dialects; AC1009 retains owner absence in both
+physical formats because its Binary wire cannot represent group 330. This
+checkpoint binds placement preparation only. Draft encoding, applicability,
+new-record insertion, clone/delete closure, and `Complete` support remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

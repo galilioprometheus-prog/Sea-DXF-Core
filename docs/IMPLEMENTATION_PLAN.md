@@ -2309,5 +2309,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     global/concurrent reservation lock. Typed draft encoding, owner group 330,
     and insert/clone/delete remain open.
 
+    M14.3az binds an M14.3ax placement to one caller-selected owner handle
+    before draft encoding. The handle must be non-null, uniquely identified,
+    and admitted as an exact uniquely named record from a completely closed
+    `BLOCK_RECORD` table. For a BLOCK placement, the BLOCK marker must also
+    expose exactly one outside-application group 330 candidate whose uniquely
+    resolved target is the same record. Cardinality, lexical, null, missing,
+    ambiguous, wrong-record-kind, and mismatch failures are distinct and queue
+    no mutation. `ENTITIES` placement does not infer model/paper space from
+    group 67 or layout 410. Paired AC1009-through-AC1032 ASCII/Binary fixtures
+    preserve parity; AC1009 exercises typed BLOCK-owner absence because the
+    pre-R13 Binary wire cannot carry group 330. This checkpoint produces a
+    source-bound preparation value only. Applicability, draft encoding,
+    insertion bytes, clone/delete graphs, and full CRUD remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

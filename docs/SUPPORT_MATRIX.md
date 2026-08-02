@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ay can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3az can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -940,6 +940,20 @@ record identity and successor seed, and execute a byte-identical inverse.
 Reservation is optimistic and source-bound, not a global/concurrent lock.
 Typed draft encoding, group-330 ownership, semantic insertion verification,
 clone, and delete remain open.
+
+M14.3az adds source-bound placement-owner admission. Caller-selected owner
+handles must be non-null, uniquely identified, and an exact named entry in a
+completely closed `BLOCK_RECORD` table. A BLOCK placement additionally checks
+the BLOCK marker's outside-application group 330 cardinality and target
+resolution, then requires its declared owner record to match the requested
+record. Missing, duplicate, malformed, null, dangling, ambiguous, wrong-kind,
+and mismatched evidence remain separate typed outcomes. An `ENTITIES`
+placement never guesses model/paper space from group 67 or layout 410.
+ASCII/Binary parity spans all nine dialects; AC1009 represents BLOCK-owner
+absence in both formats rather than inventing an unencodable Binary group 330.
+This admission does not review version applicability, encode or insert a
+draft, update ownership graphs, implement clone/delete, or advance any entity
+to `Complete`.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
