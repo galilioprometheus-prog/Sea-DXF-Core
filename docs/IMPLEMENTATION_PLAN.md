@@ -2670,5 +2670,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     strict reparse, semantic verification, and restoration. Mixed/multi-delete
     sessions and POINT `Complete` remain open.
 
+    M14.3cd replaces the single pending delete slot with a resource-bounded
+    delete-only batch. Each distinct canonical POINT is admitted under the
+    existing identity and incoming-reference rules, then all exact raw-record
+    transactions compose in source order. Semantic verification requires every
+    handle-backed identity to be absent and every handleless expectation to
+    observe the one exact final entity count. Duplicate keys remain typed and
+    leave the accepted batch unchanged. Two handled deletes cover every
+    ASCII/Binary Core dialect; a handled/handleless batch proves the combined
+    expectation path and exact inverse. Delete/update/insert mixing and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

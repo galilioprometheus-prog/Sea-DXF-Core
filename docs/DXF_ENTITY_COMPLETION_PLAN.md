@@ -1216,6 +1216,18 @@ semantic count verification, and byte-identical restoration pass every nine-
 dialect ASCII/Binary pair. Mixed/multi-delete sessions and POINT `Complete`
 remain open.
 
+M14.3cd admits multiple distinct canonical POINT deletions in one delete-only
+session. Every request independently retains the M14.3ca reference-safety and
+M14.3cc identity rules, consumes the shared edit limit, and contributes its
+exact raw-record transaction to one source-order composition. Handle-backed
+postconditions require every deleted handle to disappear; all handleless
+members share the exact final entity-count postcondition after the complete
+batch. Duplicate keys fail typed without discarding accepted deletes. Two
+handle-backed POINTs pass every nine-dialect ASCII/Binary pair, while a mixed
+handle-backed/handleless batch independently proves combined verification and
+byte-identical inverse restoration. Delete/update/insert mixing and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -2580,6 +2580,161 @@ fn handleless_point_delete_is_semantically_verified_across_every_dialect()
 }
 
 #[test]
+fn multiple_point_deletes_compose_and_restore_across_every_dialect() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = multi_delete_fixture(format, version)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let point_keys: Vec<_> = evidence
+                .entity_directory()
+                .entities()
+                .iter()
+                .copied()
+                .filter(|entity| entity.classification().topic() == Some(DxfEntityTopic::POINT))
+                .map(|entity| entity.key())
+                .collect();
+            let [first, second] = point_keys.as_slice() else {
+                return Err(io::Error::other("two POINT keys").into());
+            };
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.delete(*first)?,
+                DxfEntityDeleteOutcome::Applied(receipt)
+                    if receipt.handle() == DxfHandle::from_u64(0x10)
+            ));
+            assert!(matches!(
+                session.delete(*second)?,
+                DxfEntityDeleteOutcome::Applied(receipt)
+                    if receipt.handle() == DxfHandle::from_u64(0x12)
+            ));
+            assert_eq!(session.queued_edit_count(), 2);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 2);
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let post_entities = post.entity_directory(&token())?;
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .all(|entity| entity.classification().topic() != Some(DxfEntityTopic::POINT))
+            );
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .any(|entity| entity.classification().topic() == Some(DxfEntityTopic::LINE))
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified multiple POINT deletion").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 2);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn multiple_point_delete_rejects_duplicate_key_without_losing_the_batch()
+-> Result<(), Box<dyn Error>> {
+    let bytes = multi_delete_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.delete(key)?,
+        DxfEntityDeleteOutcome::Applied(_)
+    ));
+    assert!(matches!(
+        session.delete(key)?,
+        DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::DuplicateDelete {
+            key: observed
+        }) if observed == key
+    ));
+    assert_eq!(session.queued_edit_count(), 1);
+    let plan = session.finish_verifiable()?;
+    assert_eq!(plan.edit_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn multiple_point_delete_composes_handle_backed_and_handleless_expectations()
+-> Result<(), Box<dyn Error>> {
+    let mut bytes = multi_delete_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let needle = b"0\nPOINT\n5\n12\n10\n4\n";
+    let replacement = b"0\nPOINT\n10\n4\n";
+    let matches: Vec<_> = bytes
+        .windows(needle.len())
+        .enumerate()
+        .filter_map(|(offset, window)| (window == needle).then_some(offset))
+        .collect();
+    let [offset] = matches.as_slice() else {
+        return Err(io::Error::other("one second POINT handle").into());
+    };
+    bytes.splice(*offset..*offset + needle.len(), replacement.iter().copied());
+
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let point_keys: Vec<_> = evidence
+        .entity_directory()
+        .entities()
+        .iter()
+        .copied()
+        .filter(|entity| entity.classification().topic() == Some(DxfEntityTopic::POINT))
+        .map(|entity| entity.key())
+        .collect();
+    let [first, second] = point_keys.as_slice() else {
+        return Err(io::Error::other("two mixed-identity POINT keys").into());
+    };
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.delete(*first)?,
+        DxfEntityDeleteOutcome::Applied(_)
+    ));
+    assert!(matches!(
+        session.delete(*second)?,
+        DxfEntityDeleteOutcome::HandlelessApplied(_)
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let output_document = open_ascii(&output_source)?;
+    let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) = plan
+        .verify_post_image(
+            view,
+            DxfRawDocumentView::from(&output_document),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?
+    else {
+        return Err(io::Error::other("verified mixed-identity deletion").into());
+    };
+    assert_eq!(journal.receipt().edit_count(), 2);
+    assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+    Ok(())
+}
+
+#[test]
 fn point_delete_rejects_incoming_reference_and_ambiguous_or_invalid_identity()
 -> Result<(), Box<dyn Error>> {
     for (shape, expected) in [
@@ -2783,6 +2938,52 @@ fn delete_fixture(
             if matches!(shape, DeleteShape::IncomingReference) {
                 push_string(&mut bytes, version, 340, b"10")?;
             }
+            for (code, value) in [
+                (10, 7.0),
+                (20, 8.0),
+                (30, 9.0),
+                (11, 10.0),
+                (21, 11.0),
+                (31, 12.0),
+            ] {
+                push_double(&mut bytes, version, code, value)?;
+            }
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"EOF")?;
+            Ok(bytes)
+        }
+        _ => Err(io::Error::other("format")),
+    }
+}
+
+fn multi_delete_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    match format {
+        DxfRawDocumentFormat::Ascii => Ok(format!(
+            "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n5\n10\n10\n1\n20\n2\n30\n3\n0\nPOINT\n5\n12\n10\n4\n20\n5\n30\n6\n0\nLINE\n5\n11\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
+            version.code(),
+        )
+        .into_bytes()),
+        DxfRawDocumentFormat::Binary => {
+            let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"HEADER")?;
+            push_string(&mut bytes, version, 9, b"$ACADVER")?;
+            push_string(&mut bytes, version, 1, version.code().as_bytes())?;
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"ENTITIES")?;
+            for (handle, location) in [(b"10".as_slice(), [1.0, 2.0, 3.0]), (b"12", [4.0, 5.0, 6.0])] {
+                push_string(&mut bytes, version, 0, b"POINT")?;
+                push_string(&mut bytes, version, 5, handle)?;
+                for (code, value) in [(10, location[0]), (20, location[1]), (30, location[2])] {
+                    push_double(&mut bytes, version, code, value)?;
+                }
+            }
+            push_string(&mut bytes, version, 0, b"LINE")?;
+            push_string(&mut bytes, version, 5, b"11")?;
             for (code, value) in [
                 (10, 7.0),
                 (20, 8.0),

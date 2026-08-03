@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cc can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cd can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1297,6 +1297,17 @@ null, multiple, and ambiguous identity remains fail-closed. Every supported
 ASCII/Binary dialect proves exact deletion, neighboring LINE retention,
 semantic verification, and byte-identical restoration. Mixed/multi-delete,
 display, and POINT `Complete` remain open.
+
+M14.3cd permits a bounded delete-only session to contain multiple distinct
+canonical POINT records. Each admission independently enforces unique
+non-null-or-absent identity and incoming-reference safety, and the exact
+raw-record plans compose into one source-order transaction. Every handled
+identity must disappear; handleless members require the exact final entity
+count after all removals. Duplicate keys queue nothing and retain the existing
+batch. Two handled records pass all supported ASCII/Binary dialects, and one
+mixed handled/handleless batch proves combined semantic verification and exact
+inverse restoration. Delete/update/insert mixing, display, and POINT `Complete`
+remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
