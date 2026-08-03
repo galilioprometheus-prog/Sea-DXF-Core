@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cv can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cw can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1497,6 +1497,17 @@ owned identity directory rather than copied per entry. ASCII-to-ASCII,
 ASCII-to-Binary, Binary-to-ASCII, and Binary-to-Binary pairs have parity across
 all nine Core dialects. Application-specific payload semantics, replacement
 encoding, clone/write, and POINT `Complete` remain open.
+
+M14.3cw adds exact destination-dialect group-1005 replacement encoding over
+M14.3cv. Only a unique destination identity is ready; every missing, ambiguous,
+or remap-unavailable result is retained and publishes no replacement bytes. A
+ready entry exposes one complete canonical group with uppercase handle spelling,
+including the full 64-bit handle domain, ASCII line framing, Binary NUL framing,
+and the AC1009 extended-data group-code escape. Entries and byte lookup bind
+both source and destination identities, while debug output reports only byte
+counts. All four source/destination format pairs pass all nine Core dialects.
+Application-specific payload semantics, transaction composition, clone/write,
+and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

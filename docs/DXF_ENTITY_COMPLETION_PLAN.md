@@ -1442,6 +1442,17 @@ identities, dual-source foreign rejection, cancellation, lookup and metadata
 bounds, and non-disclosing debug output. Application semantics, replacement
 encoding, clone/write, and POINT `Complete` remain open.
 
+M14.3cw composes destination validation with the canonical entity group
+encoder. Only `Unique` destination identity emits one complete group 1005 in
+the destination's supported dialect; all other states propagate without bytes.
+Ready output uses uppercase hexadecimal through the full 64-bit handle domain,
+exact ASCII/Binary framing, and AC1009 Binary extended-data group-code escape.
+Entries retain both document identities, foreign lookup fails closed, and byte
+storage is bounded and redacted from debug output. All four source/destination
+format pairs cover all nine Core dialects plus cancellation and metadata bounds.
+Application semantics, transaction composition, clone/write, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

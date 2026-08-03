@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cv. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cw. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -389,6 +389,14 @@ identity candidate. Source and destination identities jointly bind every
 entry. All four ASCII/Binary source-destination combinations have parity across
 all nine dialects. Payload meaning, replacement encoding, clone/write, and
 POINT `Complete` remain open.
+M14.3cw adds `DxfEntityXDataHandleReplacementDirectory`. Only a uniquely
+validated destination becomes replacement-ready, using the canonical group
+encoder to publish one complete group 1005 in the destination document's exact
+ASCII or Binary dialect. Handles are uppercase, the full 64-bit domain is
+retained, and AC1009 Binary uses the required extended-data group-code escape.
+Every unavailable destination state remains exact and exposes no bytes.
+Application payload meaning, transaction composition, clone/write, and POINT
+`Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

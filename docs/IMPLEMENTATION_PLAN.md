@@ -2887,5 +2887,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     payload semantics, replacement encoding, clone/write, and POINT `Complete`
     remain open.
 
+    M14.3cw encodes an exact complete group-1005 replacement only after M14.3cv
+    proves one unique destination identity. The existing canonical group
+    encoder supplies destination-specific ASCII or Binary framing, uppercase
+    full-width handle spelling, and the AC1009 Binary extended-data group-code
+    escape. Missing, ambiguous, and remap-unavailable states retain their exact
+    typed evidence and publish no bytes. Compact entries bind both source and
+    destination identities; foreign lookup fails closed and debug output omits
+    encoded bytes. All four format pairings pass all nine Core dialects with
+    cancellation, lookup, and metadata bounds. Application-specific payload
+    semantics, transaction composition, clone/write, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
