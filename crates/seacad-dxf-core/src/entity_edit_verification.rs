@@ -92,6 +92,11 @@ pub(crate) struct DxfPointExtrusionEditExpectation {
     expected: DxfPointExtrusionExpected,
 }
 
+pub(crate) struct DxfPointUcsXAxisAngleEditExpectation {
+    raw_record_ordinal: u64,
+    angle: DxfDouble,
+}
+
 pub(crate) enum DxfPointThicknessExpected {
     Explicit(DxfDouble),
     DefaultedZero,
@@ -108,6 +113,7 @@ pub(crate) enum DxfEntityEditExpectation {
     PointLocation(DxfPointLocationEditExpectation),
     PointThickness(DxfPointThicknessEditExpectation),
     PointExtrusion(DxfPointExtrusionEditExpectation),
+    PointUcsXAxisAngle(DxfPointUcsXAxisAngleEditExpectation),
 }
 
 impl DxfEntityEditExpectation {
@@ -174,6 +180,13 @@ impl DxfEntityEditExpectation {
             expected: DxfPointExtrusionExpected::Defaulted,
         })
     }
+
+    pub(crate) const fn point_ucs_x_axis_angle(raw_record_ordinal: u64, angle: DxfDouble) -> Self {
+        Self::PointUcsXAxisAngle(DxfPointUcsXAxisAngleEditExpectation {
+            raw_record_ordinal,
+            angle,
+        })
+    }
 }
 
 /// Expected semantic state retained without exposing edited payload bytes.
@@ -228,6 +241,9 @@ pub enum DxfEntityEditVerificationIssue {
         raw_record_ordinal: u64,
     },
     UpdatedPointExtrusionMismatch {
+        raw_record_ordinal: u64,
+    },
+    UpdatedPointUcsXAxisAngleMismatch {
         raw_record_ordinal: u64,
     },
     MissingEntity {
@@ -636,6 +652,9 @@ fn verify_expectation(
         DxfEntityEditExpectation::PointExtrusion(expectation) => {
             verify_point_extrusion(document, expectation, cancellation)
         }
+        DxfEntityEditExpectation::PointUcsXAxisAngle(expectation) => {
+            verify_point_ucs_x_axis_angle(document, expectation, cancellation)
+        }
     }
 }
 
@@ -727,6 +746,31 @@ fn verify_point_extrusion(
     if !matches {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointExtrusionMismatch {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    }
+    Ok(None)
+}
+
+fn verify_point_ucs_x_axis_angle(
+    document: DxfRawDocumentView<'_>,
+    expectation: &DxfPointUcsXAxisAngleEditExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(expectation.raw_record_ordinal)? else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointSemanticsMissing {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    };
+    if point.ucs_x_axis_angle_value() != Some(expectation.angle)
+        || point.ucs_x_axis_angle().state() != DxfSemanticValueState::Explicit
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointUcsXAxisAngleMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,
             },
         ));

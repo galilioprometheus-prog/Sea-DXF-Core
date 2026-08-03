@@ -1142,6 +1142,18 @@ restoration recovers the original complete or partial source. All seven
 nonempty masks pass every supported ASCII/Binary dialect. Angle updates, mixed
 entity insert/update sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3bx introduces typed set/update behavior for POINT UCS X-axis angle group
+`50`. `DxfPointPatch::SetUcsXAxisAngle` replaces one unique explicit group or
+inserts an absent group after the last explicit extrusion component. When the
+extrusion tuple is fully absent, insertion falls back to unique thickness and
+then three required location components. Duplicate angle, duplicate extrusion,
+duplicate thickness, or unusable location anchors fail typed without queueing.
+The angle patch identity composes independently with location, thickness, and
+extrusion. All supported ASCII/Binary dialects pass explicit replacement and
+all eight extrusion-mask insertion states with exact semantic verification and
+byte-identical inverse restoration. Angle reset, mixed entity insert/update
+sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

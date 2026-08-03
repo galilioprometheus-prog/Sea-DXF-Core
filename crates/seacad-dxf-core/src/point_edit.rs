@@ -22,6 +22,7 @@ pub enum DxfPointPatch {
     ResetThickness,
     SetExtrusion { extrusion: [DxfDouble; 3] },
     ResetExtrusion,
+    SetUcsXAxisAngle { angle: DxfDouble },
 }
 
 impl DxfPointPatch {
@@ -51,11 +52,17 @@ impl DxfPointPatch {
     }
 
     #[must_use]
+    pub const fn set_ucs_x_axis_angle(angle: DxfDouble) -> Self {
+        Self::SetUcsXAxisAngle { angle }
+    }
+
+    #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         match self {
             Self::SetLocation { .. } => DxfPointPatchKind::Location,
             Self::SetThickness { .. } | Self::ResetThickness => DxfPointPatchKind::Thickness,
             Self::SetExtrusion { .. } | Self::ResetExtrusion => DxfPointPatchKind::Extrusion,
+            Self::SetUcsXAxisAngle { .. } => DxfPointPatchKind::UcsXAxisAngle,
         }
     }
 }
@@ -67,6 +74,7 @@ pub enum DxfPointPatchKind {
     Location,
     Thickness,
     Extrusion,
+    UcsXAxisAngle,
 }
 
 /// Typed reason why a POINT-family update was rejected.
@@ -102,6 +110,9 @@ pub enum DxfPointEditIssue {
     },
     DuplicateExtrusionComponent {
         role: DxfBasicGeometryComponentRole,
+        occurrence_count: u32,
+    },
+    DuplicateUcsXAxisAngle {
         occurrence_count: u32,
     },
     NonCanonicalExtrusionOrder {
@@ -187,6 +198,30 @@ pub(crate) enum DxfPointExtrusionResetPlan {
         transaction: DxfTransactionPlan,
         patch_count: usize,
     },
+}
+
+pub(crate) struct DxfPointUcsXAxisAngleEditPlan {
+    transaction: DxfTransactionPlan,
+    angle: DxfDouble,
+    disposition: DxfPointUcsXAxisAngleSetDisposition,
+}
+
+impl DxfPointUcsXAxisAngleEditPlan {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        DxfTransactionPlan,
+        DxfDouble,
+        DxfPointUcsXAxisAngleSetDisposition,
+    ) {
+        (self.transaction, self.angle, self.disposition)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum DxfPointUcsXAxisAngleSetDisposition {
+    Inserted,
+    Replaced,
 }
 
 impl DxfPointLocationEditPlan {
@@ -595,6 +630,97 @@ pub(crate) fn plan_point_extrusion_reset(
     }))
 }
 
+pub(crate) fn plan_point_ucs_x_axis_angle_edit(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    angle: DxfDouble,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointUcsXAxisAngleEditPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let (entity, version) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let card = cards
+        .card_for_role(
+            entity.record().ordinal(),
+            DxfBasicGeometryComponentRole::UcsXAxisAngle,
+        )
+        .ok_or_else(invalid_internal_data)?;
+    let unique_angle = match card.state() {
+        DxfBasicGeometryComponentCardState::Absent => None,
+        DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+            return Ok(Err(DxfPointEditIssue::DuplicateUcsXAxisAngle {
+                occurrence_count,
+            }));
+        }
+        DxfBasicGeometryComponentCardState::Unique => {
+            let members = cards
+                .members_for_card(card.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            let [member] = members else {
+                return Err(invalid_internal_data());
+            };
+            Some(
+                cards
+                    .component_for_member(*member)
+                    .ok_or_else(invalid_internal_data)?
+                    .group(),
+            )
+        }
+    };
+    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
+    let encoded = match encoder.encode_raw(
+        50,
+        DxfEntityFieldWireType::Double,
+        crate::DxfEntityEditValue::Double(angle),
+        cancellation,
+    )? {
+        Ok(encoded) => encoded,
+        Err(issue) => {
+            return Ok(Err(DxfPointEditIssue::Encoding {
+                group_code: 50,
+                issue,
+            }));
+        }
+    };
+    let mut builder = document.transaction_plan_builder(profile)?;
+    let disposition = if let Some(group) = unique_angle {
+        let framed =
+            encoded_group_insertion_bytes(document, group.occurrence(), &encoded, cancellation)?;
+        builder.replace_raw_span(group.full_span(), &framed, cancellation)?;
+        DxfPointUcsXAxisAngleSetDisposition::Replaced
+    } else {
+        let preceding = match point_ucs_x_axis_angle_insertion_predecessor(
+            &cards,
+            entity.record().ordinal(),
+        )? {
+            Ok(group) => group,
+            Err(issue) => return Ok(Err(issue)),
+        };
+        let insertion = encoded_group_insertion_bytes(
+            document,
+            preceding.occurrence(),
+            &encoded,
+            cancellation,
+        )?;
+        let offset = preceding.full_span().end();
+        let source_span = ByteSpan::new(offset, offset).ok_or_else(invalid_internal_data)?;
+        builder.replace_raw_span(source_span, &insertion, cancellation)?;
+        DxfPointUcsXAxisAngleSetDisposition::Inserted
+    };
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointUcsXAxisAngleEditPlan {
+        transaction,
+        angle,
+        disposition,
+    }))
+}
+
 fn ensure_canonical_extrusion_order(
     groups: &[Option<DxfRawGroup>; 3],
     roles: &[DxfBasicGeometryComponentRole; 3],
@@ -758,6 +884,49 @@ fn point_extrusion_insertion_predecessor(
                 .map(|component| Ok(component.group()))
                 .ok_or_else(invalid_internal_data)
         }
+    }
+}
+
+fn point_ucs_x_axis_angle_insertion_predecessor(
+    cards: &DxfBasicGeometryCardDirectory,
+    raw_record_ordinal: u64,
+) -> Result<Result<DxfRawGroup, DxfPointEditIssue>, DxfError> {
+    let mut preceding = None;
+    for role in [
+        DxfBasicGeometryComponentRole::ExtrusionX,
+        DxfBasicGeometryComponentRole::ExtrusionY,
+        DxfBasicGeometryComponentRole::ExtrusionZ,
+    ] {
+        let card = cards
+            .card_for_role(raw_record_ordinal, role)
+            .ok_or_else(invalid_internal_data)?;
+        match card.state() {
+            DxfBasicGeometryComponentCardState::Absent => continue,
+            DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+                return Ok(Err(DxfPointEditIssue::DuplicateExtrusionComponent {
+                    role,
+                    occurrence_count,
+                }));
+            }
+            DxfBasicGeometryComponentCardState::Unique => {}
+        }
+        let members = cards
+            .members_for_card(card.ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let [member] = members else {
+            return Err(invalid_internal_data());
+        };
+        let group = cards
+            .component_for_member(*member)
+            .ok_or_else(invalid_internal_data)?
+            .group();
+        if preceding.is_none_or(|current: DxfRawGroup| current.occurrence() < group.occurrence()) {
+            preceding = Some(group);
+        }
+    }
+    match preceding {
+        Some(group) => Ok(Ok(group)),
+        None => point_extrusion_insertion_predecessor(cards, raw_record_ordinal),
     }
 }
 

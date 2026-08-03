@@ -26,6 +26,7 @@ const DEFAULT_EXTRUSION: [DxfDouble; 3] = [
     DxfDouble::from_bits(0.0_f64.to_bits()),
     DxfDouble::from_bits(1.0_f64.to_bits()),
 ];
+const UPDATED_ANGLE: DxfDouble = DxfDouble::from_bits(45.0_f64.to_bits());
 
 #[test]
 fn point_location_update_is_atomic_across_every_ascii_binary_dialect() -> Result<(), Box<dyn Error>>
@@ -1358,6 +1359,410 @@ fn point_extrusion_reset_verifier_and_cancellation_fail_closed() -> Result<(), B
 }
 
 #[test]
+fn point_ucs_x_axis_angle_replaces_explicit_group_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, PointShape::Complete)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                key,
+                DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE)),
+            )?
+            else {
+                return Err(io::Error::other("POINT angle replacement").into());
+            };
+            assert_eq!(receipt.key(), key);
+            assert_eq!(receipt.kind(), DxfPointPatchKind::UcsXAxisAngle);
+            assert_eq!(receipt.disposition(), DxfEntityEditDisposition::Replaced);
+            assert_eq!(receipt.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            let [patch] = plan.transaction().patches() else {
+                return Err(io::Error::other("one POINT angle replacement patch").into());
+            };
+            assert!(!patch.source_span().is_empty());
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let geometry = post.basic_geometry_semantic_directory(&token())?;
+            let point = geometry
+                .point_for_raw_record(key.raw_record_ordinal())?
+                .ok_or_else(|| io::Error::other("updated POINT angle semantics"))?;
+            assert_eq!(point.ucs_x_axis_angle_value(), Some(UPDATED_ANGLE));
+            assert_eq!(
+                point.ucs_x_axis_angle().state(),
+                DxfSemanticValueState::Explicit
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified POINT angle replacement").into());
+            };
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_inserts_after_every_extrusion_mask_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for mask in 0_u8..=0b111 {
+                let bytes = fixture(format, version, PointShape::MissingAngleWithExtrusion(mask))?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                    key,
+                    DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE)),
+                )?
+                else {
+                    return Err(io::Error::other("POINT angle insertion").into());
+                };
+                assert_eq!(receipt.kind(), DxfPointPatchKind::UcsXAxisAngle);
+                assert_eq!(receipt.disposition(), DxfEntityEditDisposition::Inserted);
+                assert_eq!(receipt.queued_edit_count(), 1);
+
+                let plan = session.finish_verifiable()?;
+                assert_eq!(plan.edit_count(), 1);
+                let [patch] = plan.transaction().patches() else {
+                    return Err(io::Error::other("one POINT angle insertion patch").into());
+                };
+                assert!(patch.source_span().is_empty());
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let output_document = open_document(&output_source, format)?;
+                let post = output_document.view();
+                let geometry = post.basic_geometry_semantic_directory(&token())?;
+                let point = geometry
+                    .point_for_raw_record(key.raw_record_ordinal())?
+                    .ok_or_else(|| io::Error::other("inserted POINT angle semantics"))?;
+                assert_eq!(point.ucs_x_axis_angle_value(), Some(UPDATED_ANGLE));
+                assert_eq!(
+                    point.ucs_x_axis_angle().state(),
+                    DxfSemanticValueState::Explicit
+                );
+                let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                    plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+                else {
+                    return Err(io::Error::other("verified POINT angle insertion").into());
+                };
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_preserves_crlf_and_rejects_ambiguous_evidence()
+-> Result<(), Box<dyn Error>> {
+    for shape in [
+        PointShape::Complete,
+        PointShape::MissingAngleWithExtrusion(0b101),
+    ] {
+        let bytes = String::from_utf8(ascii_fixture(DxfAcadVersion::Ac1032, shape))?
+            .replace('\n', "\r\n")
+            .into_bytes();
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source)?;
+        let view = DxfRawDocumentView::from(&document);
+        let evidence = view.entity_field_evidence_directory(&token())?;
+        let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+        let cancellation = token();
+        let mut session =
+            view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+        assert!(matches!(
+            session.update(
+                key,
+                DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+            )?,
+            DxfEntityEditOutcome::PointApplied(_)
+        ));
+        let plan = session.finish_verifiable()?;
+        let output = materialize(&bytes, plan.transaction())?;
+        assert!(
+            output
+                .windows(b"50\r\n45\r\n0\r\nLINE\r\n".len())
+                .any(|window| window == b"50\r\n45\r\n0\r\nLINE\r\n")
+        );
+    }
+
+    let duplicate_angle =
+        String::from_utf8(ascii_fixture(DxfAcadVersion::Ac1032, PointShape::Complete))?
+            .replace("50\n30\n", "50\n30\n50\n31\n")
+            .into_bytes();
+    let duplicate_source = DxfMemorySource::new(&duplicate_angle, DxfResourceProfile::Safe)?;
+    let duplicate_document = open_ascii(&duplicate_source)?;
+    let duplicate_view = DxfRawDocumentView::from(&duplicate_document);
+    let duplicate_evidence = duplicate_view.entity_field_evidence_directory(&token())?;
+    let duplicate_key = key_for_topic(&duplicate_evidence, DxfEntityTopic::POINT)?;
+    let duplicate_cancellation = token();
+    let mut duplicate_session = duplicate_view.entity_edit_session(
+        &duplicate_evidence,
+        DxfResourceProfile::Safe,
+        &duplicate_cancellation,
+    )?;
+    assert!(matches!(
+        duplicate_session.update(
+            duplicate_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateUcsXAxisAngle {
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(duplicate_session.queued_edit_count(), 0);
+
+    let duplicate_extrusion = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::MissingAngleWithExtrusion(0b001),
+    ))?
+    .replace("210\n1\n", "210\n1\n210\n4\n")
+    .into_bytes();
+    let duplicate_source = DxfMemorySource::new(&duplicate_extrusion, DxfResourceProfile::Safe)?;
+    let duplicate_document = open_ascii(&duplicate_source)?;
+    let duplicate_view = DxfRawDocumentView::from(&duplicate_document);
+    let duplicate_evidence = duplicate_view.entity_field_evidence_directory(&token())?;
+    let duplicate_key = key_for_topic(&duplicate_evidence, DxfEntityTopic::POINT)?;
+    let duplicate_cancellation = token();
+    let mut duplicate_session = duplicate_view.entity_edit_session(
+        &duplicate_evidence,
+        DxfResourceProfile::Safe,
+        &duplicate_cancellation,
+    )?;
+    assert!(matches!(
+        duplicate_session.update(
+            duplicate_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateExtrusionComponent {
+                role: DxfBasicGeometryComponentRole::ExtrusionX,
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(duplicate_session.queued_edit_count(), 0);
+
+    let duplicate_thickness = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::DuplicateThickness,
+    ))?
+    .replace("50\n30\n", "")
+    .into_bytes();
+    let duplicate_source = DxfMemorySource::new(&duplicate_thickness, DxfResourceProfile::Safe)?;
+    let duplicate_document = open_ascii(&duplicate_source)?;
+    let duplicate_view = DxfRawDocumentView::from(&duplicate_document);
+    let duplicate_evidence = duplicate_view.entity_field_evidence_directory(&token())?;
+    let duplicate_key = key_for_topic(&duplicate_evidence, DxfEntityTopic::POINT)?;
+    let duplicate_cancellation = token();
+    let mut duplicate_session = duplicate_view.entity_edit_session(
+        &duplicate_evidence,
+        DxfResourceProfile::Safe,
+        &duplicate_cancellation,
+    )?;
+    assert!(matches!(
+        duplicate_session.update(
+            duplicate_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateThickness {
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(duplicate_session.queued_edit_count(), 0);
+
+    let missing_location = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::MissingThickness,
+    ))?
+    .replace("20\n2\n", "")
+    .replace("50\n30\n", "")
+    .into_bytes();
+    let missing_source = DxfMemorySource::new(&missing_location, DxfResourceProfile::Safe)?;
+    let missing_document = open_ascii(&missing_source)?;
+    let missing_view = DxfRawDocumentView::from(&missing_document);
+    let missing_evidence = missing_view.entity_field_evidence_directory(&token())?;
+    let missing_key = key_for_topic(&missing_evidence, DxfEntityTopic::POINT)?;
+    let missing_cancellation = token();
+    let mut missing_session = missing_view.entity_edit_session(
+        &missing_evidence,
+        DxfResourceProfile::Safe,
+        &missing_cancellation,
+    )?;
+    assert!(matches!(
+        missing_session.update(
+            missing_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::MissingLocationComponent {
+                role: DxfBasicGeometryComponentRole::WcsLocationOrStartY
+            }
+        ))
+    ));
+    assert_eq!(missing_session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_composes_with_other_point_fields() -> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::ExplicitExtrusion,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    for patch in [
+        DxfPointPatch::set_location(UPDATED),
+        DxfPointPatch::set_thickness(UPDATED_THICKNESS),
+        DxfPointPatch::set_extrusion(UPDATED_EXTRUSION),
+        DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE),
+    ] {
+        assert!(matches!(
+            session.update(key, DxfEntityPatch::Point(patch))?,
+            DxfEntityEditOutcome::PointApplied(_)
+        ));
+    }
+    assert_eq!(session.queued_edit_count(), 4);
+    let plan = session.finish_verifiable()?;
+    assert_eq!(plan.edit_count(), 4);
+    assert_eq!(plan.transaction().patches().len(), 8);
+    let output = materialize(&bytes, plan.transaction())?;
+    let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let output_document = open_ascii(&output_source)?;
+    let post = DxfRawDocumentView::from(&output_document);
+    let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+        plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+    else {
+        return Err(io::Error::other("verified composed POINT angle edit").into());
+    };
+    assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_rejects_invalid_requests_and_verifies_exactly()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::Complete,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let point_key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let line_key = key_for_topic(&evidence, DxfEntityTopic::LINE)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            line_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::WrongClassification { key, .. }
+        )) if key == line_key
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(DxfDouble::from_f64(
+                f64::NAN
+            )))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(DxfPointEditIssue::Encoding {
+            group_code: 50,
+            ..
+        }))
+    ));
+    assert_eq!(session.queued_edit_count(), 0);
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicatePatch {
+                kind: DxfPointPatchKind::UcsXAxisAngle,
+                ..
+            }
+        ))
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    let tampered = replace_once(&output, b"50\n45\n", b"50\n46\n")?;
+    let tampered_source = DxfMemorySource::new(&tampered, DxfResourceProfile::Safe)?;
+    let tampered_document = open_ascii(&tampered_source)?;
+    assert!(matches!(
+        plan.verify_post_image(
+            view,
+            DxfRawDocumentView::from(&tampered_document),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        seacad_dxf_core::DxfEntityEditVerificationOutcome::Unavailable(
+            seacad_dxf_core::DxfEntityEditVerificationIssue::UpdatedPointUcsXAxisAngleMismatch {
+                raw_record_ordinal
+            }
+        ) if raw_record_ordinal == point_key.raw_record_ordinal()
+    ));
+
+    let cancelled = token();
+    let mut cancelled_session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancelled)?;
+    cancelled.cancel();
+    assert!(matches!(
+        cancelled_session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert_eq!(cancelled_session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
 fn point_extrusion_partial_completion_preserves_crlf_and_rejects_source_reordering()
 -> Result<(), Box<dyn Error>> {
     let bytes = String::from_utf8(ascii_fixture(
@@ -1786,6 +2191,7 @@ enum PointShape {
     DuplicateThickness,
     ExplicitExtrusion,
     PartialExtrusion(u8),
+    MissingAngleWithExtrusion(u8),
 }
 
 fn fixture(
@@ -1806,7 +2212,8 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
         | PointShape::MissingThickness
         | PointShape::DuplicateThickness
         | PointShape::ExplicitExtrusion
-        | PointShape::PartialExtrusion(_) => "30\n3\n10\n1\n20\n2\n",
+        | PointShape::PartialExtrusion(_)
+        | PointShape::MissingAngleWithExtrusion(_) => "30\n3\n10\n1\n20\n2\n",
         PointShape::MissingY => "30\n3\n10\n1\n",
         PointShape::DuplicateX => "30\n3\n10\n1\n20\n2\n10\n9\n",
     };
@@ -1817,7 +2224,7 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
     };
     let extrusion = match shape {
         PointShape::ExplicitExtrusion => "210\n1\n220\n2\n230\n3\n".to_owned(),
-        PointShape::PartialExtrusion(mask) => {
+        PointShape::PartialExtrusion(mask) | PointShape::MissingAngleWithExtrusion(mask) => {
             let mut extrusion = String::new();
             for (bit, group) in [
                 (0b001, "210\n1\n"),
@@ -1832,12 +2239,18 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
         }
         _ => String::new(),
     };
+    let angle = if matches!(shape, PointShape::MissingAngleWithExtrusion(_)) {
+        ""
+    } else {
+        "50\n30\n"
+    };
     format!(
-        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n60\n0\n{}{}{}50\n30\n0\nLINE\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n60\n0\n{}{}{}{}0\nLINE\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
         version.code(),
         point,
         thickness,
         extrusion,
+        angle,
     )
     .into_bytes()
 }
@@ -1870,10 +2283,14 @@ fn binary_fixture(version: DxfAcadVersion, shape: PointShape) -> Result<Vec<u8>,
     }
     if matches!(
         shape,
-        PointShape::ExplicitExtrusion | PointShape::PartialExtrusion(_)
+        PointShape::ExplicitExtrusion
+            | PointShape::PartialExtrusion(_)
+            | PointShape::MissingAngleWithExtrusion(_)
     ) {
         let mask = match shape {
-            PointShape::PartialExtrusion(mask) => mask,
+            PointShape::PartialExtrusion(mask) | PointShape::MissingAngleWithExtrusion(mask) => {
+                mask
+            }
             _ => 0b111,
         };
         for (bit, code, value) in [(0b001, 210, 1.0), (0b010, 220, 2.0), (0b100, 230, 3.0)] {
@@ -1883,7 +2300,9 @@ fn binary_fixture(version: DxfAcadVersion, shape: PointShape) -> Result<Vec<u8>,
             push_double(&mut bytes, version, code, value)?;
         }
     }
-    push_double(&mut bytes, version, 50, 30.0)?;
+    if !matches!(shape, PointShape::MissingAngleWithExtrusion(_)) {
+        push_double(&mut bytes, version, 50, 30.0)?;
+    }
     push_string(&mut bytes, version, 0, b"LINE")?;
     for (code, value) in [
         (10, 7.0),

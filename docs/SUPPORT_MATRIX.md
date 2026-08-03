@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bw can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bx can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1225,6 +1225,18 @@ mutation. Strict verification requires the documented `(0,0,1)` tuple with all
 three semantic states `Defaulted`, and the inverse restores the complete source
 bytes. All seven nonempty masks pass all nine ASCII/Binary dialect pairs. Angle
 updates, mixed entity insert/update sessions, clone/delete, display, and POINT
+`Complete` remain open.
+
+M14.3bx adds atomic set/update of optional POINT UCS X-axis angle group `50`.
+A unique explicit angle is replaced; an absent angle is inserted after the last
+unique explicit extrusion component, otherwise after unique thickness or the
+last of three required location components. Duplicate angle or ambiguous
+predecessor evidence queues nothing. The distinct `UcsXAxisAngle` patch kind
+composes with location, thickness, and extrusion edits. Local ASCII line
+endings and Binary framing are preserved. Exact explicit-state verification and
+byte-identical inverse restoration pass replacement plus all eight extrusion-
+mask insertion states on every supported ASCII/Binary dialect. Angle reset,
+mixed entity insert/update sessions, clone/delete, display, and POINT
 `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,

@@ -2596,5 +2596,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dialect pairs with exact inverse restoration. Angle updates, mixed
     insert/update sessions, clone/delete, and POINT `Complete` remain open.
 
+    M14.3bx adds `DxfPointPatch::SetUcsXAxisAngle` for optional POINT group
+    `50`. One unique explicit angle is replaced at its exact span; an absent
+    angle is inserted after the last unique explicit extrusion component, or
+    after the unique thickness/required-location fallback when the extrusion
+    tuple is fully absent. Duplicate angle or ambiguous predecessor evidence
+    fails typed and queues nothing. Angle owns a distinct patch identity and
+    composes with location, thickness, and extrusion edits. Replacement and
+    insertion preserve LF, CRLF, CR, or Binary framing, while verification
+    requires the exact binary64 value in the `Explicit` state. Replacement and
+    all eight extrusion-mask insertion states pass all nine ASCII/Binary Core
+    dialect pairs. Angle reset, mixed insert/update sessions, clone/delete, and
+    POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
