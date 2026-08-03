@@ -2,17 +2,17 @@
 
 Status: `READY`
 
-Batch ID: `seacad-entity-xdata-handle-destination-verification-2026-08-04`
+Batch ID: `seacad-entity-xdata-handle-replacement-verification-2026-08-04`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3cv - entity XDATA handle destination`
+Target code checkpoint: `M14.3cw - entity XDATA handle replacement`
 
-Target checkpoint commit: `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e`
+Target checkpoint commit: `c60e394bb0ad0278b78edc83eef5d67a026cb145`
 
-Target annotated tag: `m14.3cv-entity-xdata-handle-destination`
+Target annotated tag: `m14.3cw-entity-xdata-handle-replacement`
 
-Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-destination-verification-2026-08-04.yaml`
+Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
 
 Prepared: `2026-08-04` (`Asia/Saigon`)
 
@@ -49,7 +49,7 @@ and `cargo-deny` commands normally use.
 One additional write is required: create the parent directory when absent and
 write exactly one complete report file at:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-destination-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
 
 This path is outside the Git repository. It is the only non-ephemeral output
 file permitted by this batch. If the file already exists for this same batch,
@@ -91,7 +91,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e`.
+  than `c60e394bb0ad0278b78edc83eef5d67a026cb145`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The only path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -142,10 +142,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3cv-entity-xdata-handle-destination
-git rev-list -n 1 m14.3cv-entity-xdata-handle-destination
-git merge-base --is-ancestor d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e HEAD
-git diff --name-only m14.3cv-entity-xdata-handle-destination..HEAD
+git cat-file -t m14.3cw-entity-xdata-handle-replacement
+git rev-list -n 1 m14.3cw-entity-xdata-handle-replacement
+git merge-base --is-ancestor c60e394bb0ad0278b78edc83eef5d67a026cb145 HEAD
+git diff --name-only m14.3cw-entity-xdata-handle-replacement..HEAD
 ```
 
 Expected evidence:
@@ -155,7 +155,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e`.
+  `c60e394bb0ad0278b78edc83eef5d67a026cb145`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and no other path.
@@ -215,6 +215,8 @@ git cat-file -t m14.3cu-entity-xdata-handle-remap
 git rev-list -n 1 m14.3cu-entity-xdata-handle-remap
 git cat-file -t m14.3cv-entity-xdata-handle-destination
 git rev-list -n 1 m14.3cv-entity-xdata-handle-destination
+git cat-file -t m14.3cw-entity-xdata-handle-replacement
+git rev-list -n 1 m14.3cw-entity-xdata-handle-replacement
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -243,6 +245,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3ct-entity-xdata-handle-resolution` | `caba1f3e919b5632af40bff62ec119a89c4368ea` |
 | `m14.3cu-entity-xdata-handle-remap` | `073ece05a46ef06d62f36cc857ff684338f82349` |
 | `m14.3cv-entity-xdata-handle-destination` | `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e` |
+| `m14.3cw-entity-xdata-handle-replacement` | `c60e394bb0ad0278b78edc83eef5d67a026cb145` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -271,6 +274,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_coordinate_transform_t
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_resolution_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_remap_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_destination_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_replacement_tests
 ```
 
 The `entity_insert_session_tests` target must report exactly
@@ -295,6 +299,8 @@ The `entity_xdata_handle_resolution_tests` target must report exactly
 The `entity_xdata_handle_remap_tests` target must report exactly
 `3 passed; 0 failed`.
 The `entity_xdata_handle_destination_tests` target must report exactly
+`3 passed; 0 failed`.
+The `entity_xdata_handle_replacement_tests` target must report exactly
 `3 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
@@ -327,7 +333,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `1001 passed; 0 failed` across its
+- The workspace test command reports exactly `1004 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -348,15 +354,15 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3c[a-v]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md | Select-Object FullName,Length
+rg -n "M14\.3c[a-w]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed entity checkpoint is M14.3cv.
-- Audit files exist for M14.3ca through M14.3cv.
+- The current documented completed entity checkpoint is M14.3cw.
+- Audit files exist for M14.3ca through M14.3cw.
 - The documentation does not claim completed support for cross-container clone,
   reference/text common-property clone, graph payload clone, or complete entity
   editing.
@@ -371,9 +377,9 @@ Run the following exact PowerShell block:
 ```powershell
 $batchArtifacts = @(
   'README.md',
-  'crates/seacad-dxf-core/src/entity_xdata_handle_destination.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_handle_replacement.rs',
   'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_handle_destination_tests.rs',
+  'crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs',
   'docs/DXF_ENTITY_COMPLETION_PLAN.md',
   'docs/IMPLEMENTATION_PLAN.md',
   'docs/SUPPORT_MATRIX.md'
@@ -393,13 +399,13 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 480 | `715a93c6ebcb7f61413bf05904180067203b7fbe43e5f03f7984579769855e51` |
-| `crates/seacad-dxf-core/src/entity_xdata_handle_destination.rs` | 268 | `7512a887815ac6874878c03f25e197f1d0e863d1622cad86095588ad9d12e994` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1132 | `8c31e4498579b84e8d350b77f585e34f2c6a0199dd9a3ac5e6b151d00f325f20` |
-| `crates/seacad-dxf-core/tests/entity_xdata_handle_destination_tests.rs` | 370 | `a6d6ae206e41a075e647c80421e82916b9452ad6b8e9bae9cb8b00bb8667297e` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1472 | `d122b18f5ed99017c3c4079266b2115af49dc84826c6b40048792193d61b1d49` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2891 | `04bbd6e5406fd60e85bd5c6522c010735f0b691a0bd192cdf88dfb7073552c13` |
-| `docs/SUPPORT_MATRIX.md` | 2525 | `65269679c2586eaeb00935300041bad51ca9510dd7f9d98ebfb91abc98b704c5` |
+| `README.md` | 488 | `6c7f8be8d0fe66ffc8f558d89000e57141df0229019dec5b0005cfbb9e2f16f3` |
+| `crates/seacad-dxf-core/src/entity_xdata_handle_replacement.rs` | 329 | `2f710fb59f63c5045ac0a5e939bf64b152e5240135125f3f0741cbf5ddbcd6ac` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1137 | `5a89f6255af1111e6a4cf0fce421e02a8a34dd8ff6c23adfac1b104a834fd0db` |
+| `crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs` | 342 | `cc3f19264906d37c34eb6abe9e13aea2e452c6669956ef89fb3d90e98b74b86d` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1483 | `5becb5b2d47337db1976f2edefd8e6b5a1cc95160f49a7d624731a737ce1e1bc` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2903 | `b9269901e5dd69b5785fd32b2db19c5618eacc338673c13ef2f5afa9efc66446` |
+| `docs/SUPPORT_MATRIX.md` | 2536 | `80f3578fc7528d14c362490988384e62f33f4125db90103d9d7e3b82f08bc4ff` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -443,10 +449,11 @@ The batch is `PASS` only if all of these are true:
     entity XDATA point-tuple tests, exactly 3 entity XDATA layer-resolution
     tests, exactly 3 entity XDATA capacity tests, and exactly 3 entity XDATA
     coordinate-transform tests, and exactly 3 entity XDATA handle-resolution
-    tests, exactly 3 entity XDATA handle-remap tests, and exactly 3 entity XDATA
-    handle-destination tests.
+    tests, exactly 3 entity XDATA handle-remap tests, exactly 3 entity XDATA
+    handle-destination tests, and exactly 3 entity XDATA handle-replacement
+    tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 1001 workspace tests.
+6. All full repository gates pass, including exactly 1004 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -465,7 +472,7 @@ makes it `BLOCKED`.
 Write one complete UTF-8 YAML-shaped report using the schema below to this exact
 path, even when the batch ends as `FAIL` or `BLOCKED`:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-destination-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
 
 Do not omit commands, including commands with empty output. The report file must
 contain no prose before or after the YAML-shaped report. After the file is fully
@@ -473,10 +480,10 @@ written and closed, print only its absolute path and final status to the
 Antigravity chat. Chat output without the report file is not delivery.
 
 ```yaml
-batch_id: seacad-entity-xdata-handle-destination-verification-2026-08-04
+batch_id: seacad-entity-xdata-handle-replacement-verification-2026-08-04
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-destination-verification-2026-08-04.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml
 started_at:
 finished_at:
 head_before:
@@ -486,7 +493,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3cv-entity-xdata-handle-destination
+  tag: m14.3cw-entity-xdata-handle-replacement
   tag_type:
   peeled_commit:
   ancestor_exit_code:
@@ -523,6 +530,7 @@ entity_xdata_coordinate_transform_test_count:
 entity_xdata_handle_resolution_test_count:
 entity_xdata_handle_remap_test_count:
 entity_xdata_handle_destination_test_count:
+entity_xdata_handle_replacement_test_count:
 workspace_test_total:
 documentation_checks:
   current_checkpoint:
