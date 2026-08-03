@@ -2,17 +2,17 @@
 
 Status: `READY`
 
-Batch ID: `seacad-entity-xdata-handle-replacement-verification-2026-08-04`
+Batch ID: `seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3cw - entity XDATA handle replacement`
+Target code checkpoint: `M14.3cx - entity XDATA handle replacement patch`
 
-Target checkpoint commit: `c60e394bb0ad0278b78edc83eef5d67a026cb145`
+Target checkpoint commit: `931754056d86f992f193e68cfc02e1509c48e8e7`
 
-Target annotated tag: `m14.3cw-entity-xdata-handle-replacement`
+Target annotated tag: `m14.3cx-entity-xdata-handle-replacement-patch`
 
-Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
+Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04.yaml`
 
 Prepared: `2026-08-04` (`Asia/Saigon`)
 
@@ -49,7 +49,7 @@ and `cargo-deny` commands normally use.
 One additional write is required: create the parent directory when absent and
 write exactly one complete report file at:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04.yaml`
 
 This path is outside the Git repository. It is the only non-ephemeral output
 file permitted by this batch. If the file already exists for this same batch,
@@ -91,7 +91,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `c60e394bb0ad0278b78edc83eef5d67a026cb145`.
+  than `931754056d86f992f193e68cfc02e1509c48e8e7`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The only path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -142,10 +142,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3cw-entity-xdata-handle-replacement
-git rev-list -n 1 m14.3cw-entity-xdata-handle-replacement
-git merge-base --is-ancestor c60e394bb0ad0278b78edc83eef5d67a026cb145 HEAD
-git diff --name-only m14.3cw-entity-xdata-handle-replacement..HEAD
+git cat-file -t m14.3cx-entity-xdata-handle-replacement-patch
+git rev-list -n 1 m14.3cx-entity-xdata-handle-replacement-patch
+git merge-base --is-ancestor 931754056d86f992f193e68cfc02e1509c48e8e7 HEAD
+git diff --name-only m14.3cx-entity-xdata-handle-replacement-patch..HEAD
 ```
 
 Expected evidence:
@@ -155,7 +155,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `c60e394bb0ad0278b78edc83eef5d67a026cb145`.
+  `931754056d86f992f193e68cfc02e1509c48e8e7`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and no other path.
@@ -217,6 +217,8 @@ git cat-file -t m14.3cv-entity-xdata-handle-destination
 git rev-list -n 1 m14.3cv-entity-xdata-handle-destination
 git cat-file -t m14.3cw-entity-xdata-handle-replacement
 git rev-list -n 1 m14.3cw-entity-xdata-handle-replacement
+git cat-file -t m14.3cx-entity-xdata-handle-replacement-patch
+git rev-list -n 1 m14.3cx-entity-xdata-handle-replacement-patch
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -246,6 +248,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3cu-entity-xdata-handle-remap` | `073ece05a46ef06d62f36cc857ff684338f82349` |
 | `m14.3cv-entity-xdata-handle-destination` | `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e` |
 | `m14.3cw-entity-xdata-handle-replacement` | `c60e394bb0ad0278b78edc83eef5d67a026cb145` |
+| `m14.3cx-entity-xdata-handle-replacement-patch` | `931754056d86f992f193e68cfc02e1509c48e8e7` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -354,15 +357,15 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3c[a-w]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md | Select-Object FullName,Length
+rg -n "M14\.3c[a-x]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md,docs/audits/M14_3CX_ENTITY_XDATA_HANDLE_REPLACEMENT_PATCH.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed entity checkpoint is M14.3cw.
-- Audit files exist for M14.3ca through M14.3cw.
+- The current documented completed entity checkpoint is M14.3cx.
+- Audit files exist for M14.3ca through M14.3cx.
 - The documentation does not claim completed support for cross-container clone,
   reference/text common-property clone, graph payload clone, or complete entity
   editing.
@@ -399,13 +402,13 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 488 | `6c7f8be8d0fe66ffc8f558d89000e57141df0229019dec5b0005cfbb9e2f16f3` |
-| `crates/seacad-dxf-core/src/entity_xdata_handle_replacement.rs` | 329 | `2f710fb59f63c5045ac0a5e939bf64b152e5240135125f3f0741cbf5ddbcd6ac` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1137 | `5a89f6255af1111e6a4cf0fce421e02a8a34dd8ff6c23adfac1b104a834fd0db` |
-| `crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs` | 342 | `cc3f19264906d37c34eb6abe9e13aea2e452c6669956ef89fb3d90e98b74b86d` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1483 | `5becb5b2d47337db1976f2edefd8e6b5a1cc95160f49a7d624731a737ce1e1bc` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2903 | `b9269901e5dd69b5785fd32b2db19c5618eacc338673c13ef2f5afa9efc66446` |
-| `docs/SUPPORT_MATRIX.md` | 2536 | `80f3578fc7528d14c362490988384e62f33f4125db90103d9d7e3b82f08bc4ff` |
+| `README.md` | 495 | `c1f2e501173d8e99615dc152c2af005e6b05c15a4c35d18a9b4dd8bc3090764a` |
+| `crates/seacad-dxf-core/src/entity_xdata_handle_replacement.rs` | 409 | `1a2673fe996fb4f28d1bdc07a8e76a824a0e00cf4787dcb672d5999c50f40330` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1137 | `95d6f02c789bc1e814d2591deda4eb042ee1ec0491ad025c2c018a48eb7b388d` |
+| `crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs` | 378 | `6aae145330fbaf925b81fe5a7f1696f0fdccd4f625d06400b821c6b0348f1180` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1493 | `4fcd354d265c5c18ec9b8717b50906f48794409ed29485b5906b2834f73efffb` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2914 | `d2587da1ca961557e47296f5bbd8f74fc1c0970f223aa82128aa0f76be30a5d7` |
+| `docs/SUPPORT_MATRIX.md` | 2545 | `826ad7f718882dc0cac61ce0e593ce27dc4061022a0d56f7c23331102c56676f` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -472,7 +475,7 @@ makes it `BLOCKED`.
 Write one complete UTF-8 YAML-shaped report using the schema below to this exact
 path, even when the batch ends as `FAIL` or `BLOCKED`:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04.yaml`
 
 Do not omit commands, including commands with empty output. The report file must
 contain no prose before or after the YAML-shaped report. After the file is fully
@@ -480,10 +483,10 @@ written and closed, print only its absolute path and final status to the
 Antigravity chat. Chat output without the report file is not delivery.
 
 ```yaml
-batch_id: seacad-entity-xdata-handle-replacement-verification-2026-08-04
+batch_id: seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-verification-2026-08-04.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-patch-verification-2026-08-04.yaml
 started_at:
 finished_at:
 head_before:
@@ -493,7 +496,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3cw-entity-xdata-handle-replacement
+  tag: m14.3cx-entity-xdata-handle-replacement-patch
   tag_type:
   peeled_commit:
   ancestor_exit_code:
