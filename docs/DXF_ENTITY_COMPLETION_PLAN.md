@@ -1429,6 +1429,19 @@ rejection, cancellation, lookup and metadata bounds, and non-disclosing debug
 output. Destination identity validation, application semantics, clone/write,
 and POINT `Complete` remain open.
 
+M14.3cv composes remap planning with a separately supplied destination
+document. Unusable source/remap states propagate unchanged. An exactly mapped
+destination handle resolves as missing, unique, or ambiguous against the
+destination identity index; only a unique result makes its exact destination
+record and identity candidate available. Entries carry both source and
+destination identities, and unique target evidence is derived through the
+owned destination directory instead of copied into every entry. ASCII-to-ASCII,
+ASCII-to-Binary, Binary-to-ASCII, and Binary-to-Binary source/destination pairs
+cover all nine Core dialects plus every remap/destination state, duplicate
+identities, dual-source foreign rejection, cancellation, lookup and metadata
+bounds, and non-disclosing debug output. Application semantics, replacement
+encoding, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

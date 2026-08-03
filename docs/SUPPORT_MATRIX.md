@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cu can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cv can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1486,6 +1486,17 @@ and compact resolution links; foreign ordinal lookups fail closed. All states
 have nine-dialect ASCII/Binary parity. Destination-document identity
 validation, application-specific payload semantics, clone/write, and POINT
 `Complete` remain open.
+
+M14.3cv adds `DxfEntityXDataHandleDestinationDirectory` across separate source
+and destination documents. M14.3cu remap-unavailable states propagate exactly.
+For an exactly mapped handle, the destination identity index classifies
+missing, unique, or ambiguous target count; only unique resolution exposes the
+exact destination `DxfHandleIdentityMatch`. Entry lookup binds both source and
+destination identities, while destination target evidence is derived from the
+owned identity directory rather than copied per entry. ASCII-to-ASCII,
+ASCII-to-Binary, Binary-to-ASCII, and Binary-to-Binary pairs have parity across
+all nine Core dialects. Application-specific payload semantics, replacement
+encoding, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

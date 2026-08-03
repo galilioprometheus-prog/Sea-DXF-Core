@@ -2873,5 +2873,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     application-specific payload semantics, clone/write, and POINT `Complete`
     remain open.
 
+    M14.3cv validates each M14.3cu mapped destination handle against a separately
+    supplied destination document's exact identity index. Remap-unavailable
+    states propagate without destination lookup. Mapped handles become missing,
+    unique, or ambiguous with exact target count; only unique resolution can
+    derive its exact destination record and identity candidate. Compact entries
+    retain both source and destination identities and resolve destination target
+    evidence through the owned identity directory without per-entry copying.
+    Every remap/destination state, unique evidence, duplicate identities,
+    dual-source foreign lookup, cancellation, metadata/lookup bounds, and debug
+    redaction pass ASCII-to-ASCII, ASCII-to-Binary, Binary-to-ASCII, and Binary-
+    to-Binary combinations across all nine Core dialects. Application-specific
+    payload semantics, replacement encoding, clone/write, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
