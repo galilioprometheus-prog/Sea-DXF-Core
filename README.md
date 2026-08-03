@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ca. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cb. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -257,8 +257,15 @@ it. Admission deletes the exact group-zero-delimited raw record; strict
 post-image verification requires the handle to disappear before returning the
 byte-identical inverse. Missing, invalid, null, or ambiguous identity,
 incoming references, wrong families, cancellation, and operation mixing all
-fail closed. Handleless deletion, mixed/multi-delete sessions, clone, and
-POINT `Complete` remain open.
+fail closed. POINT can also be cloned into a fresh reserved handle through the
+same verified insertion path when the source uses only the canonical groups
+currently modeled by the POINT draft. The clone preserves layer, applicable
+layout/lineweight, exact location, and explicit-versus-defaulted optional
+payload. It stays in the source container; modern owner identity must match.
+Unknown common properties, XDATA/application groups, partial or invalid POINT
+semantics, a pending source update, placement drift, and owner drift fail
+closed rather than losing data. Handleless deletion, mixed/multi-delete
+sessions, broader common-property clone, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

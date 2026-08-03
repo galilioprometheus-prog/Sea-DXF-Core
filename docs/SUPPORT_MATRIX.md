@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ca can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cb can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1272,6 +1272,20 @@ deleted handle to be absent before the executable inverse is released. Every
 supported ASCII/Binary dialect passes exact deletion and byte-identical
 restoration. Handleless deletion, mixed/multi-delete sessions, clone, display,
 and POINT `Complete` remain open.
+
+M14.3cb adds canonical semantic POINT cloning into a fresh reserved handle.
+The source and requested placement must identify the same entity container,
+and AC1012+ owner identity must match. Only the canonical group envelope
+currently representable by `DxfPointDraft` is admitted, preventing silent loss
+of unsupported common properties, XDATA, application groups, or opaque data.
+The clone preserves exact layer/layout names, applicable lineweight, location,
+and explicit-versus-defaulted thickness, extrusion, and angle state before
+reusing verified insertion, `$HANDSEED`, strict reparse, and inverse
+restoration. Pending source updates, invalid/partial semantics, placement or
+owner drift, and unsupported groups queue nothing. Defaulted clones pass every
+supported ASCII/Binary dialect; an all-explicit fixture proves complete POINT
+payload retention. Cross-container/owner clone, broader common-property clone,
+handleless/mixed deletion, display, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

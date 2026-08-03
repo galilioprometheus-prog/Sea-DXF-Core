@@ -2645,5 +2645,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     fixtures cover all nine ASCII/Binary Core dialects. Handleless deletion,
     mixed/multi-delete sessions, clone, and POINT `Complete` remain open.
 
+    M14.3cb adds `DxfEntityEditSession::clone_entity` for canonical semantic
+    POINT cloning. Admission reconstructs a typed draft only when every source
+    group belongs to the currently modeled POINT envelope, the destination is
+    the same entity container, modern owner identity is unchanged, and layer,
+    layout/lineweight, location, thickness, extrusion, and angle semantics are
+    usable without collapsing partial or invalid state. Unsupported common
+    properties, XDATA/application groups, pending source updates, placement
+    drift, and owner drift fail typed. Successful clones allocate a fresh
+    handle and reuse the verified insertion/`$HANDSEED`/inverse pipeline.
+    Defaulted clones cover every ASCII/Binary Core dialect, while an explicit
+    fixture retains every POINT payload value. Cross-container/owner clone,
+    broader common-property clone, handleless/mixed deletion, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

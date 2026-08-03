@@ -1190,6 +1190,21 @@ All nine ASCII/Binary dialect pairs prove exact deletion and byte-identical
 restoration. Handleless deletion, mixed/multi-delete sessions, clone, and
 POINT `Complete` remain open.
 
+M14.3cb adds canonical semantic POINT clone through
+`DxfEntityEditSession::clone_entity`. The source must be a canonical POINT in
+the requested existing container, modern owner identity must remain unchanged,
+and every raw group must belong to the currently modeled canonical envelope.
+Layer, applicable layout and lineweight, location, and the explicit/defaulted
+state of thickness, extrusion, and UCS X-axis angle are reconstructed into a
+typed draft; insertion then allocates a fresh handle and reuses the existing
+owner/placement, `$HANDSEED`, strict semantic verification, and exact inverse
+pipeline. Unsupported common properties, XDATA/application groups, partial or
+invalid family semantics, pending source updates, placement drift, and owner
+drift fail typed without queueing. Minimal/defaulted clones pass all nine
+ASCII/Binary dialect pairs, and an all-explicit payload clone retains every
+POINT family value. Cross-container/owner clone, broader common-property
+clone, handleless/mixed deletion, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

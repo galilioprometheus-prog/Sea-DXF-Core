@@ -30,16 +30,18 @@ use crate::{
     DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
     DxfEntityCommonSymbolEditOutcome, DxfEntityDraft, DxfEntityDraftApplicabilityIssue,
     DxfEntityDraftName, DxfEntityDraftRecordIssue, DxfEntityEditPlan, DxfEntityEditValue,
-    DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue,
-    DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
+    DxfEntityField, DxfEntityFieldCardState, DxfEntityFieldEvidenceDirectory,
+    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityKey, DxfEntityPlacement, DxfEntityPlacementOwnerIssue, DxfEntityPlacementOwnerOutcome,
+    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityKey, DxfEntityLineweight,
+    DxfEntityPlacement, DxfEntityPlacementOwnerIssue, DxfEntityPlacementOwnerOutcome,
     DxfEntityPlacementTarget, DxfError, DxfHandle, DxfHandleAllocationOutcome,
     DxfHandleAllocationPolicyState, DxfHandleGroupClass, DxfHandleIdentityDirectory,
     DxfHandleIdentityLookup, DxfHandleIdentityState, DxfHandleReservationPlanOutcome,
     DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
-    DxfNamedSymbolTableDirectory, DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind,
-    DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    DxfNamedSymbolTableDirectory, DxfPointDraft, DxfPointEditIssue, DxfPointPatch,
+    DxfPointPatchKind, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSemanticValueState,
+    DxfSourceId, DxfTransactionPlan,
 };
 
 /// One atomic replacement of the common indexed/true/color-book tuple.
@@ -379,6 +381,64 @@ pub enum DxfEntityDeleteOutcome {
     Unavailable(DxfEntityDeleteIssue),
 }
 
+/// Typed reason why a semantic entity clone was not admitted to the session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityCloneIssue {
+    SourceUpdatePending {
+        key: DxfEntityKey,
+    },
+    EntityMissing {
+        key: DxfEntityKey,
+    },
+    WrongClassification {
+        key: DxfEntityKey,
+        observed: DxfEntityClassification,
+    },
+    VersionUnavailable {
+        state: DxfAcadVersionState,
+    },
+    SourcePlacementUnavailable {
+        key: DxfEntityKey,
+    },
+    PlacementMismatch {
+        key: DxfEntityKey,
+        expected: DxfEntityPlacementTarget,
+        requested: DxfEntityPlacementTarget,
+    },
+    OwnerMismatch {
+        key: DxfEntityKey,
+        expected: DxfHandle,
+        requested: DxfHandle,
+    },
+    UnsupportedSourceGroup {
+        key: DxfEntityKey,
+        group_occurrence: u64,
+        group_code: i16,
+    },
+    CommonFieldUnavailable {
+        key: DxfEntityKey,
+        field: DxfEntityField,
+        state: DxfEntityFieldCardState,
+    },
+    PointSemanticsUnavailable {
+        key: DxfEntityKey,
+    },
+    PointFieldUnavailable {
+        key: DxfEntityKey,
+        kind: DxfPointPatchKind,
+    },
+    Insert(DxfEntityInsertIssue),
+}
+
+/// Result of cloning one supported entity into a fresh identity.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityCloneOutcome {
+    Applied(DxfEntityInsertReceipt),
+    Unavailable(DxfEntityCloneIssue),
+}
+
 struct PendingEdit {
     key: DxfEntityKey,
     field: DxfEntityField,
@@ -401,6 +461,40 @@ struct PendingDelete {
     key: DxfEntityKey,
     handle: DxfHandle,
     transaction: DxfTransactionPlan,
+}
+
+struct OwnedPointCloneDraft {
+    layer: Box<[u8]>,
+    layout: Option<Box<[u8]>>,
+    lineweight: Option<DxfEntityLineweight>,
+    location: [crate::DxfDouble; 3],
+    thickness: Option<crate::DxfDouble>,
+    extrusion: Option<[crate::DxfDouble; 3]>,
+    ucs_x_axis_angle: Option<crate::DxfDouble>,
+}
+
+type PointCloneTextResult = Result<Option<Box<[u8]>>, DxfEntityCloneIssue>;
+
+impl OwnedPointCloneDraft {
+    fn borrowed(&self, owner: DxfHandle) -> DxfEntityDraft<'_> {
+        let mut point = DxfPointDraft::new(&self.layer, self.location);
+        if let Some(layout) = self.layout.as_deref() {
+            point = point.with_layout(layout);
+        }
+        if let Some(lineweight) = self.lineweight {
+            point = point.with_lineweight(lineweight);
+        }
+        if let Some(thickness) = self.thickness {
+            point = point.with_thickness(thickness);
+        }
+        if let Some(extrusion) = self.extrusion {
+            point = point.with_extrusion(extrusion);
+        }
+        if let Some(angle) = self.ucs_x_axis_angle {
+            point = point.with_ucs_x_axis_angle(angle);
+        }
+        DxfEntityDraft::point(point).with_owner(owner)
+    }
 }
 
 enum PendingPointExpectation {
@@ -602,6 +696,44 @@ impl<'document, 'evidence, 'cancellation>
             name,
             placement: placement.target(),
         }))
+    }
+
+    /// Clones the currently supported canonical semantics into a fresh identity.
+    ///
+    /// Unsupported source groups fail closed so cloning never silently drops
+    /// opaque or not-yet-modeled payload.
+    pub fn clone_entity(
+        &mut self,
+        key: DxfEntityKey,
+        placement: DxfEntityPlacement,
+        owner: DxfHandle,
+    ) -> Result<DxfEntityCloneOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        if self.pending.iter().any(|edit| edit.key == key)
+            || self.pending_point_edits.iter().any(|edit| edit.key == key)
+        {
+            return Ok(DxfEntityCloneOutcome::Unavailable(
+                DxfEntityCloneIssue::SourceUpdatePending { key },
+            ));
+        }
+        let draft = match prepare_point_clone_draft(
+            self.document,
+            self.evidence,
+            key,
+            placement.target(),
+            owner,
+            self.profile,
+            self.cancellation,
+        )? {
+            Ok(draft) => draft,
+            Err(issue) => return Ok(DxfEntityCloneOutcome::Unavailable(issue)),
+        };
+        match self.insert(placement, draft.borrowed(owner))? {
+            DxfEntityInsertOutcome::Applied(receipt) => Ok(DxfEntityCloneOutcome::Applied(receipt)),
+            DxfEntityInsertOutcome::Unavailable(issue) => Ok(DxfEntityCloneOutcome::Unavailable(
+                DxfEntityCloneIssue::Insert(issue),
+            )),
+        }
     }
 
     /// Adds one typed update without changing the source document.
@@ -1734,6 +1866,357 @@ fn combine_insertions(pending: &[PendingEdit]) -> Result<Vec<u8>, DxfError> {
         combined.extend_from_slice(&edit.replacement);
     }
     Ok(combined)
+}
+
+fn prepare_point_clone_draft(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    placement: DxfEntityPlacementTarget,
+    owner: DxfHandle,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<OwnedPointCloneDraft, DxfEntityCloneIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    ensure_source(document.source_id(), evidence.source_id())?;
+    let Some(entity) = evidence.entity_directory().entity_for_key(key)? else {
+        return Ok(Err(DxfEntityCloneIssue::EntityMissing { key }));
+    };
+    if entity.classification() != DxfEntityClassification::Canonical(crate::DxfEntityTopic::POINT) {
+        return Ok(Err(DxfEntityCloneIssue::WrongClassification {
+            key,
+            observed: entity.classification(),
+        }));
+    }
+    let DxfAcadVersionState::Supported(version) = document.acad_version_report().state() else {
+        return Ok(Err(DxfEntityCloneIssue::VersionUnavailable {
+            state: document.acad_version_report().state(),
+        }));
+    };
+    let expected_placement = match source_clone_placement(document, entity, cancellation)? {
+        Some(expected) => expected,
+        None => return Ok(Err(DxfEntityCloneIssue::SourcePlacementUnavailable { key })),
+    };
+    if placement != expected_placement {
+        return Ok(Err(DxfEntityCloneIssue::PlacementMismatch {
+            key,
+            expected: expected_placement,
+            requested: placement,
+        }));
+    }
+    for occurrence in entity.record().group_range().start()..entity.record().group_range().end() {
+        ensure_not_cancelled(cancellation)?;
+        let group = document
+            .group(occurrence)
+            .ok_or_else(invalid_internal_data)?;
+        let group_code = group.group_code().value();
+        if !matches!(
+            group_code,
+            0 | 5 | 8 | 10 | 20 | 30 | 39 | 50 | 100 | 210 | 220 | 230 | 330 | 370 | 410
+        ) {
+            return Ok(Err(DxfEntityCloneIssue::UnsupportedSourceGroup {
+                key,
+                group_occurrence: occurrence,
+                group_code,
+            }));
+        }
+    }
+
+    let common = document.entity_field_semantic_directory(cancellation)?;
+    if version >= DxfAcadVersion::Ac1012 {
+        let owner_entry = common
+            .entry_for_field(entity, DxfEntityField::OWNER)?
+            .ok_or_else(invalid_internal_data)?;
+        let DxfEntityFieldSemantics::Singleton(value) = owner_entry.semantics() else {
+            return Err(invalid_internal_data());
+        };
+        let expected = match value.value().copied() {
+            Some(DxfEntityFieldValue::Handle(expected))
+                if value.state() == DxfSemanticValueState::Explicit =>
+            {
+                expected
+            }
+            _ => {
+                return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                    key,
+                    field: DxfEntityField::OWNER,
+                    state: owner_entry.card().state(),
+                }));
+            }
+        };
+        if owner != expected {
+            return Ok(Err(DxfEntityCloneIssue::OwnerMismatch {
+                key,
+                expected,
+                requested: owner,
+            }));
+        }
+    }
+    let layer = match clone_exact_text_field(
+        document,
+        &common,
+        entity,
+        key,
+        DxfEntityField::LAYER,
+        profile,
+        false,
+    )? {
+        Ok(Some(layer)) => layer,
+        Ok(None) => {
+            return Ok(Err(common_clone_issue(
+                key,
+                DxfEntityField::LAYER,
+                &common,
+                entity,
+            )?));
+        }
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let layout = match clone_exact_text_field(
+        document,
+        &common,
+        entity,
+        key,
+        DxfEntityField::LAYOUT,
+        profile,
+        version < DxfAcadVersion::Ac1015
+            || entity.record().section_kind() == crate::DxfRawRecordSectionKind::Blocks,
+    )? {
+        Ok(layout) => layout,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let lineweight_entry = common
+        .entry_for_field(entity, DxfEntityField::LINEWEIGHT)?
+        .ok_or_else(invalid_internal_data)?;
+    let lineweight = match lineweight_entry.card().state() {
+        DxfEntityFieldCardState::AbsentOptional => None,
+        DxfEntityFieldCardState::AbsentRequired if version < DxfAcadVersion::Ac1015 => None,
+        DxfEntityFieldCardState::Unique => {
+            let DxfEntityFieldSemantics::Singleton(value) = lineweight_entry.semantics() else {
+                return Err(invalid_internal_data());
+            };
+            match value.value().copied() {
+                Some(DxfEntityFieldValue::Int16(raw))
+                    if value.state() == DxfSemanticValueState::Explicit =>
+                {
+                    match DxfEntityLineweight::from_raw(raw) {
+                        Some(lineweight) => Some(lineweight),
+                        None => {
+                            return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                                key,
+                                field: DxfEntityField::LINEWEIGHT,
+                                state: lineweight_entry.card().state(),
+                            }));
+                        }
+                    }
+                }
+                _ => {
+                    return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                        key,
+                        field: DxfEntityField::LINEWEIGHT,
+                        state: lineweight_entry.card().state(),
+                    }));
+                }
+            }
+        }
+        state => {
+            return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                key,
+                field: DxfEntityField::LINEWEIGHT,
+                state,
+            }));
+        }
+    };
+
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(key.raw_record_ordinal())? else {
+        return Ok(Err(DxfEntityCloneIssue::PointSemanticsUnavailable { key }));
+    };
+    let location = match point.location_value() {
+        Some(location)
+            if point
+                .location()
+                .iter()
+                .all(|value| value.state() == DxfSemanticValueState::Explicit) =>
+        {
+            location
+        }
+        _ => {
+            return Ok(Err(DxfEntityCloneIssue::PointFieldUnavailable {
+                key,
+                kind: DxfPointPatchKind::Location,
+            }));
+        }
+    };
+    let thickness = match point.thickness().state() {
+        DxfSemanticValueState::Explicit => point.thickness_value(),
+        DxfSemanticValueState::Defaulted => None,
+        DxfSemanticValueState::Absent | DxfSemanticValueState::Invalid => {
+            return Ok(Err(DxfEntityCloneIssue::PointFieldUnavailable {
+                key,
+                kind: DxfPointPatchKind::Thickness,
+            }));
+        }
+    };
+    if point.thickness().state() == DxfSemanticValueState::Explicit && thickness.is_none() {
+        return Err(invalid_internal_data());
+    }
+    let extrusion = if point
+        .extrusion()
+        .iter()
+        .all(|value| value.state() == DxfSemanticValueState::Explicit)
+    {
+        match point.extrusion_value() {
+            Some(extrusion) => Some(extrusion),
+            None => return Err(invalid_internal_data()),
+        }
+    } else if point
+        .extrusion()
+        .iter()
+        .all(|value| value.state() == DxfSemanticValueState::Defaulted)
+    {
+        None
+    } else {
+        return Ok(Err(DxfEntityCloneIssue::PointFieldUnavailable {
+            key,
+            kind: DxfPointPatchKind::Extrusion,
+        }));
+    };
+    let ucs_x_axis_angle = match point.ucs_x_axis_angle().state() {
+        DxfSemanticValueState::Explicit => match point.ucs_x_axis_angle_value() {
+            Some(angle) => Some(angle),
+            None => return Err(invalid_internal_data()),
+        },
+        DxfSemanticValueState::Defaulted => None,
+        DxfSemanticValueState::Absent | DxfSemanticValueState::Invalid => {
+            return Ok(Err(DxfEntityCloneIssue::PointFieldUnavailable {
+                key,
+                kind: DxfPointPatchKind::UcsXAxisAngle,
+            }));
+        }
+    };
+    Ok(Ok(OwnedPointCloneDraft {
+        layer,
+        layout,
+        lineweight,
+        location,
+        thickness,
+        extrusion,
+        ucs_x_axis_angle,
+    }))
+}
+
+fn source_clone_placement(
+    document: DxfRawDocumentView<'_>,
+    entity: crate::DxfEntityRef,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityPlacementTarget>, DxfError> {
+    Ok(match entity.record().section_kind() {
+        crate::DxfRawRecordSectionKind::Entities => {
+            Some(DxfEntityPlacementTarget::EntitiesSection {
+                structure_section_ordinal: entity.record().structure_section_ordinal(),
+            })
+        }
+        crate::DxfRawRecordSectionKind::Blocks => {
+            let blocks = document.block_definition_directory(cancellation)?;
+            let mut target = None;
+            for definition in blocks.definitions().iter().copied() {
+                ensure_not_cancelled(cancellation)?;
+                let block_ordinal = definition.block_record().ordinal();
+                if blocks
+                    .members_for_block_raw_ordinal(block_ordinal)
+                    .is_some_and(|members| {
+                        members
+                            .iter()
+                            .any(|member| member.ordinal() == entity.record().ordinal())
+                    })
+                {
+                    target = Some(DxfEntityPlacementTarget::BlockDefinition {
+                        raw_record_ordinal: block_ordinal,
+                    });
+                    break;
+                }
+            }
+            target
+        }
+        crate::DxfRawRecordSectionKind::Classes
+        | crate::DxfRawRecordSectionKind::Tables
+        | crate::DxfRawRecordSectionKind::Objects => None,
+    })
+}
+
+fn clone_exact_text_field(
+    document: DxfRawDocumentView<'_>,
+    common: &crate::DxfEntityFieldSemanticDirectory,
+    entity: crate::DxfEntityRef,
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    profile: DxfResourceProfile,
+    allow_absent_required: bool,
+) -> Result<PointCloneTextResult, DxfError> {
+    let entry = common
+        .entry_for_field(entity, field)?
+        .ok_or_else(invalid_internal_data)?;
+    match entry.card().state() {
+        DxfEntityFieldCardState::AbsentOptional => Ok(Ok(None)),
+        DxfEntityFieldCardState::AbsentRequired if allow_absent_required => Ok(Ok(None)),
+        DxfEntityFieldCardState::Unique => {
+            let DxfEntityFieldSemantics::Singleton(value) = entry.semantics() else {
+                return Err(invalid_internal_data());
+            };
+            let Some(DxfEntityFieldValue::ExactText(text)) = value.value().copied() else {
+                return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                    key,
+                    field,
+                    state: entry.card().state(),
+                }));
+            };
+            if value.state() != DxfSemanticValueState::Explicit {
+                return Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                    key,
+                    field,
+                    state: entry.card().state(),
+                }));
+            }
+            let len =
+                usize::try_from(text.value_span().len()).map_err(|_| invalid_internal_data())?;
+            let observed = u64::try_from(len).map_err(|_| invalid_internal_data())?;
+            let limit = profile.limits().max_value_bytes();
+            if observed > limit {
+                return Err(DxfError::resource_limit(
+                    DxfResource::ValueBytes,
+                    limit,
+                    observed,
+                ));
+            }
+            let mut bytes = Vec::new();
+            bytes.try_reserve_exact(len).map_err(|_| out_of_memory())?;
+            bytes.resize(len, 0);
+            document.read_span(text.value_span(), &mut bytes)?;
+            Ok(Ok(Some(bytes.into_boxed_slice())))
+        }
+        state => Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+            key,
+            field,
+            state,
+        })),
+    }
+}
+
+fn common_clone_issue(
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    common: &crate::DxfEntityFieldSemanticDirectory,
+    entity: crate::DxfEntityRef,
+) -> Result<DxfEntityCloneIssue, DxfError> {
+    let entry = common
+        .entry_for_field(entity, field)?
+        .ok_or_else(invalid_internal_data)?;
+    Ok(DxfEntityCloneIssue::CommonFieldUnavailable {
+        key,
+        field,
+        state: entry.card().state(),
+    })
 }
 
 fn compact_owner_issue(issue: DxfEntityPlacementOwnerIssue) -> DxfEntityInsertOwnerIssue {

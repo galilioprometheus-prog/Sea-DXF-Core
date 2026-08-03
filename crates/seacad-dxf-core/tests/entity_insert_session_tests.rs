@@ -2,13 +2,13 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityDraft,
-    DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField, DxfEntityInsertIssue,
-    DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch,
-    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
-    DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfRawDocumentFormat, DxfRawDocumentView,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
-    NoopDxfReadObserver,
+    DxfCancellationToken, DxfDouble, DxfEntityCloneIssue, DxfEntityCloneOutcome,
+    DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditOutcome, DxfEntityEditValue,
+    DxfEntityField, DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
+    DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError, DxfHandle,
+    DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft, DxfPointPatch,
+    DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -461,6 +461,182 @@ fn session_insert_rejects_foreign_placement_cancellation_and_record_error()
     Ok(())
 }
 
+#[test]
+fn session_clones_canonical_point_across_every_dialect() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point(format, version)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let placement = only_placement(view)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let outcome = session.clone_entity(key, placement, handle(0x10))?;
+            let DxfEntityCloneOutcome::Applied(receipt) = outcome else {
+                return Err(io::Error::other(format!("canonical POINT clone: {outcome:?}")).into());
+            };
+            assert_eq!(receipt.handle(), handle(0x40));
+            assert_eq!(receipt.placement(), placement.target());
+            assert_eq!(session.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("unique cloned POINT identity").into());
+            };
+            let geometry = post.basic_geometry_semantic_directory(&token())?;
+            let cloned = geometry
+                .point_for_raw_record(clone.record().ordinal())?
+                .ok_or_else(|| io::Error::other("cloned POINT semantics"))?;
+            assert_eq!(cloned.location_value(), Some([DxfDouble::from_f64(0.0); 3]));
+            assert_eq!(cloned.thickness_value(), Some(DxfDouble::from_f64(0.0)));
+            assert_eq!(cloned.thickness().state(), DxfSemanticValueState::Defaulted);
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified canonical POINT clone").into());
+            };
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn session_clone_rejects_unsupported_partial_and_pending_source_state() -> Result<(), Box<dyn Error>>
+{
+    let version = DxfAcadVersion::Ac1032;
+    let base = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
+    for (extra, expected_code) in [(b"60\n1\n".as_slice(), Some(60)), (b"210\n1\n", None)] {
+        let mut bytes = base.clone();
+        let endsec = b"0\nENDSEC\n";
+        let offset = bytes
+            .windows(endsec.len())
+            .rposition(|window| window == endsec)
+            .ok_or_else(|| io::Error::other("ENTITIES ENDSEC"))?;
+        bytes.splice(offset..offset, extra.iter().copied());
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source)?;
+        let view = DxfRawDocumentView::from(&document);
+        let evidence = view.entity_field_evidence_directory(&token())?;
+        let key = existing_point_key(&evidence)?;
+        let cancellation = token();
+        let mut session =
+            view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+        let outcome = session.clone_entity(key, only_placement(view)?, handle(0x10))?;
+        assert!(
+            match expected_code {
+                Some(group_code) => matches!(
+                    outcome,
+                    DxfEntityCloneOutcome::Unavailable(
+                        DxfEntityCloneIssue::UnsupportedSourceGroup {
+                            key: observed,
+                            group_code: observed_code,
+                            ..
+                        }
+                    ) if observed == key && observed_code == group_code
+                ),
+                None => matches!(
+                    outcome,
+                    DxfEntityCloneOutcome::Unavailable(
+                        DxfEntityCloneIssue::PointFieldUnavailable {
+                            key: observed,
+                            kind: DxfPointPatchKind::Extrusion,
+                        }
+                    ) if observed == key
+                ),
+            },
+            "unexpected clone outcome: {outcome:?}"
+        );
+        assert_eq!(session.queued_edit_count(), 0);
+    }
+
+    let source = DxfMemorySource::new(&base, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = existing_point_key(&evidence)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UCS_X_AXIS_ANGLE))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    assert!(matches!(
+        session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+        DxfEntityCloneOutcome::Unavailable(DxfEntityCloneIssue::SourceUpdatePending {
+            key: observed
+        }) if observed == key
+    ));
+    assert_eq!(session.queued_edit_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn session_clone_preserves_every_explicit_point_payload_field() -> Result<(), Box<dyn Error>> {
+    let version = DxfAcadVersion::Ac1032;
+    let mut bytes = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
+    let endsec = b"0\nENDSEC\n";
+    let offset = bytes
+        .windows(endsec.len())
+        .rposition(|window| window == endsec)
+        .ok_or_else(|| io::Error::other("ENTITIES ENDSEC"))?;
+    let explicit = b"39\n2.25\n210\n0.25\n220\n-0.5\n230\n1\n50\n37.5\n";
+    bytes.splice(offset..offset, explicit.iter().copied());
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = existing_point_key(&evidence)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+        DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let output_document = open_ascii(&output_source)?;
+    let post = DxfRawDocumentView::from(&output_document);
+    let identities = post.handle_identity_directory(&token())?;
+    let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+        return Err(io::Error::other("explicit clone identity").into());
+    };
+    let geometry = post.basic_geometry_semantic_directory(&token())?;
+    let point = geometry
+        .point_for_raw_record(clone.record().ordinal())?
+        .ok_or_else(|| io::Error::other("explicit clone semantics"))?;
+    assert_eq!(point.thickness_value(), Some(THICKNESS));
+    assert_eq!(point.extrusion_value(), Some(EXTRUSION));
+    assert_eq!(point.ucs_x_axis_angle_value(), Some(UCS_X_AXIS_ANGLE));
+    assert!(
+        point
+            .extrusion()
+            .iter()
+            .all(|value| value.state() == DxfSemanticValueState::Explicit)
+    );
+    assert!(matches!(
+        plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+        seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+    ));
+    Ok(())
+}
+
 fn point_draft(version: DxfAcadVersion) -> DxfEntityDraft<'static> {
     let point = DxfPointDraft::new(b"Layer0", LOCATION)
         .with_thickness(THICKNESS)
@@ -588,11 +764,17 @@ fn encoded_existing_point(
             (5_i16, b"20".as_slice()),
             (330, b"10".as_slice()),
             (100, b"AcDbEntity".as_slice()),
-            (8, b"Layer0".as_slice()),
-            (100, b"AcDbPoint".as_slice()),
         ] {
             bytes.extend_from_slice(&encoded_string_group(format, version, code, value)?);
         }
+        if version >= DxfAcadVersion::Ac1015 {
+            bytes.extend_from_slice(&encoded_string_group(format, version, 410, b"Model")?);
+        }
+        bytes.extend_from_slice(&encoded_string_group(format, version, 8, b"Layer0")?);
+        if version >= DxfAcadVersion::Ac1015 {
+            bytes.extend_from_slice(&encoded_i16_group(format, version, 370, -1)?);
+        }
+        bytes.extend_from_slice(&encoded_string_group(format, version, 100, b"AcDbPoint")?);
     } else {
         bytes.extend_from_slice(&encoded_string_group(format, version, 8, b"Layer0")?);
     }
@@ -643,6 +825,29 @@ fn encoded_double_group(
         DxfRawDocumentFormat::Binary => {
             push_binary_code(&mut bytes, version, code)?;
             bytes.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        _ => return Err(io::Error::other("format")),
+    }
+    Ok(bytes)
+}
+
+fn encoded_i16_group(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    code: i16,
+    value: i16,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            bytes.extend_from_slice(code.to_string().as_bytes());
+            bytes.push(b'\n');
+            bytes.extend_from_slice(value.to_string().as_bytes());
+            bytes.push(b'\n');
+        }
+        DxfRawDocumentFormat::Binary => {
+            push_binary_code(&mut bytes, version, code)?;
+            bytes.extend_from_slice(&value.to_le_bytes());
         }
         _ => return Err(io::Error::other("format")),
     }
