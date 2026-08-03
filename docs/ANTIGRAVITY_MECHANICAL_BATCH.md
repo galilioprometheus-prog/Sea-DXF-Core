@@ -2,15 +2,15 @@
 
 Status: `READY`
 
-Batch ID: `seacad-point-object-reference-clone-verification-2026-08-03`
+Batch ID: `seacad-point-color-book-clone-verification-2026-08-03`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3ch — POINT object-reference clone`
+Target code checkpoint: `M14.3ci — POINT color-book clone`
 
-Target checkpoint commit: `347cceb79f1a6bf3a73313417d84951e3b025fa6`
+Target checkpoint commit: `562964ec107321781407cf7b491301936d74c7f6`
 
-Target annotated tag: `m14.3ch-point-object-reference-clone`
+Target annotated tag: `m14.3ci-point-color-book-clone`
 
 Prepared: `2026-08-03` (`Asia/Saigon`)
 
@@ -79,7 +79,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `347cceb79f1a6bf3a73313417d84951e3b025fa6`.
+  than `562964ec107321781407cf7b491301936d74c7f6`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The only path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -130,10 +130,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3ch-point-object-reference-clone
-git rev-list -n 1 m14.3ch-point-object-reference-clone
-git merge-base --is-ancestor 347cceb79f1a6bf3a73313417d84951e3b025fa6 HEAD
-git diff --name-only m14.3ch-point-object-reference-clone..HEAD
+git cat-file -t m14.3ci-point-color-book-clone
+git rev-list -n 1 m14.3ci-point-color-book-clone
+git merge-base --is-ancestor 562964ec107321781407cf7b491301936d74c7f6 HEAD
+git diff --name-only m14.3ci-point-color-book-clone..HEAD
 ```
 
 Expected evidence:
@@ -143,7 +143,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `347cceb79f1a6bf3a73313417d84951e3b025fa6`.
+  `562964ec107321781407cf7b491301936d74c7f6`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
@@ -175,6 +175,8 @@ git cat-file -t m14.3cg-point-linetype-clone
 git rev-list -n 1 m14.3cg-point-linetype-clone
 git cat-file -t m14.3ch-point-object-reference-clone
 git rev-list -n 1 m14.3ch-point-object-reference-clone
+git cat-file -t m14.3ci-point-color-book-clone
+git rev-list -n 1 m14.3ci-point-color-book-clone
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -189,6 +191,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3cf-point-scalar-common-clone` | `9228f0c51d75522d67962946ecfe83ba59c0238b` |
 | `m14.3cg-point-linetype-clone` | `c7abb77aabae6be265d4529d67b1f90864097443` |
 | `m14.3ch-point-object-reference-clone` | `347cceb79f1a6bf3a73313417d84951e3b025fa6` |
+| `m14.3ci-point-color-book-clone` | `562964ec107321781407cf7b491301936d74c7f6` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -209,7 +212,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
 ```
 
 The `entity_insert_session_tests` target must report exactly
-`14 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
+`16 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
 `43 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
@@ -242,7 +245,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `963 passed; 0 failed` across its
+- The workspace test command reports exactly `965 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -263,15 +266,15 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3c[a-h]|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md | Select-Object FullName,Length
+rg -n "M14\.3c[a-i]|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed POINT edit checkpoint is M14.3ch.
-- Audit files exist for M14.3ca through M14.3ch.
+- The current documented completed POINT edit checkpoint is M14.3ci.
+- Audit files exist for M14.3ca through M14.3ci.
 - The documentation does not claim completed support for cross-container clone,
   reference/text common-property clone, graph payload clone, or complete entity
   editing.
@@ -312,17 +315,17 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 381 | `61d3203fdb2f70231b09429f2ba26af3e39cdb570555a48c454f5278fe473052` |
-| `crates/seacad-dxf-core/src/entity_draft_record.rs` | 1180 | `fed6bb4041b892845ce2542cc6b3ba841f698c48f70f92cda595e8b502774bea` |
-| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2752 | `4305d4ba3ce3af3894be0a3931e394ed552655cff349fcd8adadb28050b01571` |
-| `crates/seacad-dxf-core/src/entity_edit_verification.rs` | 1300 | `caec9943c8af45503f342858e09292c0d84d997f0106485847fe1437ad44a615` |
+| `README.md` | 384 | `fe2e5bcbca8bccd3da6ac109f322d44add9212fa432a3c8476b44e461be4cb3f` |
+| `crates/seacad-dxf-core/src/entity_draft_record.rs` | 1241 | `40afd0f9be2c23053b4eb880428f9af421d3813a0a3be7e1b8ae6dc78caf7dc5` |
+| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2771 | `b9bb175bfa1c8dd955b923bcb1177f0b092849063d3cb4bc6359499e35bf5fd3` |
+| `crates/seacad-dxf-core/src/entity_edit_verification.rs` | 1306 | `2b3a144a9ad316909ba9f61a77590a225d498943c4dbfdd3d61786fa02da8ad0` |
 | `crates/seacad-dxf-core/src/lib.rs` | 1068 | `64aca4f5d173a42a8ad0116e2bfe93340012ca49e5531418d8a984a55eea5536` |
 | `crates/seacad-dxf-core/src/point_edit.rs` | 1084 | `bcef8c022f2c17e5bf672a06692a9c28787ef7e56fbc24194c0ab44a33c46e51` |
-| `crates/seacad-dxf-core/tests/entity_insert_session_tests.rs` | 1494 | `2d9ad8adc03b60198ed61778008f875e616b4e0db375132478f6d40c414fafb1` |
+| `crates/seacad-dxf-core/tests/entity_insert_session_tests.rs` | 1603 | `c092603c8bebff94939a2a548e71061427ac10173606fe3eb8d8e9689c74a7e6` |
 | `crates/seacad-dxf-core/tests/point_edit_session_tests.rs` | 3333 | `07fd1a4af8727054a0defe0c07d19014a69fdad059a51159a3e2a9de6a166d1f` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1297 | `c7b73eeafe964c4d4bb5ae6505f14319e779cf29d5547b6852c8850ed6917845` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2724 | `761c9f8fef18cd44b1258024f34594da152889e7e509d2ef0d6d76a68fa32fbd` |
-| `docs/SUPPORT_MATRIX.md` | 2374 | `10fa5cc39414d2eceefbc670ed8015a93418e288a87218b96d3508282740ddf7` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1305 | `c48307e795759586976cbff0f5963afaa98825dd324d950fd4810d66bebda165` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2731 | `c016df74dbc46f5e51df784ce434021ca081a59ecb013c7aab49907866e1205e` |
+| `docs/SUPPORT_MATRIX.md` | 2382 | `49691bd3917e8dcffb139ce5ef41343ce6150bddbc8a2bef8874fbeb7fe692e8` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -358,11 +361,11 @@ The batch is `PASS` only if all of these are true:
    defined immediate stop condition occurs.
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
-3. All eight recent tags are annotated and peel to their expected commits.
-4. Every focused test target passes, including exactly 14 entity insert session
+3. All nine recent tags are annotated and peel to their expected commits.
+4. Every focused test target passes, including exactly 16 entity insert session
     tests and exactly 43 POINT edit tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 963 workspace tests.
+6. All full repository gates pass, including exactly 965 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -380,7 +383,7 @@ Return only one YAML-shaped report block using this schema. Do not add prose
 before or after it. Do not omit commands, including commands with empty output.
 
 ```yaml
-batch_id: seacad-point-object-reference-clone-verification-2026-08-03
+batch_id: seacad-point-color-book-clone-verification-2026-08-03
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
 started_at:
@@ -392,7 +395,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3ch-point-object-reference-clone
+  tag: m14.3ci-point-color-book-clone
   tag_type:
   peeled_commit:
   ancestor_exit_code:
