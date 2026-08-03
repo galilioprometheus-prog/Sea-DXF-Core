@@ -3,11 +3,11 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBasicGeometryComponentRole,
     DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble,
-    DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditDisposition, DxfEntityEditIssue,
-    DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
-    DxfEntityPatch, DxfEntityTopic, DxfError, DxfMemorySource, DxfPointDraft, DxfPointEditIssue,
-    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityPatch,
+    DxfEntityTopic, DxfError, DxfMemorySource, DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const UPDATED: [DxfDouble; 3] = [
@@ -191,8 +191,7 @@ fn point_location_rejects_duplicate_missing_wrong_family_and_nonfinite()
 }
 
 #[test]
-fn point_location_composes_with_common_update_and_blocks_insert_mixing()
--> Result<(), Box<dyn Error>> {
+fn point_location_composes_with_common_update() -> Result<(), Box<dyn Error>> {
     let bytes = fixture(
         DxfRawDocumentFormat::Ascii,
         DxfAcadVersion::Ac1032,
@@ -225,20 +224,6 @@ fn point_location_composes_with_common_update_and_blocks_insert_mixing()
     };
     assert_eq!(common.queued_edit_count(), 2);
 
-    let placement = view.entity_placement_directory(&token())?.assessments()[0]
-        .placement()
-        .ok_or_else(|| io::Error::other("placement"))?;
-    assert!(matches!(
-        session.insert(
-            placement,
-            DxfEntityDraft::point(DxfPointDraft::new(b"0", UPDATED))
-        )?,
-        seacad_dxf_core::DxfEntityInsertOutcome::Unavailable(
-            seacad_dxf_core::DxfEntityInsertIssue::UpdatePending {
-                queued_update_count: 2
-            }
-        )
-    ));
     let plan = session.finish_verifiable()?;
     assert_eq!(plan.edit_count(), 2);
     assert_eq!(plan.transaction().patches().len(), 4);

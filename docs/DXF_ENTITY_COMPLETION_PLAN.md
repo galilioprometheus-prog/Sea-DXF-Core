@@ -1165,6 +1165,18 @@ strict reparse, semantic verification, and byte-identical inverse restoration;
 focused coverage also retains CRLF framing. Mixed entity insert/update
 sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3bz admits POINT insertion and existing-entity updates in one unified edit
+session regardless of call order. A shared logical-operation limit covers both
+queues. Finalization composes the handle reservation and successor `$HANDSEED`,
+all new POINT records, generated common-field patches, and typed POINT-family
+patches into one immutable source-bound transaction. Same-offset insertion
+fragments retain existing-record bytes before new records. Existing-record
+postconditions add the exact count of earlier inserted records to their raw
+record ordinal, including insertions into a preceding ENTITIES section. Every
+supported ASCII/Binary dialect passes both API orders, earlier-section ordinal
+shifts, strict semantic verification, and byte-identical inverse restoration.
+Clone/delete and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

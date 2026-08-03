@@ -418,22 +418,12 @@ impl<'document, 'evidence, 'cancellation>
     /// Adds one complete typed entity insertion without changing the source.
     ///
     /// Every admitted draft is copied into session-owned encoded evidence.
-    /// Update/insert mixing remains fail-closed until ordinal-independent mixed
-    /// verification lands.
     pub fn insert(
         &mut self,
         placement: DxfEntityPlacement,
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() || !self.pending_point_edits.is_empty() {
-            return Ok(DxfEntityInsertOutcome::Unavailable(
-                DxfEntityInsertIssue::UpdatePending {
-                    queued_update_count: u32::try_from(self.queued_update_len()?)
-                        .map_err(|_| invalid_internal_data())?,
-                },
-            ));
-        }
         let Some(owner) = draft.owner() else {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::OwnerRequired,
@@ -513,6 +503,11 @@ impl<'document, 'evidence, 'cancellation>
             }
         };
         let (bytes, expectation) = encoded.into_parts();
+        let combined_count = self
+            .queued_len()?
+            .checked_add(1)
+            .ok_or_else(invalid_internal_data)?;
+        enforce_edit_limit(self.profile, combined_count)?;
         self.pending_inserts
             .try_reserve(1)
             .map_err(|_| out_of_memory())?;
@@ -539,11 +534,6 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending_inserts.is_empty() {
-            return Ok(DxfEntityEditOutcome::Unavailable(
-                DxfEntityEditIssue::InsertPending,
-            ));
-        }
         match patch {
             DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
             DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
@@ -641,7 +631,7 @@ impl<'document, 'evidence, 'cancellation>
                             key,
                             kind,
                             disposition: DxfEntityEditDisposition::AlreadyImplicit,
-                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                            queued_edit_count: u32::try_from(self.queued_len()?)
                                 .map_err(|_| invalid_internal_data())?,
                         }));
                     }
@@ -706,7 +696,7 @@ impl<'document, 'evidence, 'cancellation>
                             key,
                             kind,
                             disposition: DxfEntityEditDisposition::AlreadyImplicit,
-                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                            queued_edit_count: u32::try_from(self.queued_len()?)
                                 .map_err(|_| invalid_internal_data())?,
                         }));
                     }
@@ -774,7 +764,7 @@ impl<'document, 'evidence, 'cancellation>
                             key,
                             kind,
                             disposition: DxfEntityEditDisposition::AlreadyImplicit,
-                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                            queued_edit_count: u32::try_from(self.queued_len()?)
                                 .map_err(|_| invalid_internal_data())?,
                         }));
                     }
@@ -792,7 +782,7 @@ impl<'document, 'evidence, 'cancellation>
             return Err(invalid_internal_data());
         }
         let next_count = self
-            .queued_update_len()?
+            .queued_len()?
             .checked_add(1)
             .ok_or_else(invalid_internal_data)?;
         enforce_edit_limit(self.profile, next_count)?;
@@ -951,7 +941,7 @@ impl<'document, 'evidence, 'cancellation>
             key,
             DxfEntityField::COLOR_NAME,
             DxfEntityEditDisposition::Composite,
-            self.queued_update_len()?,
+            self.queued_len()?,
         )
     }
 
@@ -1001,7 +991,7 @@ impl<'document, 'evidence, 'cancellation>
             key,
             DxfEntityField::COLOR_NAME,
             disposition,
-            self.queued_update_len()?,
+            self.queued_len()?,
         )
     }
 
@@ -1105,19 +1095,12 @@ impl<'document, 'evidence, 'cancellation>
 
     /// Freezes every accepted update into one source-order transaction plan.
     pub fn finish(self) -> Result<DxfTransactionPlan, DxfError> {
-        if !self.pending_inserts.is_empty() {
-            return self
-                .finish_insert_batch()
-                .map(DxfEntityEditPlan::into_transaction);
-        }
-        self.finish_parts().map(|(transaction, _, _)| transaction)
+        self.finish_verifiable()
+            .map(DxfEntityEditPlan::into_transaction)
     }
 
     /// Freezes the transaction together with its semantic postconditions.
-    pub fn finish_verifiable(self) -> Result<DxfEntityEditPlan, DxfError> {
-        if !self.pending_inserts.is_empty() {
-            return self.finish_insert_batch();
-        }
+    pub fn finish_verifiable(mut self) -> Result<DxfEntityEditPlan, DxfError> {
         let (transaction, pending, point_edits) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
@@ -1125,63 +1108,66 @@ impl<'document, 'evidence, 'cancellation>
                 pending
                     .len()
                     .checked_add(point_edits.len())
+                    .and_then(|count| count.checked_add(self.pending_inserts.len()))
                     .ok_or_else(invalid_internal_data)?,
             )
             .map_err(|_| out_of_memory())?;
         for edit in pending {
             expectations.push(DxfEntityEditExpectation::field(
-                edit.key.raw_record_ordinal(),
+                self.post_insert_raw_record_ordinal(edit.key)?,
                 edit.field,
                 edit.expected,
             ));
         }
         for edit in point_edits {
+            let raw_record_ordinal = self.post_insert_raw_record_ordinal(edit.key)?;
             expectations.push(match edit.expectation {
                 PendingPointExpectation::Location(location) => {
-                    DxfEntityEditExpectation::point_location(
-                        edit.key.raw_record_ordinal(),
-                        location,
-                    )
+                    DxfEntityEditExpectation::point_location(raw_record_ordinal, location)
                 }
                 PendingPointExpectation::Thickness(thickness) => {
-                    DxfEntityEditExpectation::point_thickness(
-                        edit.key.raw_record_ordinal(),
-                        thickness,
-                    )
+                    DxfEntityEditExpectation::point_thickness(raw_record_ordinal, thickness)
                 }
                 PendingPointExpectation::ThicknessReset => {
-                    DxfEntityEditExpectation::point_thickness_reset(edit.key.raw_record_ordinal())
+                    DxfEntityEditExpectation::point_thickness_reset(raw_record_ordinal)
                 }
                 PendingPointExpectation::Extrusion(extrusion) => {
-                    DxfEntityEditExpectation::point_extrusion(
-                        edit.key.raw_record_ordinal(),
-                        extrusion,
-                    )
+                    DxfEntityEditExpectation::point_extrusion(raw_record_ordinal, extrusion)
                 }
                 PendingPointExpectation::ExtrusionReset => {
-                    DxfEntityEditExpectation::point_extrusion_reset(edit.key.raw_record_ordinal())
+                    DxfEntityEditExpectation::point_extrusion_reset(raw_record_ordinal)
                 }
                 PendingPointExpectation::UcsXAxisAngle(angle) => {
-                    DxfEntityEditExpectation::point_ucs_x_axis_angle(
-                        edit.key.raw_record_ordinal(),
-                        angle,
-                    )
+                    DxfEntityEditExpectation::point_ucs_x_axis_angle(raw_record_ordinal, angle)
                 }
                 PendingPointExpectation::UcsXAxisAngleReset => {
-                    DxfEntityEditExpectation::point_ucs_x_axis_angle_reset(
-                        edit.key.raw_record_ordinal(),
-                    )
+                    DxfEntityEditExpectation::point_ucs_x_axis_angle_reset(raw_record_ordinal)
                 }
             });
         }
+        if self.pending_inserts.is_empty() {
+            return Ok(DxfEntityEditPlan::new(transaction, expectations));
+        }
+        let (insertion, insert_expectations) = self.finish_insert_parts()?;
+        expectations.extend(insert_expectations);
+        let transaction = if transaction.patches().is_empty() {
+            insertion
+        } else {
+            compose_session_transactions(
+                self.document,
+                &transaction,
+                &insertion,
+                self.profile,
+                self.cancellation,
+            )?
+        };
         Ok(DxfEntityEditPlan::new(transaction, expectations))
     }
 
-    fn finish_insert_batch(mut self) -> Result<DxfEntityEditPlan, DxfError> {
+    fn finish_insert_parts(
+        &mut self,
+    ) -> Result<(DxfTransactionPlan, Vec<DxfEntityEditExpectation>), DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() || !self.pending_point_edits.is_empty() {
-            return Err(invalid_internal_data());
-        }
         let handle_count =
             u64::try_from(self.pending_inserts.len()).map_err(|_| invalid_internal_data())?;
         let policy = self
@@ -1250,7 +1236,7 @@ impl<'document, 'evidence, 'cancellation>
         expectations
             .try_reserve_exact(self.pending_inserts.len())
             .map_err(|_| out_of_memory())?;
-        for insert in self.pending_inserts {
+        for insert in self.pending_inserts.drain(..) {
             let owner = (insert.version >= DxfAcadVersion::Ac1012).then_some(insert.owner);
             expectations.push(DxfEntityEditExpectation::point_insert(
                 insert.handle,
@@ -1259,11 +1245,11 @@ impl<'document, 'evidence, 'cancellation>
                 insert.expectation,
             ));
         }
-        Ok(DxfEntityEditPlan::new(transaction, expectations))
+        Ok((transaction, expectations))
     }
 
     fn finish_parts(
-        mut self,
+        &mut self,
     ) -> Result<(DxfTransactionPlan, Vec<PendingEdit>, Vec<PendingPointEdit>), DxfError> {
         ensure_not_cancelled(self.cancellation)?;
         self.pending.sort_unstable_by_key(|edit| {
@@ -1310,7 +1296,34 @@ impl<'document, 'evidence, 'cancellation>
             self.document
                 .compose_transaction_plans(&plans, self.profile, self.cancellation)?
         };
-        Ok((transaction, self.pending, self.pending_point_edits))
+        Ok((
+            transaction,
+            std::mem::take(&mut self.pending),
+            std::mem::take(&mut self.pending_point_edits),
+        ))
+    }
+
+    fn post_insert_raw_record_ordinal(&self, key: DxfEntityKey) -> Result<u64, DxfError> {
+        ensure_source(self.document.source_id(), key.source_id())?;
+        let entity = self
+            .evidence
+            .entity_directory()
+            .entity_for_raw_ordinal(key.raw_record_ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let marker_start = entity.marker().full_span().start();
+        let shift = self
+            .pending_inserts
+            .iter()
+            .try_fold(0_u64, |count, insert| {
+                if insert.placement.insertion_span().start() <= marker_start {
+                    count.checked_add(1).ok_or_else(invalid_internal_data)
+                } else {
+                    Ok(count)
+                }
+            })?;
+        key.raw_record_ordinal()
+            .checked_add(shift)
+            .ok_or_else(invalid_internal_data)
     }
 
     fn set_explicit(
@@ -1377,7 +1390,7 @@ impl<'document, 'evidence, 'cancellation>
                 key,
                 field,
                 DxfEntityEditDisposition::AlreadyImplicit,
-                self.queued_update_len()?,
+                self.queued_len()?,
             ),
             DxfEntityFieldResetOutcome::Planned(plan) => self.queue_transaction(
                 key,
@@ -1408,7 +1421,7 @@ impl<'document, 'evidence, 'cancellation>
             .replacement_bytes_for_patch_ordinal(patch.ordinal())
             .ok_or_else(invalid_internal_data)?;
         let next_count = self
-            .queued_update_len()?
+            .queued_len()?
             .checked_add(1)
             .ok_or_else(invalid_internal_data)?;
         enforce_edit_limit(self.profile, next_count)?;
@@ -1428,13 +1441,19 @@ impl<'document, 'evidence, 'cancellation>
             replacement: owned.into_boxed_slice(),
             expected,
         });
-        applied(key, field, disposition, self.queued_update_len()?)
+        applied(key, field, disposition, self.queued_len()?)
     }
 
     fn queued_update_len(&self) -> Result<usize, DxfError> {
         self.pending
             .len()
             .checked_add(self.pending_point_edits.len())
+            .ok_or_else(invalid_internal_data)
+    }
+
+    fn queued_len(&self) -> Result<usize, DxfError> {
+        self.queued_update_len()?
+            .checked_add(self.pending_inserts.len())
             .ok_or_else(invalid_internal_data)
     }
 }
@@ -1567,6 +1586,72 @@ fn enforce_edit_limit(profile: DxfResourceProfile, observed: usize) -> Result<()
     } else {
         Ok(())
     }
+}
+
+fn compose_session_transactions(
+    document: DxfRawDocumentView<'_>,
+    updates: &DxfTransactionPlan,
+    inserts: &DxfTransactionPlan,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfTransactionPlan, DxfError> {
+    updates.validate_source_precondition(document)?;
+    inserts.validate_source_precondition(document)?;
+    let patch_count = updates
+        .patches()
+        .len()
+        .checked_add(inserts.patches().len())
+        .ok_or_else(invalid_internal_data)?;
+    let mut patches = Vec::new();
+    patches
+        .try_reserve_exact(patch_count)
+        .map_err(|_| out_of_memory())?;
+    for (order, transaction) in [(0_u8, updates), (1_u8, inserts)] {
+        for patch in transaction.patches().iter().copied() {
+            ensure_not_cancelled(cancellation)?;
+            let replacement = transaction
+                .replacement_bytes_for_patch_ordinal(patch.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            patches.push((patch.source_span(), order, replacement));
+        }
+    }
+    patches.sort_unstable_by_key(|(span, order, _)| (span.start(), span.end(), *order));
+
+    let mut builder = document.transaction_plan_builder(profile)?;
+    let mut cursor = 0_usize;
+    while cursor < patches.len() {
+        ensure_not_cancelled(cancellation)?;
+        let (span, _, replacement) = patches
+            .get(cursor)
+            .copied()
+            .ok_or_else(invalid_internal_data)?;
+        if !span.is_empty() {
+            builder.replace_raw_span(span, replacement, cancellation)?;
+            cursor += 1;
+            continue;
+        }
+        let mut end = cursor + 1;
+        while patches
+            .get(end)
+            .is_some_and(|(candidate, _, _)| *candidate == span)
+        {
+            end += 1;
+        }
+        if end == cursor + 1 {
+            builder.replace_raw_span(span, replacement, cancellation)?;
+        } else {
+            let mut fragments = Vec::new();
+            fragments
+                .try_reserve_exact(end - cursor)
+                .map_err(|_| out_of_memory())?;
+            for (_, _, fragment) in &patches[cursor..end] {
+                fragments.push(*fragment);
+            }
+            builder.replace_raw_span_fragments(span, &fragments, cancellation)?;
+        }
+        cursor = end;
+    }
+    builder.finish(cancellation)
 }
 
 fn enforce_exact_text_limit(

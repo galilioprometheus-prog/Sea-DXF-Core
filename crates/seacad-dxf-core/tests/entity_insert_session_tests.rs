@@ -2,12 +2,13 @@ use std::{error::Error, io};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditIssue,
+    DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityDraft,
     DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField, DxfEntityInsertIssue,
     DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch,
     DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
-    DxfMemorySource, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfRawDocumentFormat, DxfRawDocumentView,
+    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
+    NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -95,6 +96,160 @@ fn session_inserts_and_verifies_point_across_every_dialect() -> Result<(), Box<d
 }
 
 #[test]
+fn session_mixes_point_updates_and_inserts_across_every_dialect() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for insert_first in [false, true] {
+                let bytes = fixture_with_existing_point(format, version)?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let placement = only_placement(view)?;
+                let key = existing_point_key(&evidence)?;
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                if insert_first {
+                    assert!(matches!(
+                        session.insert(
+                            placement,
+                            point_draft(version).with_owner(handle(0x10))
+                        )?,
+                        DxfEntityInsertOutcome::Applied(receipt)
+                            if receipt.handle() == handle(0x40)
+                    ));
+                }
+                assert!(matches!(
+                    session.update(
+                        key,
+                        DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(
+                            UCS_X_AXIS_ANGLE
+                        ))
+                    )?,
+                    DxfEntityEditOutcome::PointApplied(_)
+                ));
+                assert!(matches!(
+                    session.update(
+                        key,
+                        DxfEntityPatch::CommonField(DxfEntityCommonFieldPatch::SetExplicit {
+                            field: DxfEntityField::VISIBILITY,
+                            value: DxfEntityEditValue::Int16(1),
+                        })
+                    )?,
+                    DxfEntityEditOutcome::Applied(_)
+                ));
+                if !insert_first {
+                    assert!(matches!(
+                        session.insert(
+                            placement,
+                            point_draft(version).with_owner(handle(0x10))
+                        )?,
+                        DxfEntityInsertOutcome::Applied(receipt)
+                            if receipt.handle() == handle(0x40)
+                    ));
+                }
+                assert_eq!(session.queued_edit_count(), 3);
+
+                let plan = session.finish_verifiable()?;
+                assert_eq!(plan.edit_count(), 3);
+                assert_eq!(plan.transaction().patches().len(), 4);
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let output_document = open_document(&output_source, format)?;
+                let post = output_document.view();
+                let point = post
+                    .basic_geometry_semantic_directory(&token())?
+                    .point_for_raw_record(key.raw_record_ordinal())?
+                    .ok_or_else(|| io::Error::other("mixed updated POINT"))?;
+                assert_eq!(point.ucs_x_axis_angle_value(), Some(UCS_X_AXIS_ANGLE));
+                assert_eq!(
+                    point.ucs_x_axis_angle().state(),
+                    DxfSemanticValueState::Explicit
+                );
+                assert!(matches!(
+                    post.handle_identity_directory(&token())?
+                        .lookup(handle(0x40)),
+                    DxfHandleIdentityLookup::Unique(_)
+                ));
+                let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                    plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+                else {
+                    return Err(io::Error::other("verified mixed POINT session").into());
+                };
+                assert_eq!(journal.receipt().edit_count(), 3);
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn mixed_insert_before_update_target_adjusts_raw_record_ordinal_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_earlier_empty_entities(format, version)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let placements = view.entity_placement_directory(&token())?;
+            let [first, second] = placements.assessments() else {
+                return Err(io::Error::other("two entity placements").into());
+            };
+            let first = first
+                .placement()
+                .ok_or_else(|| io::Error::other("first ready placement"))?;
+            if second.placement().is_none() {
+                return Err(io::Error::other("second ready placement").into());
+            }
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.insert(first, point_draft(version).with_owner(handle(0x10)))?,
+                DxfEntityInsertOutcome::Applied(_)
+            ));
+            assert!(matches!(
+                session.update(
+                    key,
+                    DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UCS_X_AXIS_ANGLE))
+                )?,
+                DxfEntityEditOutcome::PointApplied(_)
+            ));
+            assert!(matches!(
+                session.update(
+                    key,
+                    DxfEntityPatch::CommonField(DxfEntityCommonFieldPatch::SetExplicit {
+                        field: DxfEntityField::VISIBILITY,
+                        value: DxfEntityEditValue::Int16(1),
+                    })
+                )?,
+                DxfEntityEditOutcome::Applied(_)
+            ));
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 3);
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified shifted mixed session").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 3);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn session_finish_returns_the_atomic_insert_transaction() -> Result<(), Box<dyn Error>> {
     let bytes = fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -134,7 +289,7 @@ fn session_finish_returns_the_atomic_insert_transaction() -> Result<(), Box<dyn 
 }
 
 #[test]
-fn session_insert_failures_do_not_queue_or_mix_operations() -> Result<(), Box<dyn Error>> {
+fn session_insert_failures_preserve_already_queued_operations() -> Result<(), Box<dyn Error>> {
     let bytes = fixture_with_point_ascii();
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
@@ -199,9 +354,9 @@ fn session_insert_failures_do_not_queue_or_mix_operations() -> Result<(), Box<dy
                 value: DxfEntityEditValue::ExactRawText(b"Layer1")
             })
         )?,
-        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::InsertPending)
+        DxfEntityEditOutcome::Applied(_)
     ));
-    assert_eq!(session.queued_edit_count(), 2);
+    assert_eq!(session.queued_edit_count(), 3);
 
     let cancellation = token();
     let mut update_first =
@@ -221,11 +376,9 @@ fn session_insert_failures_do_not_queue_or_mix_operations() -> Result<(), Box<dy
             placement,
             point_draft(DxfAcadVersion::Ac1032).with_owner(handle(0x10))
         )?,
-        DxfEntityInsertOutcome::Unavailable(DxfEntityInsertIssue::UpdatePending {
-            queued_update_count: 1
-        })
+        DxfEntityInsertOutcome::Applied(_)
     ));
-    assert_eq!(update_first.queued_edit_count(), 1);
+    assert_eq!(update_first.queued_edit_count(), 2);
     Ok(())
 }
 
@@ -391,6 +544,122 @@ fn fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> Result<Vec<
         DxfRawDocumentFormat::Binary => binary_document(version, &groups),
         _ => Err(io::Error::other("format")),
     }
+}
+
+fn fixture_with_existing_point(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture(format, version)?;
+    let endsec = encoded_string_group(format, version, 0, b"ENDSEC")?;
+    let offset = bytes
+        .windows(endsec.len())
+        .rposition(|window| window == endsec)
+        .ok_or_else(|| io::Error::other("ENTITIES ENDSEC"))?;
+    let point = encoded_existing_point(format, version)?;
+    bytes.splice(offset..offset, point);
+    Ok(bytes)
+}
+
+fn fixture_with_earlier_empty_entities(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let mut opening = encoded_string_group(format, version, 0, b"SECTION")?;
+    opening.extend_from_slice(&encoded_string_group(format, version, 2, b"ENTITIES")?);
+    let offset = bytes
+        .windows(opening.len())
+        .rposition(|window| window == opening)
+        .ok_or_else(|| io::Error::other("ENTITIES opening"))?;
+    let mut empty = opening;
+    empty.extend_from_slice(&encoded_string_group(format, version, 0, b"ENDSEC")?);
+    bytes.splice(offset..offset, empty);
+    Ok(bytes)
+}
+
+fn encoded_existing_point(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = encoded_string_group(format, version, 0, b"POINT")?;
+    if version >= DxfAcadVersion::Ac1012 {
+        for (code, value) in [
+            (5_i16, b"20".as_slice()),
+            (330, b"10".as_slice()),
+            (100, b"AcDbEntity".as_slice()),
+            (8, b"Layer0".as_slice()),
+            (100, b"AcDbPoint".as_slice()),
+        ] {
+            bytes.extend_from_slice(&encoded_string_group(format, version, code, value)?);
+        }
+    } else {
+        bytes.extend_from_slice(&encoded_string_group(format, version, 8, b"Layer0")?);
+    }
+    for (code, value) in [(10_i16, 0.0_f64), (20, 0.0), (30, 0.0)] {
+        bytes.extend_from_slice(&encoded_double_group(format, version, code, value)?);
+    }
+    Ok(bytes)
+}
+
+fn encoded_string_group(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    code: i16,
+    value: &[u8],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            bytes.extend_from_slice(code.to_string().as_bytes());
+            bytes.push(b'\n');
+            bytes.extend_from_slice(value);
+            bytes.push(b'\n');
+        }
+        DxfRawDocumentFormat::Binary => {
+            push_binary_code(&mut bytes, version, code)?;
+            bytes.extend_from_slice(value);
+            bytes.push(0);
+        }
+        _ => return Err(io::Error::other("format")),
+    }
+    Ok(bytes)
+}
+
+fn encoded_double_group(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    code: i16,
+    value: f64,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            bytes.extend_from_slice(code.to_string().as_bytes());
+            bytes.push(b'\n');
+            bytes.extend_from_slice(value.to_string().as_bytes());
+            bytes.push(b'\n');
+        }
+        DxfRawDocumentFormat::Binary => {
+            push_binary_code(&mut bytes, version, code)?;
+            bytes.extend_from_slice(&value.to_bits().to_le_bytes());
+        }
+        _ => return Err(io::Error::other("format")),
+    }
+    Ok(bytes)
+}
+
+fn push_binary_code(
+    bytes: &mut Vec<u8>,
+    version: DxfAcadVersion,
+    code: i16,
+) -> Result<(), io::Error> {
+    if version == DxfAcadVersion::Ac1009 {
+        bytes.push(u8::try_from(code).map_err(|_| io::Error::other("AC1009 code"))?);
+    } else {
+        bytes.extend_from_slice(&code.to_le_bytes());
+    }
+    Ok(())
 }
 
 fn fixture_with_handseed_ascii(handseed: u64) -> Vec<u8> {

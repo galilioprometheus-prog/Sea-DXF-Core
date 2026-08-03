@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3by. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bz. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -210,8 +210,8 @@ dialect and format, and composes with independent common-property edits.
 Post-image verification resolves the same raw-record ordinal, checks the exact
 typed location, and releases the existing byte-identical inverse journal.
 Duplicate family patches, incomplete/duplicate tuples, wrong families,
-non-finite values, cancellation, and insert/update mixing fail closed. Other
-POINT fields, clone, and delete remain open.
+non-finite values, and cancellation fail closed. Mixed insert/update support is
+described below. Other POINT fields, clone, and delete remain open.
 POINT thickness can now be set atomically through a distinct
 `DxfPointPatch::SetThickness` request whether group `39` is uniquely explicit
 or absent under its documented zero default. A unique occurrence is replaced;
@@ -245,8 +245,12 @@ and verifies the exact value in the `Explicit` state. The same patch identity
 can reset a unique explicit angle by deleting group `50`; an absent angle is an
 `AlreadyImplicit` no-op that does not reserve the patch identity. Reset
 verification requires the documented zero value in the `Defaulted` state, and
-the inverse restores every original byte. Mixed entity insert/update sessions,
-clone, and delete remain open.
+the inverse restores every original byte. One session can now mix existing-
+entity common/POINT updates with one or more POINT insertions in either API
+order. Handle reservation, `$HANDSEED`, source patches, record insertions, and
+all semantic postconditions commit as one reversible transaction; insertions
+before an updated record adjust its verification ordinal deterministically.
+Clone and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

@@ -2620,5 +2620,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     verification, and byte-identical inverse restoration. Mixed entity
     insert/update sessions, clone/delete, and POINT `Complete` remain open.
 
+    M14.3bz removes the session-level insert/update exclusion. Common-field and
+    POINT-family updates may be queued before or after one or more POINT drafts;
+    one combined edit limit covers every logical operation. Finalization
+    composes handle reservation, `$HANDSEED`, record insertions, common-field
+    patches, and POINT patches into one source-bound transaction. Same-offset
+    insertion fragments keep existing-record updates before new entity records.
+    Each existing-record semantic expectation shifts by the exact number of
+    inserted records placed before its marker, so earlier-section insertion
+    cannot invalidate later-record verification. Both API orders and earlier-
+    section ordinal shifts pass every ASCII/Binary Core dialect with strict
+    verification and byte-identical inverse restoration. Clone/delete and
+    POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
