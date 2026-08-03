@@ -35,8 +35,13 @@ custom, proxy, and non-public payloads remain exact opaque data.
   root, ordered commands, allowed writes, prohibited actions, stop conditions,
   acceptance criteria, expected results, and raw evidence format so the worker
   makes no scope decisions.
-- After Antigravity returns evidence, Codex independently checks the raw report
-  and repository state before relying on it or authorizing more work.
+- Every active batch must specify one batch-specific report file outside the Git
+  repository, under `D:\SeaCad\AntigravityReports`. Antigravity must write the
+  complete note-defined report there for `PASS`, `FAIL`, or `BLOCKED`; chat
+  output alone does not count as delivery.
+- After Antigravity writes the report, the user only needs to tell Codex that it
+  is ready. Codex independently reads the specified file and checks both its raw
+  evidence and repository state before relying on it or authorizing more work.
 - Keep architecture, normative-source interpretation, provenance, dependency
   approval, support claims, commit, push, tag, merge, and release decisions
   with Codex and the user.

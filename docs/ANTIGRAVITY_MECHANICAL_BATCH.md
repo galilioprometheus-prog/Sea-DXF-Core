@@ -2,15 +2,17 @@
 
 Status: `READY`
 
-Batch ID: `seacad-entity-xdata-capacity-verification-2026-08-04`
+Batch ID: `seacad-entity-xdata-coordinate-transform-verification-2026-08-04`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3cr - entity XDATA capacity`
+Target code checkpoint: `M14.3cs - entity XDATA coordinate transform`
 
-Target checkpoint commit: `a33791ef7289514d846722f3acb7074b742e28b8`
+Target checkpoint commit: `fbdb3e2de5170d853dfc9d96f3ed522fca061754`
 
-Target annotated tag: `m14.3cr-entity-xdata-capacity`
+Target annotated tag: `m14.3cs-entity-xdata-coordinate-transform`
+
+Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-coordinate-transform-verification-2026-08-04.yaml`
 
 Prepared: `2026-08-04` (`Asia/Saigon`)
 
@@ -43,6 +45,16 @@ The repository is logically read-only. The only tolerated writes are ordinary
 ephemeral compiler, linker, test, and analysis outputs under the existing
 repository `target` directory, plus tool caches that the already-installed Rust
 and `cargo-deny` commands normally use.
+
+One additional write is required: create the parent directory when absent and
+write exactly one complete report file at:
+
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-coordinate-transform-verification-2026-08-04.yaml`
+
+This path is outside the Git repository. It is the only non-ephemeral output
+file permitted by this batch. If the file already exists for this same batch,
+replace it with the complete result of the current run. Do not create a second
+report, sidecar, temporary project file, or copy inside `D:\SeaCad\SeaCad`.
 
 No project source, test, fixture, documentation, configuration, lockfile, Git
 metadata, or untracked project file may be created, edited, deleted, renamed, or
@@ -79,10 +91,10 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `38cdf2ad74be1fda6ea04ec5e16478fe204ab3c3`.
+  than `fbdb3e2de5170d853dfc9d96f3ed522fca061754`.
 - The target checkpoint is not an ancestor of current `HEAD`.
-- The only path changed after the target checkpoint is not exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
+- The paths changed after the target checkpoint are not exactly `AGENTS.md`
+  and `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
 - A required installed tool is missing and running the command would require an
   installation or update.
 - A repository mutation is detected.
@@ -130,10 +142,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3cr-entity-xdata-capacity
-git rev-list -n 1 m14.3cr-entity-xdata-capacity
-git merge-base --is-ancestor a33791ef7289514d846722f3acb7074b742e28b8 HEAD
-git diff --name-only m14.3cr-entity-xdata-capacity..HEAD
+git cat-file -t m14.3cs-entity-xdata-coordinate-transform
+git rev-list -n 1 m14.3cs-entity-xdata-coordinate-transform
+git merge-base --is-ancestor fbdb3e2de5170d853dfc9d96f3ed522fca061754 HEAD
+git diff --name-only m14.3cs-entity-xdata-coordinate-transform..HEAD
 ```
 
 Expected evidence:
@@ -143,10 +155,10 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `a33791ef7289514d846722f3acb7074b742e28b8`.
+  `fbdb3e2de5170d853dfc9d96f3ed522fca061754`.
 - `git merge-base --is-ancestor` exits `0`.
-- `git diff --name-only` prints exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
+- `git diff --name-only` prints exactly `AGENTS.md` followed by
+  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and no other path.
 
 Record the initial branch/status text and `HEAD` verbatim for postflight
 comparison. The workflow documentation commit is intentionally newer than the
@@ -195,6 +207,8 @@ git cat-file -t m14.3cq-entity-xdata-layer-resolution
 git rev-list -n 1 m14.3cq-entity-xdata-layer-resolution
 git cat-file -t m14.3cr-entity-xdata-capacity
 git rev-list -n 1 m14.3cr-entity-xdata-capacity
+git cat-file -t m14.3cs-entity-xdata-coordinate-transform
+git rev-list -n 1 m14.3cs-entity-xdata-coordinate-transform
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -219,6 +233,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3cp-entity-xdata-point-tuples` | `167bc04a253a60655361208059559c12931c7ef8` |
 | `m14.3cq-entity-xdata-layer-resolution` | `38cdf2ad74be1fda6ea04ec5e16478fe204ab3c3` |
 | `m14.3cr-entity-xdata-capacity` | `a33791ef7289514d846722f3acb7074b742e28b8` |
+| `m14.3cs-entity-xdata-coordinate-transform` | `fbdb3e2de5170d853dfc9d96f3ed522fca061754` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -243,6 +258,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_value_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_point_tuple_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_layer_resolution_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_capacity_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_coordinate_transform_tests
 ```
 
 The `entity_insert_session_tests` target must report exactly
@@ -259,6 +275,8 @@ The `entity_xdata_point_tuple_tests` target must report exactly
 The `entity_xdata_layer_resolution_tests` target must report exactly
 `3 passed; 0 failed`.
 The `entity_xdata_capacity_tests` target must report exactly
+`3 passed; 0 failed`.
+The `entity_xdata_coordinate_transform_tests` target must report exactly
 `3 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
@@ -291,7 +309,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `989 passed; 0 failed` across its
+- The workspace test command reports exactly `992 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -312,15 +330,15 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3c[a-r]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md | Select-Object FullName,Length
+rg -n "M14\.3c[a-s]|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed entity checkpoint is M14.3cr.
-- Audit files exist for M14.3ca through M14.3cr.
+- The current documented completed entity checkpoint is M14.3cs.
+- Audit files exist for M14.3ca through M14.3cs.
 - The documentation does not claim completed support for cross-container clone,
   reference/text common-property clone, graph payload clone, or complete entity
   editing.
@@ -335,10 +353,10 @@ Run the following exact PowerShell block:
 ```powershell
 $batchArtifacts = @(
   'README.md',
-  'crates/seacad-dxf-core/src/entity_xdata_capacity.rs',
-  'crates/seacad-dxf-core/src/entity_xdata_capacity_measure.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_coordinate_transform.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_coordinate_transform_math.rs',
   'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_capacity_tests.rs',
+  'crates/seacad-dxf-core/tests/entity_xdata_coordinate_transform_tests.rs',
   'docs/DXF_ENTITY_COMPLETION_PLAN.md',
   'docs/IMPLEMENTATION_PLAN.md',
   'docs/SUPPORT_MATRIX.md'
@@ -358,14 +376,14 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 448 | `58b2ba3846a3c659e22900dabf5ce521d14ff44b836239911f838bd88dfb2841` |
-| `crates/seacad-dxf-core/src/entity_xdata_capacity.rs` | 374 | `d4248b20a231e9116dc52f41337b94b497068b098f4f6fb88cd037218d741569` |
-| `crates/seacad-dxf-core/src/entity_xdata_capacity_measure.rs` | 380 | `47994bdd2c79c2810aeac2241c9d28b967196f6d91869cc6009e016a30671a14` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1107 | `fb1307b678d42a7a51fd727b72c63d0aedf692aca56e4977bfe3da1448638558` |
-| `crates/seacad-dxf-core/tests/entity_xdata_capacity_tests.rs` | 442 | `7dd9adcfe57885d2d8e33d6cd96926140ee389c66218da308c16c64c821ad197` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1418 | `6e072b6adbaaedaad54ca4373e58ec45aa9814305da49f0ac5f20456b499c680` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2834 | `41d047361768b07303194c9f492edea18f22ee1d63dca7871a4f2aced31a1e88` |
-| `docs/SUPPORT_MATRIX.md` | 2478 | `d5ec2d22b12168f2a6253c33deafdc99c79fe55f953bd1e2bb366a87b9c895cb` |
+| `README.md` | 457 | `c315682a3937d42639a8d10bf7e33357376982e7f3d33fc741e3e74498408895` |
+| `crates/seacad-dxf-core/src/entity_xdata_coordinate_transform.rs` | 261 | `d0f9fbb93edb9768f6053b5a6aa0edfd81ba24294b214a30e1d2df6a4dcec192` |
+| `crates/seacad-dxf-core/src/entity_xdata_coordinate_transform_math.rs` | 335 | `a833296f2ce98bdfdf3e8167142a7b93f865ae44549dcb4fc11eeb32962f98e9` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1118 | `313ac2c4c973424aaa17a24fe30aa8906f59fb5f5cef63c6c9f21a0df847ab8c` |
+| `crates/seacad-dxf-core/tests/entity_xdata_coordinate_transform_tests.rs` | 357 | `3ac9f6e138629c6e0d2fbd63277844439dd274e061b4b396564723f4c40f2e1e` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1433 | `6f53dc0f5046178928be563de1139a951082805b123ab15db082d91242cadf0b` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2850 | `c55f4ce87b11cbe5fab218b94da68d0f4e1b11f2e0f8c860cf0b5e610da7b4f7` |
+| `docs/SUPPORT_MATRIX.md` | 2491 | `6f1c96876d8589c63a3e9fa358799cef4de9e85a30cf41bc8a2d873e5871743d` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -401,15 +419,16 @@ The batch is `PASS` only if all of these are true:
    defined immediate stop condition occurs.
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
-3. All eighteen recent tags are annotated and peel to their expected commits.
+3. All nineteen recent tags are annotated and peel to their expected commits.
 4. Every focused test target passes, including exactly 18 entity insert session
     tests, exactly 44 POINT edit tests, exactly 3 entity XDATA tests, and
     exactly 3 entity XDATA APPID-resolution tests, and exactly 3 entity XDATA
     structure tests, exactly 3 entity XDATA typed-value tests, and exactly 3
     entity XDATA point-tuple tests, exactly 3 entity XDATA layer-resolution
-    tests, and exactly 3 entity XDATA capacity tests.
+    tests, exactly 3 entity XDATA capacity tests, and exactly 3 entity XDATA
+    coordinate-transform tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 989 workspace tests.
+6. All full repository gates pass, including exactly 992 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -417,19 +436,29 @@ The batch is `PASS` only if all of these are true:
     untracked project mutation.
 11. There are no undeclared deviations, retries, installations, updates,
     credential prompts, or prohibited actions.
+12. The complete report is written as one UTF-8 file at the exact required
+    report path outside the repository, and no other report file is created.
 
 Any unmet criterion makes the batch `FAIL`, unless an immediate stop condition
 makes it `BLOCKED`.
 
 ## 17. Required report format
 
-Return only one YAML-shaped report block using this schema. Do not add prose
-before or after it. Do not omit commands, including commands with empty output.
+Write one complete UTF-8 YAML-shaped report using the schema below to this exact
+path, even when the batch ends as `FAIL` or `BLOCKED`:
+
+`D:\SeaCad\AntigravityReports\seacad-entity-xdata-coordinate-transform-verification-2026-08-04.yaml`
+
+Do not omit commands, including commands with empty output. The report file must
+contain no prose before or after the YAML-shaped report. After the file is fully
+written and closed, print only its absolute path and final status to the
+Antigravity chat. Chat output without the report file is not delivery.
 
 ```yaml
-batch_id: seacad-entity-xdata-capacity-verification-2026-08-04
+batch_id: seacad-entity-xdata-coordinate-transform-verification-2026-08-04
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
+report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-coordinate-transform-verification-2026-08-04.yaml
 started_at:
 finished_at:
 head_before:
@@ -439,7 +468,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3cr-entity-xdata-capacity
+  tag: m14.3cs-entity-xdata-coordinate-transform
   tag_type:
   peeled_commit:
   ancestor_exit_code:
@@ -472,6 +501,7 @@ entity_xdata_value_test_count:
 entity_xdata_point_tuple_test_count:
 entity_xdata_layer_resolution_test_count:
 entity_xdata_capacity_test_count:
+entity_xdata_coordinate_transform_test_count:
 workspace_test_total:
 documentation_checks:
   current_checkpoint:
