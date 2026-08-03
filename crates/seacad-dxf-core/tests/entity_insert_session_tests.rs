@@ -764,6 +764,47 @@ fn session_clone_preserves_reviewed_scalar_common_fields_across_every_dialect()
 }
 
 #[test]
+fn session_clone_preserves_valid_linetype_across_every_dialect() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point_linetype(format, version)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+                DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+            ));
+            let plan = session.finish_verifiable()?;
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("linetype clone identity").into());
+            };
+            assert_exact_text_field(
+                post,
+                clone.record().ordinal(),
+                DxfEntityField::LINETYPE,
+                b"DASHED",
+            )?;
+            assert!(matches!(
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn session_clone_preserves_every_explicit_point_payload_field() -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
     let mut bytes = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
@@ -878,6 +919,12 @@ fn fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> Result<Vec<
         (5, "11"),
         (2, "Layer0"),
         (0, "ENDTAB"),
+        (0, "TABLE"),
+        (2, "LTYPE"),
+        (0, "LTYPE"),
+        (5, "12"),
+        (2, "DASHED"),
+        (0, "ENDTAB"),
         (0, "ENDSEC"),
     ];
     if version >= DxfAcadVersion::Ac1015 {
@@ -941,6 +988,27 @@ fn fixture_with_existing_point_common_scalars(
         common.extend_from_slice(&encoded_i16_group(format, version, 284, 3)?);
     }
     bytes.splice(offset..offset, common);
+    Ok(bytes)
+}
+
+fn fixture_with_existing_point_linetype(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let marker = if version >= DxfAcadVersion::Ac1012 {
+        encoded_string_group(format, version, 100, b"AcDbPoint")?
+    } else {
+        encoded_double_group(format, version, 10, 0.0)?
+    };
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT common-field boundary"))?;
+    bytes.splice(
+        offset..offset,
+        encoded_string_group(format, version, 6, b"DASHED")?,
+    );
     Ok(bytes)
 }
 
@@ -1098,6 +1166,34 @@ fn assert_explicit_scalar(
     };
     assert_eq!(value.state(), DxfSemanticValueState::Explicit);
     assert_eq!(value.value(), Some(&expected));
+    Ok(())
+}
+
+fn assert_exact_text_field(
+    view: DxfRawDocumentView<'_>,
+    raw_record_ordinal: u64,
+    field: DxfEntityField,
+    expected: &[u8],
+) -> Result<(), Box<dyn Error>> {
+    let semantics = view.entity_field_semantic_directory(&token())?;
+    let entity = semantics
+        .evidence_directory()
+        .entity_directory()
+        .entity_for_raw_ordinal(raw_record_ordinal)
+        .ok_or_else(|| io::Error::other("text-field entity"))?;
+    let entry = semantics
+        .entry_for_field(entity, field)?
+        .ok_or_else(|| io::Error::other("text-field entry"))?;
+    let DxfEntityFieldSemantics::Singleton(value) = entry.semantics() else {
+        return Err(io::Error::other("text-field singleton").into());
+    };
+    let Some(DxfEntityFieldValue::ExactText(text)) = value.value().copied() else {
+        return Err(io::Error::other("text-field exact value").into());
+    };
+    assert_eq!(value.state(), DxfSemanticValueState::Explicit);
+    let mut observed = vec![0_u8; expected.len()];
+    view.read_span(text.value_span(), &mut observed)?;
+    assert_eq!(observed, expected);
     Ok(())
 }
 

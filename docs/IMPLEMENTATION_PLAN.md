@@ -2704,5 +2704,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     extension dictionaries, ownership graphs, and POINT `Complete` remain
     open.
 
+    M14.3cg admits exact linetype preservation for canonical POINT clone. A
+    group 6 source value must be uniquely resolvable in the same document's
+    LTYPE table, then flows through the typed draft encoder and common-field
+    semantic verifier. Invalid scope, missing/ambiguous symbols, and unsupported
+    payloads remain fail-closed. Every ASCII/Binary Core dialect passes clone,
+    strict reparse, and exact inverse verification. Material, plot-style,
+    color-book, graph common properties, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -496,6 +496,7 @@ enum PendingDeleteExpectation {
 struct OwnedPointCloneDraft {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
+    linetype: Option<Box<[u8]>>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -520,6 +521,9 @@ impl OwnedPointCloneDraft {
         }
         if let Some(space) = self.space {
             point = point.with_space(space);
+        }
+        if let Some(linetype) = self.linetype.as_deref() {
+            point = point.with_linetype(linetype);
         }
         if let Some(color) = self.indexed_color {
             point = point.with_indexed_color(color);
@@ -2049,6 +2053,7 @@ fn prepare_point_clone_draft(
         if !matches!(
             group_code,
             0 | 5
+                | 6
                 | 8
                 | 10
                 | 20
@@ -2150,6 +2155,18 @@ fn prepare_point_clone_draft(
             || entity.record().section_kind() == crate::DxfRawRecordSectionKind::Blocks,
     )? {
         Ok(layout) => layout,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let linetype = match clone_exact_text_field(
+        document,
+        &common,
+        entity,
+        key,
+        DxfEntityField::LINETYPE,
+        profile,
+        true,
+    )? {
+        Ok(linetype) => linetype,
         Err(issue) => return Ok(Err(issue)),
     };
     let lineweight_entry = common
@@ -2347,6 +2364,7 @@ fn prepare_point_clone_draft(
     Ok(Ok(OwnedPointCloneDraft {
         layer,
         layout,
+        linetype,
         space,
         indexed_color,
         lineweight,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cf can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cg can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1330,6 +1330,14 @@ version-inapplicable values queue nothing. The coverage matrix includes all
 nine Core versions in both physical formats. Linetype/material/color-book/
 plot-style references, proxy graphics, XDATA/application groups, extension
 dictionaries, ownership graphs, display, and POINT `Complete` remain open.
+
+M14.3cg adds exact same-document linetype preservation to canonical POINT
+clone. Explicit group 6 must match one LTYPE table entry byte-for-byte; the
+typed draft emits it in common-field order and strict post-image verification
+requires the same semantic value. Missing, ambiguous, wrong-scope, and unknown
+symbols fail without queueing. The test matrix covers all nine Core versions in
+ASCII and Binary with exact inverse restoration. Material, plot-style,
+color-book, graph common properties, display, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

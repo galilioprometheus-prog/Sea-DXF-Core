@@ -1036,6 +1036,12 @@ fn verify_point_insert(
                 DxfEntityEditValue::Int16(color.raw()),
             )
         }),
+        expectation.point.linetype().map(|linetype| {
+            (
+                DxfEntityField::LINETYPE,
+                DxfEntityEditValue::ExactRawText(linetype),
+            )
+        }),
         expectation.point.lineweight().map(|lineweight| {
             (
                 DxfEntityField::LINEWEIGHT,

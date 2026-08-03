@@ -21,6 +21,7 @@ const ACDB_POINT: &[u8] = b"AcDbPoint";
 pub struct DxfPointDraft<'a> {
     layer: &'a [u8],
     layout: Option<&'a [u8]>,
+    linetype: Option<&'a [u8]>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -41,6 +42,7 @@ impl<'a> DxfPointDraft<'a> {
         Self {
             layer,
             layout: None,
+            linetype: None,
             space: None,
             indexed_color: None,
             lineweight: None,
@@ -74,6 +76,13 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn with_indexed_color(mut self, color: DxfEntityIndexedColor) -> Self {
         self.indexed_color = Some(color);
+        self
+    }
+
+    /// Emits an exact same-document linetype name in group 6.
+    #[must_use]
+    pub const fn with_linetype(mut self, linetype: &'a [u8]) -> Self {
+        self.linetype = Some(linetype);
         self
     }
 
@@ -158,6 +167,11 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn indexed_color(self) -> Option<DxfEntityIndexedColor> {
         self.indexed_color
+    }
+
+    #[must_use]
+    pub const fn linetype(self) -> Option<&'a [u8]> {
+        self.linetype
     }
 
     #[must_use]
@@ -288,6 +302,7 @@ pub enum DxfEntityDraftRecordIssue {
     },
     ZeroExtrusion,
     LayerReference(DxfEntityCommonSymbolEditIssue),
+    SymbolReference(DxfEntityCommonSymbolEditIssue),
     LayoutReference(DxfEntityCommonLayoutEditIssue),
     GroupEncode {
         group_code: i16,
@@ -305,6 +320,7 @@ pub struct DxfEntityDraftRecordPlan {
 pub(crate) struct DxfPointDraftRecordExpectation {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
+    linetype: Option<Box<[u8]>>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -372,6 +388,10 @@ impl DxfPointDraftRecordExpectation {
 
     pub(crate) const fn indexed_color(&self) -> Option<DxfEntityIndexedColor> {
         self.indexed_color
+    }
+
+    pub(crate) fn linetype(&self) -> Option<&[u8]> {
+        self.linetype.as_deref()
     }
 
     pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
@@ -559,6 +579,7 @@ fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpe
     Ok(DxfPointDraftRecordExpectation {
         layer: copy_bytes(draft.layer())?,
         layout: draft.layout().map(copy_bytes).transpose()?,
+        linetype: draft.linetype().map(copy_bytes).transpose()?,
         space: draft.space(),
         indexed_color: draft.indexed_color(),
         lineweight: draft.lineweight(),
@@ -772,6 +793,29 @@ fn encode_point(
         }
         DxfEntityCommonSymbolEditOutcome::NotSymbol { .. } => {
             return Err(invalid_internal_data());
+        }
+    }
+    if let Some(linetype) = draft.linetype() {
+        if let Some(issue) = record.push(
+            6,
+            DxfEntityFieldWireType::ExactText,
+            DxfEntityEditValue::ExactRawText(linetype),
+            cancellation,
+        )? {
+            return Ok(Err(issue));
+        }
+        match document.classify_entity_common_symbol_edit(
+            DxfEntityField::LINETYPE,
+            DxfEntityEditValue::ExactRawText(linetype),
+            cancellation,
+        )? {
+            DxfEntityCommonSymbolEditOutcome::Valid(_) => {}
+            DxfEntityCommonSymbolEditOutcome::Invalid(issue) => {
+                return Ok(Err(DxfEntityDraftRecordIssue::SymbolReference(issue)));
+            }
+            DxfEntityCommonSymbolEditOutcome::NotSymbol { .. } => {
+                return Err(invalid_internal_data());
+            }
         }
     }
     if let Some(color) = draft.indexed_color()

@@ -1251,6 +1251,14 @@ versions pass ASCII/Binary clone and inverse verification. Linetype, material,
 color-book, plot-style, proxy-graphics, XDATA/application groups, extension
 dictionaries, ownership graphs, and POINT `Complete` remain open.
 
+M14.3cg preserves an explicit common linetype name during canonical POINT
+clone. The exact group 6 bytes must resolve to one same-document LTYPE table
+entry, are canonically emitted through the typed POINT draft, and are checked
+again by semantic post-image verification. Missing, ambiguous, invalid-scope,
+or unsupported names queue nothing. All nine supported versions pass both
+ASCII and Binary clone/inverse coverage. Material, plot-style, color-book, and
+graph common properties plus POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
