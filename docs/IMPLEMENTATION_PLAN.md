@@ -2584,5 +2584,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     reset, angle updates, mixed insert/update sessions, clone/delete, and POINT
     `Complete` remain open.
 
+    M14.3bw adds `DxfPointPatch::ResetExtrusion` under the existing extrusion
+    patch identity. Every unique explicit component in any complete or partial
+    tuple becomes one exact deletion patch; a fully absent tuple returns
+    `AlreadyImplicit` without consuming an edit slot or reserving the patch
+    kind. Duplicate components fail typed before any deletion is admitted, and
+    a queued set or reset blocks a second extrusion request. Verification
+    requires the documented `(0,0,1)` value with all three component states
+    `Defaulted`, so an explicit encoding of the same numeric tuple does not
+    satisfy reset. All seven nonempty masks pass all nine ASCII/Binary Core
+    dialect pairs with exact inverse restoration. Angle updates, mixed
+    insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

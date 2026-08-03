@@ -14,9 +14,9 @@ use crate::entity_draft_record::{
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::point_edit::{
-    DxfPointExtrusionSetDisposition, DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition,
-    plan_point_extrusion_edit, plan_point_location_edit, plan_point_thickness_edit,
-    plan_point_thickness_reset,
+    DxfPointExtrusionResetPlan, DxfPointExtrusionSetDisposition, DxfPointThicknessResetPlan,
+    DxfPointThicknessSetDisposition, plan_point_extrusion_edit, plan_point_extrusion_reset,
+    plan_point_location_edit, plan_point_thickness_edit, plan_point_thickness_reset,
 };
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
@@ -337,6 +337,7 @@ enum PendingPointExpectation {
     Thickness(crate::DxfDouble),
     ThicknessReset,
     Extrusion([crate::DxfDouble; 3]),
+    ExtrusionReset,
 }
 
 struct PendingPointEdit {
@@ -679,6 +680,42 @@ impl<'document, 'evidence, 'cancellation>
                     expected_patch_count,
                     disposition,
                 )
+            }
+            DxfPointPatch::ResetExtrusion => {
+                let plan = match plan_point_extrusion_reset(
+                    self.document,
+                    self.evidence,
+                    key,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                match plan {
+                    DxfPointExtrusionResetPlan::AlreadyImplicit => {
+                        return Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
+                            key,
+                            kind,
+                            disposition: DxfEntityEditDisposition::AlreadyImplicit,
+                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                                .map_err(|_| invalid_internal_data())?,
+                        }));
+                    }
+                    DxfPointExtrusionResetPlan::Planned {
+                        transaction,
+                        patch_count,
+                    } => (
+                        transaction,
+                        PendingPointExpectation::ExtrusionReset,
+                        patch_count,
+                        DxfEntityEditDisposition::Reset,
+                    ),
+                }
             }
         };
         transaction.validate_source_precondition(self.document)?;
@@ -1051,6 +1088,9 @@ impl<'document, 'evidence, 'cancellation>
                         edit.key.raw_record_ordinal(),
                         extrusion,
                     )
+                }
+                PendingPointExpectation::ExtrusionReset => {
+                    DxfEntityEditExpectation::point_extrusion_reset(edit.key.raw_record_ordinal())
                 }
             });
         }

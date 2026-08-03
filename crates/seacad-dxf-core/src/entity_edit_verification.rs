@@ -89,12 +89,17 @@ pub(crate) struct DxfPointThicknessEditExpectation {
 
 pub(crate) struct DxfPointExtrusionEditExpectation {
     raw_record_ordinal: u64,
-    extrusion: [DxfDouble; 3],
+    expected: DxfPointExtrusionExpected,
 }
 
 pub(crate) enum DxfPointThicknessExpected {
     Explicit(DxfDouble),
     DefaultedZero,
+}
+
+pub(crate) enum DxfPointExtrusionExpected {
+    Explicit([DxfDouble; 3]),
+    Defaulted,
 }
 
 pub(crate) enum DxfEntityEditExpectation {
@@ -159,7 +164,14 @@ impl DxfEntityEditExpectation {
     ) -> Self {
         Self::PointExtrusion(DxfPointExtrusionEditExpectation {
             raw_record_ordinal,
-            extrusion,
+            expected: DxfPointExtrusionExpected::Explicit(extrusion),
+        })
+    }
+
+    pub(crate) const fn point_extrusion_reset(raw_record_ordinal: u64) -> Self {
+        Self::PointExtrusion(DxfPointExtrusionEditExpectation {
+            raw_record_ordinal,
+            expected: DxfPointExtrusionExpected::Defaulted,
         })
     }
 }
@@ -696,12 +708,23 @@ fn verify_point_extrusion(
             },
         ));
     };
-    if point.extrusion_value() != Some(expectation.extrusion)
-        || !point
-            .extrusion()
-            .iter()
-            .all(|value| value.state() == DxfSemanticValueState::Explicit)
-    {
+    let matches = match expectation.expected {
+        DxfPointExtrusionExpected::Explicit(extrusion) => {
+            point.extrusion_value() == Some(extrusion)
+                && point
+                    .extrusion()
+                    .iter()
+                    .all(|value| value.state() == DxfSemanticValueState::Explicit)
+        }
+        DxfPointExtrusionExpected::Defaulted => {
+            point.extrusion_value() == Some(DEFAULT_EXTRUSION)
+                && point
+                    .extrusion()
+                    .iter()
+                    .all(|value| value.state() == DxfSemanticValueState::Defaulted)
+        }
+    };
+    if !matches {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointExtrusionMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,

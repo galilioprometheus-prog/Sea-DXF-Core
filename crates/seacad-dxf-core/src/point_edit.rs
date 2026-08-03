@@ -21,6 +21,7 @@ pub enum DxfPointPatch {
     SetThickness { thickness: DxfDouble },
     ResetThickness,
     SetExtrusion { extrusion: [DxfDouble; 3] },
+    ResetExtrusion,
 }
 
 impl DxfPointPatch {
@@ -45,11 +46,16 @@ impl DxfPointPatch {
     }
 
     #[must_use]
+    pub const fn reset_extrusion() -> Self {
+        Self::ResetExtrusion
+    }
+
+    #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         match self {
             Self::SetLocation { .. } => DxfPointPatchKind::Location,
             Self::SetThickness { .. } | Self::ResetThickness => DxfPointPatchKind::Thickness,
-            Self::SetExtrusion { .. } => DxfPointPatchKind::Extrusion,
+            Self::SetExtrusion { .. } | Self::ResetExtrusion => DxfPointPatchKind::Extrusion,
         }
     }
 }
@@ -173,6 +179,14 @@ pub(crate) enum DxfPointExtrusionSetDisposition {
     Inserted,
     Replaced,
     Composite,
+}
+
+pub(crate) enum DxfPointExtrusionResetPlan {
+    AlreadyImplicit,
+    Planned {
+        transaction: DxfTransactionPlan,
+        patch_count: usize,
+    },
 }
 
 impl DxfPointLocationEditPlan {
@@ -513,6 +527,70 @@ pub(crate) fn plan_point_extrusion_edit(
         transaction,
         extrusion,
         disposition,
+        patch_count,
+    }))
+}
+
+pub(crate) fn plan_point_extrusion_reset(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointExtrusionResetPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let (entity, _) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let roles = [
+        DxfBasicGeometryComponentRole::ExtrusionX,
+        DxfBasicGeometryComponentRole::ExtrusionY,
+        DxfBasicGeometryComponentRole::ExtrusionZ,
+    ];
+    let mut groups = [None; 3];
+    for (index, role) in roles.into_iter().enumerate() {
+        let card = cards
+            .card_for_role(entity.record().ordinal(), role)
+            .ok_or_else(invalid_internal_data)?;
+        match card.state() {
+            DxfBasicGeometryComponentCardState::Absent => {}
+            DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+                return Ok(Err(DxfPointEditIssue::DuplicateExtrusionComponent {
+                    role,
+                    occurrence_count,
+                }));
+            }
+            DxfBasicGeometryComponentCardState::Unique => {
+                let members = cards
+                    .members_for_card(card.ordinal())
+                    .ok_or_else(invalid_internal_data)?;
+                let [member] = members else {
+                    return Err(invalid_internal_data());
+                };
+                groups[index] = Some(
+                    cards
+                        .component_for_member(*member)
+                        .ok_or_else(invalid_internal_data)?
+                        .group(),
+                );
+            }
+        }
+    }
+    let patch_count = groups.iter().filter(|group| group.is_some()).count();
+    if patch_count == 0 {
+        ensure_not_cancelled(cancellation)?;
+        return Ok(Ok(DxfPointExtrusionResetPlan::AlreadyImplicit));
+    }
+    let mut builder = document.transaction_plan_builder(profile)?;
+    for group in groups.into_iter().flatten() {
+        builder.replace_raw_span(group.full_span(), &[], cancellation)?;
+    }
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointExtrusionResetPlan::Planned {
+        transaction,
         patch_count,
     }))
 }

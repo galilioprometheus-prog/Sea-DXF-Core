@@ -1131,6 +1131,17 @@ post-image semantics, tamper-resistant verification, and byte-identical inverse
 restoration. Extrusion reset, angle updates, mixed entity insert/update
 sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3bw adds reset-to-default behavior for the extrusion patch identity.
+`DxfPointPatch::ResetExtrusion` deletes every unique present group among
+`210/220/230` as one logical edit with one to three physical patches. A fully
+absent tuple returns `AlreadyImplicit`, queues nothing, and leaves a later set
+admissible. Duplicate component evidence rejects the complete request before a
+transaction escapes. Post-image verification requires both the documented
+`(0,0,1)` value and `Defaulted` state on all three components; exact inverse
+restoration recovers the original complete or partial source. All seven
+nonempty masks pass every supported ASCII/Binary dialect. Angle updates, mixed
+entity insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
