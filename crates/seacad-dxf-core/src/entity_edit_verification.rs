@@ -84,7 +84,12 @@ pub(crate) struct DxfPointLocationEditExpectation {
 
 pub(crate) struct DxfPointThicknessEditExpectation {
     raw_record_ordinal: u64,
-    thickness: DxfDouble,
+    expected: DxfPointThicknessExpected,
+}
+
+pub(crate) enum DxfPointThicknessExpected {
+    Explicit(DxfDouble),
+    DefaultedZero,
 }
 
 pub(crate) enum DxfEntityEditExpectation {
@@ -131,7 +136,14 @@ impl DxfEntityEditExpectation {
     pub(crate) const fn point_thickness(raw_record_ordinal: u64, thickness: DxfDouble) -> Self {
         Self::PointThickness(DxfPointThicknessEditExpectation {
             raw_record_ordinal,
-            thickness,
+            expected: DxfPointThicknessExpected::Explicit(thickness),
+        })
+    }
+
+    pub(crate) const fn point_thickness_reset(raw_record_ordinal: u64) -> Self {
+        Self::PointThickness(DxfPointThicknessEditExpectation {
+            raw_record_ordinal,
+            expected: DxfPointThicknessExpected::DefaultedZero,
         })
     }
 }
@@ -629,9 +641,17 @@ fn verify_point_thickness(
             },
         ));
     };
-    if point.thickness_value() != Some(expectation.thickness)
-        || point.thickness().state() != DxfSemanticValueState::Explicit
-    {
+    let matches = match expectation.expected {
+        DxfPointThicknessExpected::Explicit(thickness) => {
+            point.thickness_value() == Some(thickness)
+                && point.thickness().state() == DxfSemanticValueState::Explicit
+        }
+        DxfPointThicknessExpected::DefaultedZero => {
+            point.thickness_value() == Some(DxfDouble::from_f64(0.0))
+                && point.thickness().state() == DxfSemanticValueState::Defaulted
+        }
+    };
+    if !matches {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointThicknessMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,

@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3br. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bs. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -220,8 +220,12 @@ location component while preserving the source ASCII line ending or Binary
 wire. Duplicate thickness and missing/duplicate insertion-anchor location
 evidence fail typed without changing the session. Location and thickness remain
 independent logical edits, and strict verification requires the exact value in
-the `Explicit` state before releasing the byte-identical inverse. Reset to the
-implicit default, extrusion/angle updates, clone, and delete remain open.
+the `Explicit` state before releasing the byte-identical inverse. The same
+logical patch kind can reset a unique explicit group `39` by deleting its exact
+source span; an absent group is an `AlreadyImplicit` no-op. Reset verification
+requires the documented zero value in the `Defaulted` state before releasing
+the byte-identical inverse. Duplicate thickness remains unselectable.
+Extrusion/angle updates, clone, and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

@@ -1081,6 +1081,18 @@ removes the inserted bytes exactly across all nine ASCII/Binary dialect pairs.
 Reset to implicit zero, extrusion/angle updates, mixed insert/update sessions,
 clone/delete, and POINT `Complete` remain open.
 
+M14.3bs adds reset-to-default behavior for the existing POINT thickness patch
+identity. `DxfPointPatch::ResetThickness` deletes one unique explicit group
+`39` and retains a postcondition requiring the documented zero value in the
+`Defaulted` semantic state. An already absent group returns an
+`AlreadyImplicit` receipt without entering the transaction or reserving the
+logical patch kind; duplicate explicit groups still fail typed. A queued set or
+reset rejects another thickness request, and POINT receipts now report whether
+the accepted operation inserted, replaced, reset, or changed nothing. All nine
+ASCII/Binary dialect pairs prove strict reparse, semantic verification, and
+byte-identical inverse restoration. Extrusion/angle updates, mixed
+insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

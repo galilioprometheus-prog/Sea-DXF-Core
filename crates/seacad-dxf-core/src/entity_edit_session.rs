@@ -13,7 +13,10 @@ use crate::entity_draft_record::{
     DxfEntityDraftEncodingContext, DxfPointDraftRecordExpectation, encode_entity_draft_record_parts,
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
-use crate::point_edit::{plan_point_location_edit, plan_point_thickness_edit};
+use crate::point_edit::{
+    DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition, plan_point_location_edit,
+    plan_point_thickness_edit, plan_point_thickness_reset,
+};
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
     DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityCommonColorBookEditIssue,
@@ -202,6 +205,7 @@ pub enum DxfEntityEditOutcome {
 pub struct DxfPointEditReceipt {
     key: DxfEntityKey,
     kind: DxfPointPatchKind,
+    disposition: DxfEntityEditDisposition,
     queued_edit_count: u32,
 }
 
@@ -214,6 +218,11 @@ impl DxfPointEditReceipt {
     #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         self.kind
+    }
+
+    #[must_use]
+    pub const fn disposition(self) -> DxfEntityEditDisposition {
+        self.disposition
     }
 
     #[must_use]
@@ -325,6 +334,7 @@ struct PendingInsert {
 enum PendingPointExpectation {
     Location([crate::DxfDouble; 3]),
     Thickness(crate::DxfDouble),
+    ThicknessReset,
 }
 
 struct PendingPointEdit {
@@ -550,7 +560,7 @@ impl<'document, 'evidence, 'cancellation>
                 DxfEntityEditIssue::Point(DxfPointEditIssue::DuplicatePatch { key, kind }),
             ));
         }
-        let (transaction, expectation, expected_patch_count) = match patch {
+        let (transaction, expectation, expected_patch_count, disposition) = match patch {
             DxfPointPatch::SetLocation { location } => {
                 let plan = match plan_point_location_edit(
                     self.document,
@@ -568,7 +578,12 @@ impl<'document, 'evidence, 'cancellation>
                     }
                 };
                 let (transaction, location) = plan.into_parts();
-                (transaction, PendingPointExpectation::Location(location), 3)
+                (
+                    transaction,
+                    PendingPointExpectation::Location(location),
+                    3,
+                    DxfEntityEditDisposition::Replaced,
+                )
             }
             DxfPointPatch::SetThickness { thickness } => {
                 let plan = match plan_point_thickness_edit(
@@ -586,12 +601,50 @@ impl<'document, 'evidence, 'cancellation>
                         ));
                     }
                 };
-                let (transaction, thickness) = plan.into_parts();
+                let (transaction, thickness, set_disposition) = plan.into_parts();
+                let disposition = match set_disposition {
+                    DxfPointThicknessSetDisposition::Inserted => DxfEntityEditDisposition::Inserted,
+                    DxfPointThicknessSetDisposition::Replaced => DxfEntityEditDisposition::Replaced,
+                };
                 (
                     transaction,
                     PendingPointExpectation::Thickness(thickness),
                     1,
+                    disposition,
                 )
+            }
+            DxfPointPatch::ResetThickness => {
+                let plan = match plan_point_thickness_reset(
+                    self.document,
+                    self.evidence,
+                    key,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                match plan {
+                    DxfPointThicknessResetPlan::AlreadyImplicit => {
+                        return Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
+                            key,
+                            kind,
+                            disposition: DxfEntityEditDisposition::AlreadyImplicit,
+                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                                .map_err(|_| invalid_internal_data())?,
+                        }));
+                    }
+                    DxfPointThicknessResetPlan::Planned(transaction) => (
+                        transaction,
+                        PendingPointExpectation::ThicknessReset,
+                        1,
+                        DxfEntityEditDisposition::Reset,
+                    ),
+                }
             }
         };
         transaction.validate_source_precondition(self.document)?;
@@ -616,6 +669,7 @@ impl<'document, 'evidence, 'cancellation>
         Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
             key,
             kind,
+            disposition,
             queued_edit_count: u32::try_from(next_count).map_err(|_| invalid_internal_data())?,
         }))
     }
@@ -954,6 +1008,9 @@ impl<'document, 'evidence, 'cancellation>
                         edit.key.raw_record_ordinal(),
                         thickness,
                     )
+                }
+                PendingPointExpectation::ThicknessReset => {
+                    DxfEntityEditExpectation::point_thickness_reset(edit.key.raw_record_ordinal())
                 }
             });
         }

@@ -2531,5 +2531,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     updates, mixed insert/update sessions, clone/delete, and POINT `Complete`
     remain open.
 
+    M14.3bs adds `DxfPointPatch::ResetThickness` under the existing thickness
+    patch identity. One unique explicit group `39` becomes one exact deletion
+    patch and verifies as the documented zero value in the `Defaulted` state.
+    Documented absence returns an `AlreadyImplicit` receipt without consuming
+    an edit slot or reserving the patch identity, so a later set remains
+    admissible. Multiple thickness occurrences remain a typed failure, while a
+    queued set or reset blocks a second thickness request. The POINT receipt now
+    distinguishes inserted, replaced, reset, and already-implicit outcomes.
+    Paired ASCII/Binary fixtures cover all nine Core dialects, strict semantic
+    verification, cancellation, tampering, and byte-identical inverse
+    restoration. Extrusion/angle updates, mixed insert/update sessions,
+    clone/delete, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3br can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bs can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1165,6 +1165,18 @@ evidence queues nothing. All nine ASCII/Binary dialect pairs, CRLF insertion,
 strict reparse, and byte-identical removal pass. Reset to implicit zero,
 extrusion/angle updates, mixed insert/update sessions, clone/delete, display,
 and POINT `Complete` remain open.
+
+M14.3bs adds reset-to-default semantics under the same POINT thickness patch
+identity. One unique explicit group `39` is deleted by exact source span and
+must reparse as the documented zero value in the `Defaulted` state before the
+inverse is released. An absent group is reported as `AlreadyImplicit` and does
+not consume a session edit slot; duplicate groups remain unselectable. POINT
+receipts now distinguish insertion, replacement, reset, and no-op default
+retention. Paired fixtures span all nine ASCII/Binary Core dialects and prove
+typed duplicate/conflict rejection, cancellation, semantic tamper rejection,
+strict reparse, and byte-identical inverse restoration. Extrusion/angle
+updates, mixed insert/update sessions, clone/delete, display, and POINT
+`Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
