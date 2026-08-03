@@ -2,15 +2,15 @@
 
 Status: `READY`
 
-Batch ID: `seacad-point-edit-verification-2026-08-03`
+Batch ID: `seacad-mixed-entity-edit-verification-2026-08-03`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3bx — POINT UCS X-axis angle set/update`
+Target code checkpoint: `M14.3bz — mixed entity insert/update session`
 
-Target checkpoint commit: `bab60370cdf2feb1e436fe63aff28cc905a2cb45`
+Target checkpoint commit: `6a865c6397132bc614e3dbd7db287fa299b12815`
 
-Target annotated tag: `m14.3bx-point-ucs-x-axis-angle-set`
+Target annotated tag: `m14.3bz-mixed-entity-insert-update-session`
 
 Prepared: `2026-08-03` (`Asia/Saigon`)
 
@@ -79,10 +79,10 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `bab60370cdf2feb1e436fe63aff28cc905a2cb45`.
+  than `6a865c6397132bc614e3dbd7db287fa299b12815`.
 - The target checkpoint is not an ancestor of current `HEAD`.
-- The only paths changed after the target checkpoint are not exactly
-  `AGENTS.md` and `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
+- The only path changed after the target checkpoint is not exactly
+  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
 - A required installed tool is missing and running the command would require an
   installation or update.
 - A repository mutation is detected.
@@ -130,10 +130,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3bx-point-ucs-x-axis-angle-set
-git rev-list -n 1 m14.3bx-point-ucs-x-axis-angle-set
-git merge-base --is-ancestor bab60370cdf2feb1e436fe63aff28cc905a2cb45 HEAD
-git diff --name-only m14.3bx-point-ucs-x-axis-angle-set..HEAD
+git cat-file -t m14.3bz-mixed-entity-insert-update-session
+git rev-list -n 1 m14.3bz-mixed-entity-insert-update-session
+git merge-base --is-ancestor 6a865c6397132bc614e3dbd7db287fa299b12815 HEAD
+git diff --name-only m14.3bz-mixed-entity-insert-update-session..HEAD
 ```
 
 Expected evidence:
@@ -143,10 +143,10 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `bab60370cdf2feb1e436fe63aff28cc905a2cb45`.
+  `6a865c6397132bc614e3dbd7db287fa299b12815`.
 - `git merge-base --is-ancestor` exits `0`.
-- `git diff --name-only` prints exactly these two paths and no others:
-  `AGENTS.md` and `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
+- `git diff --name-only` prints exactly
+  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
 
 Record the initial branch/status text and `HEAD` verbatim for postflight
 comparison. The workflow documentation commit is intentionally newer than the
@@ -159,27 +159,27 @@ For each tag below, run `git cat-file -t <tag>` and then
 `git rev-list -n 1 <tag>`, preserving the listed order:
 
 ```powershell
-git cat-file -t m14.3bt-point-extrusion-replacement
-git rev-list -n 1 m14.3bt-point-extrusion-replacement
-git cat-file -t m14.3bu-point-extrusion-insertion
-git rev-list -n 1 m14.3bu-point-extrusion-insertion
 git cat-file -t m14.3bv-point-extrusion-partial-completion
 git rev-list -n 1 m14.3bv-point-extrusion-partial-completion
 git cat-file -t m14.3bw-point-extrusion-reset
 git rev-list -n 1 m14.3bw-point-extrusion-reset
 git cat-file -t m14.3bx-point-ucs-x-axis-angle-set
 git rev-list -n 1 m14.3bx-point-ucs-x-axis-angle-set
+git cat-file -t m14.3by-point-ucs-x-axis-angle-reset
+git rev-list -n 1 m14.3by-point-ucs-x-axis-angle-reset
+git cat-file -t m14.3bz-mixed-entity-insert-update-session
+git rev-list -n 1 m14.3bz-mixed-entity-insert-update-session
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
 
 | Tag | Expected commit |
 | --- | --- |
-| `m14.3bt-point-extrusion-replacement` | `876d01df56b05634a4201c4d5c727827f9e192a5` |
-| `m14.3bu-point-extrusion-insertion` | `a3bbcbbf7d0341b7c9acde2ef37489df13a21c71` |
 | `m14.3bv-point-extrusion-partial-completion` | `93dc000432aaf973285912bcc5b8d4f392bea37a` |
 | `m14.3bw-point-extrusion-reset` | `4c83bad585b9598ff626e69c093cc217c7780ada` |
 | `m14.3bx-point-ucs-x-axis-angle-set` | `bab60370cdf2feb1e436fe63aff28cc905a2cb45` |
+| `m14.3by-point-ucs-x-axis-angle-reset` | `e53106994609f74f6d9afe7b8e9893a644225af2` |
+| `m14.3bz-mixed-entity-insert-update-session` | `6a865c6397132bc614e3dbd7db287fa299b12815` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -199,7 +199,9 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_verification_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
 ```
 
-The `point_edit_session_tests` target must report exactly `31 passed; 0 failed`.
+The `entity_insert_session_tests` target must report exactly
+`6 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
+`35 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
 ## 10. Phase 3 — Generated schema and release evidence
@@ -231,7 +233,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `941 passed; 0 failed` across its
+- The workspace test command reports exactly `947 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -252,17 +254,17 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3b[t-x]|POINT extrusion|UCS X-axis angle|SetUcsXAxisAngle|ResetExtrusion" README.md docs
-Get-Item docs/audits/M14_3BT_POINT_EXTRUSION_REPLACEMENT.md,docs/audits/M14_3BU_POINT_EXTRUSION_INSERTION.md,docs/audits/M14_3BV_POINT_EXTRUSION_PARTIAL_COMPLETION.md,docs/audits/M14_3BW_POINT_EXTRUSION_RESET.md,docs/audits/M14_3BX_POINT_UCS_X_AXIS_ANGLE_SET.md | Select-Object FullName,Length
+rg -n "M14\.3b[v-z]|POINT extrusion|UCS X-axis angle|mixed insert/update|ResetUcsXAxisAngle" README.md docs
+Get-Item docs/audits/M14_3BV_POINT_EXTRUSION_PARTIAL_COMPLETION.md,docs/audits/M14_3BW_POINT_EXTRUSION_RESET.md,docs/audits/M14_3BX_POINT_UCS_X_AXIS_ANGLE_SET.md,docs/audits/M14_3BY_POINT_UCS_X_AXIS_ANGLE_RESET.md,docs/audits/M14_3BZ_MIXED_ENTITY_INSERT_UPDATE_SESSION.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed POINT edit checkpoint is M14.3bx.
-- Audit files exist for M14.3bt, M14.3bu, M14.3bv, M14.3bw, and M14.3bx.
-- The documentation does not claim completed support for UCS angle reset,
-  mixed insert/update batches, clone, delete, or complete entity editing.
+- The current documented completed POINT edit checkpoint is M14.3bz.
+- Audit files exist for M14.3bv, M14.3bw, M14.3bx, M14.3by, and M14.3bz.
+- The documentation does not claim completed support for clone, delete, or
+  complete entity editing.
 
 If the evidence is ambiguous, record `FAIL` for this phase and quote the
 ambiguous lines. Do not decide how the text should be changed.
@@ -277,6 +279,7 @@ $batchArtifacts = @(
   'crates/seacad-dxf-core/src/entity_edit_session.rs',
   'crates/seacad-dxf-core/src/entity_edit_verification.rs',
   'crates/seacad-dxf-core/src/point_edit.rs',
+  'crates/seacad-dxf-core/tests/entity_insert_session_tests.rs',
   'crates/seacad-dxf-core/tests/point_edit_session_tests.rs',
   'docs/DXF_ENTITY_COMPLETION_PLAN.md',
   'docs/IMPLEMENTATION_PLAN.md',
@@ -297,14 +300,15 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 334 | `9a40fecf2d71f25c744b705ec8b372150a675de38c5ae95f09eceed9daf054f8` |
-| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 1580 | `9d9de5d3741270e37cf966a1785d999aad0e035ec4e097b5012661c301e73921` |
-| `crates/seacad-dxf-core/src/entity_edit_verification.rs` | 1143 | `107fb722031559f6ebedebe64e084c044957018df266402518ff68416390ab20` |
-| `crates/seacad-dxf-core/src/point_edit.rs` | 1022 | `c9da631c0fdda830206feb1ca233b52b9fff7b24819738e2b8d7320d4e8963b4` |
-| `crates/seacad-dxf-core/tests/point_edit_session_tests.rs` | 2452 | `2cea4733a461674bdbb58ef51fe58233610897b2028e8357fb30ef64a0020392` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1184 | `bb6d5a54e9d70a55d2cfc427d7f6916809b44148cca56913f1741345cd71aa2e` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2613 | `6c592fb42ad8e07e5dd22f66cf5437de8305cdf596bdff9c67239b3389db31e5` |
-| `docs/SUPPORT_MATRIX.md` | 2266 | `48f643175aa8fe4b52469c3136fc2fd005c1642e597eb33d6af303a1ad5a497c` |
+| `README.md` | 342 | `1c0eada21ee770a3418fec334e52b0a08096c8d70ab36f85528f41801f38c1fb` |
+| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 1705 | `c3666ede8ef73297ba53a448a51cd8da3f07cc89e6cf0dfd3d1e65f0a3fbadeb` |
+| `crates/seacad-dxf-core/src/entity_edit_verification.rs` | 1163 | `bd630af4b542261c6fa2fdc5b7b27f27098ba402e8f7b27d3327d7a52048d60f` |
+| `crates/seacad-dxf-core/src/point_edit.rs` | 1084 | `bcef8c022f2c17e5bf672a06692a9c28787ef7e56fbc24194c0ab44a33c46e51` |
+| `crates/seacad-dxf-core/tests/entity_insert_session_tests.rs` | 822 | `181b363ce28728a82e4d80966b411c0d3c7d2728dc94c304ccd06ff9a3bb40fd` |
+| `crates/seacad-dxf-core/tests/point_edit_session_tests.rs` | 2737 | `1450edb421f1080d5a449c5edf15ee3e0670618a3bdb1bf0ee0052c90812c6d3` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1207 | `ec8f93a4dc399f4917f699cd5e023c9552fb249c6679b146e3fbbfb3f88dc9cf` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2637 | `9e30887a697759ecced66cf39e670e4f2d3e31b7a34b1a42e1a5c9d830cdd60c` |
+| `docs/SUPPORT_MATRIX.md` | 2288 | `9fd3f2fe0fdf33867302ee63f021cec60dd597a232960ae964f436c778039bfc` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -341,9 +345,10 @@ The batch is `PASS` only if all of these are true:
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
 3. All five recent tags are annotated and peel to their expected commits.
-4. Every focused test target passes, including exactly 31 POINT edit tests.
+4. Every focused test target passes, including exactly 6 entity insert session
+   tests and exactly 35 POINT edit tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 941 workspace tests.
+6. All full repository gates pass, including exactly 947 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -361,7 +366,7 @@ Return only one YAML-shaped report block using this schema. Do not add prose
 before or after it. Do not omit commands, including commands with empty output.
 
 ```yaml
-batch_id: seacad-point-edit-verification-2026-08-03
+batch_id: seacad-mixed-entity-edit-verification-2026-08-03
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
 started_at:
@@ -373,7 +378,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3bx-point-ucs-x-axis-angle-set
+  tag: m14.3bz-mixed-entity-insert-update-session
   tag_type:
   peeled_commit:
   ancestor_exit_code:
