@@ -33,6 +33,36 @@ After DXF Core 1.0, a format-neutral command API will serve Luau, Python,
 CadLisp, sandboxed WASM plugins, and the GUI. These hosts must depend on the
 command/core interfaces; the core must not depend on them.
 
+## Internationalization boundary
+
+SeaCad is a multilingual product. English (`en`) is the canonical fallback and
+Vietnamese (`vi`) is a first-class baseline locale; later locales use the same
+catalog contract rather than adding language branches to business code. The
+current CLI already follows this direction with complete compile-time English
+and Vietnamese catalogs.
+
+After DXF Core 1.0, one presentation-only localization boundary will serve the
+GUI, CLI human output, command help, theme metadata, declarative plugin UI, and
+human-readable MCP descriptions. The document, geometry, command, transaction,
+format, and rendering cores remain locale-neutral. Stable command IDs, error
+codes, JSON keys and values, MCP schemas, WIT/RPC contracts, logs, and receipts
+must not change with the selected language.
+
+Locale identifiers use normalized BCP 47 tags. GUI selection precedence is an
+explicit user setting, then the operating-system locale, then English. CLI
+selection remains explicit through `--lang` and defaults to English for
+reproducible automation. Missing messages fall back through the locale's
+declared parent and finally English; missing English entries fail catalog
+validation. Drawing text, symbol names, layer names, file payloads, and user
+script source are never automatically translated.
+
+Plugin catalogs are namespaced by plugin ID and cannot replace host messages.
+Themes may supply font-family roles and localized metadata but never message
+translations or executable localization logic. UI acceptance tests cover
+Vietnamese diacritics, Unicode font fallback, IME composition, text expansion,
+plural and number formatting, right-to-left layout readiness, missing-message
+fallback, and pseudo-localization before an additional locale is advertised.
+
 ## Implementation language boundary
 
 DXF Core 1.0 is Rust-first and keeps its parsing, preservation, semantics,
