@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cn. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3co. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -326,6 +326,13 @@ nested lists must balance, premature closes, leftover opens, invalid controls,
 and normal-group interruptions remain separate source-anchored issues. Symbol
 name character policy, typed values, 16-KiB enforcement, payload meaning,
 clone/write, and POINT `Complete` remain open.
+M14.3co projects every documented generic XDATA value code into a typed,
+source-anchored result. Exact strings and controls, caller-buffer binary chunks,
+handles, all 15 double roles, signed 16-bit integers, and signed 32-bit integers
+have ASCII/Binary parity across all nine Core dialects; malformed or unsupported
+values remain explicit without normalization. Layer-name resolution, point and
+vector tuple grouping, the 16-KiB application policy, handle remap, payload
+meaning, clone/write, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

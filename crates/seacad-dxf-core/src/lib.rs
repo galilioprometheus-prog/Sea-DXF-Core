@@ -82,6 +82,7 @@ mod entity_value_encoder;
 mod entity_xdata;
 mod entity_xdata_appid_resolution;
 mod entity_xdata_structure;
+mod entity_xdata_value;
 mod error;
 mod format_probe;
 #[allow(dead_code)]
@@ -541,6 +542,11 @@ pub use entity_xdata_structure::{
     DxfEntityXDataStructureDirectory, DxfEntityXDataStructureEntry, DxfEntityXDataStructureIssue,
     DxfEntityXDataStructureIssueKind, DxfEntityXDataStructureIssueRange,
     DxfEntityXDataStructureState,
+};
+pub use entity_xdata_value::{
+    DXF_XDATA_BINARY_CHUNK_MAX_BYTES, DXF_XDATA_STRING_MAX_BYTES, DxfEntityXDataControl,
+    DxfEntityXDataDoubleRole, DxfEntityXDataTextKind, DxfEntityXDataTypedDirectory,
+    DxfEntityXDataTypedEntry, DxfEntityXDataValue, DxfEntityXDataValueIssue,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

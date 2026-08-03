@@ -1331,6 +1331,19 @@ Complete symbol-name character policy, typed value domains, 16-KiB
 enforcement, application semantics, group-1005 remap, clone/write, and POINT
 `Complete` remain open.
 
+M14.3co projects the documented generic XDATA wire domains without assigning
+application-specific meaning. Every retained occurrence has one stable typed
+entry: exact text/control provenance, bounded caller-buffer binary chunks,
+handles, 15 distinct double roles, signed 16-bit integers, signed 32-bit
+integers, or a source-anchored invalidity. The 255-byte group-1000 and 127-byte
+decoded group-1004 ceilings are enforced, non-finite doubles and invalid ASCII
+numbers fail typed, and unknown XDATA codes are never discarded. All nine
+ASCII/Binary dialect pairs cover valid parity, malformed domains, source
+identity, cancellation, lookup bounds, metadata bounds, and non-disclosing
+debug output. Layer-name resolution, point/vector tuple grouping and
+transforms, the 16-KiB application policy, application semantics, group-1005
+target resolution/remap, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -2779,5 +2779,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     symbol-name character policy, typed values, 16-KiB enforcement, payload
     semantics, handle remap, clone/write, and POINT `Complete` remain open.
 
+    M14.3co adds a one-to-one typed projection for every retained generic XDATA
+    occurrence. Exact text/control spans, bounded group-1004 caller-buffer
+    chunks, group-1005 handles, all 15 documented binary64 roles, group-1070
+    signed 16-bit values, and group-1071 signed 32-bit values retain raw
+    provenance. The documented 255-byte string and 127-byte decoded chunk
+    ceilings are enforced; malformed, non-finite, and unsupported values remain
+    explicit typed evidence. Paired ASCII and Binary fixtures cover all nine
+    Core dialects, source identity, cancellation, lookup and allocation bounds,
+    and non-disclosing debug output. Layer-name resolution, point/vector tuple
+    grouping and transforms, 16-KiB application enforcement, payload semantics,
+    handle target resolution/remap, clone/write, and POINT `Complete` remain
+    open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
