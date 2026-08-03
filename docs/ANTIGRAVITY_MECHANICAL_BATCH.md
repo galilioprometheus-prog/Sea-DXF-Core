@@ -2,15 +2,15 @@
 
 Status: `READY`
 
-Batch ID: `seacad-entity-xdata-appid-resolution-verification-2026-08-03`
+Batch ID: `seacad-entity-xdata-structure-verification-2026-08-03`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3cm - entity XDATA APPID resolution`
+Target code checkpoint: `M14.3cn - entity XDATA structure`
 
-Target checkpoint commit: `bc1288b62a398fcf45fb96d3360ff018adc4fa27`
+Target checkpoint commit: `3a51ea061118b42c582f5d09aa40f52b65f99b06`
 
-Target annotated tag: `m14.3cm-entity-xdata-appid-resolution`
+Target annotated tag: `m14.3cn-entity-xdata-structure`
 
 Prepared: `2026-08-03` (`Asia/Saigon`)
 
@@ -79,7 +79,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `bc1288b62a398fcf45fb96d3360ff018adc4fa27`.
+  than `3a51ea061118b42c582f5d09aa40f52b65f99b06`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The only path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -130,10 +130,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3cm-entity-xdata-appid-resolution
-git rev-list -n 1 m14.3cm-entity-xdata-appid-resolution
-git merge-base --is-ancestor bc1288b62a398fcf45fb96d3360ff018adc4fa27 HEAD
-git diff --name-only m14.3cm-entity-xdata-appid-resolution..HEAD
+git cat-file -t m14.3cn-entity-xdata-structure
+git rev-list -n 1 m14.3cn-entity-xdata-structure
+git merge-base --is-ancestor 3a51ea061118b42c582f5d09aa40f52b65f99b06 HEAD
+git diff --name-only m14.3cn-entity-xdata-structure..HEAD
 ```
 
 Expected evidence:
@@ -143,7 +143,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `bc1288b62a398fcf45fb96d3360ff018adc4fa27`.
+  `3a51ea061118b42c582f5d09aa40f52b65f99b06`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
@@ -185,6 +185,8 @@ git cat-file -t m14.3cl-entity-xdata-evidence
 git rev-list -n 1 m14.3cl-entity-xdata-evidence
 git cat-file -t m14.3cm-entity-xdata-appid-resolution
 git rev-list -n 1 m14.3cm-entity-xdata-appid-resolution
+git cat-file -t m14.3cn-entity-xdata-structure
+git rev-list -n 1 m14.3cn-entity-xdata-structure
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -204,6 +206,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3ck-point-delete-graph-scope` | `13ebd4acf15d7b59afb2829176af278c6a51e11b` |
 | `m14.3cl-entity-xdata-evidence` | `96bacc15dd6693b1dbf8d1083ab271b5f6b9b65a` |
 | `m14.3cm-entity-xdata-appid-resolution` | `bc1288b62a398fcf45fb96d3360ff018adc4fa27` |
+| `m14.3cn-entity-xdata-structure` | `3a51ea061118b42c582f5d09aa40f52b65f99b06` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -223,6 +226,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_verification_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_resolution_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_structure_tests
 ```
 
 The `entity_insert_session_tests` target must report exactly
@@ -230,6 +234,8 @@ The `entity_insert_session_tests` target must report exactly
 `44 passed; 0 failed`. The `entity_xdata_tests` target must report exactly
 `3 passed; 0 failed`. The `entity_xdata_appid_resolution_tests` target must
 also report exactly `3 passed; 0 failed`.
+The `entity_xdata_structure_tests` target must report exactly
+`3 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
 ## 10. Phase 3 — Generated schema and release evidence
@@ -261,7 +267,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `974 passed; 0 failed` across its
+- The workspace test command reports exactly `977 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -282,15 +288,15 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3c[a-m]|entity XDATA|APPID resolution|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md | Select-Object FullName,Length
+rg -n "M14\.3c[a-n]|entity XDATA|APPID resolution|XDATA structure|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed entity checkpoint is M14.3cm.
-- Audit files exist for M14.3ca through M14.3cm.
+- The current documented completed entity checkpoint is M14.3cn.
+- Audit files exist for M14.3ca through M14.3cn.
 - The documentation does not claim completed support for cross-container clone,
   reference/text common-property clone, graph payload clone, or complete entity
   editing.
@@ -305,11 +311,9 @@ Run the following exact PowerShell block:
 ```powershell
 $batchArtifacts = @(
   'README.md',
-  'crates/seacad-dxf-core/src/entity_common_text_semantic.rs',
-  'crates/seacad-dxf-core/src/entity_xdata_appid_resolution.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_structure.rs',
   'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/src/named_symbol_table.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_appid_resolution_tests.rs',
+  'crates/seacad-dxf-core/tests/entity_xdata_structure_tests.rs',
   'docs/DXF_ENTITY_COMPLETION_PLAN.md',
   'docs/IMPLEMENTATION_PLAN.md',
   'docs/SUPPORT_MATRIX.md'
@@ -329,15 +333,13 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 411 | `339934fc623630b13f0ba049683fa19dcba804429cdf4014b16a13aaee7413db` |
-| `crates/seacad-dxf-core/src/entity_common_text_semantic.rs` | 745 | `2b911c5809a82c7cda6a79bf8b1e65a237f0a6460f7249357b72a128f054585a` |
-| `crates/seacad-dxf-core/src/entity_xdata_appid_resolution.rs` | 260 | `58550311fe06093cf481288f1accb7af9c317806811d5d072e366b372442c14b` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1078 | `e5d8367c0cf7214a721a32b72d56c03c7942f072473f6e8f5d4d2d6142e37a69` |
-| `crates/seacad-dxf-core/src/named_symbol_table.rs` | 276 | `57b53e542971ead68f0d789bb7f484be3708f533af5c545354e6c96fe747528c` |
-| `crates/seacad-dxf-core/tests/entity_xdata_appid_resolution_tests.rs` | 283 | `bbeaa2c2a9c37947c93c2a6828d2af28baad8c506cfa0a83efa3d56f810fcb83` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1349 | `7fec4c8d82eb7e9adf35955214adda4248d8955eb4ca1c20f3a2d6004bd48797` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2773 | `9570639f9f4126db05fcb2b0d8f844aed8d9bd52f2afdd348bc346e9ed89123f` |
-| `docs/SUPPORT_MATRIX.md` | 2419 | `afdb1aa1da4c5680b6ed42a246ae0573d8eca46faa830c0abd6db97a8457c69e` |
+| `README.md` | 417 | `265823820b4f9526e12e48a707b9bae9ae8ea295748d41df386f02a4415be29e` |
+| `crates/seacad-dxf-core/src/entity_xdata_structure.rs` | 348 | `374f05d5e82f1bc26bd4cd6ba32d41965b965b9bbe937476244b2fbb0c3816c4` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1084 | `735d7e7da341d44aca0bd7b6095344c77ff113389cafb8ef8d85aabaf73adb18` |
+| `crates/seacad-dxf-core/tests/entity_xdata_structure_tests.rs` | 250 | `056d3249b54a88c41374b1637bfff9dec8c9f788c1096297ed02bad43272a53d` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1361 | `5bbc3d0605a8fa51762cb60cefbe6fcf323198218b3cda0bc35456b681d92b20` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2783 | `d235f200a0b8c112e5500e63de4792401ba372cc5f8bfa75eb6588390aa13f29` |
+| `docs/SUPPORT_MATRIX.md` | 2428 | `104559be35e342477e47972ff08e8cf825f0dc0659926b1d0fe66951ff7b2575` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -373,12 +375,13 @@ The batch is `PASS` only if all of these are true:
    defined immediate stop condition occurs.
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
-3. All thirteen recent tags are annotated and peel to their expected commits.
+3. All fourteen recent tags are annotated and peel to their expected commits.
 4. Every focused test target passes, including exactly 18 entity insert session
     tests, exactly 44 POINT edit tests, exactly 3 entity XDATA tests, and
-    exactly 3 entity XDATA APPID-resolution tests.
+    exactly 3 entity XDATA APPID-resolution tests, and exactly 3 entity XDATA
+    structure tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 974 workspace tests.
+6. All full repository gates pass, including exactly 977 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -396,7 +399,7 @@ Return only one YAML-shaped report block using this schema. Do not add prose
 before or after it. Do not omit commands, including commands with empty output.
 
 ```yaml
-batch_id: seacad-entity-xdata-appid-resolution-verification-2026-08-03
+batch_id: seacad-entity-xdata-structure-verification-2026-08-03
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
 started_at:
@@ -408,7 +411,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3cm-entity-xdata-appid-resolution
+  tag: m14.3cn-entity-xdata-structure
   tag_type:
   peeled_commit:
   ancestor_exit_code:
@@ -436,6 +439,7 @@ focused_test_total:
 point_edit_test_count:
 entity_xdata_test_count:
 entity_xdata_appid_resolution_test_count:
+entity_xdata_structure_test_count:
 workspace_test_total:
 documentation_checks:
   current_checkpoint:
