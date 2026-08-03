@@ -1228,6 +1228,18 @@ handle-backed/handleless batch independently proves combined verification and
 byte-identical inverse restoration. Delete/update/insert mixing and POINT
 `Complete` remain open.
 
+M14.3ce unifies deletion with unrelated update and insertion work in one
+session. Admission rejects only an update or clone whose source key is already
+selected for deletion, and rejects deleting a key with pending updates; other
+records may compose in either API order. Existing-record verification ordinals
+add insertions placed before the source marker and subtract queued deletions
+with earlier raw-record ordinals. Finalization composes common/POINT patches,
+handle reservation, `$HANDSEED`, inserted records, and exact delete spans into
+one transaction. Delete/update and delete/insert both pass every nine-dialect
+ASCII/Binary pair in both API orders with strict semantic verification and
+byte-identical inverse restoration. Broader clone and POINT `Complete` remain
+open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

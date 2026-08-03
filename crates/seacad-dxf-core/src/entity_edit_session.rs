@@ -339,6 +339,9 @@ pub enum DxfEntityDeleteIssue {
     DuplicateDelete {
         key: DxfEntityKey,
     },
+    SourceUpdatePending {
+        key: DxfEntityKey,
+    },
     IdentityUnavailable {
         key: DxfEntityKey,
         state: DxfHandleIdentityState,
@@ -403,6 +406,9 @@ pub enum DxfEntityDeleteOutcome {
 #[non_exhaustive]
 pub enum DxfEntityCloneIssue {
     SourceUpdatePending {
+        key: DxfEntityKey,
+    },
+    SourceDeletePending {
         key: DxfEntityKey,
     },
     EntityMissing {
@@ -613,11 +619,6 @@ impl<'document, 'evidence, 'cancellation>
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending_deletes.is_empty() {
-            return Ok(DxfEntityInsertOutcome::Unavailable(
-                DxfEntityInsertIssue::DeletePending,
-            ));
-        }
         let Some(owner) = draft.owner() else {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::OwnerRequired,
@@ -732,6 +733,11 @@ impl<'document, 'evidence, 'cancellation>
         owner: DxfHandle,
     ) -> Result<DxfEntityCloneOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
+        if self.pending_deletes.iter().any(|delete| delete.key == key) {
+            return Ok(DxfEntityCloneOutcome::Unavailable(
+                DxfEntityCloneIssue::SourceDeletePending { key },
+            ));
+        }
         if self.pending.iter().any(|edit| edit.key == key)
             || self.pending_point_edits.iter().any(|edit| edit.key == key)
         {
@@ -766,7 +772,7 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending_deletes.is_empty() {
+        if self.pending_deletes.iter().any(|delete| delete.key == key) {
             return Ok(DxfEntityEditOutcome::Unavailable(
                 DxfEntityEditIssue::DeletePending,
             ));
@@ -781,8 +787,9 @@ impl<'document, 'evidence, 'cancellation>
 
     /// Deletes one standalone canonical POINT record when reference safety is proven.
     ///
-    /// Delete-only sessions may queue multiple distinct records. Any uniquely
-    /// resolved incoming pointer or owner from another record blocks deletion.
+    /// Sessions may queue multiple distinct records and unrelated edits. Any
+    /// uniquely resolved incoming pointer or owner from another record blocks
+    /// deletion.
     pub fn delete(&mut self, key: DxfEntityKey) -> Result<DxfEntityDeleteOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
         if self.pending_deletes.iter().any(|delete| delete.key == key) {
@@ -790,16 +797,11 @@ impl<'document, 'evidence, 'cancellation>
                 DxfEntityDeleteIssue::DuplicateDelete { key },
             ));
         }
-        let non_delete_queued = self
-            .queued_update_len()?
-            .checked_add(self.pending_inserts.len())
-            .ok_or_else(invalid_internal_data)?;
-        if non_delete_queued != 0 {
+        if self.pending.iter().any(|edit| edit.key == key)
+            || self.pending_point_edits.iter().any(|edit| edit.key == key)
+        {
             return Ok(DxfEntityDeleteOutcome::Unavailable(
-                DxfEntityDeleteIssue::PendingOperations {
-                    queued_operation_count: u32::try_from(self.queued_len()?)
-                        .map_err(|_| invalid_internal_data())?,
-                },
+                DxfEntityDeleteIssue::SourceUpdatePending { key },
             ));
         }
         let Some(entity) = self.evidence.entity_directory().entity_for_key(key)? else {
@@ -1482,46 +1484,7 @@ impl<'document, 'evidence, 'cancellation>
 
     /// Freezes the transaction together with its semantic postconditions.
     pub fn finish_verifiable(mut self) -> Result<DxfEntityEditPlan, DxfError> {
-        if !self.pending_deletes.is_empty() {
-            if self.queued_update_len()? != 0 || !self.pending_inserts.is_empty() {
-                return Err(invalid_internal_data());
-            }
-            let deletes = std::mem::take(&mut self.pending_deletes);
-            let expected_entity_count = u64::try_from(
-                self.evidence
-                    .entity_directory()
-                    .entities()
-                    .len()
-                    .checked_sub(deletes.len())
-                    .ok_or_else(invalid_internal_data)?,
-            )
-            .map_err(|_| invalid_internal_data())?;
-            let mut plans = Vec::new();
-            plans
-                .try_reserve_exact(deletes.len())
-                .map_err(|_| out_of_memory())?;
-            let mut expectations = Vec::new();
-            expectations
-                .try_reserve_exact(deletes.len())
-                .map_err(|_| out_of_memory())?;
-            for delete in &deletes {
-                ensure_source(self.document.source_id(), delete.key.source_id())?;
-                plans.push(&delete.transaction);
-                expectations.push(match delete.expectation {
-                    PendingDeleteExpectation::Handle(handle) => {
-                        DxfEntityEditExpectation::point_delete(handle)
-                    }
-                    PendingDeleteExpectation::Handleless => {
-                        DxfEntityEditExpectation::handleless_point_delete(expected_entity_count)
-                    }
-                });
-            }
-            let transaction =
-                self.document
-                    .compose_transaction_plans(&plans, self.profile, self.cancellation)?;
-            return Ok(DxfEntityEditPlan::new(transaction, expectations));
-        }
-        let (transaction, pending, point_edits) = self.finish_parts()?;
+        let (mut transaction, pending, point_edits) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
             .try_reserve_exact(
@@ -1529,18 +1492,19 @@ impl<'document, 'evidence, 'cancellation>
                     .len()
                     .checked_add(point_edits.len())
                     .and_then(|count| count.checked_add(self.pending_inserts.len()))
+                    .and_then(|count| count.checked_add(self.pending_deletes.len()))
                     .ok_or_else(invalid_internal_data)?,
             )
             .map_err(|_| out_of_memory())?;
         for edit in pending {
             expectations.push(DxfEntityEditExpectation::field(
-                self.post_insert_raw_record_ordinal(edit.key)?,
+                self.post_session_raw_record_ordinal(edit.key)?,
                 edit.field,
                 edit.expected,
             ));
         }
         for edit in point_edits {
-            let raw_record_ordinal = self.post_insert_raw_record_ordinal(edit.key)?;
+            let raw_record_ordinal = self.post_session_raw_record_ordinal(edit.key)?;
             expectations.push(match edit.expectation {
                 PendingPointExpectation::Location(location) => {
                     DxfEntityEditExpectation::point_location(raw_record_ordinal, location)
@@ -1565,23 +1529,80 @@ impl<'document, 'evidence, 'cancellation>
                 }
             });
         }
-        if self.pending_inserts.is_empty() {
-            return Ok(DxfEntityEditPlan::new(transaction, expectations));
+        let inserted_entity_count = self.pending_inserts.len();
+        if !self.pending_inserts.is_empty() {
+            let (insertion, insert_expectations) = self.finish_insert_parts()?;
+            expectations.extend(insert_expectations);
+            transaction = if transaction.patches().is_empty() {
+                insertion
+            } else {
+                compose_session_transactions(
+                    self.document,
+                    &transaction,
+                    &insertion,
+                    self.profile,
+                    self.cancellation,
+                )?
+            };
         }
-        let (insertion, insert_expectations) = self.finish_insert_parts()?;
-        expectations.extend(insert_expectations);
-        let transaction = if transaction.patches().is_empty() {
-            insertion
-        } else {
-            compose_session_transactions(
-                self.document,
-                &transaction,
-                &insertion,
-                self.profile,
-                self.cancellation,
-            )?
-        };
+        if !self.pending_deletes.is_empty() {
+            let (deletion, delete_expectations) =
+                self.finish_delete_parts(inserted_entity_count)?;
+            expectations.extend(delete_expectations);
+            transaction = if transaction.patches().is_empty() {
+                deletion
+            } else {
+                compose_session_transactions(
+                    self.document,
+                    &transaction,
+                    &deletion,
+                    self.profile,
+                    self.cancellation,
+                )?
+            };
+        }
         Ok(DxfEntityEditPlan::new(transaction, expectations))
+    }
+
+    fn finish_delete_parts(
+        &mut self,
+        inserted_entity_count: usize,
+    ) -> Result<(DxfTransactionPlan, Vec<DxfEntityEditExpectation>), DxfError> {
+        let deletes = std::mem::take(&mut self.pending_deletes);
+        let expected_entity_count = self
+            .evidence
+            .entity_directory()
+            .entities()
+            .len()
+            .checked_add(inserted_entity_count)
+            .and_then(|count| count.checked_sub(deletes.len()))
+            .ok_or_else(invalid_internal_data)?;
+        let expected_entity_count =
+            u64::try_from(expected_entity_count).map_err(|_| invalid_internal_data())?;
+        let mut plans = Vec::new();
+        plans
+            .try_reserve_exact(deletes.len())
+            .map_err(|_| out_of_memory())?;
+        let mut expectations = Vec::new();
+        expectations
+            .try_reserve_exact(deletes.len())
+            .map_err(|_| out_of_memory())?;
+        for delete in &deletes {
+            ensure_source(self.document.source_id(), delete.key.source_id())?;
+            plans.push(&delete.transaction);
+            expectations.push(match delete.expectation {
+                PendingDeleteExpectation::Handle(handle) => {
+                    DxfEntityEditExpectation::point_delete(handle)
+                }
+                PendingDeleteExpectation::Handleless => {
+                    DxfEntityEditExpectation::handleless_point_delete(expected_entity_count)
+                }
+            });
+        }
+        let transaction =
+            self.document
+                .compose_transaction_plans(&plans, self.profile, self.cancellation)?;
+        Ok((transaction, expectations))
     }
 
     fn finish_insert_parts(
@@ -1723,7 +1744,7 @@ impl<'document, 'evidence, 'cancellation>
         ))
     }
 
-    fn post_insert_raw_record_ordinal(&self, key: DxfEntityKey) -> Result<u64, DxfError> {
+    fn post_session_raw_record_ordinal(&self, key: DxfEntityKey) -> Result<u64, DxfError> {
         ensure_source(self.document.source_id(), key.source_id())?;
         let entity = self
             .evidence
@@ -1741,8 +1762,19 @@ impl<'document, 'evidence, 'cancellation>
                     Ok(count)
                 }
             })?;
+        let deleted_before = self
+            .pending_deletes
+            .iter()
+            .try_fold(0_u64, |count, delete| {
+                if delete.key.raw_record_ordinal() < key.raw_record_ordinal() {
+                    count.checked_add(1).ok_or_else(invalid_internal_data)
+                } else {
+                    Ok(count)
+                }
+            })?;
         key.raw_record_ordinal()
             .checked_add(shift)
+            .and_then(|ordinal| ordinal.checked_sub(deleted_before))
             .ok_or_else(invalid_internal_data)
     }
 

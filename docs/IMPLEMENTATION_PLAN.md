@@ -2681,5 +2681,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     expectation path and exact inverse. Delete/update/insert mixing and POINT
     `Complete` remain open.
 
+    M14.3ce removes the session-wide delete exclusion while preserving
+    per-record conflict safety. Updates and clones reject a source key selected
+    for deletion, and delete rejects a key with pending common or POINT edits;
+    unrelated work and new POINT inserts compose in either order. Verification
+    ordinals apply both insertion shifts and earlier-delete reductions. The
+    final transaction combines common/POINT updates, handle reservation,
+    `$HANDSEED`, record insertion, and raw-record deletion, while handleless
+    postconditions use the exact source-minus-deletes-plus-inserts entity
+    count. Delete/update and delete/insert pass every ASCII/Binary Core dialect
+    in both API orders with exact inverse restoration. Broader clone and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

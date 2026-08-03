@@ -2735,6 +2735,79 @@ fn multiple_point_delete_composes_handle_backed_and_handleless_expectations()
 }
 
 #[test]
+fn point_delete_and_unrelated_update_compose_in_both_orders_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for delete_first in [false, true] {
+                let bytes = multi_delete_fixture(format, version)?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let point_keys: Vec<_> = evidence
+                    .entity_directory()
+                    .entities()
+                    .iter()
+                    .copied()
+                    .filter(|entity| entity.classification().topic() == Some(DxfEntityTopic::POINT))
+                    .map(|entity| entity.key())
+                    .collect();
+                let [deleted, updated] = point_keys.as_slice() else {
+                    return Err(io::Error::other("two mixed-operation POINT keys").into());
+                };
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                if delete_first {
+                    assert!(matches!(
+                        session.delete(*deleted)?,
+                        DxfEntityDeleteOutcome::Applied(_)
+                    ));
+                    assert!(matches!(
+                        session.update(
+                            *updated,
+                            DxfEntityPatch::Point(DxfPointPatch::set_location(UPDATED)),
+                        )?,
+                        DxfEntityEditOutcome::PointApplied(_)
+                    ));
+                } else {
+                    assert!(matches!(
+                        session.update(
+                            *updated,
+                            DxfEntityPatch::Point(DxfPointPatch::set_location(UPDATED)),
+                        )?,
+                        DxfEntityEditOutcome::PointApplied(_)
+                    ));
+                    assert!(matches!(
+                        session.delete(*deleted)?,
+                        DxfEntityDeleteOutcome::Applied(_)
+                    ));
+                }
+                assert_eq!(session.queued_edit_count(), 2);
+                let plan = session.finish_verifiable()?;
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let output_document = open_document(&output_source, format)?;
+                let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) = plan
+                    .verify_post_image(
+                        view,
+                        output_document.view(),
+                        DxfResourceProfile::Safe,
+                        &token(),
+                    )?
+                else {
+                    return Err(io::Error::other("verified mixed delete/update").into());
+                };
+                assert_eq!(journal.receipt().edit_count(), 2);
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn point_delete_rejects_incoming_reference_and_ambiguous_or_invalid_identity()
 -> Result<(), Box<dyn Error>> {
     for (shape, expected) in [
@@ -2819,9 +2892,9 @@ fn point_delete_rejects_wrong_family_mixing_and_cancellation() -> Result<(), Box
     ));
     assert!(matches!(
         update_first.delete(point_key)?,
-        DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::PendingOperations {
-            queued_operation_count: 1
-        })
+        DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::SourceUpdatePending {
+            key
+        }) if key == point_key
     ));
 
     let delete_cancellation = token();

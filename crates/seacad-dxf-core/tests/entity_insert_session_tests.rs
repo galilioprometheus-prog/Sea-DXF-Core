@@ -3,11 +3,11 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDouble, DxfEntityCloneIssue, DxfEntityCloneOutcome,
-    DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditOutcome, DxfEntityEditValue,
-    DxfEntityField, DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
-    DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError, DxfHandle,
-    DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft, DxfPointPatch,
-    DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfEntityCommonFieldPatch, DxfEntityDeleteOutcome, DxfEntityDraft, DxfEntityEditOutcome,
+    DxfEntityEditValue, DxfEntityField, DxfEntityInsertIssue, DxfEntityInsertOutcome,
+    DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError,
+    DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft,
+    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
     DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
@@ -178,6 +178,77 @@ fn session_mixes_point_updates_and_inserts_across_every_dialect() -> Result<(), 
                     return Err(io::Error::other("verified mixed POINT session").into());
                 };
                 assert_eq!(journal.receipt().edit_count(), 3);
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn session_mixes_point_delete_and_insert_in_both_orders_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for delete_first in [false, true] {
+                let bytes = fixture_with_existing_point(format, version)?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let placement = only_placement(view)?;
+                let key = existing_point_key(&evidence)?;
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                if delete_first {
+                    assert!(matches!(
+                        session.delete(key)?,
+                        DxfEntityDeleteOutcome::Applied(_)
+                            | DxfEntityDeleteOutcome::HandlelessApplied(_)
+                    ));
+                }
+                assert!(matches!(
+                    session.insert(
+                        placement,
+                        point_draft(version).with_owner(handle(0x10)),
+                    )?,
+                    DxfEntityInsertOutcome::Applied(receipt)
+                        if receipt.handle() == handle(0x40)
+                ));
+                if !delete_first {
+                    assert!(matches!(
+                        session.delete(key)?,
+                        DxfEntityDeleteOutcome::Applied(_)
+                            | DxfEntityDeleteOutcome::HandlelessApplied(_)
+                    ));
+                }
+                assert_eq!(session.queued_edit_count(), 2);
+                let plan = session.finish_verifiable()?;
+                assert_eq!(plan.edit_count(), 2);
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let output_document = open_document(&output_source, format)?;
+                let post = output_document.view();
+                let DxfHandleIdentityLookup::Unique(inserted) = post
+                    .handle_identity_directory(&token())?
+                    .lookup(handle(0x40))
+                else {
+                    return Err(io::Error::other("mixed delete/insert identity").into());
+                };
+                assert!(
+                    post.entity_directory(&token())?
+                        .entity_for_raw_ordinal(inserted.record().ordinal())
+                        .is_some_and(|entity| {
+                            entity.classification().topic() == Some(DxfEntityTopic::POINT)
+                        })
+                );
+                let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                    plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+                else {
+                    return Err(io::Error::other("verified mixed delete/insert").into());
+                };
+                assert_eq!(journal.receipt().edit_count(), 2);
                 assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
             }
         }
