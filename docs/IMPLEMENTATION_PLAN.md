@@ -2769,5 +2769,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     group-1002 braces, typed values, the 16-KiB policy, payload semantics,
     handle remap, clone/write, and POINT `Complete` remain open.
 
+    M14.3cn adds source-bound structural validation for every generic entity
+    XDATA application. Group-1001 names above the documented 31-byte limit are
+    typed invalid. Exact group-1002 `{` and `}` controls maintain nested-list
+    balance; invalid controls, premature closes, leftover opens, and normal-
+    group interruption remain distinct deterministic issues. Paired ASCII and
+    Binary fixtures cover every Core dialect, source identity, cancellation,
+    lookup limits, metadata bounds, and non-disclosing debug output. Full
+    symbol-name character policy, typed values, 16-KiB enforcement, payload
+    semantics, handle remap, clone/write, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

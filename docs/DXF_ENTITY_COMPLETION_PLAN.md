@@ -1319,6 +1319,18 @@ cancellation, lookup limits, and metadata bounds. Name syntax and length,
 group-1002 brace validation, typed XDATA values, 16-KiB enforcement, payload
 meaning, group-1005 remap, clone/write, and POINT `Complete` remain open.
 
+M14.3cn validates generic entity XDATA list structure without interpreting
+application payloads. Each group-1001 name retains its exact source bytes and
+fails typed above Autodesk's 31-byte ceiling. Exact group-1002 `{` and `}`
+values maintain a per-application nesting counter; malformed controls,
+premature closing braces, remaining open lists, and an application interrupted
+by a normal group are separately observable. All nine ASCII/Binary dialect
+pairs cover balanced nesting and every reviewed failure plus source identity,
+cancellation, lookup limits, metadata bounds, and redacted debug output.
+Complete symbol-name character policy, typed value domains, 16-KiB
+enforcement, application semantics, group-1005 remap, clone/write, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

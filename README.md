@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cm. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cn. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -319,6 +319,12 @@ index narrows candidates, then authoritative source spans are compared
 byte-for-byte. Missing, unique, and ambiguous targets remain distinct; near
 case, wrong-table, malformed, and unclosed evidence fail closed. Application
 name syntax, brace/value validation, the 16-KiB policy, payload meaning,
+clone/write, and POINT `Complete` remain open.
+M14.3cn validates the documented XDATA application-name byte ceiling and
+group-1002 list structure. Only exact `{` and `}` controls are accepted;
+nested lists must balance, premature closes, leftover opens, invalid controls,
+and normal-group interruptions remain separate source-anchored issues. Symbol
+name character policy, typed values, 16-KiB enforcement, payload meaning,
 clone/write, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
