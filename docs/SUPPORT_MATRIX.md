@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cq can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cr can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1432,6 +1432,23 @@ ambiguous targets are distinct. Near-case names, wrong table kinds, malformed
 multi-name records, and unclosed tables fail closed. All nine Core dialects
 have ASCII/Binary parity. Per-entity 16-KiB accounting, coordinate transforms,
 payload semantics, handle target resolution/remap, clone/write, and POINT
+`Complete` remain open.
+
+M14.3cr adds `DxfEntityXDataCapacityDirectory` for every indexed entity,
+including an exact zero-XDATA result. AutoCAD 2027 Core Console `xdsize` and
+`xdroom` observations establish a 16,383-byte per-entity ceiling and the
+logical-value formula: each nonempty application contributes three bytes;
+strings contribute three plus twice the decoded Unicode-scalar count; list
+controls contribute two; resolved layers three; binary chunks two plus decoded
+length; handles nine; complete 3D tuples twenty-five; other doubles nine;
+signed 16-bit integers three; and signed 32-bit integers five. Empty
+applications contribute zero. Exact totals distinguish within-limit from
+exceeded; orphan values, unresolved/ambiguous APPIDs or layers, invalid
+structure/value/text, and partial point tuples instead publish an accounted
+lower bound with compact typed issues. The exact 16,383/16,384 boundary, raw
+UTF-8, CIF surrogate pairs, all logical value families, and all fail-closed
+states have nine-dialect ASCII/Binary parity. Coordinate transforms, payload
+semantics, group-1005 target resolution/remap, clone/write, and POINT
 `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,

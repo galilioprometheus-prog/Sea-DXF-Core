@@ -81,6 +81,8 @@ mod entity_transparency;
 mod entity_value_encoder;
 mod entity_xdata;
 mod entity_xdata_appid_resolution;
+mod entity_xdata_capacity;
+mod entity_xdata_capacity_measure;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
 mod entity_xdata_structure;
@@ -539,6 +541,11 @@ pub use entity_xdata::{
 pub use entity_xdata_appid_resolution::{
     DxfEntityXDataAppIdResolutionDirectory, DxfEntityXDataAppIdResolutionEntry,
     DxfEntityXDataAppIdResolutionState,
+};
+pub use entity_xdata_capacity::{
+    DXF_XDATA_ENTITY_CAPACITY_BYTES, DxfEntityXDataCapacityDirectory, DxfEntityXDataCapacityEntry,
+    DxfEntityXDataCapacityIssue, DxfEntityXDataCapacityIssueKind, DxfEntityXDataCapacityIssueRange,
+    DxfEntityXDataCapacityState, DxfEntityXDataCapacityTextIssue,
 };
 pub use entity_xdata_layer_resolution::{
     DxfEntityXDataLayerResolutionDirectory, DxfEntityXDataLayerResolutionEntry,

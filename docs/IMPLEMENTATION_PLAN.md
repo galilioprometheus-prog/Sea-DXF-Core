@@ -2816,5 +2816,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     semantics, handle target resolution/remap, clone/write, and POINT
     `Complete` remain open.
 
+    M14.3cr adds source-bound AutoCAD-compatible XDATA capacity accounting for
+    every indexed entity. AutoCAD 2027 `xdsize`/`xdroom` observations establish
+    the exact 16,383-byte ceiling and logical-value costs, including decoded
+    Unicode-scalar string length rather than physical wire length. Exact totals
+    publish within-limit or exceeded states; unresolved APPID/layer names,
+    invalid structure or typed values, partial 3D tuples, or replacement-free
+    text/escape decoding failures publish only an accounted lower bound and
+    compact typed issues. Empty and multiple applications, every logical value
+    family, Unicode, exact 16,383 and exceeded 16,384 totals, source identity,
+    cancellation, metadata bounds, and debug redaction pass all nine paired
+    ASCII/Binary Core dialects. Coordinate transforms, payload semantics,
+    group-1005 target resolution/remap, clone/write, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

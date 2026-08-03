@@ -1371,6 +1371,23 @@ bounds, compact metadata, and non-disclosing debug output. Per-entity 16-KiB
 accounting, coordinate transforms, application semantics, group-1005 target
 resolution/remap, clone/write, and POINT `Complete` remain open.
 
+M14.3cr accounts AutoCAD's logical XDATA storage per indexed entity. A
+source-bound directory publishes exact within-limit or exceeded totals against
+the observed 16,383-byte `xdroom` ceiling; inputs that cannot produce a valid
+AutoCAD XDATA list publish only an accounted lower bound plus typed issues.
+The formula is verified independently with AutoCAD 2027 `xdsize`: a nonempty
+application costs three bytes, strings cost three plus twice their decoded
+Unicode-scalar count, controls cost two, resolved layers three, chunks two plus
+decoded length, handles nine, complete point/vector tuples twenty-five,
+remaining doubles nine, int16 values three, and int32 values five. Empty
+applications cost zero. APPID/layer resolution, structure, typed values, tuple
+completeness, storage decoding, and CIF/MIF decoding compose fail-closed.
+All nine ASCII/Binary dialect pairs cover every logical value family, Unicode,
+multiple/empty applications, exact 16,383 and exceeded 16,384 totals, source
+identity, cancellation, metadata bounds, and non-disclosing debug output.
+Coordinate transforms, application semantics, group-1005 target
+resolution/remap, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

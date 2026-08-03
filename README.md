@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cq. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cr. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -348,6 +348,15 @@ Near-case, wrong-table, malformed-record, and unclosed-table evidence fails
 closed across all nine ASCII/Binary dialect pairs. Per-entity 16-KiB
 accounting, coordinate transforms, payload meaning, handle remap, clone/write,
 and POINT `Complete` remain open.
+M14.3cr adds an AutoCAD-compatible capacity result for every indexed entity.
+It counts logical XDATA values rather than ASCII/Binary wire bytes, publishes
+exact within-limit and exceeded states against the observed 16,383-byte
+`xdroom` ceiling, and otherwise returns an accounted lower bound with typed
+issues. APPID/layer resolution, structure, point tuples, replacement-free text
+decoding, and Unicode escape decoding all fail closed. The 16,383/16,384-byte
+boundary and every logical value family have parity across all nine
+ASCII/Binary dialect pairs. Coordinate transforms, payload meaning, group-1005
+target resolution/remap, clone/write, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar
