@@ -1341,8 +1341,22 @@ numbers fail typed, and unknown XDATA codes are never discarded. All nine
 ASCII/Binary dialect pairs cover valid parity, malformed domains, source
 identity, cancellation, lookup bounds, metadata bounds, and non-disclosing
 debug output. Layer-name resolution, point/vector tuple grouping and
-transforms, the 16-KiB application policy, application semantics, group-1005
+transforms, the per-entity 16-KiB policy, application semantics, group-1005
 target resolution/remap, clone/write, and POINT `Complete` remain open.
+
+M14.3cp groups the four documented 3D XDATA families before size accounting or
+transform semantics. A tuple candidate contains only immediately adjacent,
+same-context components of one 101x/102x/103x suffix. Complete X/Y/Z candidates
+and every partial axis set remain separately visible; numeric invalidity stays
+on the generic typed member. Compact ordinal links avoid copying typed entry
+metadata, while tuple and member lookup reject foreign sources and forged
+relationships. All nine ASCII/Binary dialect pairs cover the four families,
+partial, reordered, duplicated, interrupted, application-boundary, entity-
+boundary, orphan, invalid-number, source-identity, cancellation, lookup-bound,
+metadata-bound, and non-disclosing-debug cases. Coordinate transforms,
+layer-name resolution, per-entity 16-KiB accounting, application semantics,
+group-1005 target resolution/remap, clone/write, and POINT `Complete` remain
+open.
 
 ## Milestone queue
 

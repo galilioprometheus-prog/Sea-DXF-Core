@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3co can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cp can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1409,9 +1409,19 @@ chunks up to 127 bytes, and exposes group-1005 handles, all documented
 1010--1042 double roles, group-1070 signed 16-bit integers, and group-1071
 signed 32-bit integers. Unsupported codes and malformed values remain typed
 source evidence. All nine Core dialects have ASCII/Binary parity. Layer-name
-resolution, point/vector tuple grouping and transforms, 16-KiB application
+resolution, point/vector tuple grouping and transforms, per-entity 16-KiB
 enforcement, payload semantics, handle target resolution/remap, clone/write,
 and POINT `Complete` remain open.
+
+M14.3cp adds `DxfEntityXDataPointTupleDirectory`. Immediately adjacent members
+with matching suffixes form maximal Point, WorldPosition, WorldDisplacement, or
+WorldDirection candidates in documented X/Y/Z order. Every component retains
+its compact link to the generic typed entry. Complete and partial axis sets are
+explicit, invalid numeric members remain typed, and normal-group gaps,
+application changes, entity changes, and source changes cannot be bridged. All
+nine Core dialects have ASCII/Binary parity. Transformation application,
+layer-name resolution, per-entity 16-KiB accounting, payload semantics, handle
+target resolution/remap, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

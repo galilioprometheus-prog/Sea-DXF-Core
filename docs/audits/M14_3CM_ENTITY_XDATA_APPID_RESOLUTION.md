@@ -47,8 +47,8 @@ bounds, entry size, and non-disclosing debug output.
 ## Nonclaims
 
 This checkpoint does not validate the APPID/application name syntax or 31-byte
-limit, group-1002 brace balance, XDATA value domains, the separate 16-KiB
-application limit, application payload meaning, group-1005 handle resolution
+limit, group-1002 brace balance, XDATA value domains, the separate per-entity
+16-KiB limit, application payload meaning, group-1005 handle resolution
 or remap, XDATA clone/write, or POINT/entity `Complete` support.
 
 ## Verification

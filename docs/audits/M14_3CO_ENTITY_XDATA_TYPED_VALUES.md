@@ -39,7 +39,7 @@ source mismatch, cancellation, metadata bounds, and non-disclosing debug
 output.
 
 This checkpoint does not claim layer-name resolution, point/vector tuple
-grouping or coordinate transforms, the total 16-KiB XDATA application policy,
+grouping or coordinate transforms, the total per-entity 16-KiB XDATA policy,
 application-specific payload semantics, group-1005 target resolution or remap,
 clone/write behavior, or any entity's `Complete` status.
 

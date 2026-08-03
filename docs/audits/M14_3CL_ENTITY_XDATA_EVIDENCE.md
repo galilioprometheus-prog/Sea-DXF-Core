@@ -51,7 +51,7 @@ debug output.
 
 This checkpoint does not resolve application names against APPID, validate the
 31-byte name limit or symbol-name syntax, validate group-1002 brace structure,
-project typed XDATA values, enforce the separate 16-KiB AutoCAD application
+project typed XDATA values, enforce the separate per-entity 16-KiB AutoCAD
 policy, interpret application payloads, validate or remap group-1005 targets,
 clone/write XDATA, or advance POINT or any other entity to `Complete`.
 

@@ -46,7 +46,7 @@ cancellation, public lookup bounds, metadata size, and non-disclosing debug.
 
 This checkpoint does not implement the complete version-sensitive symbol-table
 name character policy, typed XDATA value domains, 1000/1004 payload limits,
-the separate 16-KiB application limit, application payload meaning, group-1005
+the separate per-entity 16-KiB limit, application payload meaning, group-1005
 handle resolution/remap, XDATA clone/write, or POINT/entity `Complete` support.
 
 ## Verification

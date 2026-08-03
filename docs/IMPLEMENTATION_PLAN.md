@@ -2754,7 +2754,7 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     codes inside group-102 application controls remain excluded. Paired ASCII
     and Binary fixtures cover every Core dialect, source identity,
     cancellation, duplicate names, orphans, interruption, and public metadata
-    bounds. APPID resolution, lexical/value validation, the 16-KiB application
+    bounds. APPID resolution, lexical/value validation, the per-entity 16-KiB
     policy, application semantics, clone/write, and POINT `Complete` remain
     open.
 
@@ -2788,9 +2788,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     explicit typed evidence. Paired ASCII and Binary fixtures cover all nine
     Core dialects, source identity, cancellation, lookup and allocation bounds,
     and non-disclosing debug output. Layer-name resolution, point/vector tuple
-    grouping and transforms, 16-KiB application enforcement, payload semantics,
+    grouping and transforms, per-entity 16-KiB enforcement, payload semantics,
     handle target resolution/remap, clone/write, and POINT `Complete` remain
     open.
+
+    M14.3cp groups the four documented XDATA 3D families as immediately
+    adjacent, same-context 101x/102x/103x candidates. Complete X/Y/Z tuples and
+    partial axis sets remain exact; invalid numeric members keep their typed
+    provenance. Compact member handles resolve through the owned typed
+    directory, and grouping cannot cross normal-group gaps, application,
+    entity, or source boundaries. Paired ASCII and Binary fixtures cover all
+    nine Core dialects plus partial, reordered, duplicate, interrupted, orphan,
+    source-identity, cancellation, lookup, metadata, and debug-redaction
+    boundaries. Coordinate transforms, layer-name resolution, per-entity
+    16-KiB accounting, payload semantics, handle target resolution/remap,
+    clone/write, and POINT `Complete` remain open.
 
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
