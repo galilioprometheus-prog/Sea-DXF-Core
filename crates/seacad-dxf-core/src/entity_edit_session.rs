@@ -360,6 +360,11 @@ pub enum DxfEntityDeleteIssue {
         group_occurrence: u64,
         class: DxfHandleGroupClass,
     },
+    AttachedGraphScope {
+        key: DxfEntityKey,
+        group_occurrence: u64,
+        group_code: i16,
+    },
 }
 
 /// Non-payload receipt for one admitted whole-entity deletion.
@@ -873,6 +878,24 @@ impl<'document, 'evidence, 'cancellation>
                 },
             ));
         }
+        let range = entity.record().group_range();
+        for occurrence in range.start()..range.end() {
+            ensure_not_cancelled(self.cancellation)?;
+            let group = self
+                .document
+                .group(occurrence)
+                .ok_or_else(invalid_internal_data)?;
+            let group_code = group.group_code().value();
+            if matches!(group_code, 102 | 360) {
+                return Ok(DxfEntityDeleteOutcome::Unavailable(
+                    DxfEntityDeleteIssue::AttachedGraphScope {
+                        key,
+                        group_occurrence: occurrence,
+                        group_code,
+                    },
+                ));
+            }
+        }
         let resolutions = self
             .document
             .handle_resolution_directory(self.cancellation)?;
@@ -937,7 +960,6 @@ impl<'document, 'evidence, 'cancellation>
                 }
             }
         }
-        let range = entity.record().group_range();
         let first = self
             .document
             .group(range.start())

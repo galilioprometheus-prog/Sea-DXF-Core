@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cj can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ck can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1362,6 +1362,14 @@ strict post-image verification compares the exact bytes as well as the declared
 size relation. Missing, mismatched, or malformed size/data relations queue
 nothing. Graph-scoped handles, application groups/XDATA, display, and POINT
 `Complete` remain open.
+
+M14.3ck makes standalone POINT deletion fail closed when the selected raw
+record contains any application-control group 102 or hard-owner group 360.
+The typed rejection retains the exact group occurrence and code, and no edit is
+queued. AC1012 through AC1032 ASCII/Binary fixtures cover reactor,
+extension-dictionary, and unscoped hard-owner shapes. This is an orphan-
+prevention boundary, not graph-aware cascade deletion or graph clone; XDATA,
+display, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

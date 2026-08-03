@@ -2734,5 +2734,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Invalid relations leave the queue unchanged. Graph-scoped handles,
     application groups/XDATA, and POINT `Complete` remain open.
 
+    M14.3ck closes the standalone-delete orphan gap before graph mutation is
+    implemented. Canonical POINT deletion scans the complete selected record
+    before identity admission and rejects any group-102 application control or
+    group-360 hard-owner occurrence with an exact typed source location. This
+    covers persistent-reactor, extension-dictionary, custom, malformed, and
+    unscoped ownership payload without interpreting or silently dropping it.
+    AC1012+ ASCII/Binary fixtures prove reactor, extension-dictionary, and
+    unscoped hard-owner rejection leaves the session unchanged. Graph-aware
+    cascade/remap, application groups/XDATA clone, and POINT `Complete` remain
+    open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

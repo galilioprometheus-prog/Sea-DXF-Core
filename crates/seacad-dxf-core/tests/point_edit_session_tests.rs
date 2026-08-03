@@ -2857,6 +2857,51 @@ fn point_delete_rejects_incoming_reference_and_ambiguous_or_invalid_identity()
 }
 
 #[test]
+fn point_delete_rejects_attached_graph_scope_across_every_applicable_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        if version == DxfAcadVersion::Ac1009 {
+            continue;
+        }
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for shape in [
+                DeleteGraphShape::ReactorsApplicationGroup,
+                DeleteGraphShape::ExtensionDictionaryApplicationGroup,
+                DeleteGraphShape::UnscopedHardOwner,
+            ] {
+                let bytes = delete_graph_fixture(format, version, shape)?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                let outcome = session.delete(key)?;
+                let expected_code = match shape {
+                    DeleteGraphShape::ReactorsApplicationGroup
+                    | DeleteGraphShape::ExtensionDictionaryApplicationGroup => 102,
+                    DeleteGraphShape::UnscopedHardOwner => 360,
+                };
+                assert!(matches!(
+                    outcome,
+                    DxfEntityDeleteOutcome::Unavailable(
+                        DxfEntityDeleteIssue::AttachedGraphScope {
+                            key: observed,
+                            group_code,
+                            ..
+                        }
+                    ) if observed == key && group_code == expected_code
+                ));
+                assert_eq!(session.queued_edit_count(), 0);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn point_delete_rejects_wrong_family_mixing_and_cancellation() -> Result<(), Box<dyn Error>> {
     let bytes = delete_fixture(
         DxfRawDocumentFormat::Ascii,
@@ -2952,6 +2997,13 @@ enum DeleteFailure {
     Invalid,
 }
 
+#[derive(Clone, Copy)]
+enum DeleteGraphShape {
+    ReactorsApplicationGroup,
+    ExtensionDictionaryApplicationGroup,
+    UnscopedHardOwner,
+}
+
 fn delete_fixture(
     format: DxfRawDocumentFormat,
     version: DxfAcadVersion,
@@ -3021,6 +3073,71 @@ fn delete_fixture(
             ] {
                 push_double(&mut bytes, version, code, value)?;
             }
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"EOF")?;
+            Ok(bytes)
+        }
+        _ => Err(io::Error::other("format")),
+    }
+}
+
+fn delete_graph_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    shape: DeleteGraphShape,
+) -> Result<Vec<u8>, io::Error> {
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            let graph_groups = match shape {
+                DeleteGraphShape::ReactorsApplicationGroup => {
+                    "102\n{ACAD_REACTORS\n330\n20\n102\n}\n"
+                }
+                DeleteGraphShape::ExtensionDictionaryApplicationGroup => {
+                    "102\n{ACAD_XDICTIONARY\n360\n20\n102\n}\n"
+                }
+                DeleteGraphShape::UnscopedHardOwner => "360\n20\n",
+            };
+            Ok(format!(
+                "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n5\n10\n{}10\n1\n20\n2\n30\n3\n0\nENDSEC\n0\nSECTION\n2\nOBJECTS\n0\nDICTIONARY\n5\n20\n0\nENDSEC\n0\nEOF\n",
+                version.code(),
+                graph_groups,
+            )
+            .into_bytes())
+        }
+        DxfRawDocumentFormat::Binary => {
+            let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"HEADER")?;
+            push_string(&mut bytes, version, 9, b"$ACADVER")?;
+            push_string(&mut bytes, version, 1, version.code().as_bytes())?;
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"ENTITIES")?;
+            push_string(&mut bytes, version, 0, b"POINT")?;
+            push_string(&mut bytes, version, 5, b"10")?;
+            match shape {
+                DeleteGraphShape::ReactorsApplicationGroup => {
+                    push_string(&mut bytes, version, 102, b"{ACAD_REACTORS")?;
+                    push_string(&mut bytes, version, 330, b"20")?;
+                    push_string(&mut bytes, version, 102, b"}")?;
+                }
+                DeleteGraphShape::ExtensionDictionaryApplicationGroup => {
+                    push_string(&mut bytes, version, 102, b"{ACAD_XDICTIONARY")?;
+                    push_string(&mut bytes, version, 360, b"20")?;
+                    push_string(&mut bytes, version, 102, b"}")?;
+                }
+                DeleteGraphShape::UnscopedHardOwner => {
+                    push_string(&mut bytes, version, 360, b"20")?;
+                }
+            }
+            for (code, value) in [(10, 1.0), (20, 2.0), (30, 3.0)] {
+                push_double(&mut bytes, version, code, value)?;
+            }
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"OBJECTS")?;
+            push_string(&mut bytes, version, 0, b"DICTIONARY")?;
+            push_string(&mut bytes, version, 5, b"20")?;
             push_string(&mut bytes, version, 0, b"ENDSEC")?;
             push_string(&mut bytes, version, 0, b"EOF")?;
             Ok(bytes)

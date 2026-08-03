@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cj. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ck. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -298,6 +298,13 @@ group 92 must equal the combined group-310 payload length, ASCII hex is
 validated and decoded, Binary payloads remain byte-exact, and clone output is
 canonically rechunked and semantically compared. Graph-scoped handles,
 application groups/XDATA, and POINT `Complete` remain open.
+M14.3ck hardens POINT deletion against attached record-local graphs. Any group
+102 application control or group 360 hard-owner occurrence now rejects the
+delete with its exact source occurrence before a transaction is queued, so
+persistent-reactor, extension-dictionary, custom, malformed, and unscoped
+ownership payload cannot be orphaned by the standalone-record delete path.
+Graph-aware cascade/remap, graph clone, XDATA clone, and POINT `Complete`
+remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

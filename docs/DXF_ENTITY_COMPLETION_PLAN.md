@@ -1284,6 +1284,16 @@ relation and exact decoded payload before releasing the inverse. Mismatched or
 malformed relations queue nothing. Graph-scoped handles, application groups,
 XDATA, and POINT `Complete` remain open.
 
+M14.3ck makes the existing standalone POINT delete fail closed around attached
+record-local graphs. Before identity or incoming-reference admission, the
+complete source record is scanned for group-102 application controls and
+group-360 hard-owner occurrences. Either returns a typed rejection containing
+the exact source occurrence and leaves the edit queue empty, including reactor,
+extension-dictionary, custom/malformed application, and unscoped hard-owner
+shapes. Every applicable AC1012+ ASCII/Binary dialect covers the three reviewed
+graph shapes. This prevents orphan creation but does not claim graph-aware
+cascade/remap, application-group/XDATA clone, or POINT `Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
