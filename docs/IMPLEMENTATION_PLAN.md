@@ -2505,5 +2505,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dialect. Other POINT fields, reset, clone/delete, and mixed insert/update
     sessions remain open.
 
+    M14.3bq adds atomic replacement of one existing explicit POINT thickness
+    group `39`. Admission requires a unique source-backed thickness occurrence;
+    absence, duplicates, wrong classification, duplicate thickness patches,
+    non-finite encoding, resource limits, and cancellation leave the session
+    unchanged. Location and thickness use distinct patch identities and may
+    compose as independent logical edits, while insert/update mixing remains
+    fail-closed. Verification requires the exact typed thickness and explicit
+    semantic state on the same raw-record ordinal before returning the
+    byte-identical inverse. Paired ASCII/Binary tests cover all nine Core
+    dialects. Missing-field insertion, reset to the documented zero default,
+    extrusion/angle updates, clone/delete, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

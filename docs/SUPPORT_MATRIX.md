@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3bp can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3bq can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1139,6 +1139,20 @@ duplicate/missing components, wrong families, non-finite values, duplicate
 patches, cancellation, tampering, common-field composition, strict reparse,
 and byte-identical inverse restoration. Thickness, extrusion, angle, reset,
 clone/delete, and POINT `Complete` remain open.
+
+M14.3bq adds source-bound replacement of one existing explicit POINT thickness
+group `39`. The typed patch rejects absent or duplicate occurrences instead of
+inventing an insertion anchor or selecting evidence, and it encodes only finite
+binary64 values for the source physical format and dialect. Thickness and
+location patch identities may compose for the same POINT, while a second patch
+of either kind is rejected without changing the queue. Strict verification
+requires the exact thickness and explicit semantic state on the same raw-record
+ordinal before releasing the inverse. Paired fixtures span AC1009 through
+AC1032 in ASCII and Binary and cover missing/duplicate evidence, wrong family,
+non-finite input, duplicate admission, location composition, cancellation,
+tampering, strict reparse, and byte-identical inverse restoration. Absent-field
+insertion, reset, extrusion/angle updates, mixed insert/update sessions,
+clone/delete, display behavior, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

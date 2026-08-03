@@ -1055,6 +1055,19 @@ remain typed fail-closed outcomes across all nine ASCII/Binary dialect pairs.
 Thickness, extrusion, angle, reset, clone/delete, and POINT `Complete` remain
 open.
 
+M14.3bq adds the second typed existing-record POINT update.
+`DxfPointPatch::SetThickness` replaces one unique explicit group `39` through
+the original ASCII/Binary dialect encoder. Missing or duplicate thickness is
+not selected or silently defaulted. Location and thickness have distinct patch
+identities, may be queued together for the same source-bound POINT, and remain
+separate logical expectations when composed with common-property edits. Strict
+post-image verification requires the exact binary64 value and `Explicit`
+semantic state before exposing the byte-identical inverse. Wrong families,
+non-finite values, duplicate patches, cancellation, tampering, and resource
+limits remain typed fail-closed. Inserting an absent group `39`, reset to zero,
+extrusion/angle updates, mixed insert/update sessions, clone/delete, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

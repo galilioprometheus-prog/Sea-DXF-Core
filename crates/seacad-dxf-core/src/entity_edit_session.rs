@@ -13,7 +13,7 @@ use crate::entity_draft_record::{
     DxfEntityDraftEncodingContext, DxfPointDraftRecordExpectation, encode_entity_draft_record_parts,
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
-use crate::point_edit::plan_point_location_edit;
+use crate::point_edit::{plan_point_location_edit, plan_point_thickness_edit};
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
     DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityCommonColorBookEditIssue,
@@ -322,10 +322,16 @@ struct PendingInsert {
     expectation: DxfPointDraftRecordExpectation,
 }
 
-struct PendingPointLocation {
+enum PendingPointExpectation {
+    Location([crate::DxfDouble; 3]),
+    Thickness(crate::DxfDouble),
+}
+
+struct PendingPointEdit {
     key: DxfEntityKey,
+    kind: DxfPointPatchKind,
     transaction: DxfTransactionPlan,
-    location: [crate::DxfDouble; 3],
+    expectation: PendingPointExpectation,
 }
 
 /// Source-bound batch of entity edits that finishes as one immutable transaction.
@@ -339,7 +345,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     layout_objects: Option<DxfLayoutObjectDirectory>,
     named_symbols: Option<DxfNamedSymbolTableDirectory>,
     pending: Vec<PendingEdit>,
-    pending_point_locations: Vec<PendingPointLocation>,
+    pending_point_edits: Vec<PendingPointEdit>,
     pending_inserts: Vec<PendingInsert>,
 }
 
@@ -375,7 +381,7 @@ impl<'document, 'evidence, 'cancellation>
             layout_objects: None,
             named_symbols: None,
             pending: Vec::new(),
-            pending_point_locations: Vec::new(),
+            pending_point_edits: Vec::new(),
             pending_inserts: Vec::new(),
         })
     }
@@ -388,7 +394,7 @@ impl<'document, 'evidence, 'cancellation>
     #[must_use]
     pub fn queued_edit_count(&self) -> u64 {
         self.pending.len() as u64
-            + self.pending_point_locations.len() as u64
+            + self.pending_point_edits.len() as u64
             + self.pending_inserts.len() as u64
     }
 
@@ -403,7 +409,7 @@ impl<'document, 'evidence, 'cancellation>
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() || !self.pending_point_locations.is_empty() {
+        if !self.pending.is_empty() || !self.pending_point_edits.is_empty() {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::UpdatePending {
                     queued_update_count: u32::try_from(self.queued_update_len()?)
@@ -536,33 +542,60 @@ impl<'document, 'evidence, 'cancellation>
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         let kind = patch.kind();
         if self
-            .pending_point_locations
+            .pending_point_edits
             .iter()
-            .any(|edit| edit.key == key)
+            .any(|edit| edit.key == key && edit.kind == kind)
         {
             return Ok(DxfEntityEditOutcome::Unavailable(
                 DxfEntityEditIssue::Point(DxfPointEditIssue::DuplicatePatch { key, kind }),
             ));
         }
-        let DxfPointPatch::SetLocation { location } = patch;
-        let plan = match plan_point_location_edit(
-            self.document,
-            self.evidence,
-            key,
-            location,
-            self.profile,
-            self.cancellation,
-        )? {
-            Ok(plan) => plan,
-            Err(issue) => {
-                return Ok(DxfEntityEditOutcome::Unavailable(
-                    DxfEntityEditIssue::Point(issue),
-                ));
+        let (transaction, expectation, expected_patch_count) = match patch {
+            DxfPointPatch::SetLocation { location } => {
+                let plan = match plan_point_location_edit(
+                    self.document,
+                    self.evidence,
+                    key,
+                    location,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                let (transaction, location) = plan.into_parts();
+                (transaction, PendingPointExpectation::Location(location), 3)
+            }
+            DxfPointPatch::SetThickness { thickness } => {
+                let plan = match plan_point_thickness_edit(
+                    self.document,
+                    self.evidence,
+                    key,
+                    thickness,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                let (transaction, thickness) = plan.into_parts();
+                (
+                    transaction,
+                    PendingPointExpectation::Thickness(thickness),
+                    1,
+                )
             }
         };
-        let (transaction, location) = plan.into_parts();
         transaction.validate_source_precondition(self.document)?;
-        if transaction.patches().len() != 3 {
+        if transaction.patches().len() != expected_patch_count {
             return Err(invalid_internal_data());
         }
         let next_count = self
@@ -570,14 +603,15 @@ impl<'document, 'evidence, 'cancellation>
             .checked_add(1)
             .ok_or_else(invalid_internal_data)?;
         enforce_edit_limit(self.profile, next_count)?;
-        self.pending_point_locations
+        self.pending_point_edits
             .try_reserve(1)
             .map_err(|_| out_of_memory())?;
         ensure_not_cancelled(self.cancellation)?;
-        self.pending_point_locations.push(PendingPointLocation {
+        self.pending_point_edits.push(PendingPointEdit {
             key,
+            kind,
             transaction,
-            location,
+            expectation,
         });
         Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
             key,
@@ -890,13 +924,13 @@ impl<'document, 'evidence, 'cancellation>
         if !self.pending_inserts.is_empty() {
             return self.finish_insert_batch();
         }
-        let (transaction, pending, point_locations) = self.finish_parts()?;
+        let (transaction, pending, point_edits) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
             .try_reserve_exact(
                 pending
                     .len()
-                    .checked_add(point_locations.len())
+                    .checked_add(point_edits.len())
                     .ok_or_else(invalid_internal_data)?,
             )
             .map_err(|_| out_of_memory())?;
@@ -907,18 +941,28 @@ impl<'document, 'evidence, 'cancellation>
                 edit.expected,
             ));
         }
-        for edit in point_locations {
-            expectations.push(DxfEntityEditExpectation::point_location(
-                edit.key.raw_record_ordinal(),
-                edit.location,
-            ));
+        for edit in point_edits {
+            expectations.push(match edit.expectation {
+                PendingPointExpectation::Location(location) => {
+                    DxfEntityEditExpectation::point_location(
+                        edit.key.raw_record_ordinal(),
+                        location,
+                    )
+                }
+                PendingPointExpectation::Thickness(thickness) => {
+                    DxfEntityEditExpectation::point_thickness(
+                        edit.key.raw_record_ordinal(),
+                        thickness,
+                    )
+                }
+            });
         }
         Ok(DxfEntityEditPlan::new(transaction, expectations))
     }
 
     fn finish_insert_batch(mut self) -> Result<DxfEntityEditPlan, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
-        if !self.pending.is_empty() || !self.pending_point_locations.is_empty() {
+        if !self.pending.is_empty() || !self.pending_point_edits.is_empty() {
             return Err(invalid_internal_data());
         }
         let handle_count =
@@ -1003,14 +1047,7 @@ impl<'document, 'evidence, 'cancellation>
 
     fn finish_parts(
         mut self,
-    ) -> Result<
-        (
-            DxfTransactionPlan,
-            Vec<PendingEdit>,
-            Vec<PendingPointLocation>,
-        ),
-        DxfError,
-    > {
+    ) -> Result<(DxfTransactionPlan, Vec<PendingEdit>, Vec<PendingPointEdit>), DxfError> {
         ensure_not_cancelled(self.cancellation)?;
         self.pending.sort_unstable_by_key(|edit| {
             (
@@ -1040,23 +1077,23 @@ impl<'document, 'evidence, 'cancellation>
             cursor = end;
         }
         let common = builder.finish(self.cancellation)?;
-        let transaction = if self.pending_point_locations.is_empty() {
+        let transaction = if self.pending_point_edits.is_empty() {
             common
         } else {
             let mut plans = Vec::new();
             plans
-                .try_reserve_exact(self.pending_point_locations.len().saturating_add(1))
+                .try_reserve_exact(self.pending_point_edits.len().saturating_add(1))
                 .map_err(|_| out_of_memory())?;
             if !common.patches().is_empty() {
                 plans.push(&common);
             }
-            for edit in &self.pending_point_locations {
+            for edit in &self.pending_point_edits {
                 plans.push(&edit.transaction);
             }
             self.document
                 .compose_transaction_plans(&plans, self.profile, self.cancellation)?
         };
-        Ok((transaction, self.pending, self.pending_point_locations))
+        Ok((transaction, self.pending, self.pending_point_edits))
     }
 
     fn set_explicit(
@@ -1180,7 +1217,7 @@ impl<'document, 'evidence, 'cancellation>
     fn queued_update_len(&self) -> Result<usize, DxfError> {
         self.pending
             .len()
-            .checked_add(self.pending_point_locations.len())
+            .checked_add(self.pending_point_edits.len())
             .ok_or_else(invalid_internal_data)
     }
 }

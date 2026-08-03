@@ -82,10 +82,16 @@ pub(crate) struct DxfPointLocationEditExpectation {
     location: [DxfDouble; 3],
 }
 
+pub(crate) struct DxfPointThicknessEditExpectation {
+    raw_record_ordinal: u64,
+    thickness: DxfDouble,
+}
+
 pub(crate) enum DxfEntityEditExpectation {
     Field(DxfEntityFieldEditExpectation),
     PointInsert(DxfPointInsertExpectation),
     PointLocation(DxfPointLocationEditExpectation),
+    PointThickness(DxfPointThicknessEditExpectation),
 }
 
 impl DxfEntityEditExpectation {
@@ -119,6 +125,13 @@ impl DxfEntityEditExpectation {
         Self::PointLocation(DxfPointLocationEditExpectation {
             raw_record_ordinal,
             location,
+        })
+    }
+
+    pub(crate) const fn point_thickness(raw_record_ordinal: u64, thickness: DxfDouble) -> Self {
+        Self::PointThickness(DxfPointThicknessEditExpectation {
+            raw_record_ordinal,
+            thickness,
         })
     }
 }
@@ -169,6 +182,9 @@ pub enum DxfEntityEditVerificationIssue {
         raw_record_ordinal: u64,
     },
     UpdatedPointLocationMismatch {
+        raw_record_ordinal: u64,
+    },
+    UpdatedPointThicknessMismatch {
         raw_record_ordinal: u64,
     },
     MissingEntity {
@@ -571,6 +587,9 @@ fn verify_expectation(
         DxfEntityEditExpectation::PointLocation(expectation) => {
             verify_point_location(document, expectation, cancellation)
         }
+        DxfEntityEditExpectation::PointThickness(expectation) => {
+            verify_point_thickness(document, expectation, cancellation)
+        }
     }
 }
 
@@ -590,6 +609,31 @@ fn verify_point_location(
     if point.location_value() != Some(expectation.location) {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointLocationMismatch {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    }
+    Ok(None)
+}
+
+fn verify_point_thickness(
+    document: DxfRawDocumentView<'_>,
+    expectation: &DxfPointThicknessEditExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(expectation.raw_record_ordinal)? else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointSemanticsMissing {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    };
+    if point.thickness_value() != Some(expectation.thickness)
+        || point.thickness().state() != DxfSemanticValueState::Explicit
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointThicknessMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,
             },
         ));

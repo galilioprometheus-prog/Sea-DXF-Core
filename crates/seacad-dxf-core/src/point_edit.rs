@@ -3,11 +3,11 @@
 use std::io;
 
 use crate::{
-    DxfAcadVersionState, DxfBasicGeometryComponentCardState, DxfBasicGeometryComponentRole,
-    DxfCancellationToken, DxfDouble, DxfEntityClassification, DxfEntityFieldEvidenceDirectory,
-    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder, DxfEntityKey,
-    DxfEntityTopic, DxfError, DxfIoOperation, DxfRawDocumentView, DxfResourceProfile,
-    DxfTransactionPlan,
+    DxfAcadVersion, DxfAcadVersionState, DxfBasicGeometryComponentCardState,
+    DxfBasicGeometryComponentRole, DxfCancellationToken, DxfDouble, DxfEntityClassification,
+    DxfEntityFieldEvidenceDirectory, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue,
+    DxfEntityGroupEncoder, DxfEntityKey, DxfEntityRef, DxfEntityTopic, DxfError, DxfIoOperation,
+    DxfRawDocumentView, DxfResourceProfile, DxfTransactionPlan,
 };
 
 /// One typed POINT-family update.
@@ -15,6 +15,7 @@ use crate::{
 #[non_exhaustive]
 pub enum DxfPointPatch {
     SetLocation { location: [DxfDouble; 3] },
+    SetThickness { thickness: DxfDouble },
 }
 
 impl DxfPointPatch {
@@ -24,9 +25,15 @@ impl DxfPointPatch {
     }
 
     #[must_use]
+    pub const fn set_thickness(thickness: DxfDouble) -> Self {
+        Self::SetThickness { thickness }
+    }
+
+    #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         match self {
             Self::SetLocation { .. } => DxfPointPatchKind::Location,
+            Self::SetThickness { .. } => DxfPointPatchKind::Thickness,
         }
     }
 }
@@ -36,6 +43,7 @@ impl DxfPointPatch {
 #[non_exhaustive]
 pub enum DxfPointPatchKind {
     Location,
+    Thickness,
 }
 
 /// Typed reason why a POINT-family update was rejected.
@@ -63,10 +71,25 @@ pub enum DxfPointEditIssue {
         role: DxfBasicGeometryComponentRole,
         occurrence_count: u32,
     },
+    MissingThickness,
+    DuplicateThickness {
+        occurrence_count: u32,
+    },
     Encoding {
         group_code: i16,
         issue: DxfEntityGroupEncodeIssue,
     },
+}
+
+pub(crate) struct DxfPointThicknessEditPlan {
+    transaction: DxfTransactionPlan,
+    thickness: DxfDouble,
+}
+
+impl DxfPointThicknessEditPlan {
+    pub(crate) fn into_parts(self) -> (DxfTransactionPlan, DxfDouble) {
+        (self.transaction, self.thickness)
+    }
 }
 
 pub(crate) struct DxfPointLocationEditPlan {
@@ -89,24 +112,9 @@ pub(crate) fn plan_point_location_edit(
     cancellation: &DxfCancellationToken,
 ) -> Result<Result<DxfPointLocationEditPlan, DxfPointEditIssue>, DxfError> {
     ensure_not_cancelled(cancellation)?;
-    if evidence.source_id() != document.source_id() {
-        return Err(DxfError::SourceIdentityMismatch {
-            expected: document.source_id(),
-            observed: evidence.source_id(),
-        });
-    }
-    let Some(entity) = evidence.entity_directory().entity_for_key(key)? else {
-        return Ok(Err(DxfPointEditIssue::MissingEntity { key }));
-    };
-    if entity.classification() != DxfEntityClassification::Canonical(DxfEntityTopic::POINT) {
-        return Ok(Err(DxfPointEditIssue::WrongClassification {
-            key,
-            observed: entity.classification(),
-        }));
-    }
-    let version = match document.acad_version_report().state() {
-        DxfAcadVersionState::Supported(version) => version,
-        state => return Ok(Err(DxfPointEditIssue::VersionUnavailable { state })),
+    let (entity, version) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
     };
     let cards = document.basic_geometry_card_directory(cancellation)?;
     let roles = [
@@ -162,6 +170,98 @@ pub(crate) fn plan_point_location_edit(
         transaction,
         location,
     }))
+}
+
+pub(crate) fn plan_point_thickness_edit(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    thickness: DxfDouble,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointThicknessEditPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let (entity, version) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let card = cards
+        .card_for_role(
+            entity.record().ordinal(),
+            DxfBasicGeometryComponentRole::Thickness,
+        )
+        .ok_or_else(invalid_internal_data)?;
+    match card.state() {
+        DxfBasicGeometryComponentCardState::Absent => {
+            return Ok(Err(DxfPointEditIssue::MissingThickness));
+        }
+        DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+            return Ok(Err(DxfPointEditIssue::DuplicateThickness {
+                occurrence_count,
+            }));
+        }
+        DxfBasicGeometryComponentCardState::Unique => {}
+    }
+    let members = cards
+        .members_for_card(card.ordinal())
+        .ok_or_else(invalid_internal_data)?;
+    let [member] = members else {
+        return Err(invalid_internal_data());
+    };
+    let component = cards
+        .component_for_member(*member)
+        .ok_or_else(invalid_internal_data)?;
+    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
+    let encoded = match encoder.encode_raw(
+        39,
+        DxfEntityFieldWireType::Double,
+        crate::DxfEntityEditValue::Double(thickness),
+        cancellation,
+    )? {
+        Ok(encoded) => encoded,
+        Err(issue) => {
+            return Ok(Err(DxfPointEditIssue::Encoding {
+                group_code: 39,
+                issue,
+            }));
+        }
+    };
+    let mut builder = document.transaction_plan_builder(profile)?;
+    builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointThicknessEditPlan {
+        transaction,
+        thickness,
+    }))
+}
+
+fn point_edit_context(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+) -> Result<Result<(DxfEntityRef, DxfAcadVersion), DxfPointEditIssue>, DxfError> {
+    if evidence.source_id() != document.source_id() {
+        return Err(DxfError::SourceIdentityMismatch {
+            expected: document.source_id(),
+            observed: evidence.source_id(),
+        });
+    }
+    let Some(entity) = evidence.entity_directory().entity_for_key(key)? else {
+        return Ok(Err(DxfPointEditIssue::MissingEntity { key }));
+    };
+    if entity.classification() != DxfEntityClassification::Canonical(DxfEntityTopic::POINT) {
+        return Ok(Err(DxfPointEditIssue::WrongClassification {
+            key,
+            observed: entity.classification(),
+        }));
+    }
+    let version = match document.acad_version_report().state() {
+        DxfAcadVersionState::Supported(version) => version,
+        state => return Ok(Err(DxfPointEditIssue::VersionUnavailable { state })),
+    };
+    Ok(Ok((entity, version)))
 }
 
 fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
