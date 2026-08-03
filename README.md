@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bx. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3by. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -241,8 +241,12 @@ the documented `(0,0,1)` value with all three components `Defaulted`.
 POINT UCS X-axis angle group `50` can now be replaced when unique or inserted
 after the last unambiguous extrusion, thickness, or location anchor. It has a
 distinct logical patch identity, preserves ASCII endings or Binary framing,
-and verifies the exact value in the `Explicit` state. Angle reset, mixed entity
-insert/update sessions, clone, and delete remain open.
+and verifies the exact value in the `Explicit` state. The same patch identity
+can reset a unique explicit angle by deleting group `50`; an absent angle is an
+`AlreadyImplicit` no-op that does not reserve the patch identity. Reset
+verification requires the documented zero value in the `Defaulted` state, and
+the inverse restores every original byte. Mixed entity insert/update sessions,
+clone, and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

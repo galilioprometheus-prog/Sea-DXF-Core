@@ -1763,6 +1763,306 @@ fn point_ucs_x_axis_angle_rejects_invalid_requests_and_verifies_exactly()
 }
 
 #[test]
+fn point_ucs_x_axis_angle_reset_is_atomic_across_every_ascii_binary_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, PointShape::Complete)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                key,
+                DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle()),
+            )?
+            else {
+                return Err(io::Error::other("POINT UCS X-axis angle reset").into());
+            };
+            assert_eq!(receipt.key(), key);
+            assert_eq!(receipt.kind(), DxfPointPatchKind::UcsXAxisAngle);
+            assert_eq!(receipt.disposition(), DxfEntityEditDisposition::Reset);
+            assert_eq!(receipt.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            let [patch] = plan.transaction().patches() else {
+                return Err(io::Error::other("one POINT angle reset patch").into());
+            };
+            assert!(!patch.source_span().is_empty());
+            assert_eq!(
+                plan.transaction()
+                    .replacement_bytes_for_patch_ordinal(patch.ordinal()),
+                Some(&[][..])
+            );
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let geometry = post.basic_geometry_semantic_directory(&token())?;
+            let point = geometry
+                .point_for_raw_record(key.raw_record_ordinal())?
+                .ok_or_else(|| io::Error::other("reset POINT angle semantics"))?;
+            assert_eq!(
+                point.ucs_x_axis_angle_value(),
+                Some(DxfDouble::from_f64(0.0))
+            );
+            assert_eq!(
+                point.ucs_x_axis_angle().state(),
+                DxfSemanticValueState::Defaulted
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified POINT angle reset").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 1);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_reset_absent_is_noop_and_does_not_reserve_patch_kind()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::MissingAngleWithExtrusion(0b101),
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    let DxfEntityEditOutcome::PointApplied(reset) = session.update(
+        key,
+        DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle()),
+    )?
+    else {
+        return Err(io::Error::other("implicit POINT angle reset").into());
+    };
+    assert_eq!(
+        reset.disposition(),
+        DxfEntityEditDisposition::AlreadyImplicit
+    );
+    assert_eq!(reset.queued_edit_count(), 0);
+    assert_eq!(session.queued_edit_count(), 0);
+
+    let DxfEntityEditOutcome::PointApplied(set) = session.update(
+        key,
+        DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE)),
+    )?
+    else {
+        return Err(io::Error::other("set after no-op angle reset").into());
+    };
+    assert_eq!(set.disposition(), DxfEntityEditDisposition::Inserted);
+    assert_eq!(set.queued_edit_count(), 1);
+
+    let noop_cancellation = token();
+    let mut noop_session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &noop_cancellation)?;
+    assert!(matches!(
+        noop_session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::PointApplied(receipt)
+            if receipt.disposition() == DxfEntityEditDisposition::AlreadyImplicit
+    ));
+    let noop_plan = noop_session.finish_verifiable()?;
+    assert_eq!(noop_plan.edit_count(), 0);
+    assert!(noop_plan.transaction().patches().is_empty());
+    assert_eq!(materialize(&bytes, noop_plan.transaction())?, bytes);
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_reset_rejects_ambiguous_wrong_and_conflicting_requests()
+-> Result<(), Box<dyn Error>> {
+    let malformed = String::from_utf8(ascii_fixture(DxfAcadVersion::Ac1032, PointShape::Complete))?
+        .replace("50\n30\n", "50\n30\n50\n31\n")
+        .into_bytes();
+    let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
+    let malformed_document = open_ascii(&malformed_source)?;
+    let malformed_view = DxfRawDocumentView::from(&malformed_document);
+    let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
+    let malformed_key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
+    let malformed_cancellation = token();
+    let mut malformed_session = malformed_view.entity_edit_session(
+        &malformed_evidence,
+        DxfResourceProfile::Safe,
+        &malformed_cancellation,
+    )?;
+    assert!(matches!(
+        malformed_session.update(
+            malformed_key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateUcsXAxisAngle {
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(malformed_session.queued_edit_count(), 0);
+
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::Complete,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let point_key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let line_key = key_for_topic(&evidence, DxfEntityTopic::LINE)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            line_key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::WrongClassification { key, .. }
+        )) if key == line_key
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::PointApplied(receipt)
+            if receipt.disposition() == DxfEntityEditDisposition::Reset
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_ucs_x_axis_angle(UPDATED_ANGLE))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicatePatch {
+                kind: DxfPointPatchKind::UcsXAxisAngle,
+                ..
+            }
+        ))
+    ));
+    assert_eq!(session.queued_edit_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn point_ucs_x_axis_angle_reset_verifier_cancellation_and_crlf_fail_closed()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::Complete,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    let tampered = replace_once(&output, b"0\nLINE\n", b"50\n0.0\n")?;
+    let tampered_source = DxfMemorySource::new(&tampered, DxfResourceProfile::Safe)?;
+    let tampered_document = open_ascii(&tampered_source)?;
+    assert!(matches!(
+        plan.verify_post_image(
+            view,
+            DxfRawDocumentView::from(&tampered_document),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        seacad_dxf_core::DxfEntityEditVerificationOutcome::Unavailable(
+            seacad_dxf_core::DxfEntityEditVerificationIssue::UpdatedPointUcsXAxisAngleMismatch {
+                raw_record_ordinal
+            }
+        ) if raw_record_ordinal == key.raw_record_ordinal()
+    ));
+
+    let cancelled = token();
+    let mut cancelled_session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancelled)?;
+    cancelled.cancel();
+    assert!(matches!(
+        cancelled_session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert_eq!(cancelled_session.queued_edit_count(), 0);
+
+    let crlf = String::from_utf8(bytes)?.replace('\n', "\r\n").into_bytes();
+    let crlf_source = DxfMemorySource::new(&crlf, DxfResourceProfile::Safe)?;
+    let crlf_document = open_ascii(&crlf_source)?;
+    let crlf_view = DxfRawDocumentView::from(&crlf_document);
+    let crlf_evidence = crlf_view.entity_field_evidence_directory(&token())?;
+    let crlf_key = key_for_topic(&crlf_evidence, DxfEntityTopic::POINT)?;
+    let crlf_cancellation = token();
+    let mut crlf_session = crlf_view.entity_edit_session(
+        &crlf_evidence,
+        DxfResourceProfile::Safe,
+        &crlf_cancellation,
+    )?;
+    assert!(matches!(
+        crlf_session.update(
+            crlf_key,
+            DxfEntityPatch::Point(DxfPointPatch::reset_ucs_x_axis_angle())
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    let crlf_plan = crlf_session.finish_verifiable()?;
+    let crlf_output = materialize(&crlf, crlf_plan.transaction())?;
+    assert!(
+        !crlf_output
+            .windows(b"50\r\n30\r\n".len())
+            .any(|window| window == b"50\r\n30\r\n")
+    );
+    let crlf_output_source = DxfMemorySource::new(&crlf_output, DxfResourceProfile::Safe)?;
+    let crlf_output_document = open_ascii(&crlf_output_source)?;
+    let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(crlf_journal) = crlf_plan
+        .verify_post_image(
+            crlf_view,
+            DxfRawDocumentView::from(&crlf_output_document),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?
+    else {
+        return Err(io::Error::other("verified CRLF angle reset").into());
+    };
+    assert_eq!(
+        materialize(&crlf_output, crlf_journal.inverse_plan())?,
+        crlf
+    );
+    Ok(())
+}
+
+#[test]
 fn point_extrusion_partial_completion_preserves_crlf_and_rejects_source_reordering()
 -> Result<(), Box<dyn Error>> {
     let bytes = String::from_utf8(ascii_fixture(

@@ -1154,6 +1154,17 @@ all eight extrusion-mask insertion states with exact semantic verification and
 byte-identical inverse restoration. Angle reset, mixed entity insert/update
 sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3by adds reset-to-default behavior for the POINT UCS X-axis angle patch
+identity. `DxfPointPatch::ResetUcsXAxisAngle` deletes one unique explicit group
+`50`; absent evidence returns `AlreadyImplicit`, queues nothing, and leaves a
+later set admissible. Duplicate evidence rejects the request before a
+transaction escapes, and set/reset share duplicate-patch admission. Post-image
+verification requires the documented zero value with `Defaulted` state rather
+than accepting an explicit zero. All supported ASCII/Binary dialects pass
+strict reparse, semantic verification, and byte-identical inverse restoration;
+focused coverage also retains CRLF framing. Mixed entity insert/update
+sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

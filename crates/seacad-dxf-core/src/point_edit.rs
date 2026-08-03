@@ -23,6 +23,7 @@ pub enum DxfPointPatch {
     SetExtrusion { extrusion: [DxfDouble; 3] },
     ResetExtrusion,
     SetUcsXAxisAngle { angle: DxfDouble },
+    ResetUcsXAxisAngle,
 }
 
 impl DxfPointPatch {
@@ -57,12 +58,19 @@ impl DxfPointPatch {
     }
 
     #[must_use]
+    pub const fn reset_ucs_x_axis_angle() -> Self {
+        Self::ResetUcsXAxisAngle
+    }
+
+    #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         match self {
             Self::SetLocation { .. } => DxfPointPatchKind::Location,
             Self::SetThickness { .. } | Self::ResetThickness => DxfPointPatchKind::Thickness,
             Self::SetExtrusion { .. } | Self::ResetExtrusion => DxfPointPatchKind::Extrusion,
-            Self::SetUcsXAxisAngle { .. } => DxfPointPatchKind::UcsXAxisAngle,
+            Self::SetUcsXAxisAngle { .. } | Self::ResetUcsXAxisAngle => {
+                DxfPointPatchKind::UcsXAxisAngle
+            }
         }
     }
 }
@@ -222,6 +230,11 @@ impl DxfPointUcsXAxisAngleEditPlan {
 pub(crate) enum DxfPointUcsXAxisAngleSetDisposition {
     Inserted,
     Replaced,
+}
+
+pub(crate) enum DxfPointUcsXAxisAngleResetPlan {
+    AlreadyImplicit,
+    Planned(DxfTransactionPlan),
 }
 
 impl DxfPointLocationEditPlan {
@@ -719,6 +732,55 @@ pub(crate) fn plan_point_ucs_x_axis_angle_edit(
         angle,
         disposition,
     }))
+}
+
+pub(crate) fn plan_point_ucs_x_axis_angle_reset(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointUcsXAxisAngleResetPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let (entity, _) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let card = cards
+        .card_for_role(
+            entity.record().ordinal(),
+            DxfBasicGeometryComponentRole::UcsXAxisAngle,
+        )
+        .ok_or_else(invalid_internal_data)?;
+    let group = match card.state() {
+        DxfBasicGeometryComponentCardState::Absent => {
+            ensure_not_cancelled(cancellation)?;
+            return Ok(Ok(DxfPointUcsXAxisAngleResetPlan::AlreadyImplicit));
+        }
+        DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+            return Ok(Err(DxfPointEditIssue::DuplicateUcsXAxisAngle {
+                occurrence_count,
+            }));
+        }
+        DxfBasicGeometryComponentCardState::Unique => {
+            let members = cards
+                .members_for_card(card.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            let [member] = members else {
+                return Err(invalid_internal_data());
+            };
+            cards
+                .component_for_member(*member)
+                .ok_or_else(invalid_internal_data)?
+                .group()
+        }
+    };
+    let mut builder = document.transaction_plan_builder(profile)?;
+    builder.replace_raw_span(group.full_span(), &[], cancellation)?;
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointUcsXAxisAngleResetPlan::Planned(transaction)))
 }
 
 fn ensure_canonical_extrusion_order(

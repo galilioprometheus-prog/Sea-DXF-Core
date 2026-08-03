@@ -2609,5 +2609,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dialect pairs. Angle reset, mixed insert/update sessions, clone/delete, and
     POINT `Complete` remain open.
 
+    M14.3by adds `DxfPointPatch::ResetUcsXAxisAngle` under the existing angle
+    patch identity. One unique explicit group `50` becomes one exact deletion
+    patch; an absent angle returns `AlreadyImplicit`, queues no edit, and does
+    not reserve the angle patch kind. Duplicate angle evidence fails typed
+    before a transaction escapes, while a queued set or reset blocks a second
+    angle request. Post-image verification requires both the documented zero
+    value and `Defaulted` semantic state, so an explicit zero does not satisfy
+    reset. Every ASCII/Binary Core dialect pair passes strict reparse,
+    verification, and byte-identical inverse restoration. Mixed entity
+    insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

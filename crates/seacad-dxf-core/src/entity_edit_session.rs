@@ -15,9 +15,10 @@ use crate::entity_draft_record::{
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::point_edit::{
     DxfPointExtrusionResetPlan, DxfPointExtrusionSetDisposition, DxfPointThicknessResetPlan,
-    DxfPointThicknessSetDisposition, DxfPointUcsXAxisAngleSetDisposition,
-    plan_point_extrusion_edit, plan_point_extrusion_reset, plan_point_location_edit,
-    plan_point_thickness_edit, plan_point_thickness_reset, plan_point_ucs_x_axis_angle_edit,
+    DxfPointThicknessSetDisposition, DxfPointUcsXAxisAngleResetPlan,
+    DxfPointUcsXAxisAngleSetDisposition, plan_point_extrusion_edit, plan_point_extrusion_reset,
+    plan_point_location_edit, plan_point_thickness_edit, plan_point_thickness_reset,
+    plan_point_ucs_x_axis_angle_edit, plan_point_ucs_x_axis_angle_reset,
 };
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
@@ -340,6 +341,7 @@ enum PendingPointExpectation {
     Extrusion([crate::DxfDouble; 3]),
     ExtrusionReset,
     UcsXAxisAngle(crate::DxfDouble),
+    UcsXAxisAngleReset,
 }
 
 struct PendingPointEdit {
@@ -751,6 +753,39 @@ impl<'document, 'evidence, 'cancellation>
                     disposition,
                 )
             }
+            DxfPointPatch::ResetUcsXAxisAngle => {
+                let plan = match plan_point_ucs_x_axis_angle_reset(
+                    self.document,
+                    self.evidence,
+                    key,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                match plan {
+                    DxfPointUcsXAxisAngleResetPlan::AlreadyImplicit => {
+                        return Ok(DxfEntityEditOutcome::PointApplied(DxfPointEditReceipt {
+                            key,
+                            kind,
+                            disposition: DxfEntityEditDisposition::AlreadyImplicit,
+                            queued_edit_count: u32::try_from(self.queued_update_len()?)
+                                .map_err(|_| invalid_internal_data())?,
+                        }));
+                    }
+                    DxfPointUcsXAxisAngleResetPlan::Planned(transaction) => (
+                        transaction,
+                        PendingPointExpectation::UcsXAxisAngleReset,
+                        1,
+                        DxfEntityEditDisposition::Reset,
+                    ),
+                }
+            }
         };
         transaction.validate_source_precondition(self.document)?;
         if transaction.patches().len() != expected_patch_count {
@@ -1130,6 +1165,11 @@ impl<'document, 'evidence, 'cancellation>
                     DxfEntityEditExpectation::point_ucs_x_axis_angle(
                         edit.key.raw_record_ordinal(),
                         angle,
+                    )
+                }
+                PendingPointExpectation::UcsXAxisAngleReset => {
+                    DxfEntityEditExpectation::point_ucs_x_axis_angle_reset(
+                        edit.key.raw_record_ordinal(),
                     )
                 }
             });

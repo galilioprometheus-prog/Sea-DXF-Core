@@ -94,7 +94,7 @@ pub(crate) struct DxfPointExtrusionEditExpectation {
 
 pub(crate) struct DxfPointUcsXAxisAngleEditExpectation {
     raw_record_ordinal: u64,
-    angle: DxfDouble,
+    expected: DxfPointUcsXAxisAngleExpected,
 }
 
 pub(crate) enum DxfPointThicknessExpected {
@@ -105,6 +105,11 @@ pub(crate) enum DxfPointThicknessExpected {
 pub(crate) enum DxfPointExtrusionExpected {
     Explicit([DxfDouble; 3]),
     Defaulted,
+}
+
+pub(crate) enum DxfPointUcsXAxisAngleExpected {
+    Explicit(DxfDouble),
+    DefaultedZero,
 }
 
 pub(crate) enum DxfEntityEditExpectation {
@@ -184,7 +189,14 @@ impl DxfEntityEditExpectation {
     pub(crate) const fn point_ucs_x_axis_angle(raw_record_ordinal: u64, angle: DxfDouble) -> Self {
         Self::PointUcsXAxisAngle(DxfPointUcsXAxisAngleEditExpectation {
             raw_record_ordinal,
-            angle,
+            expected: DxfPointUcsXAxisAngleExpected::Explicit(angle),
+        })
+    }
+
+    pub(crate) const fn point_ucs_x_axis_angle_reset(raw_record_ordinal: u64) -> Self {
+        Self::PointUcsXAxisAngle(DxfPointUcsXAxisAngleEditExpectation {
+            raw_record_ordinal,
+            expected: DxfPointUcsXAxisAngleExpected::DefaultedZero,
         })
     }
 }
@@ -766,9 +778,17 @@ fn verify_point_ucs_x_axis_angle(
             },
         ));
     };
-    if point.ucs_x_axis_angle_value() != Some(expectation.angle)
-        || point.ucs_x_axis_angle().state() != DxfSemanticValueState::Explicit
-    {
+    let matches = match expectation.expected {
+        DxfPointUcsXAxisAngleExpected::Explicit(angle) => {
+            point.ucs_x_axis_angle_value() == Some(angle)
+                && point.ucs_x_axis_angle().state() == DxfSemanticValueState::Explicit
+        }
+        DxfPointUcsXAxisAngleExpected::DefaultedZero => {
+            point.ucs_x_axis_angle_value() == Some(DxfDouble::from_f64(0.0))
+                && point.ucs_x_axis_angle().state() == DxfSemanticValueState::Defaulted
+        }
+    };
+    if !matches {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointUcsXAxisAngleMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,
