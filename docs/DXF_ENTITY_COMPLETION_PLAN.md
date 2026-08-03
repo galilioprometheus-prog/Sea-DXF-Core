@@ -1358,6 +1358,19 @@ layer-name resolution, per-entity 16-KiB accounting, application semantics,
 group-1005 target resolution/remap, clone/write, and POINT `Complete` remain
 open.
 
+M14.3cq resolves generic XDATA group-1003 values against the exact LAYER symbol
+table before capacity accounting. Every layer occurrence receives one stable
+source-bound result: unique target, missing, or ambiguous target count. A
+sorted SHA-256 index narrows candidates, followed by authoritative byte-exact
+source-span comparison. Only matching records with exactly one group-2 name in
+a completely closed LAYER table are admitted; near-case, wrong-table,
+malformed-record, and unclosed-table evidence fails closed. All nine
+ASCII/Binary dialect pairs cover application values and orphans, exact and
+near-case matches, duplicate targets, source identity, cancellation, lookup
+bounds, compact metadata, and non-disclosing debug output. Per-entity 16-KiB
+accounting, coordinate transforms, application semantics, group-1005 target
+resolution/remap, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

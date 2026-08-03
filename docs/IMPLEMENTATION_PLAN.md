@@ -2804,5 +2804,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     16-KiB accounting, payload semantics, handle target resolution/remap,
     clone/write, and POINT `Complete` remain open.
 
+    M14.3cq resolves every retained generic XDATA group-1003 occurrence against
+    exact group-2 names admitted from completely closed LAYER tables. A sorted
+    SHA-256 index bounds candidate selection, while byte-exact source-span
+    comparison remains authoritative and collision safe. Unique, missing, and
+    ambiguous results remain typed; near-case, wrong-table, multi-name, and
+    unclosed-table evidence fails closed. Paired ASCII and Binary fixtures
+    cover every Core dialect, application/orphan context, source identity,
+    cancellation, lookup limits, compact metadata, and non-disclosing debug
+    output. Per-entity 16-KiB accounting, coordinate transforms, payload
+    semantics, handle target resolution/remap, clone/write, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

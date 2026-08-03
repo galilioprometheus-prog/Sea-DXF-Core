@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cp can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cq can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1422,6 +1422,17 @@ application changes, entity changes, and source changes cannot be bridged. All
 nine Core dialects have ASCII/Binary parity. Transformation application,
 layer-name resolution, per-entity 16-KiB accounting, payload semantics, handle
 target resolution/remap, clone/write, and POINT `Complete` remain open.
+
+M14.3cq adds `DxfEntityXDataLayerResolutionDirectory`. Every retained
+group-1003 value, including orphan evidence, resolves by exact source bytes
+against group-2 names admitted only from completely closed LAYER tables. A
+sorted SHA-256 index bounds candidate selection; byte-for-byte source-span
+comparison remains authoritative and collision safe. Unique, missing, and
+ambiguous targets are distinct. Near-case names, wrong table kinds, malformed
+multi-name records, and unclosed tables fail closed. All nine Core dialects
+have ASCII/Binary parity. Per-entity 16-KiB accounting, coordinate transforms,
+payload semantics, handle target resolution/remap, clone/write, and POINT
+`Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
