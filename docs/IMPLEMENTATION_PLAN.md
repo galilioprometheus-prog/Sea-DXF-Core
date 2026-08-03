@@ -2899,5 +2899,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     semantics, transaction composition, clone/write, and POINT `Complete`
     remain open.
 
+    M14.3cx binds every M14.3cw ready byte group to the exact complete source
+    group-1005 span that it supersedes. `DxfEntityXDataHandleReplacementPatch`
+    follows the owned destination, remap, resolution, and typed directories
+    without copying payload evidence, retaining the target plus source and
+    destination identities. Patch byte lookup revalidates the complete binding;
+    foreign and unavailable entries expose neither patch nor bytes. All four
+    format pairings and nine Core dialects cover span association, foreign
+    rejection, cancellation, lookup bounds, and debug redaction. Application-
+    specific payload semantics, transaction composition, clone/write, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

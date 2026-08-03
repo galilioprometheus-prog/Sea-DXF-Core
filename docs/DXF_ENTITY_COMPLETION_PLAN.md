@@ -1453,6 +1453,16 @@ format pairs cover all nine Core dialects plus cancellation and metadata bounds.
 Application semantics, transaction composition, clone/write, and POINT
 `Complete` remain open.
 
+M14.3cx publishes one compact replacement patch only for each M14.3cw ready
+entry. It traces the owned destination/remap/resolution/typed chain back to the
+exact source group-1005 occurrence and complete raw span, then binds that group,
+target, replacement ordinal, source identity, and destination identity. Byte
+lookup revalidates the complete patch; foreign or unavailable entries cannot
+release bytes. The binding passes all source/destination format pairs and nine
+Core dialects with cancellation, lookup bounds, and debug redaction. Application
+semantics, transaction composition, clone/write, and POINT `Complete` remain
+open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -4,9 +4,10 @@ use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfEntityXDataHandleDestinationState, DxfEntityXDataHandleRemap,
     DxfEntityXDataHandleRemapState, DxfEntityXDataHandleReplacementDirectory,
-    DxfEntityXDataHandleReplacementEntry, DxfEntityXDataHandleReplacementState, DxfError,
-    DxfHandle, DxfHandleParseIssue, DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView,
-    DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+    DxfEntityXDataHandleReplacementEntry, DxfEntityXDataHandleReplacementPatch,
+    DxfEntityXDataHandleReplacementState, DxfError, DxfHandle, DxfHandleParseIssue,
+    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
+    NoopDxfReadObserver,
 };
 
 #[test]
@@ -59,7 +60,26 @@ fn unavailable_destinations_publish_no_replacement_bytes() -> Result<(), Box<dyn
             directory.replacement_bytes_for_entry(entry).is_some(),
             index == 0
         );
+        assert_eq!(directory.patch_for_entry(entry).is_some(), index == 0);
     }
+    let patch = directory
+        .patch_for_entry(directory.entries()[0])
+        .ok_or(io::Error::other("ready patch"))?;
+    assert_eq!(patch.source_id(), directory.source_id());
+    assert_eq!(patch.destination_id(), directory.destination_id());
+    assert_eq!(patch.replacement_ordinal(), 0);
+    assert_eq!(patch.source_group().group_code().value(), 1005);
+    assert_eq!(patch.target(), handle(u64::MAX));
+    let source_len = usize::try_from(patch.source_group().full_span().len())?;
+    let mut source_group = vec![0; source_len];
+    source
+        .view()
+        .read_span(patch.source_group().full_span(), &mut source_group)?;
+    assert_eq!(source_group, b"1005\n1\n");
+    assert_eq!(
+        directory.replacement_bytes_for_patch(patch),
+        directory.replacement_bytes_for_entry(directory.entries()[0])
+    );
     assert_eq!(directory.entry(u64::MAX), None);
     Ok(())
 }
@@ -69,6 +89,7 @@ fn directory_is_cancellable_dual_source_bound_bounded_and_non_disclosing()
 -> Result<(), Box<dyn Error>> {
     assert_send_sync::<DxfEntityXDataHandleReplacementDirectory>();
     assert_copy::<DxfEntityXDataHandleReplacementEntry>();
+    assert_copy::<DxfEntityXDataHandleReplacementPatch>();
     assert!(size_of::<DxfEntityXDataHandleReplacementEntry>() <= 160);
     let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
     let destination_bytes =
@@ -110,6 +131,10 @@ fn directory_is_cancellable_dual_source_bound_bounded_and_non_disclosing()
         directory.replacement_bytes_for_entry(other.entries()[0]),
         None
     );
+    let other_patch = other
+        .patch_for_entry(other.entries()[0])
+        .ok_or(io::Error::other("other ready patch"))?;
+    assert_eq!(directory.replacement_bytes_for_patch(other_patch), None);
     let debug = format!("{directory:?}");
     assert!(!debug.contains("SECRET_REPLACEMENT_SOURCE"));
     assert!(!debug.contains("1005\\nFFFFFFFFFFFFFFFF"));
@@ -149,6 +174,17 @@ fn assert_directory(
     );
     assert_eq!(
         directory.replacement_bytes_for_entry(ready),
+        Some(expected.as_slice())
+    );
+    let patch = directory
+        .patch_for_entry(ready)
+        .ok_or(io::Error::other("matrix patch"))?;
+    assert_eq!(patch.source_id(), directory.source_id());
+    assert_eq!(patch.destination_id(), directory.destination_id());
+    assert_eq!(patch.source_group().group_code().value(), 1005);
+    assert_eq!(patch.target(), handle(u64::MAX));
+    assert_eq!(
+        directory.replacement_bytes_for_patch(patch),
         Some(expected.as_slice())
     );
     for (offset, state) in expected_unavailable.into_iter().enumerate() {

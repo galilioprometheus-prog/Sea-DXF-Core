@@ -572,7 +572,7 @@ pub use entity_xdata_handle_remap::{
 };
 pub use entity_xdata_handle_replacement::{
     DxfEntityXDataHandleReplacementDirectory, DxfEntityXDataHandleReplacementEntry,
-    DxfEntityXDataHandleReplacementState,
+    DxfEntityXDataHandleReplacementPatch, DxfEntityXDataHandleReplacementState,
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,

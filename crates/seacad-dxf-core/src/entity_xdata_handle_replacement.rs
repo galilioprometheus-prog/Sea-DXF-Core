@@ -7,7 +7,8 @@ use crate::{
     DxfEntityEditValue, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
     DxfEntityXDataHandleDestinationDirectory, DxfEntityXDataHandleDestinationEntry,
     DxfEntityXDataHandleDestinationState, DxfEntityXDataHandleRemap, DxfError, DxfHandle,
-    DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfResourceProfile, DxfSourceId,
+    DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup, DxfResourceProfile,
+    DxfSourceId,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -59,6 +60,43 @@ impl DxfEntityXDataHandleReplacementEntry {
     #[must_use]
     pub const fn state(self) -> DxfEntityXDataHandleReplacementState {
         self.state
+    }
+}
+
+/// One ready replacement bound to the exact complete source group it supersedes.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityXDataHandleReplacementPatch {
+    source_id: DxfSourceId,
+    destination_id: DxfSourceId,
+    replacement_ordinal: u32,
+    source_group: DxfRawGroup,
+    target: DxfHandle,
+}
+
+impl DxfEntityXDataHandleReplacementPatch {
+    #[must_use]
+    pub const fn source_id(self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn destination_id(self) -> DxfSourceId {
+        self.destination_id
+    }
+
+    #[must_use]
+    pub const fn replacement_ordinal(self) -> u64 {
+        self.replacement_ordinal as u64
+    }
+
+    #[must_use]
+    pub const fn source_group(self) -> DxfRawGroup {
+        self.source_group
+    }
+
+    #[must_use]
+    pub const fn target(self) -> DxfHandle {
+        self.target
     }
 }
 
@@ -191,6 +229,48 @@ impl DxfEntityXDataHandleReplacementDirectory {
         }
         self.replacement_bytes
             .get(usize::try_from(entry.byte_start).ok()?..usize::try_from(entry.byte_end).ok()?)
+    }
+
+    #[must_use]
+    pub fn patch_for_entry(
+        &self,
+        entry: DxfEntityXDataHandleReplacementEntry,
+    ) -> Option<DxfEntityXDataHandleReplacementPatch> {
+        if self.entry(entry.ordinal()) != Some(entry) {
+            return None;
+        }
+        let DxfEntityXDataHandleReplacementState::Ready { target, .. } = entry.state() else {
+            return None;
+        };
+        let destination = self.destination_for_entry(entry)?;
+        let remaps = self.destinations.remap_directory();
+        let remap = remaps.entry(destination.remap_ordinal())?;
+        let resolutions = remaps.resolution_directory();
+        let resolution = resolutions.entry(remap.resolution_ordinal())?;
+        let typed = resolutions.typed_for_entry(resolution)?;
+        let source_group = typed.occurrence().group();
+        if source_group.group_code().value() != 1005 {
+            return None;
+        }
+        Some(DxfEntityXDataHandleReplacementPatch {
+            source_id: self.source_id,
+            destination_id: self.destination_id,
+            replacement_ordinal: entry.ordinal,
+            source_group,
+            target,
+        })
+    }
+
+    #[must_use]
+    pub fn replacement_bytes_for_patch(
+        &self,
+        patch: DxfEntityXDataHandleReplacementPatch,
+    ) -> Option<&[u8]> {
+        let entry = self.entry(patch.replacement_ordinal())?;
+        if self.patch_for_entry(entry) != Some(patch) {
+            return None;
+        }
+        self.replacement_bytes_for_entry(entry)
     }
 }
 
