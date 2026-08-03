@@ -3,11 +3,12 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBasicGeometryComponentRole,
     DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble,
-    DxfEntityCommonFieldPatch, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
-    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityPatch,
-    DxfEntityTopic, DxfError, DxfMemorySource, DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind,
-    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityCommonFieldPatch, DxfEntityDeleteIssue, DxfEntityDeleteOutcome,
+    DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditValue,
+    DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityPatch, DxfEntityTopic, DxfError,
+    DxfHandle, DxfHandleGroupClass, DxfHandleIdentityState, DxfMemorySource, DxfPointEditIssue,
+    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const UPDATED: [DxfDouble; 3] = [
@@ -2467,6 +2468,183 @@ fn point_extrusion_verifier_and_cancellation_fail_closed() -> Result<(), Box<dyn
     Ok(())
 }
 
+#[test]
+fn point_delete_is_reference_safe_and_reversible_across_every_dialect() -> Result<(), Box<dyn Error>>
+{
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = delete_fixture(format, version, DeleteShape::Ready)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityDeleteOutcome::Applied(receipt) = session.delete(key)? else {
+                return Err(io::Error::other("POINT deletion").into());
+            };
+            assert_eq!(receipt.key(), key);
+            assert_eq!(receipt.handle(), DxfHandle::from_u64(0x10));
+            assert_eq!(session.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            let [patch] = plan.transaction().patches() else {
+                return Err(io::Error::other("one POINT deletion patch").into());
+            };
+            assert!(
+                plan.transaction()
+                    .replacement_bytes_for_patch_ordinal(patch.ordinal())
+                    .is_some_and(|bytes| bytes.is_empty())
+            );
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let post_entities = post.entity_directory(&token())?;
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .all(|entity| entity.classification().topic() != Some(DxfEntityTopic::POINT))
+            );
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .any(|entity| entity.classification().topic() == Some(DxfEntityTopic::LINE))
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified POINT deletion").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 1);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_delete_rejects_incoming_reference_and_ambiguous_or_missing_identity()
+-> Result<(), Box<dyn Error>> {
+    for (shape, expected) in [
+        (DeleteShape::IncomingReference, DeleteFailure::Incoming),
+        (DeleteShape::AmbiguousIdentity, DeleteFailure::Ambiguous),
+        (DeleteShape::MissingIdentity, DeleteFailure::Missing),
+    ] {
+        let bytes = delete_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, shape)?;
+        let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+        let document = open_ascii(&source)?;
+        let view = DxfRawDocumentView::from(&document);
+        let evidence = view.entity_field_evidence_directory(&token())?;
+        let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+        let cancellation = token();
+        let mut session =
+            view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+        let outcome = session.delete(key)?;
+        assert!(match expected {
+            DeleteFailure::Incoming => matches!(
+                outcome,
+                DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::IncomingReference {
+                    key: observed,
+                    handle,
+                    class: DxfHandleGroupClass::HardPointer,
+                    ..
+                }) if observed == key && handle == DxfHandle::from_u64(0x10)
+            ),
+            DeleteFailure::Ambiguous => matches!(
+                outcome,
+                DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::AmbiguousIdentity {
+                    key: observed,
+                    handle,
+                    target_count: 2,
+                }) if observed == key && handle == DxfHandle::from_u64(0x10)
+            ),
+            DeleteFailure::Missing => matches!(
+                outcome,
+                DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::IdentityUnavailable {
+                    key: observed,
+                    state: DxfHandleIdentityState::Absent,
+                }) if observed == key
+            ),
+        });
+        assert_eq!(session.queued_edit_count(), 0);
+    }
+    Ok(())
+}
+
+#[test]
+fn point_delete_rejects_wrong_family_mixing_and_cancellation() -> Result<(), Box<dyn Error>> {
+    let bytes = delete_fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        DeleteShape::Ready,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let point_key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let line_key = key_for_topic(&evidence, DxfEntityTopic::LINE)?;
+
+    let cancellation = token();
+    let mut wrong = view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        wrong.delete(line_key)?,
+        DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::WrongClassification {
+            key,
+            ..
+        }) if key == line_key
+    ));
+
+    let update_cancellation = token();
+    let mut update_first =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &update_cancellation)?;
+    assert!(matches!(
+        update_first.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_location(UPDATED))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    assert!(matches!(
+        update_first.delete(point_key)?,
+        DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::PendingOperations {
+            queued_operation_count: 1
+        })
+    ));
+
+    let delete_cancellation = token();
+    let mut delete_first =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &delete_cancellation)?;
+    assert!(matches!(
+        delete_first.delete(point_key)?,
+        DxfEntityDeleteOutcome::Applied(_)
+    ));
+    assert!(matches!(
+        delete_first.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_location(UPDATED))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::DeletePending)
+    ));
+
+    let cancelled = token();
+    let mut cancelled_session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancelled)?;
+    cancelled.cancel();
+    assert!(matches!(
+        cancelled_session.delete(point_key),
+        Err(DxfError::Cancelled)
+    ));
+    assert_eq!(cancelled_session.queued_edit_count(), 0);
+    Ok(())
+}
+
 #[derive(Clone, Copy)]
 enum PointShape {
     Complete,
@@ -2477,6 +2655,96 @@ enum PointShape {
     ExplicitExtrusion,
     PartialExtrusion(u8),
     MissingAngleWithExtrusion(u8),
+}
+
+#[derive(Clone, Copy)]
+enum DeleteShape {
+    Ready,
+    IncomingReference,
+    AmbiguousIdentity,
+    MissingIdentity,
+}
+
+#[derive(Clone, Copy)]
+enum DeleteFailure {
+    Incoming,
+    Ambiguous,
+    Missing,
+}
+
+fn delete_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    shape: DeleteShape,
+) -> Result<Vec<u8>, io::Error> {
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            let point_handle = if matches!(shape, DeleteShape::MissingIdentity) {
+                ""
+            } else {
+                "5\n10\n"
+            };
+            let line_handle = if matches!(shape, DeleteShape::AmbiguousIdentity) {
+                "10"
+            } else {
+                "11"
+            };
+            let incoming = if matches!(shape, DeleteShape::IncomingReference) {
+                "340\n10\n"
+            } else {
+                ""
+            };
+            Ok(format!(
+                "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n{}10\n1\n20\n2\n30\n3\n0\nLINE\n5\n{}\n{}10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
+                version.code(),
+                point_handle,
+                line_handle,
+                incoming,
+            )
+            .into_bytes())
+        }
+        DxfRawDocumentFormat::Binary => {
+            let mut bytes = DXF_BINARY_SENTINEL.to_vec();
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"HEADER")?;
+            push_string(&mut bytes, version, 9, b"$ACADVER")?;
+            push_string(&mut bytes, version, 1, version.code().as_bytes())?;
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"SECTION")?;
+            push_string(&mut bytes, version, 2, b"ENTITIES")?;
+            push_string(&mut bytes, version, 0, b"POINT")?;
+            if !matches!(shape, DeleteShape::MissingIdentity) {
+                push_string(&mut bytes, version, 5, b"10")?;
+            }
+            for (code, value) in [(10, 1.0), (20, 2.0), (30, 3.0)] {
+                push_double(&mut bytes, version, code, value)?;
+            }
+            push_string(&mut bytes, version, 0, b"LINE")?;
+            let line_handle = if matches!(shape, DeleteShape::AmbiguousIdentity) {
+                b"10".as_slice()
+            } else {
+                b"11".as_slice()
+            };
+            push_string(&mut bytes, version, 5, line_handle)?;
+            if matches!(shape, DeleteShape::IncomingReference) {
+                push_string(&mut bytes, version, 340, b"10")?;
+            }
+            for (code, value) in [
+                (10, 7.0),
+                (20, 8.0),
+                (30, 9.0),
+                (11, 10.0),
+                (21, 11.0),
+                (31, 12.0),
+            ] {
+                push_double(&mut bytes, version, code, value)?;
+            }
+            push_string(&mut bytes, version, 0, b"ENDSEC")?;
+            push_string(&mut bytes, version, 0, b"EOF")?;
+            Ok(bytes)
+        }
+        _ => Err(io::Error::other("format")),
+    }
 }
 
 fn fixture(

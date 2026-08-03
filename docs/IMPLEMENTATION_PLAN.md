@@ -2633,5 +2633,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     verification and byte-identical inverse restoration. Clone/delete and
     POINT `Complete` remain open.
 
+    M14.3ca adds the first reference-safe whole-record delete operation. The
+    session admits one standalone canonical POINT only when its record owns one
+    non-null parsed handle, the document resolves that handle uniquely back to
+    the selected record, and no uniquely resolved pointer or owner from another
+    record targets it. Admission deletes the exact complete raw-record span and
+    retains a postcondition requiring the handle to disappear before the
+    byte-identical inverse is released. Missing, invalid, null, multiple, or
+    ambiguous identity, incoming references, wrong families, cancellation, and
+    queued-operation mixing fail typed without mutating the session. Paired
+    fixtures cover all nine ASCII/Binary Core dialects. Handleless deletion,
+    mixed/multi-delete sessions, clone, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

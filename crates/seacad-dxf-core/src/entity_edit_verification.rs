@@ -77,6 +77,10 @@ pub(crate) struct DxfPointInsertExpectation {
     point: DxfPointDraftRecordExpectation,
 }
 
+pub(crate) struct DxfPointDeleteExpectation {
+    handle: DxfHandle,
+}
+
 pub(crate) struct DxfPointLocationEditExpectation {
     raw_record_ordinal: u64,
     location: [DxfDouble; 3],
@@ -115,6 +119,7 @@ pub(crate) enum DxfPointUcsXAxisAngleExpected {
 pub(crate) enum DxfEntityEditExpectation {
     Field(DxfEntityFieldEditExpectation),
     PointInsert(DxfPointInsertExpectation),
+    PointDelete(DxfPointDeleteExpectation),
     PointLocation(DxfPointLocationEditExpectation),
     PointThickness(DxfPointThicknessEditExpectation),
     PointExtrusion(DxfPointExtrusionEditExpectation),
@@ -146,6 +151,10 @@ impl DxfEntityEditExpectation {
             placement,
             point,
         })
+    }
+
+    pub(crate) const fn point_delete(handle: DxfHandle) -> Self {
+        Self::PointDelete(DxfPointDeleteExpectation { handle })
     }
 
     pub(crate) const fn point_location(raw_record_ordinal: u64, location: [DxfDouble; 3]) -> Self {
@@ -217,6 +226,10 @@ pub enum DxfEntityEditVerificationIssue {
         handle: DxfHandle,
     },
     AmbiguousInsertedEntity {
+        handle: DxfHandle,
+        candidate_count: u32,
+    },
+    DeletedEntityStillPresent {
         handle: DxfHandle,
         candidate_count: u32,
     },
@@ -655,6 +668,9 @@ fn verify_expectation(
         DxfEntityEditExpectation::PointInsert(expectation) => {
             verify_point_insert(document, semantics, expectation, cancellation)
         }
+        DxfEntityEditExpectation::PointDelete(expectation) => {
+            verify_point_delete(document, expectation, cancellation)
+        }
         DxfEntityEditExpectation::PointLocation(expectation) => {
             verify_point_location(document, expectation, cancellation)
         }
@@ -668,6 +684,27 @@ fn verify_expectation(
             verify_point_ucs_x_axis_angle(document, expectation, cancellation)
         }
     }
+}
+
+fn verify_point_delete(
+    document: DxfRawDocumentView<'_>,
+    expectation: &DxfPointDeleteExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let identities = document.handle_identity_directory(cancellation)?;
+    let candidate_count = match identities.lookup(expectation.handle) {
+        DxfHandleIdentityLookup::Missing => return Ok(None),
+        DxfHandleIdentityLookup::Unique(_) => 1,
+        DxfHandleIdentityLookup::Ambiguous(candidates) => {
+            u32::try_from(candidates.len()).map_err(|_| invalid_internal_data())?
+        }
+    };
+    Ok(Some(
+        DxfEntityEditVerificationIssue::DeletedEntityStillPresent {
+            handle: expectation.handle,
+            candidate_count,
+        },
+    ))
 }
 
 fn verify_point_location(

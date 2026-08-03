@@ -22,19 +22,21 @@ use crate::point_edit::{
 };
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
-    DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityCommonColorBookEditIssue,
-    DxfEntityCommonColorBookEditOutcome, DxfEntityCommonFieldDomainDirectory,
-    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
-    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
-    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
-    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome, DxfEntityDraft,
-    DxfEntityDraftApplicabilityIssue, DxfEntityDraftName, DxfEntityDraftRecordIssue,
-    DxfEntityEditPlan, DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
-    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
+    DxfCancellationToken, DxfCommonOwnerCandidateState, DxfEntityClassification,
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
+    DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainIssue,
+    DxfEntityCommonFieldDomainOutcome, DxfEntityCommonLayoutEditIssue,
+    DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
+    DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
+    DxfEntityCommonSymbolEditOutcome, DxfEntityDraft, DxfEntityDraftApplicabilityIssue,
+    DxfEntityDraftName, DxfEntityDraftRecordIssue, DxfEntityEditPlan, DxfEntityEditValue,
+    DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityFieldInsertionIssue,
+    DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
     DxfEntityKey, DxfEntityPlacement, DxfEntityPlacementOwnerIssue, DxfEntityPlacementOwnerOutcome,
     DxfEntityPlacementTarget, DxfError, DxfHandle, DxfHandleAllocationOutcome,
-    DxfHandleAllocationPolicyState, DxfHandleIdentityDirectory, DxfHandleReservationPlanOutcome,
+    DxfHandleAllocationPolicyState, DxfHandleGroupClass, DxfHandleIdentityDirectory,
+    DxfHandleIdentityLookup, DxfHandleIdentityState, DxfHandleReservationPlanOutcome,
     DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
     DxfNamedSymbolTableDirectory, DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind,
     DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
@@ -150,6 +152,7 @@ pub enum DxfEntityEditIssue {
     Reset(DxfEntityFieldResetIssue),
     Point(DxfPointEditIssue),
     InsertPending,
+    DeletePending,
 }
 
 /// Effect of one accepted update request.
@@ -281,6 +284,7 @@ pub enum DxfEntityInsertIssue {
     },
     Applicability(DxfEntityDraftApplicabilityIssue),
     Record(DxfEntityDraftRecordIssue),
+    DeletePending,
 }
 
 /// Non-payload receipt for one admitted whole-entity insertion.
@@ -316,6 +320,65 @@ pub enum DxfEntityInsertOutcome {
     Unavailable(DxfEntityInsertIssue),
 }
 
+/// Typed reason why a whole-entity delete was not admitted to the session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityDeleteIssue {
+    PendingOperations {
+        queued_operation_count: u32,
+    },
+    EntityMissing {
+        key: DxfEntityKey,
+    },
+    WrongClassification {
+        key: DxfEntityKey,
+        observed: DxfEntityClassification,
+    },
+    IdentityUnavailable {
+        key: DxfEntityKey,
+        state: DxfHandleIdentityState,
+    },
+    AmbiguousIdentity {
+        key: DxfEntityKey,
+        handle: DxfHandle,
+        target_count: u32,
+    },
+    IncomingReference {
+        key: DxfEntityKey,
+        handle: DxfHandle,
+        source_record_ordinal: u64,
+        group_occurrence: u64,
+        class: DxfHandleGroupClass,
+    },
+}
+
+/// Non-payload receipt for one admitted whole-entity deletion.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityDeleteReceipt {
+    key: DxfEntityKey,
+    handle: DxfHandle,
+}
+
+impl DxfEntityDeleteReceipt {
+    #[must_use]
+    pub const fn key(self) -> DxfEntityKey {
+        self.key
+    }
+
+    #[must_use]
+    pub const fn handle(self) -> DxfHandle {
+        self.handle
+    }
+}
+
+/// Result of adding one whole-entity deletion to an edit session.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum DxfEntityDeleteOutcome {
+    Applied(DxfEntityDeleteReceipt),
+    Unavailable(DxfEntityDeleteIssue),
+}
+
 struct PendingEdit {
     key: DxfEntityKey,
     field: DxfEntityField,
@@ -332,6 +395,12 @@ struct PendingInsert {
     placement: DxfEntityPlacement,
     bytes: Box<[u8]>,
     expectation: DxfPointDraftRecordExpectation,
+}
+
+struct PendingDelete {
+    key: DxfEntityKey,
+    handle: DxfHandle,
+    transaction: DxfTransactionPlan,
 }
 
 enum PendingPointExpectation {
@@ -364,6 +433,7 @@ pub struct DxfEntityEditSession<'document, 'evidence, 'cancellation> {
     pending: Vec<PendingEdit>,
     pending_point_edits: Vec<PendingPointEdit>,
     pending_inserts: Vec<PendingInsert>,
+    pending_delete: Option<PendingDelete>,
 }
 
 impl fmt::Debug for DxfEntityEditSession<'_, '_, '_> {
@@ -400,6 +470,7 @@ impl<'document, 'evidence, 'cancellation>
             pending: Vec::new(),
             pending_point_edits: Vec::new(),
             pending_inserts: Vec::new(),
+            pending_delete: None,
         })
     }
 
@@ -413,6 +484,7 @@ impl<'document, 'evidence, 'cancellation>
         self.pending.len() as u64
             + self.pending_point_edits.len() as u64
             + self.pending_inserts.len() as u64
+            + u64::from(self.pending_delete.is_some())
     }
 
     /// Adds one complete typed entity insertion without changing the source.
@@ -424,6 +496,11 @@ impl<'document, 'evidence, 'cancellation>
         draft: DxfEntityDraft<'_>,
     ) -> Result<DxfEntityInsertOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
+        if self.pending_delete.is_some() {
+            return Ok(DxfEntityInsertOutcome::Unavailable(
+                DxfEntityInsertIssue::DeletePending,
+            ));
+        }
         let Some(owner) = draft.owner() else {
             return Ok(DxfEntityInsertOutcome::Unavailable(
                 DxfEntityInsertIssue::OwnerRequired,
@@ -534,12 +611,138 @@ impl<'document, 'evidence, 'cancellation>
         patch: DxfEntityPatch<'_>,
     ) -> Result<DxfEntityEditOutcome, DxfError> {
         ensure_not_cancelled(self.cancellation)?;
+        if self.pending_delete.is_some() {
+            return Ok(DxfEntityEditOutcome::Unavailable(
+                DxfEntityEditIssue::DeletePending,
+            ));
+        }
         match patch {
             DxfEntityPatch::CommonField(patch) => self.update_common_field(key, patch),
             DxfEntityPatch::CommonColorBook(patch) => self.update_color_book(key, patch),
             DxfEntityPatch::ResetCommonColorBook => self.reset_color_book(key),
             DxfEntityPatch::Point(patch) => self.update_point(key, patch),
         }
+    }
+
+    /// Deletes one standalone canonical POINT record when reference safety is proven.
+    ///
+    /// This first closed-set delete checkpoint deliberately rejects mixing with
+    /// other session operations. Any uniquely resolved incoming pointer or owner
+    /// from another record blocks deletion.
+    pub fn delete(&mut self, key: DxfEntityKey) -> Result<DxfEntityDeleteOutcome, DxfError> {
+        ensure_not_cancelled(self.cancellation)?;
+        let queued = self.queued_len()?;
+        if queued != 0 {
+            return Ok(DxfEntityDeleteOutcome::Unavailable(
+                DxfEntityDeleteIssue::PendingOperations {
+                    queued_operation_count: u32::try_from(queued)
+                        .map_err(|_| invalid_internal_data())?,
+                },
+            ));
+        }
+        let Some(entity) = self.evidence.entity_directory().entity_for_key(key)? else {
+            return Ok(DxfEntityDeleteOutcome::Unavailable(
+                DxfEntityDeleteIssue::EntityMissing { key },
+            ));
+        };
+        if entity.classification()
+            != DxfEntityClassification::Canonical(crate::DxfEntityTopic::POINT)
+        {
+            return Ok(DxfEntityDeleteOutcome::Unavailable(
+                DxfEntityDeleteIssue::WrongClassification {
+                    key,
+                    observed: entity.classification(),
+                },
+            ));
+        }
+        let resolutions = self
+            .document
+            .handle_resolution_directory(self.cancellation)?;
+        let identity = resolutions
+            .identity_directory()
+            .entry(key.raw_record_ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let handle = match identity.state() {
+            DxfHandleIdentityState::UniqueParsed(handle) if !handle.is_null() => handle,
+            state => {
+                return Ok(DxfEntityDeleteOutcome::Unavailable(
+                    DxfEntityDeleteIssue::IdentityUnavailable { key, state },
+                ));
+            }
+        };
+        match resolutions.identity_directory().lookup(handle) {
+            DxfHandleIdentityLookup::Unique(target)
+                if target.record().ordinal() == key.raw_record_ordinal() => {}
+            DxfHandleIdentityLookup::Ambiguous(targets) => {
+                return Ok(DxfEntityDeleteOutcome::Unavailable(
+                    DxfEntityDeleteIssue::AmbiguousIdentity {
+                        key,
+                        handle,
+                        target_count: u32::try_from(targets.len())
+                            .map_err(|_| invalid_internal_data())?,
+                    },
+                ));
+            }
+            DxfHandleIdentityLookup::Missing | DxfHandleIdentityLookup::Unique(_) => {
+                return Err(invalid_internal_data());
+            }
+        }
+        for (ordinal, resolution) in resolutions.entries().iter().copied().enumerate() {
+            ensure_not_cancelled(self.cancellation)?;
+            if resolution.reference().record().ordinal() == key.raw_record_ordinal()
+                || resolution.state() != DxfHandleResolutionState::Unique
+            {
+                continue;
+            }
+            let ordinal = u64::try_from(ordinal).map_err(|_| invalid_internal_data())?;
+            let [target] = resolutions
+                .targets_for_reference(ordinal)
+                .ok_or_else(invalid_internal_data)?
+            else {
+                return Err(invalid_internal_data());
+            };
+            if target.record().ordinal() == key.raw_record_ordinal() {
+                let reference = resolution.reference();
+                return Ok(DxfEntityDeleteOutcome::Unavailable(
+                    DxfEntityDeleteIssue::IncomingReference {
+                        key,
+                        handle,
+                        source_record_ordinal: reference.record().ordinal(),
+                        group_occurrence: reference.value().group().occurrence(),
+                        class: reference.class(),
+                    },
+                ));
+            }
+        }
+        let range = entity.record().group_range();
+        let first = self
+            .document
+            .group(range.start())
+            .ok_or_else(invalid_internal_data)?;
+        let last_ordinal = range
+            .end()
+            .checked_sub(1)
+            .ok_or_else(invalid_internal_data)?;
+        let last = self
+            .document
+            .group(last_ordinal)
+            .ok_or_else(invalid_internal_data)?;
+        let span = ByteSpan::new(first.full_span().start(), last.full_span().end())
+            .ok_or_else(invalid_internal_data)?;
+        let mut builder = self.document.transaction_plan_builder(self.profile)?;
+        builder.replace_raw_span(span, &[], self.cancellation)?;
+        let transaction = builder.finish(self.cancellation)?;
+        enforce_edit_limit(self.profile, 1)?;
+        ensure_not_cancelled(self.cancellation)?;
+        self.pending_delete = Some(PendingDelete {
+            key,
+            handle,
+            transaction,
+        });
+        Ok(DxfEntityDeleteOutcome::Applied(DxfEntityDeleteReceipt {
+            key,
+            handle,
+        }))
     }
 
     fn update_point(
@@ -1101,6 +1304,16 @@ impl<'document, 'evidence, 'cancellation>
 
     /// Freezes the transaction together with its semantic postconditions.
     pub fn finish_verifiable(mut self) -> Result<DxfEntityEditPlan, DxfError> {
+        if let Some(delete) = self.pending_delete.take() {
+            if self.queued_update_len()? != 0 || !self.pending_inserts.is_empty() {
+                return Err(invalid_internal_data());
+            }
+            ensure_source(self.document.source_id(), delete.key.source_id())?;
+            return Ok(DxfEntityEditPlan::new(
+                delete.transaction,
+                vec![DxfEntityEditExpectation::point_delete(delete.handle)],
+            ));
+        }
         let (transaction, pending, point_edits) = self.finish_parts()?;
         let mut expectations = Vec::new();
         expectations
@@ -1454,6 +1667,7 @@ impl<'document, 'evidence, 'cancellation>
     fn queued_len(&self) -> Result<usize, DxfError> {
         self.queued_update_len()?
             .checked_add(self.pending_inserts.len())
+            .and_then(|count| count.checked_add(usize::from(self.pending_delete.is_some())))
             .ok_or_else(invalid_internal_data)
     }
 }

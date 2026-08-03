@@ -473,10 +473,11 @@ pub use entity_draft_record::{
     DxfEntityDraft, DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfPointDraft,
 };
 pub use entity_edit_session::{
-    DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityEditDisposition,
-    DxfEntityEditIssue, DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession,
-    DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
-    DxfEntityInsertReceipt, DxfEntityPatch, DxfPointEditReceipt,
+    DxfEntityCommonColorBookPatch, DxfEntityCommonFieldPatch, DxfEntityDeleteIssue,
+    DxfEntityDeleteOutcome, DxfEntityDeleteReceipt, DxfEntityEditDisposition, DxfEntityEditIssue,
+    DxfEntityEditOutcome, DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityInsertIssue,
+    DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityInsertReceipt, DxfEntityPatch,
+    DxfPointEditReceipt,
 };
 pub use entity_edit_verification::{
     DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,

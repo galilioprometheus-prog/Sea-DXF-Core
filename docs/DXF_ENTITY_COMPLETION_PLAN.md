@@ -1177,6 +1177,19 @@ supported ASCII/Binary dialect passes both API orders, earlier-section ordinal
 shifts, strict semantic verification, and byte-identical inverse restoration.
 Clone/delete and POINT `Complete` remain open.
 
+M14.3ca adds the first reference-safe whole-entity delete to the unified CRUD
+session. A standalone canonical POINT is selectable only when its record has
+one non-null parsed handle, that handle resolves uniquely back to the selected
+record, and no uniquely resolved pointer or owner occurrence from another raw
+record targets it. The accepted operation deletes the exact complete raw
+record span, retains a handle-absence semantic postcondition, and exposes an
+inverse only after strict byte and semantic verification. Missing, invalid,
+null, multiple, or document-ambiguous identities, incoming references, wrong
+families, cancellation, and mixing with queued work remain typed fail-closed.
+All nine ASCII/Binary dialect pairs prove exact deletion and byte-identical
+restoration. Handleless deletion, mixed/multi-delete sessions, clone, and
+POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
