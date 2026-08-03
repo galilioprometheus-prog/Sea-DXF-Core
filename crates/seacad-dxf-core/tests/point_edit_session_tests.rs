@@ -1031,6 +1031,141 @@ fn point_extrusion_inserts_defaulted_tuple_across_every_ascii_binary_dialect()
 }
 
 #[test]
+fn point_extrusion_completes_every_partial_tuple_across_all_dialects() -> Result<(), Box<dyn Error>>
+{
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for mask in 1_u8..0b111 {
+                let bytes = fixture(format, version, PointShape::PartialExtrusion(mask))?;
+                let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+                let document = open_document(&source, format)?;
+                let view = document.view();
+                let evidence = view.entity_field_evidence_directory(&token())?;
+                let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+                let cancellation = token();
+                let mut session =
+                    view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+                let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                    key,
+                    DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION)),
+                )?
+                else {
+                    return Err(io::Error::other("partial POINT extrusion update").into());
+                };
+                assert_eq!(receipt.kind(), DxfPointPatchKind::Extrusion);
+                assert_eq!(receipt.disposition(), DxfEntityEditDisposition::Composite);
+                assert_eq!(receipt.queued_edit_count(), 1);
+
+                let plan = session.finish_verifiable()?;
+                let expected_patch_count = if matches!(mask, 0b001 | 0b100) { 2 } else { 3 };
+                assert_eq!(plan.edit_count(), 1);
+                assert_eq!(plan.transaction().patches().len(), expected_patch_count);
+                let expected_insertion_count = if mask == 0b010 { 2 } else { 1 };
+                assert_eq!(
+                    plan.transaction()
+                        .patches()
+                        .iter()
+                        .filter(|patch| patch.source_span().is_empty())
+                        .count(),
+                    expected_insertion_count
+                );
+                let output = materialize(&bytes, plan.transaction())?;
+                let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+                let output_document = open_document(&output_source, format)?;
+                let post = output_document.view();
+                let geometry = post.basic_geometry_semantic_directory(&token())?;
+                let point = geometry
+                    .point_for_raw_record(key.raw_record_ordinal())?
+                    .ok_or_else(|| io::Error::other("completed POINT extrusion semantics"))?;
+                assert_eq!(point.extrusion_value(), Some(UPDATED_EXTRUSION));
+                assert!(
+                    point
+                        .extrusion()
+                        .iter()
+                        .all(|value| value.state() == DxfSemanticValueState::Explicit)
+                );
+                let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                    plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+                else {
+                    return Err(io::Error::other("verified partial POINT extrusion").into());
+                };
+                assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_extrusion_partial_completion_preserves_crlf_and_rejects_source_reordering()
+-> Result<(), Box<dyn Error>> {
+    let bytes = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::PartialExtrusion(0b010),
+    ))?
+    .replace('\n', "\r\n")
+    .into_bytes();
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::PointApplied(receipt)
+            if receipt.disposition() == DxfEntityEditDisposition::Composite
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    assert!(
+        output
+            .windows(b"210\r\n0.25\r\n220\r\n-0.5\r\n230\r\n2\r\n50\r\n30\r\n".len())
+            .any(|window| { window == b"210\r\n0.25\r\n220\r\n-0.5\r\n230\r\n2\r\n50\r\n30\r\n" }),
+        "{}",
+        String::from_utf8_lossy(&output)
+    );
+
+    let canonical = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::PartialExtrusion(0b101),
+    ))?;
+    let reordered = canonical
+        .replace("210\n1\n230\n3\n", "230\n3\n210\n1\n")
+        .into_bytes();
+    let reordered_source = DxfMemorySource::new(&reordered, DxfResourceProfile::Safe)?;
+    let reordered_document = open_ascii(&reordered_source)?;
+    let reordered_view = DxfRawDocumentView::from(&reordered_document);
+    let reordered_evidence = reordered_view.entity_field_evidence_directory(&token())?;
+    let reordered_key = key_for_topic(&reordered_evidence, DxfEntityTopic::POINT)?;
+    let reordered_cancellation = token();
+    let mut reordered_session = reordered_view.entity_edit_session(
+        &reordered_evidence,
+        DxfResourceProfile::Safe,
+        &reordered_cancellation,
+    )?;
+    assert!(matches!(
+        reordered_session.update(
+            reordered_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::NonCanonicalExtrusionOrder {
+                preceding: DxfBasicGeometryComponentRole::ExtrusionX,
+                following: DxfBasicGeometryComponentRole::ExtrusionZ,
+            }
+        ))
+    ));
+    assert_eq!(reordered_session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
 fn point_extrusion_insertion_preserves_crlf_and_requires_an_unambiguous_predecessor()
 -> Result<(), Box<dyn Error>> {
     let bytes = String::from_utf8(ascii_fixture(DxfAcadVersion::Ac1032, PointShape::Complete))?
@@ -1176,8 +1311,7 @@ fn point_extrusion_insertion_preserves_crlf_and_requires_an_unambiguous_predeces
 }
 
 #[test]
-fn point_extrusion_rejects_wrong_zero_nonfinite_duplicate_and_incomplete()
--> Result<(), Box<dyn Error>> {
+fn point_extrusion_rejects_wrong_zero_nonfinite_and_duplicate() -> Result<(), Box<dyn Error>> {
     let bytes = fixture(
         DxfRawDocumentFormat::Ascii,
         DxfAcadVersion::Ac1032,
@@ -1251,55 +1385,34 @@ fn point_extrusion_rejects_wrong_zero_nonfinite_duplicate_and_incomplete()
     assert_eq!(session.queued_edit_count(), 1);
 
     let explicit = String::from_utf8(bytes)?;
-    for (malformed, expected_role, duplicate) in [
-        (
-            explicit.replace("220\n2\n", "").into_bytes(),
-            DxfBasicGeometryComponentRole::ExtrusionY,
-            false,
-        ),
-        (
-            explicit
-                .replace("210\n1\n", "210\n1\n210\n4\n")
-                .into_bytes(),
-            DxfBasicGeometryComponentRole::ExtrusionX,
-            true,
-        ),
-    ] {
-        let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
-        let malformed_document = open_ascii(&malformed_source)?;
-        let malformed_view = DxfRawDocumentView::from(&malformed_document);
-        let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
-        let key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
-        let malformed_cancellation = token();
-        let mut malformed_session = malformed_view.entity_edit_session(
-            &malformed_evidence,
-            DxfResourceProfile::Safe,
-            &malformed_cancellation,
-        )?;
-        let outcome = malformed_session.update(
-            key,
-            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION)),
-        )?;
-        assert!(if duplicate {
-            matches!(
-                outcome,
-                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
-                    DxfPointEditIssue::DuplicateExtrusionComponent {
-                        role,
-                        occurrence_count: 2
-                    }
-                )) if role == expected_role
-            )
-        } else {
-            matches!(
-                outcome,
-                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
-                    DxfPointEditIssue::MissingExtrusionComponent { role }
-                )) if role == expected_role
-            )
-        });
-        assert_eq!(malformed_session.queued_edit_count(), 0);
-    }
+    let malformed = explicit
+        .replace("210\n1\n", "210\n1\n210\n4\n")
+        .into_bytes();
+    let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
+    let malformed_document = open_ascii(&malformed_source)?;
+    let malformed_view = DxfRawDocumentView::from(&malformed_document);
+    let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
+    let malformed_cancellation = token();
+    let mut malformed_session = malformed_view.entity_edit_session(
+        &malformed_evidence,
+        DxfResourceProfile::Safe,
+        &malformed_cancellation,
+    )?;
+    let outcome = malformed_session.update(
+        key,
+        DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION)),
+    )?;
+    assert!(matches!(
+        outcome,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateExtrusionComponent {
+                role: DxfBasicGeometryComponentRole::ExtrusionX,
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(malformed_session.queued_edit_count(), 0);
     Ok(())
 }
 
@@ -1411,6 +1524,7 @@ enum PointShape {
     MissingThickness,
     DuplicateThickness,
     ExplicitExtrusion,
+    PartialExtrusion(u8),
 }
 
 fn fixture(
@@ -1430,7 +1544,8 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
         PointShape::Complete
         | PointShape::MissingThickness
         | PointShape::DuplicateThickness
-        | PointShape::ExplicitExtrusion => "30\n3\n10\n1\n20\n2\n",
+        | PointShape::ExplicitExtrusion
+        | PointShape::PartialExtrusion(_) => "30\n3\n10\n1\n20\n2\n",
         PointShape::MissingY => "30\n3\n10\n1\n",
         PointShape::DuplicateX => "30\n3\n10\n1\n20\n2\n10\n9\n",
     };
@@ -1440,8 +1555,21 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
         _ => "39\n2.5\n",
     };
     let extrusion = match shape {
-        PointShape::ExplicitExtrusion => "210\n1\n220\n2\n230\n3\n",
-        _ => "",
+        PointShape::ExplicitExtrusion => "210\n1\n220\n2\n230\n3\n".to_owned(),
+        PointShape::PartialExtrusion(mask) => {
+            let mut extrusion = String::new();
+            for (bit, group) in [
+                (0b001, "210\n1\n"),
+                (0b010, "220\n2\n"),
+                (0b100, "230\n3\n"),
+            ] {
+                if mask & bit != 0 {
+                    extrusion.push_str(group);
+                }
+            }
+            extrusion
+        }
+        _ => String::new(),
     };
     format!(
         "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n60\n0\n{}{}{}50\n30\n0\nLINE\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
@@ -1479,8 +1607,18 @@ fn binary_fixture(version: DxfAcadVersion, shape: PointShape) -> Result<Vec<u8>,
     if matches!(shape, PointShape::DuplicateThickness) {
         push_double(&mut bytes, version, 39, 3.5)?;
     }
-    if matches!(shape, PointShape::ExplicitExtrusion) {
-        for (code, value) in [(210, 1.0), (220, 2.0), (230, 3.0)] {
+    if matches!(
+        shape,
+        PointShape::ExplicitExtrusion | PointShape::PartialExtrusion(_)
+    ) {
+        let mask = match shape {
+            PointShape::PartialExtrusion(mask) => mask,
+            _ => 0b111,
+        };
+        for (bit, code, value) in [(0b001, 210, 1.0), (0b010, 220, 2.0), (0b100, 230, 3.0)] {
+            if mask & bit == 0 {
+                continue;
+            }
             push_double(&mut bytes, version, code, value)?;
         }
     }

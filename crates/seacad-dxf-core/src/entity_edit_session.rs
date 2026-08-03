@@ -664,13 +664,13 @@ impl<'document, 'evidence, 'cancellation>
                         ));
                     }
                 };
-                let (transaction, extrusion, set_disposition) = plan.into_parts();
-                let (expected_patch_count, disposition) = match set_disposition {
-                    DxfPointExtrusionSetDisposition::Inserted => {
-                        (1, DxfEntityEditDisposition::Inserted)
-                    }
-                    DxfPointExtrusionSetDisposition::Replaced => {
-                        (3, DxfEntityEditDisposition::Replaced)
+                let (transaction, extrusion, set_disposition, expected_patch_count) =
+                    plan.into_parts();
+                let disposition = match set_disposition {
+                    DxfPointExtrusionSetDisposition::Inserted => DxfEntityEditDisposition::Inserted,
+                    DxfPointExtrusionSetDisposition::Replaced => DxfEntityEditDisposition::Replaced,
+                    DxfPointExtrusionSetDisposition::Composite => {
+                        DxfEntityEditDisposition::Composite
                     }
                 };
                 (

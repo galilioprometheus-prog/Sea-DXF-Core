@@ -2571,5 +2571,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     updates, mixed insert/update sessions, clone/delete, and POINT `Complete`
     remain open.
 
+    M14.3bv completes every partial absent/unique POINT extrusion tuple. Each
+    unique explicit component is replaced in place, while every consecutive
+    missing run is encoded in canonical `210/220/230` order and inserted at
+    its source-order gap. One logical `Extrusion` edit may therefore contain
+    two or three physical patches and reports `Composite`. Partial source
+    evidence must already retain canonical component order; reordered or
+    duplicate components fail typed and queue nothing. Replacement and
+    insertion preserve local LF, CRLF, CR, or exact Binary framing. All six
+    partial masks pass all nine ASCII/Binary Core dialect pairs with strict
+    post-image verification and byte-identical inverse restoration. Extrusion
+    reset, angle updates, mixed insert/update sessions, clone/delete, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

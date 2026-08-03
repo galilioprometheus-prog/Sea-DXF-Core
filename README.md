@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bu. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3bv. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -226,17 +226,16 @@ source span; an absent group is an `AlreadyImplicit` no-op. Reset verification
 requires the documented zero value in the `Defaulted` state before releasing
 the byte-identical inverse. Duplicate thickness remains unselectable.
 Extrusion/angle updates, clone, and delete remain open.
-POINT extrusion can now be replaced atomically when all three explicit groups
-`210/220/230` are unique. The nonzero finite tuple uses one logical patch
-identity and three exact source-span replacements; missing or duplicate
-components, zero direction, non-finite encoding, wrong family, cancellation,
-and duplicate admission leave the session unchanged. Strict verification
-requires the exact tuple with all three components in the `Explicit` state
-before exposing the byte-identical inverse. When the entire tuple is absent and
-defaulted, the same patch inserts canonical `210/220/230` bytes after one
-unambiguous thickness or location predecessor while preserving ASCII endings
-or Binary framing. Partial explicit/default tuples, extrusion reset, angle
-updates, clone, and delete remain open.
+POINT extrusion can now be set atomically for every absent/unique component
+mask. A complete explicit tuple replaces its three source spans; a completely
+absent tuple inserts one canonical `210/220/230` sequence; and a partial tuple
+replaces each explicit component while inserting each consecutive missing run
+at its canonical gap. Partial completion reports `Composite`, preserves local
+ASCII endings or Binary framing, and rejects duplicate or source-reordered
+partial evidence without guessing. Strict verification requires the exact
+nonzero tuple with all three components in the `Explicit` state before exposing
+the byte-identical inverse. Extrusion reset, angle updates, mixed entity
+insert/update sessions, clone, and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

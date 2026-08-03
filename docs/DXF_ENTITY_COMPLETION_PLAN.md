@@ -1119,6 +1119,18 @@ bytes exactly across nine ASCII/Binary dialect pairs. Partial
 explicit/default extrusion tuples, extrusion reset, angle updates, mixed
 insert/update sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3bv closes the remaining partial-tuple gap for `SetExtrusion`. Every mask
+with one or two unique explicit components replaces those exact source spans
+and inserts each consecutive missing component run at the canonical
+`210/220/230` gap. The operation remains one logical edit, reports `Composite`,
+and produces two or three physical transaction patches. Reordered partial
+source evidence and duplicate components fail typed rather than being moved or
+guessed. Local ASCII line endings and Binary framing are preserved. All six
+partial masks pass every supported ASCII/Binary dialect with exact explicit
+post-image semantics, tamper-resistant verification, and byte-identical inverse
+restoration. Extrusion reset, angle updates, mixed entity insert/update
+sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
