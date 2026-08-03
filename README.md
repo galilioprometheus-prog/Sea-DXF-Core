@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cl. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cm. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -313,6 +313,13 @@ A normal entity group interrupts the active list, while XDATA-shaped codes
 inside group-102 application controls remain outside XDATA. APPID resolution,
 brace/value validation, payload interpretation, clone/write, and POINT
 `Complete` remain open.
+M14.3cm resolves every entity XDATA group-1001 name against exact group-2
+names admitted from completely closed APPID tables. A collision-safe digest
+index narrows candidates, then authoritative source spans are compared
+byte-for-byte. Missing, unique, and ambiguous targets remain distinct; near
+case, wrong-table, malformed, and unclosed evidence fail closed. Application
+name syntax, brace/value validation, the 16-KiB policy, payload meaning,
+clone/write, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

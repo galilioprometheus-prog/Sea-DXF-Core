@@ -2758,5 +2758,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     policy, application semantics, clone/write, and POINT `Complete` remain
     open.
 
+    M14.3cm extends the exact closed named-symbol table scanner with APPID and
+    resolves every entity XDATA group-1001 application name. A resource-bounded
+    sorted SHA-256 index selects candidate APPID names, while byte-exact source
+    span comparison remains authoritative and collision safe. Missing, unique,
+    and ambiguous outcomes remain typed; malformed, wrong-table, near-case,
+    duplicate, and unclosed table evidence fails closed. Paired ASCII and
+    Binary fixtures cover every Core dialect, source identity, cancellation,
+    lookup limits, and public metadata bounds. Application-name syntax,
+    group-1002 braces, typed values, the 16-KiB policy, payload semantics,
+    handle remap, clone/write, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

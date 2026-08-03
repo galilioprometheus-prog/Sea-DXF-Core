@@ -80,6 +80,7 @@ mod entity_proxy_graphics_relation;
 mod entity_transparency;
 mod entity_value_encoder;
 mod entity_xdata;
+mod entity_xdata_appid_resolution;
 mod error;
 mod format_probe;
 #[allow(dead_code)]
@@ -530,6 +531,10 @@ pub use entity_value_encoder::{
 pub use entity_xdata::{
     DxfEntityXDataApplication, DxfEntityXDataApplicationState, DxfEntityXDataDirectory,
     DxfEntityXDataOccurrence, DxfEntityXDataOccurrenceKind, DxfEntityXDataOccurrenceRange,
+};
+pub use entity_xdata_appid_resolution::{
+    DxfEntityXDataAppIdResolutionDirectory, DxfEntityXDataAppIdResolutionEntry,
+    DxfEntityXDataAppIdResolutionState,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

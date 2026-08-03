@@ -708,6 +708,7 @@ const fn kind_ordinal(kind: DxfNamedSymbolTableKind) -> u8 {
         DxfNamedSymbolTableKind::BlockRecord => 2,
         DxfNamedSymbolTableKind::Layer => 3,
         DxfNamedSymbolTableKind::Linetype => 4,
+        DxfNamedSymbolTableKind::AppId => 5,
     }
 }
 

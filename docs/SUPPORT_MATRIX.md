@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cl can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cm can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1381,6 +1381,16 @@ and XDATA-shaped codes inside group-102 application controls are excluded.
 ASCII/Binary parity spans all nine Core dialects. APPID lookup, application-name
 or group-1002 brace validation, typed value projection, 16-KiB policy, payload
 meaning, clone/write, and POINT `Complete` remain open.
+
+M14.3cm extends the exact closed-table scanner to APPID and adds
+`DxfEntityXDataAppIdResolutionDirectory`. Every group-1001 application name is
+hashed only to bound candidate selection, then compared byte-for-byte against
+the exact group-2 APPID name span. Results retain missing, unique, or ambiguous
+state and a unique source-backed target. Wrong-table records, case near-matches,
+duplicate names, malformed table declarations, and tables without an exact
+`ENDTAB` remain fail closed. All nine Core dialects have ASCII/Binary parity.
+Application-name syntax, group-1002 braces, typed values, 16-KiB policy,
+payload meaning, handle remap, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

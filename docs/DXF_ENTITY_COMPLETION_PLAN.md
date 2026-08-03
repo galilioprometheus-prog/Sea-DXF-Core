@@ -1306,6 +1306,19 @@ APPID resolution, name and group-1002 brace validation, typed XDATA values,
 16-KiB enforcement, application payload meaning, clone/write, and POINT
 `Complete` remain open.
 
+M14.3cm resolves each generic entity XDATA application name against the APPID
+symbol table without normalizing source bytes. The named-symbol scanner admits
+APPID records only from exact, completely closed APPID tables and requires one
+outside-application-control group-2 name per record. A sorted digest index
+narrows lookup candidates, but exact source-span equality decides matches and
+therefore remains collision safe. Missing, unique, and ambiguous results keep
+their source application; unique results retain the exact APPID record. All
+nine ASCII/Binary dialect pairs cover exact, duplicate, missing, case-near,
+wrong-table, malformed, and unclosed evidence plus source identity,
+cancellation, lookup limits, and metadata bounds. Name syntax and length,
+group-1002 brace validation, typed XDATA values, 16-KiB enforcement, payload
+meaning, group-1005 remap, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
