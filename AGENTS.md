@@ -20,12 +20,23 @@ custom, proxy, and non-public payloads remain exact opaque data.
 
 - Mechanical checks may accumulate and be handed to Antigravity CLI as one
   bounded batch instead of interrupting implementation after every small check.
+- Use `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` as the single source of truth for
+  that handoff. Codex must keep exactly one active batch marked `READY`, update
+  its checkpoint, commands, expected evidence, and date as work advances, and
+  retire or replace the batch after its returned evidence has been reviewed.
 - Codex defines and reviews the batch; the user manually copies one explicit
   English prompt to Antigravity CLI. Do not depend on Agent Hub or another MCP
   coordination layer.
-- Every handoff prompt must state the exact root, ordered commands, allowed
-  writes, prohibited actions, stop conditions, acceptance criteria, and raw
-  evidence format so the worker makes no scope decisions.
+- The chat handoff prompt should only identify the exact repository root, order
+  Antigravity to read `AGENTS.md` and the complete active batch note, execute
+  the `READY` batch exactly, and return the note-defined report. Do not duplicate
+  the full batch in chat unless the note is inaccessible.
+- The active batch note, rather than the short chat prompt, must state the exact
+  root, ordered commands, allowed writes, prohibited actions, stop conditions,
+  acceptance criteria, expected results, and raw evidence format so the worker
+  makes no scope decisions.
+- After Antigravity returns evidence, Codex independently checks the raw report
+  and repository state before relying on it or authorizing more work.
 - Keep architecture, normative-source interpretation, provenance, dependency
   approval, support claims, commit, push, tag, merge, and release decisions
   with Codex and the user.
