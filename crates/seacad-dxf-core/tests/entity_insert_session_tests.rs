@@ -4,11 +4,12 @@ use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDouble, DxfEntityCloneIssue, DxfEntityCloneOutcome,
     DxfEntityCommonFieldPatch, DxfEntityDeleteOutcome, DxfEntityDraft, DxfEntityEditOutcome,
-    DxfEntityEditValue, DxfEntityField, DxfEntityInsertIssue, DxfEntityInsertOutcome,
-    DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError,
-    DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft,
-    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldSemantics, DxfEntityFieldValue,
+    DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight,
+    DxfEntityPatch, DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
+    DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat,
+    DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -587,7 +588,11 @@ fn session_clone_rejects_unsupported_partial_and_pending_source_state() -> Resul
 {
     let version = DxfAcadVersion::Ac1032;
     let base = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
-    for (extra, expected_code) in [(b"60\n1\n".as_slice(), Some(60)), (b"210\n1\n", None)] {
+    for (extra, expected_code) in [
+        (b"6\nDASHED\n".as_slice(), Some(6)),
+        (b"60\n1\n".as_slice(), Some(60)),
+        (b"210\n1\n".as_slice(), None),
+    ] {
         let mut bytes = base.clone();
         let endsec = b"0\nENDSEC\n";
         let offset = bytes
@@ -631,6 +636,39 @@ fn session_clone_rejects_unsupported_partial_and_pending_source_state() -> Resul
         assert_eq!(session.queued_edit_count(), 0);
     }
 
+    let mut invalid_scalar = base.clone();
+    let point_subclass = b"100\nAcDbPoint\n";
+    let offset = invalid_scalar
+        .windows(point_subclass.len())
+        .rposition(|window| window == point_subclass)
+        .ok_or_else(|| io::Error::other("POINT subclass"))?;
+    invalid_scalar.splice(offset..offset, b"60\n2\n".iter().copied());
+    let invalid_source = DxfMemorySource::new(&invalid_scalar, DxfResourceProfile::Safe)?;
+    let invalid_document = open_ascii(&invalid_source)?;
+    let invalid_view = DxfRawDocumentView::from(&invalid_document);
+    let invalid_evidence = invalid_view.entity_field_evidence_directory(&token())?;
+    let invalid_key = existing_point_key(&invalid_evidence)?;
+    let invalid_cancellation = token();
+    let mut invalid_session = invalid_view.entity_edit_session(
+        &invalid_evidence,
+        DxfResourceProfile::Safe,
+        &invalid_cancellation,
+    )?;
+    let invalid_outcome =
+        invalid_session.clone_entity(invalid_key, only_placement(invalid_view)?, handle(0x10))?;
+    assert!(
+        matches!(
+        invalid_outcome,
+        DxfEntityCloneOutcome::Unavailable(DxfEntityCloneIssue::CommonFieldUnavailable {
+            key,
+            field: DxfEntityField::VISIBILITY,
+            ..
+        }) if key == invalid_key
+        ),
+        "unexpected invalid scalar clone outcome: {invalid_outcome:?}"
+    );
+    assert_eq!(invalid_session.queued_edit_count(), 0);
+
     let source = DxfMemorySource::new(&base, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
     let view = DxfRawDocumentView::from(&document);
@@ -653,6 +691,75 @@ fn session_clone_rejects_unsupported_partial_and_pending_source_state() -> Resul
         }) if observed == key
     ));
     assert_eq!(session.queued_edit_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn session_clone_preserves_reviewed_scalar_common_fields_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    const SCALE: DxfDouble = DxfDouble::from_bits(0.5_f64.to_bits());
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point_common_scalars(format, version, SCALE)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+                DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+            ));
+            let plan = session.finish_verifiable()?;
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("scalar-common clone identity").into());
+            };
+            let semantics = post.entity_field_semantic_directory(&token())?;
+            let entity = semantics
+                .evidence_directory()
+                .entity_directory()
+                .entity_for_raw_ordinal(clone.record().ordinal())
+                .ok_or_else(|| io::Error::other("scalar-common clone entity"))?;
+            for (field, expected) in [
+                (DxfEntityField::PAPER_SPACE, DxfEntityFieldValue::Int16(1)),
+                (DxfEntityField::COLOR, DxfEntityFieldValue::Int16(-7)),
+                (
+                    DxfEntityField::LINETYPE_SCALE,
+                    DxfEntityFieldValue::Double(SCALE),
+                ),
+                (DxfEntityField::VISIBILITY, DxfEntityFieldValue::Int16(1)),
+            ] {
+                assert_explicit_scalar(&semantics, entity, field, expected)?;
+            }
+            if version >= DxfAcadVersion::Ac1012 {
+                for (field, expected) in [
+                    (
+                        DxfEntityField::TRUE_COLOR,
+                        DxfEntityFieldValue::Int32(0x12_34_56),
+                    ),
+                    (
+                        DxfEntityField::TRANSPARENCY,
+                        DxfEntityFieldValue::Int32(0x0200_007f),
+                    ),
+                    (DxfEntityField::SHADOW, DxfEntityFieldValue::Int16(3)),
+                ] {
+                    assert_explicit_scalar(&semantics, entity, field, expected)?;
+                }
+            }
+            assert!(matches!(
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+            ));
+        }
+    }
     Ok(())
 }
 
@@ -808,6 +915,35 @@ fn fixture_with_existing_point(
     Ok(bytes)
 }
 
+fn fixture_with_existing_point_common_scalars(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    scale: DxfDouble,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let marker = if version >= DxfAcadVersion::Ac1012 {
+        encoded_string_group(format, version, 100, b"AcDbPoint")?
+    } else {
+        encoded_double_group(format, version, 10, 0.0)?
+    };
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT common-field boundary"))?;
+    let mut common = Vec::new();
+    common.extend_from_slice(&encoded_i16_group(format, version, 67, 1)?);
+    common.extend_from_slice(&encoded_i16_group(format, version, 62, -7)?);
+    common.extend_from_slice(&encoded_double_group(format, version, 48, scale.to_f64())?);
+    common.extend_from_slice(&encoded_i16_group(format, version, 60, 1)?);
+    if version >= DxfAcadVersion::Ac1012 {
+        common.extend_from_slice(&encoded_i32_group(format, version, 420, 0x12_34_56)?);
+        common.extend_from_slice(&encoded_i32_group(format, version, 440, 0x0200_007f)?);
+        common.extend_from_slice(&encoded_i16_group(format, version, 284, 3)?);
+    }
+    bytes.splice(offset..offset, common);
+    Ok(bytes)
+}
+
 fn fixture_with_earlier_empty_entities(
     format: DxfRawDocumentFormat,
     version: DxfAcadVersion,
@@ -923,6 +1059,46 @@ fn encoded_i16_group(
         _ => return Err(io::Error::other("format")),
     }
     Ok(bytes)
+}
+
+fn encoded_i32_group(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    code: i16,
+    value: i32,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            bytes.extend_from_slice(code.to_string().as_bytes());
+            bytes.push(b'\n');
+            bytes.extend_from_slice(value.to_string().as_bytes());
+            bytes.push(b'\n');
+        }
+        DxfRawDocumentFormat::Binary => {
+            push_binary_code(&mut bytes, version, code)?;
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        _ => return Err(io::Error::other("format")),
+    }
+    Ok(bytes)
+}
+
+fn assert_explicit_scalar(
+    semantics: &seacad_dxf_core::DxfEntityFieldSemanticDirectory,
+    entity: seacad_dxf_core::DxfEntityRef,
+    field: DxfEntityField,
+    expected: DxfEntityFieldValue,
+) -> Result<(), Box<dyn Error>> {
+    let entry = semantics
+        .entry_for_field(entity, field)?
+        .ok_or_else(|| io::Error::other("scalar semantic entry"))?;
+    let DxfEntityFieldSemantics::Singleton(value) = entry.semantics() else {
+        return Err(io::Error::other("scalar singleton semantics").into());
+    };
+    assert_eq!(value.state(), DxfSemanticValueState::Explicit);
+    assert_eq!(value.value(), Some(&expected));
+    Ok(())
 }
 
 fn push_binary_code(

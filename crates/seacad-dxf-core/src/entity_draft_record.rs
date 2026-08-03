@@ -5,8 +5,10 @@ use crate::{
     DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
     DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome,
     DxfEntityDraftApplicabilityPlan, DxfEntityDraftName, DxfEntityEditValue, DxfEntityField,
-    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder, DxfEntityLineweight,
-    DxfEntityNameClassification, DxfEntityPlacementTarget, DxfEntityTopic, DxfError, DxfHandle,
+    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
+    DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityNameClassification,
+    DxfEntityPlacementTarget, DxfEntityShadowMode, DxfEntitySpace, DxfEntityTopic,
+    DxfEntityTransparency, DxfEntityTrueColor, DxfEntityVisibility, DxfError, DxfHandle,
     DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
     DxfTransactionPlan,
 };
@@ -19,7 +21,14 @@ const ACDB_POINT: &[u8] = b"AcDbPoint";
 pub struct DxfPointDraft<'a> {
     layer: &'a [u8],
     layout: Option<&'a [u8]>,
+    space: Option<DxfEntitySpace>,
+    indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
+    linetype_scale: Option<DxfDouble>,
+    visibility: Option<DxfEntityVisibility>,
+    true_color: Option<DxfEntityTrueColor>,
+    transparency: Option<DxfEntityTransparency>,
+    shadow_mode: Option<DxfEntityShadowMode>,
     location: [DxfDouble; 3],
     thickness: Option<DxfDouble>,
     extrusion: Option<[DxfDouble; 3]>,
@@ -32,7 +41,14 @@ impl<'a> DxfPointDraft<'a> {
         Self {
             layer,
             layout: None,
+            space: None,
+            indexed_color: None,
             lineweight: None,
+            linetype_scale: None,
+            visibility: None,
+            true_color: None,
+            transparency: None,
+            shadow_mode: None,
             location,
             thickness: None,
             extrusion: None,
@@ -47,10 +63,59 @@ impl<'a> DxfPointDraft<'a> {
         self
     }
 
+    /// Emits an explicit model/paper-space group 67.
+    #[must_use]
+    pub const fn with_space(mut self, space: DxfEntitySpace) -> Self {
+        self.space = Some(space);
+        self
+    }
+
+    /// Emits an explicit indexed color group 62.
+    #[must_use]
+    pub const fn with_indexed_color(mut self, color: DxfEntityIndexedColor) -> Self {
+        self.indexed_color = Some(color);
+        self
+    }
+
     /// Supplies the non-omitted AC1015+ common lineweight.
     #[must_use]
     pub const fn with_lineweight(mut self, lineweight: DxfEntityLineweight) -> Self {
         self.lineweight = Some(lineweight);
+        self
+    }
+
+    /// Emits an explicit non-negative common linetype scale group 48.
+    #[must_use]
+    pub const fn with_linetype_scale(mut self, scale: DxfDouble) -> Self {
+        self.linetype_scale = Some(scale);
+        self
+    }
+
+    /// Emits an explicit visibility group 60.
+    #[must_use]
+    pub const fn with_visibility(mut self, visibility: DxfEntityVisibility) -> Self {
+        self.visibility = Some(visibility);
+        self
+    }
+
+    /// Emits an explicit true-color group 420.
+    #[must_use]
+    pub const fn with_true_color(mut self, color: DxfEntityTrueColor) -> Self {
+        self.true_color = Some(color);
+        self
+    }
+
+    /// Emits an explicit transparency group 440.
+    #[must_use]
+    pub const fn with_transparency(mut self, transparency: DxfEntityTransparency) -> Self {
+        self.transparency = Some(transparency);
+        self
+    }
+
+    /// Emits an explicit common shadow-mode group 284.
+    #[must_use]
+    pub const fn with_shadow_mode(mut self, shadow_mode: DxfEntityShadowMode) -> Self {
+        self.shadow_mode = Some(shadow_mode);
         self
     }
 
@@ -86,8 +151,43 @@ impl<'a> DxfPointDraft<'a> {
     }
 
     #[must_use]
+    pub const fn space(self) -> Option<DxfEntitySpace> {
+        self.space
+    }
+
+    #[must_use]
+    pub const fn indexed_color(self) -> Option<DxfEntityIndexedColor> {
+        self.indexed_color
+    }
+
+    #[must_use]
     pub const fn lineweight(self) -> Option<DxfEntityLineweight> {
         self.lineweight
+    }
+
+    #[must_use]
+    pub const fn linetype_scale(self) -> Option<DxfDouble> {
+        self.linetype_scale
+    }
+
+    #[must_use]
+    pub const fn visibility(self) -> Option<DxfEntityVisibility> {
+        self.visibility
+    }
+
+    #[must_use]
+    pub const fn true_color(self) -> Option<DxfEntityTrueColor> {
+        self.true_color
+    }
+
+    #[must_use]
+    pub const fn transparency(self) -> Option<DxfEntityTransparency> {
+        self.transparency
+    }
+
+    #[must_use]
+    pub const fn shadow_mode(self) -> Option<DxfEntityShadowMode> {
+        self.shadow_mode
     }
 
     #[must_use]
@@ -179,6 +279,13 @@ pub enum DxfEntityDraftRecordIssue {
     LineweightNotApplicable {
         version: DxfAcadVersion,
     },
+    CommonFieldNotApplicable {
+        field: DxfEntityField,
+        version: DxfAcadVersion,
+    },
+    InvalidLinetypeScale {
+        value: DxfDouble,
+    },
     ZeroExtrusion,
     LayerReference(DxfEntityCommonSymbolEditIssue),
     LayoutReference(DxfEntityCommonLayoutEditIssue),
@@ -198,7 +305,14 @@ pub struct DxfEntityDraftRecordPlan {
 pub(crate) struct DxfPointDraftRecordExpectation {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
+    space: Option<DxfEntitySpace>,
+    indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
+    linetype_scale: Option<DxfDouble>,
+    visibility: Option<DxfEntityVisibility>,
+    true_color: Option<DxfEntityTrueColor>,
+    transparency: Option<DxfEntityTransparency>,
+    shadow_mode: Option<DxfEntityShadowMode>,
     location: [DxfDouble; 3],
     thickness: Option<DxfDouble>,
     extrusion: Option<[DxfDouble; 3]>,
@@ -252,8 +366,36 @@ impl DxfPointDraftRecordExpectation {
         self.layout.as_deref()
     }
 
+    pub(crate) const fn space(&self) -> Option<DxfEntitySpace> {
+        self.space
+    }
+
+    pub(crate) const fn indexed_color(&self) -> Option<DxfEntityIndexedColor> {
+        self.indexed_color
+    }
+
     pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
         self.lineweight
+    }
+
+    pub(crate) const fn linetype_scale(&self) -> Option<DxfDouble> {
+        self.linetype_scale
+    }
+
+    pub(crate) const fn visibility(&self) -> Option<DxfEntityVisibility> {
+        self.visibility
+    }
+
+    pub(crate) const fn true_color(&self) -> Option<DxfEntityTrueColor> {
+        self.true_color
+    }
+
+    pub(crate) const fn transparency(&self) -> Option<DxfEntityTransparency> {
+        self.transparency
+    }
+
+    pub(crate) const fn shadow_mode(&self) -> Option<DxfEntityShadowMode> {
+        self.shadow_mode
     }
 
     pub(crate) const fn location(&self) -> [DxfDouble; 3] {
@@ -417,7 +559,14 @@ fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpe
     Ok(DxfPointDraftRecordExpectation {
         layer: copy_bytes(draft.layer())?,
         layout: draft.layout().map(copy_bytes).transpose()?,
+        space: draft.space(),
+        indexed_color: draft.indexed_color(),
         lineweight: draft.lineweight(),
+        linetype_scale: draft.linetype_scale(),
+        visibility: draft.visibility(),
+        true_color: draft.true_color(),
+        transparency: draft.transparency(),
+        shadow_mode: draft.shadow_mode(),
         location: draft.location(),
         thickness: draft.thickness(),
         extrusion: draft.extrusion(),
@@ -508,6 +657,28 @@ fn encode_point(
         (false, None) => None,
     };
     if draft
+        .linetype_scale()
+        .is_some_and(|scale| !scale.is_finite() || scale.to_f64() < 0.0)
+    {
+        return Ok(Err(DxfEntityDraftRecordIssue::InvalidLinetypeScale {
+            value: draft.linetype_scale().ok_or_else(invalid_internal_data)?,
+        }));
+    }
+    if context.version == DxfAcadVersion::Ac1009 {
+        for (field, present) in [
+            (DxfEntityField::TRUE_COLOR, draft.true_color().is_some()),
+            (DxfEntityField::TRANSPARENCY, draft.transparency().is_some()),
+            (DxfEntityField::SHADOW, draft.shadow_mode().is_some()),
+        ] {
+            if present {
+                return Ok(Err(DxfEntityDraftRecordIssue::CommonFieldNotApplicable {
+                    field,
+                    version: context.version,
+                }));
+            }
+        }
+    }
+    if draft
         .extrusion()
         .is_some_and(|extrusion| extrusion.iter().all(|component| component.to_f64() == 0.0))
     {
@@ -548,6 +719,16 @@ fn encode_point(
         )? {
             return Ok(Err(issue));
         }
+    }
+    if let Some(space) = draft.space()
+        && let Some(issue) = record.push(
+            67,
+            DxfEntityFieldWireType::Int16,
+            DxfEntityEditValue::Int16(space.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
     }
     if let Some(layout) = layout {
         if let Some(issue) = record.push(
@@ -593,11 +774,71 @@ fn encode_point(
             return Err(invalid_internal_data());
         }
     }
+    if let Some(color) = draft.indexed_color()
+        && let Some(issue) = record.push(
+            62,
+            DxfEntityFieldWireType::Int16,
+            DxfEntityEditValue::Int16(color.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
     if let Some(lineweight) = lineweight
         && let Some(issue) = record.push(
             370,
             DxfEntityFieldWireType::Int16,
             DxfEntityEditValue::Int16(lineweight.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(scale) = draft.linetype_scale()
+        && let Some(issue) = record.push(
+            48,
+            DxfEntityFieldWireType::Double,
+            DxfEntityEditValue::Double(scale),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(visibility) = draft.visibility()
+        && let Some(issue) = record.push(
+            60,
+            DxfEntityFieldWireType::Int16,
+            DxfEntityEditValue::Int16(visibility.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(color) = draft.true_color()
+        && let Some(issue) = record.push(
+            420,
+            DxfEntityFieldWireType::Int32,
+            DxfEntityEditValue::Int32(color.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(transparency) = draft.transparency()
+        && let Some(issue) = record.push(
+            440,
+            DxfEntityFieldWireType::Int32,
+            DxfEntityEditValue::Int32(transparency.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(shadow_mode) = draft.shadow_mode()
+        && let Some(issue) = record.push(
+            284,
+            DxfEntityFieldWireType::Int16,
+            DxfEntityEditValue::Int16(shadow_mode.raw()),
             cancellation,
         )?
     {

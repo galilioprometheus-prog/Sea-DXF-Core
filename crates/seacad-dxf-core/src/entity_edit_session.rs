@@ -33,15 +33,16 @@ use crate::{
     DxfEntityField, DxfEntityFieldCardState, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityKey, DxfEntityLineweight,
-    DxfEntityPlacement, DxfEntityPlacementOwnerIssue, DxfEntityPlacementOwnerOutcome,
-    DxfEntityPlacementTarget, DxfError, DxfHandle, DxfHandleAllocationOutcome,
-    DxfHandleAllocationPolicyState, DxfHandleGroupClass, DxfHandleIdentityDirectory,
-    DxfHandleIdentityLookup, DxfHandleIdentityState, DxfHandleReservationPlanOutcome,
-    DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
-    DxfNamedSymbolTableDirectory, DxfPointDraft, DxfPointEditIssue, DxfPointPatch,
-    DxfPointPatchKind, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSemanticValueState,
-    DxfSourceId, DxfTransactionPlan,
+    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityIndexedColor, DxfEntityKey,
+    DxfEntityLineweight, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
+    DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfEntityShadowMode, DxfEntitySpace,
+    DxfEntityTransparency, DxfEntityTrueColor, DxfEntityVisibility, DxfError, DxfHandle,
+    DxfHandleAllocationOutcome, DxfHandleAllocationPolicyState, DxfHandleGroupClass,
+    DxfHandleIdentityDirectory, DxfHandleIdentityLookup, DxfHandleIdentityState,
+    DxfHandleReservationPlanOutcome, DxfHandleResolutionState, DxfIoOperation,
+    DxfLayoutObjectDirectory, DxfNamedSymbolTableDirectory, DxfPointDraft, DxfPointEditIssue,
+    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentView, DxfResource, DxfResourceProfile,
+    DxfSemanticValueState, DxfSourceId, DxfTransactionPlan,
 };
 
 /// One atomic replacement of the common indexed/true/color-book tuple.
@@ -495,7 +496,14 @@ enum PendingDeleteExpectation {
 struct OwnedPointCloneDraft {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
+    space: Option<DxfEntitySpace>,
+    indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
+    linetype_scale: Option<crate::DxfDouble>,
+    visibility: Option<DxfEntityVisibility>,
+    true_color: Option<DxfEntityTrueColor>,
+    transparency: Option<DxfEntityTransparency>,
+    shadow_mode: Option<DxfEntityShadowMode>,
     location: [crate::DxfDouble; 3],
     thickness: Option<crate::DxfDouble>,
     extrusion: Option<[crate::DxfDouble; 3]>,
@@ -510,8 +518,29 @@ impl OwnedPointCloneDraft {
         if let Some(layout) = self.layout.as_deref() {
             point = point.with_layout(layout);
         }
+        if let Some(space) = self.space {
+            point = point.with_space(space);
+        }
+        if let Some(color) = self.indexed_color {
+            point = point.with_indexed_color(color);
+        }
         if let Some(lineweight) = self.lineweight {
             point = point.with_lineweight(lineweight);
+        }
+        if let Some(scale) = self.linetype_scale {
+            point = point.with_linetype_scale(scale);
+        }
+        if let Some(visibility) = self.visibility {
+            point = point.with_visibility(visibility);
+        }
+        if let Some(color) = self.true_color {
+            point = point.with_true_color(color);
+        }
+        if let Some(transparency) = self.transparency {
+            point = point.with_transparency(transparency);
+        }
+        if let Some(shadow_mode) = self.shadow_mode {
+            point = point.with_shadow_mode(shadow_mode);
         }
         if let Some(thickness) = self.thickness {
             point = point.with_thickness(thickness);
@@ -2019,8 +2048,39 @@ fn prepare_point_clone_draft(
         let group_code = group.group_code().value();
         if !matches!(
             group_code,
-            0 | 5 | 8 | 10 | 20 | 30 | 39 | 50 | 100 | 210 | 220 | 230 | 330 | 370 | 410
+            0 | 5
+                | 8
+                | 10
+                | 20
+                | 30
+                | 39
+                | 48
+                | 50
+                | 60
+                | 62
+                | 67
+                | 100
+                | 210
+                | 220
+                | 230
+                | 284
+                | 330
+                | 370
+                | 410
+                | 420
+                | 440
         ) {
+            return Ok(Err(DxfEntityCloneIssue::UnsupportedSourceGroup {
+                key,
+                group_occurrence: occurrence,
+                group_code,
+            }));
+        }
+        if let Some(field) = DxfEntityField::from_group_code(group_code)
+            && !evidence
+                .occurrence_for_group(occurrence)
+                .is_some_and(|entry| entry.entity() == entity && entry.field() == field)
+        {
             return Ok(Err(DxfEntityCloneIssue::UnsupportedSourceGroup {
                 key,
                 group_occurrence: occurrence,
@@ -2134,6 +2194,88 @@ fn prepare_point_clone_draft(
             }));
         }
     };
+    let space =
+        match clone_common_scalar(&common, entity, key, DxfEntityField::PAPER_SPACE, |value| {
+            match value {
+                DxfEntityFieldValue::Int16(raw) => DxfEntitySpace::from_raw(raw),
+                _ => None,
+            }
+        })? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        };
+    let indexed_color = match clone_common_scalar(
+        &common,
+        entity,
+        key,
+        DxfEntityField::COLOR,
+        |value| match value {
+            DxfEntityFieldValue::Int16(raw) => DxfEntityIndexedColor::from_raw(raw),
+            _ => None,
+        },
+    )? {
+        Ok(value) => value,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let linetype_scale = match clone_common_scalar(
+        &common,
+        entity,
+        key,
+        DxfEntityField::LINETYPE_SCALE,
+        |value| match value {
+            DxfEntityFieldValue::Double(raw) if raw.is_finite() && raw.to_f64() >= 0.0 => Some(raw),
+            _ => None,
+        },
+    )? {
+        Ok(value) => value,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let visibility =
+        match clone_common_scalar(&common, entity, key, DxfEntityField::VISIBILITY, |value| {
+            match value {
+                DxfEntityFieldValue::Int16(raw) => DxfEntityVisibility::from_raw(raw),
+                _ => None,
+            }
+        })? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        };
+    let true_color =
+        match clone_common_scalar(&common, entity, key, DxfEntityField::TRUE_COLOR, |value| {
+            match value {
+                DxfEntityFieldValue::Int32(raw) => DxfEntityTrueColor::from_raw(raw),
+                _ => None,
+            }
+        })? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        };
+    let transparency = match clone_common_scalar(
+        &common,
+        entity,
+        key,
+        DxfEntityField::TRANSPARENCY,
+        |value| match value {
+            DxfEntityFieldValue::Int32(raw) => DxfEntityTransparency::from_raw(raw),
+            _ => None,
+        },
+    )? {
+        Ok(value) => value,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let shadow_mode = match clone_common_scalar(
+        &common,
+        entity,
+        key,
+        DxfEntityField::SHADOW,
+        |value| match value {
+            DxfEntityFieldValue::Int16(raw) => DxfEntityShadowMode::from_raw(raw),
+            _ => None,
+        },
+    )? {
+        Ok(value) => value,
+        Err(issue) => return Ok(Err(issue)),
+    };
 
     let geometry = document.basic_geometry_semantic_directory(cancellation)?;
     let Some(point) = geometry.point_for_raw_record(key.raw_record_ordinal())? else {
@@ -2205,12 +2347,63 @@ fn prepare_point_clone_draft(
     Ok(Ok(OwnedPointCloneDraft {
         layer,
         layout,
+        space,
+        indexed_color,
         lineweight,
+        linetype_scale,
+        visibility,
+        true_color,
+        transparency,
+        shadow_mode,
         location,
         thickness,
         extrusion,
         ucs_x_axis_angle,
     }))
+}
+
+fn clone_common_scalar<T>(
+    common: &crate::DxfEntityFieldSemanticDirectory,
+    entity: crate::DxfEntityRef,
+    key: DxfEntityKey,
+    field: DxfEntityField,
+    classify: impl FnOnce(DxfEntityFieldValue) -> Option<T>,
+) -> Result<Result<Option<T>, DxfEntityCloneIssue>, DxfError> {
+    let entry = common
+        .entry_for_field(entity, field)?
+        .ok_or_else(invalid_internal_data)?;
+    match entry.card().state() {
+        DxfEntityFieldCardState::AbsentOptional | DxfEntityFieldCardState::AbsentRequired => {
+            Ok(Ok(None))
+        }
+        DxfEntityFieldCardState::Unique => {
+            let DxfEntityFieldSemantics::Singleton(value) = entry.semantics() else {
+                return Err(invalid_internal_data());
+            };
+            match value.value().cloned() {
+                Some(raw) if value.state() == DxfSemanticValueState::Explicit => {
+                    match classify(raw) {
+                        Some(typed) => Ok(Ok(Some(typed))),
+                        None => Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                            key,
+                            field,
+                            state: entry.card().state(),
+                        })),
+                    }
+                }
+                _ => Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+                    key,
+                    field,
+                    state: entry.card().state(),
+                })),
+            }
+        }
+        state => Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
+            key,
+            field,
+            state,
+        })),
+    }
 }
 
 fn source_clone_placement(

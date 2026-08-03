@@ -2693,5 +2693,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     in both API orders with exact inverse restoration. Broader clone and POINT
     `Complete` remain open.
 
+    M14.3cf retains reviewed common scalar properties during canonical POINT
+    clone. Typed draft fields cover explicit paper/model space, indexed color,
+    linetype scale, visibility, true color, transparency, and shadow mode;
+    encoding and verification use their exact public wire domains. Defaulted
+    and absent source values remain omitted, while invalid, duplicate, or
+    version-inapplicable values fail before queueing. The clone matrix passes
+    all ASCII/Binary Core dialects with strict semantic verification and exact
+    inverse restoration. Reference/text properties, proxy graphics, XDATA,
+    extension dictionaries, ownership graphs, and POINT `Complete` remain
+    open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

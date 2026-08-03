@@ -1240,6 +1240,17 @@ ASCII/Binary pair in both API orders with strict semantic verification and
 byte-identical inverse restoration. Broader clone and POINT `Complete` remain
 open.
 
+M14.3cf broadens canonical POINT clone to the reviewed singleton scalar common
+fields. Exact explicit group 67 space, group 62 indexed color, group 48
+linetype scale, group 60 visibility, group 420 true color, group 440
+transparency, and group 284 shadow mode are classified into typed domains,
+canonically re-encoded, and included in semantic post-image verification.
+Defaulted or absent values remain omitted; invalid, duplicate, or
+version-inapplicable values fail typed without queueing. All nine supported
+versions pass ASCII/Binary clone and inverse verification. Linetype, material,
+color-book, plot-style, proxy-graphics, XDATA/application groups, extension
+dictionaries, ownership graphs, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

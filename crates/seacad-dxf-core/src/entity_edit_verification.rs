@@ -1024,10 +1024,52 @@ fn verify_point_insert(
                 DxfEntityEditValue::ExactRawText(layout),
             )
         }),
+        expectation.point.space().map(|space| {
+            (
+                DxfEntityField::PAPER_SPACE,
+                DxfEntityEditValue::Int16(space.raw()),
+            )
+        }),
+        expectation.point.indexed_color().map(|color| {
+            (
+                DxfEntityField::COLOR,
+                DxfEntityEditValue::Int16(color.raw()),
+            )
+        }),
         expectation.point.lineweight().map(|lineweight| {
             (
                 DxfEntityField::LINEWEIGHT,
                 DxfEntityEditValue::Int16(lineweight.raw()),
+            )
+        }),
+        expectation.point.linetype_scale().map(|scale| {
+            (
+                DxfEntityField::LINETYPE_SCALE,
+                DxfEntityEditValue::Double(scale),
+            )
+        }),
+        expectation.point.visibility().map(|visibility| {
+            (
+                DxfEntityField::VISIBILITY,
+                DxfEntityEditValue::Int16(visibility.raw()),
+            )
+        }),
+        expectation.point.true_color().map(|color| {
+            (
+                DxfEntityField::TRUE_COLOR,
+                DxfEntityEditValue::Int32(color.raw()),
+            )
+        }),
+        expectation.point.transparency().map(|transparency| {
+            (
+                DxfEntityField::TRANSPARENCY,
+                DxfEntityEditValue::Int32(transparency.raw()),
+            )
+        }),
+        expectation.point.shadow_mode().map(|shadow_mode| {
+            (
+                DxfEntityField::SHADOW,
+                DxfEntityEditValue::Int16(shadow_mode.raw()),
             )
         }),
     ]
