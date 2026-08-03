@@ -2529,12 +2529,63 @@ fn point_delete_is_reference_safe_and_reversible_across_every_dialect() -> Resul
 }
 
 #[test]
-fn point_delete_rejects_incoming_reference_and_ambiguous_or_missing_identity()
+fn handleless_point_delete_is_semantically_verified_across_every_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = delete_fixture(format, version, DeleteShape::Handleless)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityDeleteOutcome::HandlelessApplied(receipt) = session.delete(key)? else {
+                return Err(io::Error::other("handleless POINT deletion").into());
+            };
+            assert_eq!(receipt.key(), key);
+            assert_eq!(session.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let post_entities = post.entity_directory(&token())?;
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .all(|entity| entity.classification().topic() != Some(DxfEntityTopic::POINT))
+            );
+            assert!(
+                post_entities
+                    .entities()
+                    .iter()
+                    .any(|entity| entity.classification().topic() == Some(DxfEntityTopic::LINE))
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified handleless POINT deletion").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 1);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_delete_rejects_incoming_reference_and_ambiguous_or_invalid_identity()
 -> Result<(), Box<dyn Error>> {
     for (shape, expected) in [
         (DeleteShape::IncomingReference, DeleteFailure::Incoming),
         (DeleteShape::AmbiguousIdentity, DeleteFailure::Ambiguous),
-        (DeleteShape::MissingIdentity, DeleteFailure::Missing),
+        (DeleteShape::InvalidIdentity, DeleteFailure::Invalid),
     ] {
         let bytes = delete_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, shape)?;
         let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
@@ -2564,11 +2615,11 @@ fn point_delete_rejects_incoming_reference_and_ambiguous_or_missing_identity()
                     target_count: 2,
                 }) if observed == key && handle == DxfHandle::from_u64(0x10)
             ),
-            DeleteFailure::Missing => matches!(
+            DeleteFailure::Invalid => matches!(
                 outcome,
                 DxfEntityDeleteOutcome::Unavailable(DxfEntityDeleteIssue::IdentityUnavailable {
                     key: observed,
-                    state: DxfHandleIdentityState::Absent,
+                    state: DxfHandleIdentityState::UniqueInvalid(_),
                 }) if observed == key
             ),
         });
@@ -2660,16 +2711,17 @@ enum PointShape {
 #[derive(Clone, Copy)]
 enum DeleteShape {
     Ready,
+    Handleless,
     IncomingReference,
     AmbiguousIdentity,
-    MissingIdentity,
+    InvalidIdentity,
 }
 
 #[derive(Clone, Copy)]
 enum DeleteFailure {
     Incoming,
     Ambiguous,
-    Missing,
+    Invalid,
 }
 
 fn delete_fixture(
@@ -2679,10 +2731,10 @@ fn delete_fixture(
 ) -> Result<Vec<u8>, io::Error> {
     match format {
         DxfRawDocumentFormat::Ascii => {
-            let point_handle = if matches!(shape, DeleteShape::MissingIdentity) {
-                ""
-            } else {
-                "5\n10\n"
+            let point_handle = match shape {
+                DeleteShape::Handleless => "",
+                DeleteShape::InvalidIdentity => "5\nGG\n",
+                _ => "5\n10\n",
             };
             let line_handle = if matches!(shape, DeleteShape::AmbiguousIdentity) {
                 "10"
@@ -2713,8 +2765,10 @@ fn delete_fixture(
             push_string(&mut bytes, version, 0, b"SECTION")?;
             push_string(&mut bytes, version, 2, b"ENTITIES")?;
             push_string(&mut bytes, version, 0, b"POINT")?;
-            if !matches!(shape, DeleteShape::MissingIdentity) {
-                push_string(&mut bytes, version, 5, b"10")?;
+            match shape {
+                DeleteShape::Handleless => {}
+                DeleteShape::InvalidIdentity => push_string(&mut bytes, version, 5, b"GG")?,
+                _ => push_string(&mut bytes, version, 5, b"10")?,
             }
             for (code, value) in [(10, 1.0), (20, 2.0), (30, 3.0)] {
                 push_double(&mut bytes, version, code, value)?;

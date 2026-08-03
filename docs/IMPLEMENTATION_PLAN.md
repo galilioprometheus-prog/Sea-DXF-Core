@@ -2659,5 +2659,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     broader common-property clone, handleless/mixed deletion, and POINT
     `Complete` remain open.
 
+    M14.3cc admits standalone canonical POINT deletion when record-local handle
+    identity is exactly `Absent`. The public outcome distinguishes handleless
+    admission from handle-backed deletion without weakening the existing
+    handle receipt. Strict verification retains the expected post-image entity
+    count, so the exact raw-record deletion must also prove a one-entity
+    semantic reduction before returning the byte-identical inverse. Invalid,
+    null, multiple, or ambiguous identities remain typed failures. Every
+    ASCII/Binary Core dialect passes exact removal, retained neighboring LINE,
+    strict reparse, semantic verification, and restoration. Mixed/multi-delete
+    sessions and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

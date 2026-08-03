@@ -78,7 +78,12 @@ pub(crate) struct DxfPointInsertExpectation {
 }
 
 pub(crate) struct DxfPointDeleteExpectation {
-    handle: DxfHandle,
+    identity: DxfPointDeleteIdentity,
+}
+
+pub(crate) enum DxfPointDeleteIdentity {
+    Handle(DxfHandle),
+    Handleless { expected_entity_count: u64 },
 }
 
 pub(crate) struct DxfPointLocationEditExpectation {
@@ -154,7 +159,17 @@ impl DxfEntityEditExpectation {
     }
 
     pub(crate) const fn point_delete(handle: DxfHandle) -> Self {
-        Self::PointDelete(DxfPointDeleteExpectation { handle })
+        Self::PointDelete(DxfPointDeleteExpectation {
+            identity: DxfPointDeleteIdentity::Handle(handle),
+        })
+    }
+
+    pub(crate) const fn handleless_point_delete(expected_entity_count: u64) -> Self {
+        Self::PointDelete(DxfPointDeleteExpectation {
+            identity: DxfPointDeleteIdentity::Handleless {
+                expected_entity_count,
+            },
+        })
     }
 
     pub(crate) const fn point_location(raw_record_ordinal: u64, location: [DxfDouble; 3]) -> Self {
@@ -232,6 +247,10 @@ pub enum DxfEntityEditVerificationIssue {
     DeletedEntityStillPresent {
         handle: DxfHandle,
         candidate_count: u32,
+    },
+    HandlelessDeleteEntityCountMismatch {
+        expected_entity_count: u64,
+        observed_entity_count: u64,
     },
     InsertedEntityClassificationMismatch {
         handle: DxfHandle,
@@ -691,20 +710,41 @@ fn verify_point_delete(
     expectation: &DxfPointDeleteExpectation,
     cancellation: &DxfCancellationToken,
 ) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
-    let identities = document.handle_identity_directory(cancellation)?;
-    let candidate_count = match identities.lookup(expectation.handle) {
-        DxfHandleIdentityLookup::Missing => return Ok(None),
-        DxfHandleIdentityLookup::Unique(_) => 1,
-        DxfHandleIdentityLookup::Ambiguous(candidates) => {
-            u32::try_from(candidates.len()).map_err(|_| invalid_internal_data())?
+    match expectation.identity {
+        DxfPointDeleteIdentity::Handle(handle) => {
+            let identities = document.handle_identity_directory(cancellation)?;
+            let candidate_count = match identities.lookup(handle) {
+                DxfHandleIdentityLookup::Missing => return Ok(None),
+                DxfHandleIdentityLookup::Unique(_) => 1,
+                DxfHandleIdentityLookup::Ambiguous(candidates) => {
+                    u32::try_from(candidates.len()).map_err(|_| invalid_internal_data())?
+                }
+            };
+            Ok(Some(
+                DxfEntityEditVerificationIssue::DeletedEntityStillPresent {
+                    handle,
+                    candidate_count,
+                },
+            ))
         }
-    };
-    Ok(Some(
-        DxfEntityEditVerificationIssue::DeletedEntityStillPresent {
-            handle: expectation.handle,
-            candidate_count,
-        },
-    ))
+        DxfPointDeleteIdentity::Handleless {
+            expected_entity_count,
+        } => {
+            let observed_entity_count =
+                u64::try_from(document.entity_directory(cancellation)?.entities().len())
+                    .map_err(|_| invalid_internal_data())?;
+            if observed_entity_count == expected_entity_count {
+                Ok(None)
+            } else {
+                Ok(Some(
+                    DxfEntityEditVerificationIssue::HandlelessDeleteEntityCountMismatch {
+                        expected_entity_count,
+                        observed_entity_count,
+                    },
+                ))
+            }
+        }
+    }
 }
 
 fn verify_point_location(

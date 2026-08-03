@@ -373,11 +373,25 @@ impl DxfEntityDeleteReceipt {
     }
 }
 
+/// Non-payload receipt for one admitted handleless whole-entity deletion.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfEntityHandlelessDeleteReceipt {
+    key: DxfEntityKey,
+}
+
+impl DxfEntityHandlelessDeleteReceipt {
+    #[must_use]
+    pub const fn key(self) -> DxfEntityKey {
+        self.key
+    }
+}
+
 /// Result of adding one whole-entity deletion to an edit session.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityDeleteOutcome {
     Applied(DxfEntityDeleteReceipt),
+    HandlelessApplied(DxfEntityHandlelessDeleteReceipt),
     Unavailable(DxfEntityDeleteIssue),
 }
 
@@ -459,8 +473,14 @@ struct PendingInsert {
 
 struct PendingDelete {
     key: DxfEntityKey,
-    handle: DxfHandle,
+    expectation: PendingDeleteExpectation,
     transaction: DxfTransactionPlan,
+}
+
+#[derive(Clone, Copy)]
+enum PendingDeleteExpectation {
+    Handle(DxfHandle),
+    Handleless { expected_entity_count: u64 },
 }
 
 struct OwnedPointCloneDraft {
@@ -794,56 +814,71 @@ impl<'document, 'evidence, 'cancellation>
             .identity_directory()
             .entry(key.raw_record_ordinal())
             .ok_or_else(invalid_internal_data)?;
-        let handle = match identity.state() {
-            DxfHandleIdentityState::UniqueParsed(handle) if !handle.is_null() => handle,
+        let expectation = match identity.state() {
+            DxfHandleIdentityState::Absent => PendingDeleteExpectation::Handleless {
+                expected_entity_count: u64::try_from(
+                    self.evidence
+                        .entity_directory()
+                        .entities()
+                        .len()
+                        .checked_sub(1)
+                        .ok_or_else(invalid_internal_data)?,
+                )
+                .map_err(|_| invalid_internal_data())?,
+            },
+            DxfHandleIdentityState::UniqueParsed(handle) if !handle.is_null() => {
+                PendingDeleteExpectation::Handle(handle)
+            }
             state => {
                 return Ok(DxfEntityDeleteOutcome::Unavailable(
                     DxfEntityDeleteIssue::IdentityUnavailable { key, state },
                 ));
             }
         };
-        match resolutions.identity_directory().lookup(handle) {
-            DxfHandleIdentityLookup::Unique(target)
-                if target.record().ordinal() == key.raw_record_ordinal() => {}
-            DxfHandleIdentityLookup::Ambiguous(targets) => {
-                return Ok(DxfEntityDeleteOutcome::Unavailable(
-                    DxfEntityDeleteIssue::AmbiguousIdentity {
-                        key,
-                        handle,
-                        target_count: u32::try_from(targets.len())
-                            .map_err(|_| invalid_internal_data())?,
-                    },
-                ));
+        if let PendingDeleteExpectation::Handle(handle) = expectation {
+            match resolutions.identity_directory().lookup(handle) {
+                DxfHandleIdentityLookup::Unique(target)
+                    if target.record().ordinal() == key.raw_record_ordinal() => {}
+                DxfHandleIdentityLookup::Ambiguous(targets) => {
+                    return Ok(DxfEntityDeleteOutcome::Unavailable(
+                        DxfEntityDeleteIssue::AmbiguousIdentity {
+                            key,
+                            handle,
+                            target_count: u32::try_from(targets.len())
+                                .map_err(|_| invalid_internal_data())?,
+                        },
+                    ));
+                }
+                DxfHandleIdentityLookup::Missing | DxfHandleIdentityLookup::Unique(_) => {
+                    return Err(invalid_internal_data());
+                }
             }
-            DxfHandleIdentityLookup::Missing | DxfHandleIdentityLookup::Unique(_) => {
-                return Err(invalid_internal_data());
-            }
-        }
-        for (ordinal, resolution) in resolutions.entries().iter().copied().enumerate() {
-            ensure_not_cancelled(self.cancellation)?;
-            if resolution.reference().record().ordinal() == key.raw_record_ordinal()
-                || resolution.state() != DxfHandleResolutionState::Unique
-            {
-                continue;
-            }
-            let ordinal = u64::try_from(ordinal).map_err(|_| invalid_internal_data())?;
-            let [target] = resolutions
-                .targets_for_reference(ordinal)
-                .ok_or_else(invalid_internal_data)?
-            else {
-                return Err(invalid_internal_data());
-            };
-            if target.record().ordinal() == key.raw_record_ordinal() {
-                let reference = resolution.reference();
-                return Ok(DxfEntityDeleteOutcome::Unavailable(
-                    DxfEntityDeleteIssue::IncomingReference {
-                        key,
-                        handle,
-                        source_record_ordinal: reference.record().ordinal(),
-                        group_occurrence: reference.value().group().occurrence(),
-                        class: reference.class(),
-                    },
-                ));
+            for (ordinal, resolution) in resolutions.entries().iter().copied().enumerate() {
+                ensure_not_cancelled(self.cancellation)?;
+                if resolution.reference().record().ordinal() == key.raw_record_ordinal()
+                    || resolution.state() != DxfHandleResolutionState::Unique
+                {
+                    continue;
+                }
+                let ordinal = u64::try_from(ordinal).map_err(|_| invalid_internal_data())?;
+                let [target] = resolutions
+                    .targets_for_reference(ordinal)
+                    .ok_or_else(invalid_internal_data)?
+                else {
+                    return Err(invalid_internal_data());
+                };
+                if target.record().ordinal() == key.raw_record_ordinal() {
+                    let reference = resolution.reference();
+                    return Ok(DxfEntityDeleteOutcome::Unavailable(
+                        DxfEntityDeleteIssue::IncomingReference {
+                            key,
+                            handle,
+                            source_record_ordinal: reference.record().ordinal(),
+                            group_occurrence: reference.value().group().occurrence(),
+                            class: reference.class(),
+                        },
+                    ));
+                }
             }
         }
         let range = entity.record().group_range();
@@ -868,13 +903,17 @@ impl<'document, 'evidence, 'cancellation>
         ensure_not_cancelled(self.cancellation)?;
         self.pending_delete = Some(PendingDelete {
             key,
-            handle,
+            expectation,
             transaction,
         });
-        Ok(DxfEntityDeleteOutcome::Applied(DxfEntityDeleteReceipt {
-            key,
-            handle,
-        }))
+        Ok(match expectation {
+            PendingDeleteExpectation::Handle(handle) => {
+                DxfEntityDeleteOutcome::Applied(DxfEntityDeleteReceipt { key, handle })
+            }
+            PendingDeleteExpectation::Handleless { .. } => {
+                DxfEntityDeleteOutcome::HandlelessApplied(DxfEntityHandlelessDeleteReceipt { key })
+            }
+        })
     }
 
     fn update_point(
@@ -1441,9 +1480,17 @@ impl<'document, 'evidence, 'cancellation>
                 return Err(invalid_internal_data());
             }
             ensure_source(self.document.source_id(), delete.key.source_id())?;
+            let expectation = match delete.expectation {
+                PendingDeleteExpectation::Handle(handle) => {
+                    DxfEntityEditExpectation::point_delete(handle)
+                }
+                PendingDeleteExpectation::Handleless {
+                    expected_entity_count,
+                } => DxfEntityEditExpectation::handleless_point_delete(expected_entity_count),
+            };
             return Ok(DxfEntityEditPlan::new(
                 delete.transaction,
-                vec![DxfEntityEditExpectation::point_delete(delete.handle)],
+                vec![expectation],
             ));
         }
         let (transaction, pending, point_edits) = self.finish_parts()?;

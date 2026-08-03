@@ -1205,6 +1205,17 @@ ASCII/Binary dialect pairs, and an all-explicit payload clone retains every
 POINT family value. Cross-container/owner clone, broader common-property
 clone, handleless/mixed deletion, and POINT `Complete` remain open.
 
+M14.3cc closes handleless deletion for standalone canonical POINT records.
+`DxfHandleIdentityState::Absent` is admitted through a distinct
+`HandlelessApplied` outcome, while invalid, null, multiple, and ambiguous
+identity remains rejected. Because no handle exists to use as a semantic
+postcondition, the plan retains the exact expected post-image entity count;
+strict reparse must prove that one entity disappeared before the executable
+inverse is released. Exact raw-record removal, retained neighboring LINE,
+semantic count verification, and byte-identical restoration pass every nine-
+dialect ASCII/Binary pair. Mixed/multi-delete sessions and POINT `Complete`
+remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
