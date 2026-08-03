@@ -2745,5 +2745,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     cascade/remap, application groups/XDATA clone, and POINT `Complete` remain
     open.
 
+    M14.3cl adds one source-anchored, format-neutral entity XDATA directory as
+    the prerequisite for any payload-preserving clone. Exact group 1001 opens
+    a distinct application list; following codes in 1000..=1071 retain raw
+    source order until another 1001, a normal group, or the record boundary.
+    Duplicate application names remain separate, pre-name values remain
+    orphans, and a normal group marks the open list interrupted. XDATA-shaped
+    codes inside group-102 application controls remain excluded. Paired ASCII
+    and Binary fixtures cover every Core dialect, source identity,
+    cancellation, duplicate names, orphans, interruption, and public metadata
+    bounds. APPID resolution, lexical/value validation, the 16-KiB application
+    policy, application semantics, clone/write, and POINT `Complete` remain
+    open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

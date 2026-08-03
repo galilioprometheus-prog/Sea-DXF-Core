@@ -79,6 +79,7 @@ mod entity_placement_owner;
 mod entity_proxy_graphics_relation;
 mod entity_transparency;
 mod entity_value_encoder;
+mod entity_xdata;
 mod error;
 mod format_probe;
 #[allow(dead_code)]
@@ -525,6 +526,10 @@ pub use entity_transparency::{
 pub use entity_value_encoder::{
     DXF_ENTITY_BINARY_CHUNK_MAX_BYTES, DxfEncodedEntityGroup, DxfEntityEditValue,
     DxfEntityEditValueKind, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
+};
+pub use entity_xdata::{
+    DxfEntityXDataApplication, DxfEntityXDataApplicationState, DxfEntityXDataDirectory,
+    DxfEntityXDataOccurrence, DxfEntityXDataOccurrenceKind, DxfEntityXDataOccurrenceRange,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};

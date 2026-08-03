@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ck can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cl can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1370,6 +1370,17 @@ queued. AC1012 through AC1032 ASCII/Binary fixtures cover reactor,
 extension-dictionary, and unscoped hard-owner shapes. This is an orphan-
 prevention boundary, not graph-aware cascade deletion or graph clone; XDATA,
 display, and POINT `Complete` remain open.
+
+M14.3cl adds `DxfEntityXDataDirectory` over every entity in the unified
+directory. Exact group-1001 occurrences start separate application lists, and
+the following group codes in the inclusive 1000..=1071 range retain their raw
+groups and source order until the next 1001, a normal group, or the record
+boundary. Duplicate application names are not merged; XDATA codes before a
+1001 remain explicit orphans; a normal group marks the open list interrupted;
+and XDATA-shaped codes inside group-102 application controls are excluded.
+ASCII/Binary parity spans all nine Core dialects. APPID lookup, application-name
+or group-1002 brace validation, typed value projection, 16-KiB policy, payload
+meaning, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

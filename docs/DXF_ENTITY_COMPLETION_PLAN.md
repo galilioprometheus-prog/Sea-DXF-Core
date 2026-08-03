@@ -1294,6 +1294,18 @@ shapes. Every applicable AC1012+ ASCII/Binary dialect covers the three reviewed
 graph shapes. This prevents orphan creation but does not claim graph-aware
 cascade/remap, application-group/XDATA clone, or POINT `Complete`.
 
+M14.3cl introduces generic entity XDATA evidence before any clone policy. For
+every entity in the unified directory, one exact group 1001 opens a distinct
+registered-application list and following groups in the inclusive 1000..=1071
+range retain source order through the next 1001 or raw-record boundary. A
+normal entity group interrupts an open list; later XDATA codes without a new
+1001 remain explicit orphans. Duplicate application names remain separate,
+and XDATA-shaped codes inside group-102 application controls are excluded from
+this directory. All nine ASCII/Binary dialect pairs share the same index.
+APPID resolution, name and group-1002 brace validation, typed XDATA values,
+16-KiB enforcement, application payload meaning, clone/write, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
