@@ -3,6 +3,7 @@
 use crate::{
     DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble,
     DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
     DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome,
     DxfEntityDraftApplicabilityPlan, DxfEntityDraftName, DxfEntityEditValue, DxfEntityField,
     DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
@@ -22,6 +23,8 @@ pub struct DxfPointDraft<'a> {
     layer: &'a [u8],
     layout: Option<&'a [u8]>,
     linetype: Option<&'a [u8]>,
+    material: Option<DxfHandle>,
+    plot_style: Option<DxfHandle>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -43,6 +46,8 @@ impl<'a> DxfPointDraft<'a> {
             layer,
             layout: None,
             linetype: None,
+            material: None,
+            plot_style: None,
             space: None,
             indexed_color: None,
             lineweight: None,
@@ -83,6 +88,20 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn with_linetype(mut self, linetype: &'a [u8]) -> Self {
         self.linetype = Some(linetype);
+        self
+    }
+
+    /// Emits a validated same-document MATERIAL object reference in group 347.
+    #[must_use]
+    pub const fn with_material(mut self, material: DxfHandle) -> Self {
+        self.material = Some(material);
+        self
+    }
+
+    /// Emits a validated same-document plot-style object reference in group 390.
+    #[must_use]
+    pub const fn with_plot_style(mut self, plot_style: DxfHandle) -> Self {
+        self.plot_style = Some(plot_style);
         self
     }
 
@@ -172,6 +191,16 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn linetype(self) -> Option<&'a [u8]> {
         self.linetype
+    }
+
+    #[must_use]
+    pub const fn material(self) -> Option<DxfHandle> {
+        self.material
+    }
+
+    #[must_use]
+    pub const fn plot_style(self) -> Option<DxfHandle> {
+        self.plot_style
     }
 
     #[must_use]
@@ -303,6 +332,7 @@ pub enum DxfEntityDraftRecordIssue {
     ZeroExtrusion,
     LayerReference(DxfEntityCommonSymbolEditIssue),
     SymbolReference(DxfEntityCommonSymbolEditIssue),
+    Reference(DxfEntityCommonReferenceEditIssue),
     LayoutReference(DxfEntityCommonLayoutEditIssue),
     GroupEncode {
         group_code: i16,
@@ -321,6 +351,7 @@ pub(crate) struct DxfPointDraftRecordExpectation {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
     linetype: Option<Box<[u8]>>,
+    references: DxfPointDraftReferenceExpectation,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -333,6 +364,57 @@ pub(crate) struct DxfPointDraftRecordExpectation {
     thickness: Option<DxfDouble>,
     extrusion: Option<[DxfDouble; 3]>,
     ucs_x_axis_angle: Option<DxfDouble>,
+}
+
+#[derive(Clone, Copy)]
+struct DxfPointDraftReferenceExpectation {
+    handles: [DxfHandle; 2],
+    explicit_mask: u8,
+}
+
+impl DxfPointDraftReferenceExpectation {
+    const MATERIAL_MASK: u8 = 1;
+    const PLOT_STYLE_MASK: u8 = 2;
+
+    const fn new(material: Option<DxfHandle>, plot_style: Option<DxfHandle>) -> Self {
+        Self {
+            handles: [
+                match material {
+                    Some(handle) => handle,
+                    None => DxfHandle::from_u64(0),
+                },
+                match plot_style {
+                    Some(handle) => handle,
+                    None => DxfHandle::from_u64(0),
+                },
+            ],
+            explicit_mask: (if material.is_some() {
+                Self::MATERIAL_MASK
+            } else {
+                0
+            }) | (if plot_style.is_some() {
+                Self::PLOT_STYLE_MASK
+            } else {
+                0
+            }),
+        }
+    }
+
+    const fn material(self) -> Option<DxfHandle> {
+        if self.explicit_mask & Self::MATERIAL_MASK != 0 {
+            Some(self.handles[0])
+        } else {
+            None
+        }
+    }
+
+    const fn plot_style(self) -> Option<DxfHandle> {
+        if self.explicit_mask & Self::PLOT_STYLE_MASK != 0 {
+            Some(self.handles[1])
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -392,6 +474,14 @@ impl DxfPointDraftRecordExpectation {
 
     pub(crate) fn linetype(&self) -> Option<&[u8]> {
         self.linetype.as_deref()
+    }
+
+    pub(crate) const fn material(&self) -> Option<DxfHandle> {
+        self.references.material()
+    }
+
+    pub(crate) const fn plot_style(&self) -> Option<DxfHandle> {
+        self.references.plot_style()
     }
 
     pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
@@ -580,6 +670,7 @@ fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpe
         layer: copy_bytes(draft.layer())?,
         layout: draft.layout().map(copy_bytes).transpose()?,
         linetype: draft.linetype().map(copy_bytes).transpose()?,
+        references: DxfPointDraftReferenceExpectation::new(draft.material(), draft.plot_style()),
         space: draft.space(),
         indexed_color: draft.indexed_color(),
         lineweight: draft.lineweight(),
@@ -687,9 +778,11 @@ fn encode_point(
     }
     if context.version == DxfAcadVersion::Ac1009 {
         for (field, present) in [
+            (DxfEntityField::MATERIAL, draft.material().is_some()),
             (DxfEntityField::TRUE_COLOR, draft.true_color().is_some()),
             (DxfEntityField::TRANSPARENCY, draft.transparency().is_some()),
             (DxfEntityField::SHADOW, draft.shadow_mode().is_some()),
+            (DxfEntityField::PLOT_STYLE, draft.plot_style().is_some()),
         ] {
             if present {
                 return Ok(Err(DxfEntityDraftRecordIssue::CommonFieldNotApplicable {
@@ -818,6 +911,29 @@ fn encode_point(
             }
         }
     }
+    if let Some(material) = draft.material() {
+        if let Some(issue) = record.push(
+            347,
+            DxfEntityFieldWireType::Handle,
+            DxfEntityEditValue::Handle(material),
+            cancellation,
+        )? {
+            return Ok(Err(issue));
+        }
+        match document.classify_entity_common_reference_edit(
+            DxfEntityField::MATERIAL,
+            DxfEntityEditValue::Handle(material),
+            cancellation,
+        )? {
+            DxfEntityCommonReferenceEditOutcome::Valid(_) => {}
+            DxfEntityCommonReferenceEditOutcome::Invalid(issue) => {
+                return Ok(Err(DxfEntityDraftRecordIssue::Reference(issue)));
+            }
+            DxfEntityCommonReferenceEditOutcome::NotReference { .. } => {
+                return Err(invalid_internal_data());
+            }
+        }
+    }
     if let Some(color) = draft.indexed_color()
         && let Some(issue) = record.push(
             62,
@@ -877,6 +993,29 @@ fn encode_point(
         )?
     {
         return Ok(Err(issue));
+    }
+    if let Some(plot_style) = draft.plot_style() {
+        if let Some(issue) = record.push(
+            390,
+            DxfEntityFieldWireType::Handle,
+            DxfEntityEditValue::Handle(plot_style),
+            cancellation,
+        )? {
+            return Ok(Err(issue));
+        }
+        match document.classify_entity_common_reference_edit(
+            DxfEntityField::PLOT_STYLE,
+            DxfEntityEditValue::Handle(plot_style),
+            cancellation,
+        )? {
+            DxfEntityCommonReferenceEditOutcome::Valid(_) => {}
+            DxfEntityCommonReferenceEditOutcome::Invalid(issue) => {
+                return Ok(Err(DxfEntityDraftRecordIssue::Reference(issue)));
+            }
+            DxfEntityCommonReferenceEditOutcome::NotReference { .. } => {
+                return Err(invalid_internal_data());
+            }
+        }
     }
     if let Some(shadow_mode) = draft.shadow_mode()
         && let Some(issue) = record.push(

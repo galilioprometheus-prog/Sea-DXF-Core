@@ -497,6 +497,8 @@ struct OwnedPointCloneDraft {
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
     linetype: Option<Box<[u8]>>,
+    material: Option<DxfHandle>,
+    plot_style: Option<DxfHandle>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -524,6 +526,12 @@ impl OwnedPointCloneDraft {
         }
         if let Some(linetype) = self.linetype.as_deref() {
             point = point.with_linetype(linetype);
+        }
+        if let Some(material) = self.material {
+            point = point.with_material(material);
+        }
+        if let Some(plot_style) = self.plot_style {
+            point = point.with_plot_style(plot_style);
         }
         if let Some(color) = self.indexed_color {
             point = point.with_indexed_color(color);
@@ -2070,7 +2078,9 @@ fn prepare_point_clone_draft(
                 | 230
                 | 284
                 | 330
+                | 347
                 | 370
+                | 390
                 | 410
                 | 420
                 | 440
@@ -2169,6 +2179,26 @@ fn prepare_point_clone_draft(
         Ok(linetype) => linetype,
         Err(issue) => return Ok(Err(issue)),
     };
+    let material =
+        match clone_common_scalar(&common, entity, key, DxfEntityField::MATERIAL, |value| {
+            match value {
+                DxfEntityFieldValue::Handle(handle) if !handle.is_null() => Some(handle),
+                _ => None,
+            }
+        })? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        };
+    let plot_style =
+        match clone_common_scalar(&common, entity, key, DxfEntityField::PLOT_STYLE, |value| {
+            match value {
+                DxfEntityFieldValue::Handle(handle) if !handle.is_null() => Some(handle),
+                _ => None,
+            }
+        })? {
+            Ok(value) => value,
+            Err(issue) => return Ok(Err(issue)),
+        };
     let lineweight_entry = common
         .entry_for_field(entity, DxfEntityField::LINEWEIGHT)?
         .ok_or_else(invalid_internal_data)?;
@@ -2365,6 +2395,8 @@ fn prepare_point_clone_draft(
         layer,
         layout,
         linetype,
+        material,
+        plot_style,
         space,
         indexed_color,
         lineweight,

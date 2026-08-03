@@ -1042,6 +1042,12 @@ fn verify_point_insert(
                 DxfEntityEditValue::ExactRawText(linetype),
             )
         }),
+        expectation.point.material().map(|material| {
+            (
+                DxfEntityField::MATERIAL,
+                DxfEntityEditValue::Handle(material),
+            )
+        }),
         expectation.point.lineweight().map(|lineweight| {
             (
                 DxfEntityField::LINEWEIGHT,
@@ -1070,6 +1076,12 @@ fn verify_point_insert(
             (
                 DxfEntityField::TRANSPARENCY,
                 DxfEntityEditValue::Int32(transparency.raw()),
+            )
+        }),
+        expectation.point.plot_style().map(|plot_style| {
+            (
+                DxfEntityField::PLOT_STYLE,
+                DxfEntityEditValue::Handle(plot_style),
             )
         }),
         expectation.point.shadow_mode().map(|shadow_mode| {

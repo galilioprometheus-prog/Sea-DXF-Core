@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cg. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3ch. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -285,9 +285,11 @@ color-book references, proxy graphics, XDATA, extension dictionaries, and
 ownership graphs still fail closed rather than being copied incompletely.
 POINT clone also preserves an explicit same-document linetype name only when it
 resolves to one exact LTYPE table entry; canonical encoding and post-image
-verification retain the exact source bytes across every Core dialect. Material,
-plot-style, color-book, and graph common-property clone plus POINT `Complete`
-remain open.
+verification retain the exact source bytes across every Core dialect. On
+AC1012+, clone also preserves same-document material and plot-style handles only
+when they resolve uniquely to the required MATERIAL and ACDBPLACEHOLDER object
+kinds. Both references are revalidated after strict reparse. Color-book and
+graph common-property clone plus POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

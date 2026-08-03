@@ -2712,5 +2712,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     strict reparse, and exact inverse verification. Material, plot-style,
     color-book, graph common properties, and POINT `Complete` remain open.
 
+    M14.3ch adds same-document material and plot-style reference preservation
+    for AC1012+ canonical POINT clone. Non-null groups 347 and 390 must resolve
+    uniquely to the reviewed MATERIAL and ACDBPLACEHOLDER OBJECTS targets. The
+    typed draft revalidates target kind, and semantic post-image verification
+    checks both handles. Every applicable ASCII/Binary dialect passes clone,
+    strict reparse, and exact inverse restoration. Color-book, graph common
+    properties, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

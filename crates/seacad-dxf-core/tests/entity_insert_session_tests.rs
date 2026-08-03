@@ -3,10 +3,11 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDouble, DxfEntityCloneIssue, DxfEntityCloneOutcome,
-    DxfEntityCommonFieldPatch, DxfEntityDeleteOutcome, DxfEntityDraft, DxfEntityEditOutcome,
-    DxfEntityEditValue, DxfEntityField, DxfEntityFieldSemantics, DxfEntityFieldValue,
-    DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight,
-    DxfEntityPatch, DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
+    DxfEntityCommonFieldPatch, DxfEntityCommonReferenceEditIssue, DxfEntityDeleteOutcome,
+    DxfEntityDraft, DxfEntityDraftRecordIssue, DxfEntityEditOutcome, DxfEntityEditValue,
+    DxfEntityField, DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityInsertIssue,
+    DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch,
+    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
     DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat,
     DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
     DxfTransactionPlan, NoopDxfReadObserver,
@@ -805,6 +806,96 @@ fn session_clone_preserves_valid_linetype_across_every_dialect() -> Result<(), B
 }
 
 #[test]
+fn session_clone_preserves_valid_object_references_across_modern_dialects()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED
+        .into_iter()
+        .filter(|version| *version >= DxfAcadVersion::Ac1012)
+    {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point_references(format, version)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+                DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+            ));
+            let plan = session.finish_verifiable()?;
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("reference clone identity").into());
+            };
+            let semantics = post.entity_field_semantic_directory(&token())?;
+            let entity = semantics
+                .evidence_directory()
+                .entity_directory()
+                .entity_for_raw_ordinal(clone.record().ordinal())
+                .ok_or_else(|| io::Error::other("reference clone entity"))?;
+            for (field, target) in [
+                (DxfEntityField::MATERIAL, handle(0x13)),
+                (DxfEntityField::PLOT_STYLE, handle(0x14)),
+            ] {
+                assert_explicit_scalar(
+                    &semantics,
+                    entity,
+                    field,
+                    DxfEntityFieldValue::Handle(target),
+                )?;
+            }
+            assert!(matches!(
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn session_clone_rejects_incompatible_object_reference_without_queueing()
+-> Result<(), Box<dyn Error>> {
+    let version = DxfAcadVersion::Ac1032;
+    let bytes = fixture_with_existing_point_reference_values(
+        DxfRawDocumentFormat::Ascii,
+        version,
+        b"14",
+        b"14",
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = existing_point_key(&evidence)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    let outcome = session.clone_entity(key, only_placement(view)?, handle(0x10))?;
+    assert!(matches!(
+        outcome,
+        DxfEntityCloneOutcome::Unavailable(DxfEntityCloneIssue::Insert(
+            DxfEntityInsertIssue::Record(DxfEntityDraftRecordIssue::Reference(
+                DxfEntityCommonReferenceEditIssue::IncompatibleTarget {
+                    field: DxfEntityField::MATERIAL,
+                    ..
+                }
+            ))
+        ))
+    ));
+    assert_eq!(session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
 fn session_clone_preserves_every_explicit_point_payload_field() -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
     let mut bytes = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
@@ -927,17 +1018,25 @@ fn fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> Result<Vec<
         (0, "ENDTAB"),
         (0, "ENDSEC"),
     ];
-    if version >= DxfAcadVersion::Ac1015 {
+    if version >= DxfAcadVersion::Ac1012 {
         groups.extend([
             (0, "SECTION"),
             (2, "OBJECTS"),
-            (0, "LAYOUT"),
-            (100, "AcDbPlotSettings"),
-            (1, "PAGE_SETUP"),
-            (100, "AcDbLayout"),
-            (1, "Model"),
-            (0, "ENDSEC"),
+            (0, "MATERIAL"),
+            (5, "13"),
+            (0, "ACDBPLACEHOLDER"),
+            (5, "14"),
         ]);
+        if version >= DxfAcadVersion::Ac1015 {
+            groups.extend([
+                (0, "LAYOUT"),
+                (100, "AcDbPlotSettings"),
+                (1, "PAGE_SETUP"),
+                (100, "AcDbLayout"),
+                (1, "Model"),
+            ]);
+        }
+        groups.push((0, "ENDSEC"));
     }
     groups.extend([(0, "SECTION"), (2, "ENTITIES"), (0, "ENDSEC"), (0, "EOF")]);
     match format {
@@ -1009,6 +1108,31 @@ fn fixture_with_existing_point_linetype(
         offset..offset,
         encoded_string_group(format, version, 6, b"DASHED")?,
     );
+    Ok(bytes)
+}
+
+fn fixture_with_existing_point_references(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    fixture_with_existing_point_reference_values(format, version, b"13", b"14")
+}
+
+fn fixture_with_existing_point_reference_values(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    material: &[u8],
+    plot_style: &[u8],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let marker = encoded_string_group(format, version, 100, b"AcDbPoint")?;
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT common-field boundary"))?;
+    let mut references = encoded_string_group(format, version, 347, material)?;
+    references.extend_from_slice(&encoded_string_group(format, version, 390, plot_style)?);
+    bytes.splice(offset..offset, references);
     Ok(bytes)
 }
 

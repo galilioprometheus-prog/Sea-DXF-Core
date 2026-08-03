@@ -1259,6 +1259,14 @@ or unsupported names queue nothing. All nine supported versions pass both
 ASCII and Binary clone/inverse coverage. Material, plot-style, color-book, and
 graph common properties plus POINT `Complete` remain open.
 
+M14.3ch preserves AC1012+ material and plot-style common references during
+canonical POINT clone. Group 347 and 390 handles must be non-null, unique in the
+same document, and resolve respectively to MATERIAL and ACDBPLACEHOLDER records
+in OBJECTS. The typed draft encoder validates targets before admission and the
+post-image verifier requires both explicit handles. All applicable modern
+ASCII/Binary dialect pairs pass strict reparse and exact inverse restoration.
+Color-book and graph common properties plus POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
