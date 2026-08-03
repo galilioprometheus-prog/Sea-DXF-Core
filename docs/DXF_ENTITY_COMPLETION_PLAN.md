@@ -1416,6 +1416,19 @@ cancellation, lookup and metadata bounds, and non-disclosing debug output.
 Cross-document handle remap, application semantics, clone/write, and POINT
 `Complete` remain open.
 
+M14.3cu maps uniquely resolved XDATA group-1005 sources to caller-supplied
+destination handles. Non-null source/target candidates are fallibly copied and
+sorted. Invalid, null, missing, and ambiguous source resolution remains typed;
+a unique source becomes unmapped, mapped only by exactly one candidate, or
+ambiguous with the exact duplicate-candidate count. Only the mapped state
+publishes a destination handle, while source target evidence remains reachable.
+Entries carry exact source identity so a structurally identical foreign ordinal
+cannot pass lookup. All nine ASCII/Binary dialect pairs cover every source and
+mapping state, shuffled/duplicate candidates, null rejection, foreign-source
+rejection, cancellation, lookup and metadata bounds, and non-disclosing debug
+output. Destination identity validation, application semantics, clone/write,
+and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

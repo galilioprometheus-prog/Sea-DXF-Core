@@ -2859,5 +2859,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dialects. Cross-document remap, application-specific payload semantics,
     clone/write, and POINT `Complete` remain open.
 
+    M14.3cu adds fail-closed cross-document remap planning over M14.3ct unique
+    XDATA handle targets. Public mapping candidates reject null source or
+    destination handles; the directory copies and sorts caller input before
+    bounded lookup. Invalid/null/missing/ambiguous source resolution remains
+    typed unusable. A unique source with no mapping remains `Unmapped`, exactly
+    one candidate publishes `Mapped`, and duplicate candidates publish only an
+    ambiguous candidate count. Every result is source-bound and keeps its exact
+    source target through the composed resolution directory. All remap/source
+    states, shuffled mappings, duplicate mappings, constructor failures, source
+    identity, cancellation, lookup and metadata bounds, and debug redaction pass
+    all nine paired ASCII/Binary Core dialects. Destination identity validation,
+    application-specific payload semantics, clone/write, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

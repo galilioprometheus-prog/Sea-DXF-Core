@@ -85,6 +85,7 @@ mod entity_xdata_capacity;
 mod entity_xdata_capacity_measure;
 mod entity_xdata_coordinate_transform;
 mod entity_xdata_coordinate_transform_math;
+mod entity_xdata_handle_remap;
 mod entity_xdata_handle_resolution;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
@@ -558,6 +559,10 @@ pub use entity_xdata_coordinate_transform::{
 pub use entity_xdata_coordinate_transform_math::{
     DxfEntityXDataCoordinateTransform, DxfEntityXDataCoordinateTransformInput,
     DxfEntityXDataCoordinateTransformIssue,
+};
+pub use entity_xdata_handle_remap::{
+    DxfEntityXDataHandleRemap, DxfEntityXDataHandleRemapDirectory, DxfEntityXDataHandleRemapEntry,
+    DxfEntityXDataHandleRemapInputIssue, DxfEntityXDataHandleRemapState,
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,
