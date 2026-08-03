@@ -2531,6 +2531,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     updates, mixed insert/update sessions, clone/delete, and POINT `Complete`
     remain open.
 
+    M14.3bu extends `SetExtrusion` to the fully absent tuple whose three
+    components use the documented `(0,0,1)` default. A unique thickness group
+    `39` is the preferred insertion predecessor; when thickness is absent, the
+    last of three unique source-backed location components is used. Duplicate
+    thickness or unusable location evidence fails typed. The three encoded
+    groups are concatenated in `210/220/230` order into one zero-width patch,
+    preserving LF, CRLF, CR, or Binary framing. The receipt reports `Inserted`,
+    strict verification requires the requested tuple in the `Explicit` state,
+    and the inverse removes the complete inserted sequence. Paired
+    ASCII/Binary fixtures cover all nine Core dialects. Partial
+    explicit/default extrusion tuples, extrusion reset, angle updates, mixed
+    insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
     M14.3bs adds `DxfPointPatch::ResetThickness` under the existing thickness
     patch identity. One unique explicit group `39` becomes one exact deletion
     patch and verifies as the documented zero value in the `Defaulted` state.

@@ -142,12 +142,25 @@ pub(crate) struct DxfPointLocationEditPlan {
 pub(crate) struct DxfPointExtrusionEditPlan {
     transaction: DxfTransactionPlan,
     extrusion: [DxfDouble; 3],
+    disposition: DxfPointExtrusionSetDisposition,
 }
 
 impl DxfPointExtrusionEditPlan {
-    pub(crate) fn into_parts(self) -> (DxfTransactionPlan, [DxfDouble; 3]) {
-        (self.transaction, self.extrusion)
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        DxfTransactionPlan,
+        [DxfDouble; 3],
+        DxfPointExtrusionSetDisposition,
+    ) {
+        (self.transaction, self.extrusion, self.disposition)
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum DxfPointExtrusionSetDisposition {
+    Inserted,
+    Replaced,
 }
 
 impl DxfPointLocationEditPlan {
@@ -382,16 +395,16 @@ pub(crate) fn plan_point_extrusion_edit(
         DxfBasicGeometryComponentRole::ExtrusionZ,
     ];
     let group_codes = [210_i16, 220, 230];
-    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
-    let mut builder = document.transaction_plan_builder(profile)?;
-    for ((role, group_code), value) in roles.into_iter().zip(group_codes).zip(extrusion) {
-        ensure_not_cancelled(cancellation)?;
+    let mut absent_count = 0_u8;
+    for role in roles {
         let card = cards
             .card_for_role(entity.record().ordinal(), role)
             .ok_or_else(invalid_internal_data)?;
         match card.state() {
             DxfBasicGeometryComponentCardState::Absent => {
-                return Ok(Err(DxfPointEditIssue::MissingExtrusionComponent { role }));
+                absent_count = absent_count
+                    .checked_add(1)
+                    .ok_or_else(invalid_internal_data)?;
             }
             DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
                 return Ok(Err(DxfPointEditIssue::DuplicateExtrusionComponent {
@@ -401,34 +414,122 @@ pub(crate) fn plan_point_extrusion_edit(
             }
             DxfBasicGeometryComponentCardState::Unique => {}
         }
-        let members = cards
-            .members_for_card(card.ordinal())
-            .ok_or_else(invalid_internal_data)?;
-        let [member] = members else {
-            return Err(invalid_internal_data());
-        };
-        let component = cards
-            .component_for_member(*member)
-            .ok_or_else(invalid_internal_data)?;
-        let encoded = match encoder.encode_raw(
-            group_code,
-            DxfEntityFieldWireType::Double,
-            crate::DxfEntityEditValue::Double(value),
-            cancellation,
-        )? {
-            Ok(encoded) => encoded,
-            Err(issue) => {
-                return Ok(Err(DxfPointEditIssue::Encoding { group_code, issue }));
-            }
-        };
-        builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
     }
+    if absent_count != 0 && absent_count != 3 {
+        let role = roles
+            .into_iter()
+            .find(|role| {
+                cards
+                    .card_for_role(entity.record().ordinal(), *role)
+                    .is_some_and(|card| card.state() == DxfBasicGeometryComponentCardState::Absent)
+            })
+            .ok_or_else(invalid_internal_data)?;
+        return Ok(Err(DxfPointEditIssue::MissingExtrusionComponent { role }));
+    }
+    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
+    let mut builder = document.transaction_plan_builder(profile)?;
+    let disposition = if absent_count == 3 {
+        let preceding =
+            match point_extrusion_insertion_predecessor(&cards, entity.record().ordinal())? {
+                Ok(group) => group,
+                Err(issue) => return Ok(Err(issue)),
+            };
+        let mut insertion = Vec::new();
+        for (group_code, value) in group_codes.into_iter().zip(extrusion) {
+            let encoded = match encoder.encode_raw(
+                group_code,
+                DxfEntityFieldWireType::Double,
+                crate::DxfEntityEditValue::Double(value),
+                cancellation,
+            )? {
+                Ok(encoded) => encoded,
+                Err(issue) => {
+                    return Ok(Err(DxfPointEditIssue::Encoding { group_code, issue }));
+                }
+            };
+            let framed = encoded_group_insertion_bytes(
+                document,
+                preceding.occurrence(),
+                &encoded,
+                cancellation,
+            )?;
+            insertion
+                .try_reserve_exact(framed.len())
+                .map_err(|_| out_of_memory())?;
+            insertion.extend_from_slice(&framed);
+        }
+        let offset = preceding.full_span().end();
+        let source_span = ByteSpan::new(offset, offset).ok_or_else(invalid_internal_data)?;
+        builder.replace_raw_span(source_span, &insertion, cancellation)?;
+        DxfPointExtrusionSetDisposition::Inserted
+    } else {
+        for ((role, group_code), value) in roles.into_iter().zip(group_codes).zip(extrusion) {
+            ensure_not_cancelled(cancellation)?;
+            let card = cards
+                .card_for_role(entity.record().ordinal(), role)
+                .ok_or_else(invalid_internal_data)?;
+            let members = cards
+                .members_for_card(card.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            let [member] = members else {
+                return Err(invalid_internal_data());
+            };
+            let component = cards
+                .component_for_member(*member)
+                .ok_or_else(invalid_internal_data)?;
+            let encoded = match encoder.encode_raw(
+                group_code,
+                DxfEntityFieldWireType::Double,
+                crate::DxfEntityEditValue::Double(value),
+                cancellation,
+            )? {
+                Ok(encoded) => encoded,
+                Err(issue) => {
+                    return Ok(Err(DxfPointEditIssue::Encoding { group_code, issue }));
+                }
+            };
+            builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+        }
+        DxfPointExtrusionSetDisposition::Replaced
+    };
     let transaction = builder.finish(cancellation)?;
     ensure_not_cancelled(cancellation)?;
     Ok(Ok(DxfPointExtrusionEditPlan {
         transaction,
         extrusion,
+        disposition,
     }))
+}
+
+fn point_extrusion_insertion_predecessor(
+    cards: &DxfBasicGeometryCardDirectory,
+    raw_record_ordinal: u64,
+) -> Result<Result<DxfRawGroup, DxfPointEditIssue>, DxfError> {
+    let thickness = cards
+        .card_for_role(raw_record_ordinal, DxfBasicGeometryComponentRole::Thickness)
+        .ok_or_else(invalid_internal_data)?;
+    match thickness.state() {
+        DxfBasicGeometryComponentCardState::Absent => {
+            point_thickness_insertion_predecessor(cards, raw_record_ordinal)
+        }
+        DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+            Ok(Err(DxfPointEditIssue::DuplicateThickness {
+                occurrence_count,
+            }))
+        }
+        DxfBasicGeometryComponentCardState::Unique => {
+            let members = cards
+                .members_for_card(thickness.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            let [member] = members else {
+                return Err(invalid_internal_data());
+            };
+            cards
+                .component_for_member(*member)
+                .map(|component| Ok(component.group()))
+                .ok_or_else(invalid_internal_data)
+        }
+    }
 }
 
 fn point_thickness_insertion_predecessor(
@@ -512,5 +613,12 @@ fn invalid_internal_data() -> DxfError {
     DxfError::from_io(
         DxfIoOperation::Read,
         &io::Error::from(io::ErrorKind::InvalidData),
+    )
+}
+
+fn out_of_memory() -> DxfError {
+    DxfError::from_io(
+        DxfIoOperation::Write,
+        &io::Error::from(io::ErrorKind::OutOfMemory),
     )
 }

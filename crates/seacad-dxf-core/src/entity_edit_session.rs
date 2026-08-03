@@ -14,8 +14,9 @@ use crate::entity_draft_record::{
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::point_edit::{
-    DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition, plan_point_extrusion_edit,
-    plan_point_location_edit, plan_point_thickness_edit, plan_point_thickness_reset,
+    DxfPointExtrusionSetDisposition, DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition,
+    plan_point_extrusion_edit, plan_point_location_edit, plan_point_thickness_edit,
+    plan_point_thickness_reset,
 };
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
@@ -663,12 +664,20 @@ impl<'document, 'evidence, 'cancellation>
                         ));
                     }
                 };
-                let (transaction, extrusion) = plan.into_parts();
+                let (transaction, extrusion, set_disposition) = plan.into_parts();
+                let (expected_patch_count, disposition) = match set_disposition {
+                    DxfPointExtrusionSetDisposition::Inserted => {
+                        (1, DxfEntityEditDisposition::Inserted)
+                    }
+                    DxfPointExtrusionSetDisposition::Replaced => {
+                        (3, DxfEntityEditDisposition::Replaced)
+                    }
+                };
                 (
                     transaction,
                     PendingPointExpectation::Extrusion(extrusion),
-                    3,
-                    DxfEntityEditDisposition::Replaced,
+                    expected_patch_count,
+                    disposition,
                 )
             }
         };

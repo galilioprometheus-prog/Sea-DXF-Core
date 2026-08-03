@@ -1106,6 +1106,19 @@ tamper rejection, cancellation, and inverse restoration. Absent/default
 extrusion insertion or reset, angle updates, mixed insert/update sessions,
 clone/delete, and POINT `Complete` remain open.
 
+M14.3bu makes the extrusion patch usable when all three extrusion groups are
+absent and therefore defaulted to `(0,0,1)`. The insertion path encodes the
+complete requested `210/220/230` tuple in canonical order and emits one
+zero-width transaction patch. It anchors after one unique thickness group when
+available, otherwise after the last of three unique location components;
+duplicate thickness and missing or duplicate fallback location evidence are
+typed failures. The shared insertion framing preserves LF, CRLF, CR, and Binary
+without changing the replacement path. Verification still requires the exact
+tuple with every component `Explicit`, and the inverse removes all inserted
+bytes exactly across nine ASCII/Binary dialect pairs. Partial
+explicit/default extrusion tuples, extrusion reset, angle updates, mixed
+insert/update sessions, clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
