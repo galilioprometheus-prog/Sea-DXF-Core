@@ -4,7 +4,7 @@ use std::io;
 
 use crate::{
     ByteSpan, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
-    DxfEncodedEntityGroup, DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionAnchor, DxfEntityFieldInsertionAnchorIssue,
     DxfEntityFieldInsertionAnchorOutcome, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
     DxfEntityKey, DxfError, DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView,
@@ -100,7 +100,15 @@ impl DxfRawDocumentView<'_> {
                 return Ok(unavailable(DxfEntityFieldInsertionIssue::Encoding(issue)));
             }
         };
-        let insertion = insertion_bytes(self, anchor, &encoded, cancellation)?;
+        let preceding_group_occurrence = anchor
+            .preceding_group_occurrence()
+            .ok_or_else(invalid_internal_data)?;
+        let insertion = encoded_group_insertion_bytes(
+            self,
+            preceding_group_occurrence,
+            encoded.bytes(),
+            cancellation,
+        )?;
         let source_span = ByteSpan::new(anchor.byte_offset(), anchor.byte_offset())
             .ok_or_else(invalid_internal_data)?;
         let mut builder = self.transaction_plan_builder(profile)?;
@@ -158,20 +166,19 @@ impl DxfBinaryRawDocument<'_> {
     }
 }
 
-fn insertion_bytes(
+pub(crate) fn encoded_group_insertion_bytes(
     document: DxfRawDocumentView<'_>,
-    anchor: DxfEntityFieldInsertionAnchor,
-    encoded: &DxfEncodedEntityGroup,
+    preceding_group_occurrence: u64,
+    encoded: &[u8],
     cancellation: &DxfCancellationToken,
 ) -> Result<Vec<u8>, DxfError> {
     ensure_not_cancelled(cancellation)?;
     let ending = match document.format() {
-        DxfRawDocumentFormat::Ascii => ascii_line_ending(document, anchor)?,
+        DxfRawDocumentFormat::Ascii => ascii_line_ending(document, preceding_group_occurrence)?,
         DxfRawDocumentFormat::Binary => b"".as_slice(),
     };
     let extra = if ending.len() > 1 {
         encoded
-            .bytes()
             .iter()
             .filter(|byte| **byte == b'\n')
             .count()
@@ -181,7 +188,6 @@ fn insertion_bytes(
         0
     };
     let capacity = encoded
-        .bytes()
         .len()
         .checked_add(extra)
         .ok_or_else(invalid_internal_data)?;
@@ -190,10 +196,10 @@ fn insertion_bytes(
         .try_reserve_exact(capacity)
         .map_err(|_| out_of_memory())?;
     if document.format() == DxfRawDocumentFormat::Binary {
-        bytes.extend_from_slice(encoded.bytes());
+        bytes.extend_from_slice(encoded);
     } else {
         let mut separators = 0_u8;
-        for byte in encoded.bytes().iter().copied() {
+        for byte in encoded.iter().copied() {
             if byte == b'\n' {
                 bytes.extend_from_slice(ending);
                 separators = separators
@@ -213,13 +219,10 @@ fn insertion_bytes(
 
 fn ascii_line_ending(
     document: DxfRawDocumentView<'_>,
-    anchor: DxfEntityFieldInsertionAnchor,
+    preceding_group_occurrence: u64,
 ) -> Result<&'static [u8], DxfError> {
-    let occurrence = anchor
-        .preceding_group_occurrence()
-        .ok_or_else(invalid_internal_data)?;
     let group = document
-        .group(occurrence)
+        .group(preceding_group_occurrence)
         .ok_or_else(invalid_internal_data)?;
     let full_span = group.full_span();
     if full_span.is_empty() {

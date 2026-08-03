@@ -3,12 +3,15 @@
 use std::io;
 
 use crate::{
-    DxfAcadVersion, DxfAcadVersionState, DxfBasicGeometryComponentCardState,
-    DxfBasicGeometryComponentRole, DxfCancellationToken, DxfDouble, DxfEntityClassification,
-    DxfEntityFieldEvidenceDirectory, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue,
-    DxfEntityGroupEncoder, DxfEntityKey, DxfEntityRef, DxfEntityTopic, DxfError, DxfIoOperation,
-    DxfRawDocumentView, DxfResourceProfile, DxfTransactionPlan,
+    ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfBasicGeometryCardDirectory,
+    DxfBasicGeometryComponentCardState, DxfBasicGeometryComponentRole, DxfCancellationToken,
+    DxfDouble, DxfEntityClassification, DxfEntityFieldEvidenceDirectory, DxfEntityFieldWireType,
+    DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder, DxfEntityKey, DxfEntityRef, DxfEntityTopic,
+    DxfError, DxfIoOperation, DxfRawDocumentView, DxfRawGroup, DxfResourceProfile,
+    DxfTransactionPlan,
 };
+
+use crate::entity_field_insertion::encoded_group_insertion_bytes;
 
 /// One typed POINT-family update.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -71,7 +74,6 @@ pub enum DxfPointEditIssue {
         role: DxfBasicGeometryComponentRole,
         occurrence_count: u32,
     },
-    MissingThickness,
     DuplicateThickness {
         occurrence_count: u32,
     },
@@ -192,26 +194,27 @@ pub(crate) fn plan_point_thickness_edit(
             DxfBasicGeometryComponentRole::Thickness,
         )
         .ok_or_else(invalid_internal_data)?;
-    match card.state() {
-        DxfBasicGeometryComponentCardState::Absent => {
-            return Ok(Err(DxfPointEditIssue::MissingThickness));
-        }
+    let unique_thickness = match card.state() {
+        DxfBasicGeometryComponentCardState::Absent => None,
         DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
             return Ok(Err(DxfPointEditIssue::DuplicateThickness {
                 occurrence_count,
             }));
         }
-        DxfBasicGeometryComponentCardState::Unique => {}
-    }
-    let members = cards
-        .members_for_card(card.ordinal())
-        .ok_or_else(invalid_internal_data)?;
-    let [member] = members else {
-        return Err(invalid_internal_data());
+        DxfBasicGeometryComponentCardState::Unique => {
+            let members = cards
+                .members_for_card(card.ordinal())
+                .ok_or_else(invalid_internal_data)?;
+            let [member] = members else {
+                return Err(invalid_internal_data());
+            };
+            Some(
+                cards
+                    .component_for_member(*member)
+                    .ok_or_else(invalid_internal_data)?,
+            )
+        }
     };
-    let component = cards
-        .component_for_member(*member)
-        .ok_or_else(invalid_internal_data)?;
     let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
     let encoded = match encoder.encode_raw(
         39,
@@ -228,13 +231,72 @@ pub(crate) fn plan_point_thickness_edit(
         }
     };
     let mut builder = document.transaction_plan_builder(profile)?;
-    builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+    if let Some(component) = unique_thickness {
+        builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+    } else {
+        let preceding =
+            match point_thickness_insertion_predecessor(&cards, entity.record().ordinal())? {
+                Ok(group) => group,
+                Err(issue) => return Ok(Err(issue)),
+            };
+        let insertion = encoded_group_insertion_bytes(
+            document,
+            preceding.occurrence(),
+            &encoded,
+            cancellation,
+        )?;
+        let offset = preceding.full_span().end();
+        let source_span = ByteSpan::new(offset, offset).ok_or_else(invalid_internal_data)?;
+        builder.replace_raw_span(source_span, &insertion, cancellation)?;
+    }
     let transaction = builder.finish(cancellation)?;
     ensure_not_cancelled(cancellation)?;
     Ok(Ok(DxfPointThicknessEditPlan {
         transaction,
         thickness,
     }))
+}
+
+fn point_thickness_insertion_predecessor(
+    cards: &DxfBasicGeometryCardDirectory,
+    raw_record_ordinal: u64,
+) -> Result<Result<DxfRawGroup, DxfPointEditIssue>, DxfError> {
+    let mut preceding = None;
+    for role in [
+        DxfBasicGeometryComponentRole::WcsLocationOrStartX,
+        DxfBasicGeometryComponentRole::WcsLocationOrStartY,
+        DxfBasicGeometryComponentRole::WcsLocationOrStartZ,
+    ] {
+        let card = cards
+            .card_for_role(raw_record_ordinal, role)
+            .ok_or_else(invalid_internal_data)?;
+        match card.state() {
+            DxfBasicGeometryComponentCardState::Absent => {
+                return Ok(Err(DxfPointEditIssue::MissingLocationComponent { role }));
+            }
+            DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+                return Ok(Err(DxfPointEditIssue::DuplicateLocationComponent {
+                    role,
+                    occurrence_count,
+                }));
+            }
+            DxfBasicGeometryComponentCardState::Unique => {}
+        }
+        let members = cards
+            .members_for_card(card.ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let [member] = members else {
+            return Err(invalid_internal_data());
+        };
+        let group = cards
+            .component_for_member(*member)
+            .ok_or_else(invalid_internal_data)?
+            .group();
+        if preceding.is_none_or(|current: DxfRawGroup| current.occurrence() < group.occurrence()) {
+            preceding = Some(group);
+        }
+    }
+    preceding.ok_or_else(invalid_internal_data).map(Ok)
 }
 
 fn point_edit_context(

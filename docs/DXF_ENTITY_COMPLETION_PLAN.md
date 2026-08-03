@@ -1068,6 +1068,19 @@ limits remain typed fail-closed. Inserting an absent group `39`, reset to zero,
 extrusion/angle updates, mixed insert/update sessions, clone/delete, and POINT
 `Complete` remain open.
 
+M14.3br makes the existing `SetThickness` operation total over the two usable
+POINT thickness states. A unique explicit group `39` is still replaced in
+place; documented defaulted absence inserts one encoded group immediately
+after the last unique source location component. The insertion path requires
+all three location cards to be unique, preserves the preceding ASCII line
+ending or exact Binary framing, and enters the session as the same logical
+thickness patch identity. Duplicate thickness and missing/duplicate location
+anchors remain typed failures with no queued transaction. Strict post-image
+verification requires the exact value and `Explicit` state, and the inverse
+removes the inserted bytes exactly across all nine ASCII/Binary dialect pairs.
+Reset to implicit zero, extrusion/angle updates, mixed insert/update sessions,
+clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3bq. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3br. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -212,16 +212,16 @@ typed location, and releases the existing byte-identical inverse journal.
 Duplicate family patches, incomplete/duplicate tuples, wrong families,
 non-finite values, cancellation, and insert/update mixing fail closed. Other
 POINT fields, clone, and delete remain open.
-Existing explicit POINT thickness can now be replaced atomically through a
-distinct `DxfPointPatch::SetThickness` request. Admission requires one unique
-source-backed group `39`; absent or duplicate thickness, a wrong family,
-non-finite encoding, cancellation, and a duplicate thickness patch leave the
-session unchanged. Location and thickness are independent logical edits and
-may compose with each other and with common-property updates. Verification
-requires both the exact typed thickness and its explicit semantic state before
-releasing the byte-identical inverse journal. Insertion of an absent thickness,
-reset to the documented zero default, extrusion/angle updates, clone, and
-delete remain open.
+POINT thickness can now be set atomically through a distinct
+`DxfPointPatch::SetThickness` request whether group `39` is uniquely explicit
+or absent under its documented zero default. A unique occurrence is replaced;
+an absent occurrence is inserted immediately after the last unique source
+location component while preserving the source ASCII line ending or Binary
+wire. Duplicate thickness and missing/duplicate insertion-anchor location
+evidence fail typed without changing the session. Location and thickness remain
+independent logical edits, and strict verification requires the exact value in
+the `Explicit` state before releasing the byte-identical inverse. Reset to the
+implicit default, extrusion/angle updates, clone, and delete remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

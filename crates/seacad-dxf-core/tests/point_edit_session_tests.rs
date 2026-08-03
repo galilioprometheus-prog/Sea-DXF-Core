@@ -1,11 +1,12 @@
 use std::{error::Error, io};
 
 use seacad_dxf_core::{
-    DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
-    DxfCancellationToken, DxfDouble, DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditIssue,
-    DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory,
-    DxfEntityPatch, DxfEntityTopic, DxfError, DxfMemorySource, DxfPointDraft, DxfPointEditIssue,
-    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBasicGeometryComponentRole,
+    DxfBinaryRawDocument, DxfByteSource, DxfCancellationToken, DxfDouble,
+    DxfEntityCommonFieldPatch, DxfEntityDraft, DxfEntityEditIssue, DxfEntityEditOutcome,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldEvidenceDirectory, DxfEntityPatch,
+    DxfEntityTopic, DxfError, DxfMemorySource, DxfPointDraft, DxfPointEditIssue, DxfPointPatch,
+    DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
     DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
@@ -347,8 +348,143 @@ fn point_thickness_update_is_atomic_across_every_ascii_binary_dialect() -> Resul
 }
 
 #[test]
-fn point_thickness_rejects_duplicate_missing_wrong_family_and_nonfinite()
+fn point_thickness_inserts_absent_group_across_every_ascii_binary_dialect()
 -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, PointShape::MissingThickness)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                key,
+                DxfEntityPatch::Point(DxfPointPatch::set_thickness(UPDATED_THICKNESS)),
+            )?
+            else {
+                return Err(io::Error::other("POINT thickness insertion").into());
+            };
+            assert_eq!(receipt.kind(), DxfPointPatchKind::Thickness);
+            let plan = session.finish_verifiable()?;
+            let [patch] = plan.transaction().patches() else {
+                return Err(io::Error::other("one POINT thickness insertion patch").into());
+            };
+            assert!(patch.source_span().is_empty());
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let geometry = post.basic_geometry_semantic_directory(&token())?;
+            let point = geometry
+                .point_for_raw_record(key.raw_record_ordinal())?
+                .ok_or_else(|| io::Error::other("inserted POINT thickness semantics"))?;
+            assert_eq!(point.thickness_value(), Some(UPDATED_THICKNESS));
+            assert_eq!(point.thickness().state(), DxfSemanticValueState::Explicit);
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified POINT thickness insertion").into());
+            };
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_thickness_insertion_preserves_ascii_line_endings_and_requires_location_anchor()
+-> Result<(), Box<dyn Error>> {
+    let bytes = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::MissingThickness,
+    ))?
+    .replace('\n', "\r\n")
+    .into_bytes();
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_thickness(UPDATED_THICKNESS))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    assert!(
+        output
+            .windows(b"20\r\n2\r\n39\r\n4.25\r\n50\r\n30\r\n".len())
+            .any(|window| window == b"20\r\n2\r\n39\r\n4.25\r\n50\r\n30\r\n")
+    );
+
+    let missing_thickness = String::from_utf8(ascii_fixture(
+        DxfAcadVersion::Ac1032,
+        PointShape::MissingThickness,
+    ))?;
+    for (malformed, expected_role, duplicate) in [
+        (
+            missing_thickness.replace("20\n2\n", "").into_bytes(),
+            DxfBasicGeometryComponentRole::WcsLocationOrStartY,
+            false,
+        ),
+        (
+            missing_thickness
+                .replace("20\n2\n", "20\n2\n10\n9\n")
+                .into_bytes(),
+            DxfBasicGeometryComponentRole::WcsLocationOrStartX,
+            true,
+        ),
+    ] {
+        let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
+        let malformed_document = open_ascii(&malformed_source)?;
+        let malformed_view = DxfRawDocumentView::from(&malformed_document);
+        let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
+        let malformed_key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
+        let malformed_cancellation = token();
+        let mut malformed_session = malformed_view.entity_edit_session(
+            &malformed_evidence,
+            DxfResourceProfile::Safe,
+            &malformed_cancellation,
+        )?;
+        let outcome = malformed_session.update(
+            malformed_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_thickness(UPDATED_THICKNESS)),
+        )?;
+        assert!(if duplicate {
+            matches!(
+                outcome,
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+                    DxfPointEditIssue::DuplicateLocationComponent {
+                        role,
+                        occurrence_count: 2
+                    }
+                )) if role == expected_role
+            )
+        } else {
+            matches!(
+                outcome,
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+                    DxfPointEditIssue::MissingLocationComponent { role }
+                )) if role == expected_role
+            )
+        });
+        assert_eq!(malformed_session.queued_edit_count(), 0);
+    }
+    Ok(())
+}
+
+#[test]
+fn point_thickness_rejects_duplicate_wrong_family_and_nonfinite() -> Result<(), Box<dyn Error>> {
     let bytes = fixture(
         DxfRawDocumentFormat::Ascii,
         DxfAcadVersion::Ac1032,
@@ -404,45 +540,35 @@ fn point_thickness_rejects_duplicate_missing_wrong_family_and_nonfinite()
     ));
     assert_eq!(session.queued_edit_count(), 1);
 
-    for (shape, duplicate) in [
-        (PointShape::MissingThickness, false),
-        (PointShape::DuplicateThickness, true),
-    ] {
-        let malformed = fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032, shape)?;
-        let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
-        let malformed_document = open_ascii(&malformed_source)?;
-        let malformed_view = DxfRawDocumentView::from(&malformed_document);
-        let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
-        let key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
-        let malformed_cancellation = token();
-        let mut malformed_session = malformed_view.entity_edit_session(
-            &malformed_evidence,
-            DxfResourceProfile::Safe,
-            &malformed_cancellation,
-        )?;
-        let outcome = malformed_session.update(
-            key,
-            DxfEntityPatch::Point(DxfPointPatch::set_thickness(UPDATED_THICKNESS)),
-        )?;
-        assert!(if duplicate {
-            matches!(
-                outcome,
-                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
-                    DxfPointEditIssue::DuplicateThickness {
-                        occurrence_count: 2
-                    }
-                ))
-            )
-        } else {
-            matches!(
-                outcome,
-                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
-                    DxfPointEditIssue::MissingThickness
-                ))
-            )
-        });
-        assert_eq!(malformed_session.queued_edit_count(), 0);
-    }
+    let malformed = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::DuplicateThickness,
+    )?;
+    let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
+    let malformed_document = open_ascii(&malformed_source)?;
+    let malformed_view = DxfRawDocumentView::from(&malformed_document);
+    let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
+    let malformed_cancellation = token();
+    let mut malformed_session = malformed_view.entity_edit_session(
+        &malformed_evidence,
+        DxfResourceProfile::Safe,
+        &malformed_cancellation,
+    )?;
+    let outcome = malformed_session.update(
+        key,
+        DxfEntityPatch::Point(DxfPointPatch::set_thickness(UPDATED_THICKNESS)),
+    )?;
+    assert!(matches!(
+        outcome,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicateThickness {
+                occurrence_count: 2
+            }
+        ))
+    ));
+    assert_eq!(malformed_session.queued_edit_count(), 0);
     Ok(())
 }
 
@@ -451,7 +577,7 @@ fn point_location_and_thickness_compose_as_distinct_family_patches() -> Result<(
     let bytes = fixture(
         DxfRawDocumentFormat::Ascii,
         DxfAcadVersion::Ac1032,
-        PointShape::Complete,
+        PointShape::MissingThickness,
     )?;
     let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
     let document = open_ascii(&source)?;
@@ -480,6 +606,14 @@ fn point_location_and_thickness_compose_as_distinct_family_patches() -> Result<(
     let plan = session.finish_verifiable()?;
     assert_eq!(plan.edit_count(), 2);
     assert_eq!(plan.transaction().patches().len(), 4);
+    assert_eq!(
+        plan.transaction()
+            .patches()
+            .iter()
+            .filter(|patch| patch.source_span().is_empty())
+            .count(),
+        1
+    );
     let output = materialize(&bytes, plan.transaction())?;
     let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
     let output_document = open_ascii(&output_source)?;

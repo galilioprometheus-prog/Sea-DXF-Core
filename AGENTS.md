@@ -16,6 +16,20 @@ custom, proxy, and non-public payloads remain exact opaque data.
 - Keep production changes near 200-500 lines per micro-milestone. Split work
   before it becomes difficult to review.
 
+## Mechanical delegation
+
+- Mechanical checks may accumulate and be handed to Antigravity CLI as one
+  bounded batch instead of interrupting implementation after every small check.
+- Codex defines and reviews the batch; the user manually copies one explicit
+  English prompt to Antigravity CLI. Do not depend on Agent Hub or another MCP
+  coordination layer.
+- Every handoff prompt must state the exact root, ordered commands, allowed
+  writes, prohibited actions, stop conditions, acceptance criteria, and raw
+  evidence format so the worker makes no scope decisions.
+- Keep architecture, normative-source interpretation, provenance, dependency
+  approval, support claims, commit, push, tag, merge, and release decisions
+  with Codex and the user.
+
 ## Source and provenance
 
 - Treat every earlier workspace outside the current SeaCad repository as

@@ -2517,5 +2517,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     dialects. Missing-field insertion, reset to the documented zero default,
     extrusion/angle updates, clone/delete, and POINT `Complete` remain open.
 
+    M14.3br extends the same POINT thickness patch to an absent group `39`.
+    Unique explicit thickness still uses exact source-span replacement, while
+    documented defaulted absence now uses one zero-width insertion immediately
+    after the last unique source-backed location component. Missing or duplicate
+    location evidence cannot provide an insertion predecessor and fails typed;
+    duplicate thickness remains unselectable. The shared insertion-byte helper
+    preserves LF, CRLF, CR, and Binary framing without adding a parallel writer.
+    Verification requires the requested exact binary64 value in the `Explicit`
+    state, and the inverse removes the inserted bytes exactly. Paired fixtures
+    cover all nine Core dialects in ASCII and Binary, plus CRLF and malformed
+    anchor evidence. Reset to the implicit zero default, extrusion/angle
+    updates, mixed insert/update sessions, clone/delete, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
