@@ -87,6 +87,11 @@ pub(crate) struct DxfPointThicknessEditExpectation {
     expected: DxfPointThicknessExpected,
 }
 
+pub(crate) struct DxfPointExtrusionEditExpectation {
+    raw_record_ordinal: u64,
+    extrusion: [DxfDouble; 3],
+}
+
 pub(crate) enum DxfPointThicknessExpected {
     Explicit(DxfDouble),
     DefaultedZero,
@@ -97,6 +102,7 @@ pub(crate) enum DxfEntityEditExpectation {
     PointInsert(DxfPointInsertExpectation),
     PointLocation(DxfPointLocationEditExpectation),
     PointThickness(DxfPointThicknessEditExpectation),
+    PointExtrusion(DxfPointExtrusionEditExpectation),
 }
 
 impl DxfEntityEditExpectation {
@@ -144,6 +150,16 @@ impl DxfEntityEditExpectation {
         Self::PointThickness(DxfPointThicknessEditExpectation {
             raw_record_ordinal,
             expected: DxfPointThicknessExpected::DefaultedZero,
+        })
+    }
+
+    pub(crate) const fn point_extrusion(
+        raw_record_ordinal: u64,
+        extrusion: [DxfDouble; 3],
+    ) -> Self {
+        Self::PointExtrusion(DxfPointExtrusionEditExpectation {
+            raw_record_ordinal,
+            extrusion,
         })
     }
 }
@@ -197,6 +213,9 @@ pub enum DxfEntityEditVerificationIssue {
         raw_record_ordinal: u64,
     },
     UpdatedPointThicknessMismatch {
+        raw_record_ordinal: u64,
+    },
+    UpdatedPointExtrusionMismatch {
         raw_record_ordinal: u64,
     },
     MissingEntity {
@@ -602,6 +621,9 @@ fn verify_expectation(
         DxfEntityEditExpectation::PointThickness(expectation) => {
             verify_point_thickness(document, expectation, cancellation)
         }
+        DxfEntityEditExpectation::PointExtrusion(expectation) => {
+            verify_point_extrusion(document, expectation, cancellation)
+        }
     }
 }
 
@@ -654,6 +676,34 @@ fn verify_point_thickness(
     if !matches {
         return Ok(Some(
             DxfEntityEditVerificationIssue::UpdatedPointThicknessMismatch {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    }
+    Ok(None)
+}
+
+fn verify_point_extrusion(
+    document: DxfRawDocumentView<'_>,
+    expectation: &DxfPointExtrusionEditExpectation,
+    cancellation: &DxfCancellationToken,
+) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
+    let geometry = document.basic_geometry_semantic_directory(cancellation)?;
+    let Some(point) = geometry.point_for_raw_record(expectation.raw_record_ordinal)? else {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointSemanticsMissing {
+                raw_record_ordinal: expectation.raw_record_ordinal,
+            },
+        ));
+    };
+    if point.extrusion_value() != Some(expectation.extrusion)
+        || !point
+            .extrusion()
+            .iter()
+            .all(|value| value.state() == DxfSemanticValueState::Explicit)
+    {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::UpdatedPointExtrusionMismatch {
                 raw_record_ordinal: expectation.raw_record_ordinal,
             },
         ));

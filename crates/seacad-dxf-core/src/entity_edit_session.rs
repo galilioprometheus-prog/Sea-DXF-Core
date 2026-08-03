@@ -14,8 +14,8 @@ use crate::entity_draft_record::{
 };
 use crate::entity_edit_verification::{DxfEntityEditExpectation, DxfEntityExpectedField};
 use crate::point_edit::{
-    DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition, plan_point_location_edit,
-    plan_point_thickness_edit, plan_point_thickness_reset,
+    DxfPointThicknessResetPlan, DxfPointThicknessSetDisposition, plan_point_extrusion_edit,
+    plan_point_location_edit, plan_point_thickness_edit, plan_point_thickness_reset,
 };
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument,
@@ -335,6 +335,7 @@ enum PendingPointExpectation {
     Location([crate::DxfDouble; 3]),
     Thickness(crate::DxfDouble),
     ThicknessReset,
+    Extrusion([crate::DxfDouble; 3]),
 }
 
 struct PendingPointEdit {
@@ -645,6 +646,30 @@ impl<'document, 'evidence, 'cancellation>
                         DxfEntityEditDisposition::Reset,
                     ),
                 }
+            }
+            DxfPointPatch::SetExtrusion { extrusion } => {
+                let plan = match plan_point_extrusion_edit(
+                    self.document,
+                    self.evidence,
+                    key,
+                    extrusion,
+                    self.profile,
+                    self.cancellation,
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Ok(DxfEntityEditOutcome::Unavailable(
+                            DxfEntityEditIssue::Point(issue),
+                        ));
+                    }
+                };
+                let (transaction, extrusion) = plan.into_parts();
+                (
+                    transaction,
+                    PendingPointExpectation::Extrusion(extrusion),
+                    3,
+                    DxfEntityEditDisposition::Replaced,
+                )
             }
         };
         transaction.validate_source_precondition(self.document)?;
@@ -1011,6 +1036,12 @@ impl<'document, 'evidence, 'cancellation>
                 }
                 PendingPointExpectation::ThicknessReset => {
                     DxfEntityEditExpectation::point_thickness_reset(edit.key.raw_record_ordinal())
+                }
+                PendingPointExpectation::Extrusion(extrusion) => {
+                    DxfEntityEditExpectation::point_extrusion(
+                        edit.key.raw_record_ordinal(),
+                        extrusion,
+                    )
                 }
             });
         }

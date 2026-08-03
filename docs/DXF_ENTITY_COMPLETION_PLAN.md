@@ -1093,6 +1093,19 @@ ASCII/Binary dialect pairs prove strict reparse, semantic verification, and
 byte-identical inverse restoration. Extrusion/angle updates, mixed
 insert/update sessions, clone/delete, and POINT `Complete` remain open.
 
+M14.3bt introduces `DxfPointPatch::SetExtrusion` for an already explicit POINT
+extrusion tuple. Groups `210`, `220`, and `230` must each be unique; one missing
+or duplicated component rejects the whole request. The requested tuple must be
+nonzero and every component must pass the existing dialect encoder before the
+three exact replacements enter the session as one logical edit. Extrusion has
+its own patch identity and composes with location and thickness. Post-image
+verification requires the exact tuple and an `Explicit` state for every
+component on the same raw-record ordinal before exposing the byte-identical
+inverse. All nine ASCII/Binary dialect pairs pass replacement, strict reparse,
+tamper rejection, cancellation, and inverse restoration. Absent/default
+extrusion insertion or reset, angle updates, mixed insert/update sessions,
+clone/delete, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

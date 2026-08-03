@@ -16,6 +16,11 @@ const UPDATED: [DxfDouble; 3] = [
     DxfDouble::from_bits(6.0_f64.to_bits()),
 ];
 const UPDATED_THICKNESS: DxfDouble = DxfDouble::from_bits(4.25_f64.to_bits());
+const UPDATED_EXTRUSION: [DxfDouble; 3] = [
+    DxfDouble::from_bits(0.25_f64.to_bits()),
+    DxfDouble::from_bits((-0.5_f64).to_bits()),
+    DxfDouble::from_bits(2.0_f64.to_bits()),
+];
 
 #[test]
 fn point_location_update_is_atomic_across_every_ascii_binary_dialect() -> Result<(), Box<dyn Error>>
@@ -912,6 +917,290 @@ fn point_thickness_reset_verifier_and_cancellation_fail_closed() -> Result<(), B
     Ok(())
 }
 
+#[test]
+fn point_extrusion_update_is_atomic_across_every_ascii_binary_dialect() -> Result<(), Box<dyn Error>>
+{
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture(format, version, PointShape::ExplicitExtrusion)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            let DxfEntityEditOutcome::PointApplied(receipt) = session.update(
+                key,
+                DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION)),
+            )?
+            else {
+                return Err(io::Error::other("POINT extrusion update").into());
+            };
+            assert_eq!(receipt.key(), key);
+            assert_eq!(receipt.kind(), DxfPointPatchKind::Extrusion);
+            assert_eq!(receipt.disposition(), DxfEntityEditDisposition::Replaced);
+            assert_eq!(receipt.queued_edit_count(), 1);
+
+            let plan = session.finish_verifiable()?;
+            assert_eq!(plan.edit_count(), 1);
+            assert_eq!(plan.transaction().patches().len(), 3);
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let geometry = post.basic_geometry_semantic_directory(&token())?;
+            let point = geometry
+                .point_for_raw_record(key.raw_record_ordinal())?
+                .ok_or_else(|| io::Error::other("updated POINT extrusion semantics"))?;
+            assert_eq!(point.extrusion_value(), Some(UPDATED_EXTRUSION));
+            assert!(
+                point
+                    .extrusion()
+                    .iter()
+                    .all(|value| value.state() == DxfSemanticValueState::Explicit)
+            );
+            let seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(journal) =
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?
+            else {
+                return Err(io::Error::other("verified POINT extrusion update").into());
+            };
+            assert_eq!(journal.receipt().edit_count(), 1);
+            assert_eq!(materialize(&output, journal.inverse_plan())?, bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_extrusion_rejects_wrong_zero_nonfinite_duplicate_and_incomplete()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::ExplicitExtrusion,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let point_key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let line_key = key_for_topic(&evidence, DxfEntityTopic::LINE)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            line_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::WrongClassification { key, .. }
+        )) if key == line_key
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion([
+                DxfDouble::from_f64(0.0),
+                DxfDouble::from_f64(-0.0),
+                DxfDouble::from_f64(0.0),
+            ]))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::ZeroExtrusion
+        ))
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion([
+                DxfDouble::from_f64(f64::NAN),
+                UPDATED_EXTRUSION[1],
+                UPDATED_EXTRUSION[2],
+            ]))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(DxfPointEditIssue::Encoding {
+            group_code: 210,
+            ..
+        }))
+    ));
+    assert_eq!(session.queued_edit_count(), 0);
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    assert!(matches!(
+        session.update(
+            point_key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+            DxfPointEditIssue::DuplicatePatch {
+                kind: DxfPointPatchKind::Extrusion,
+                ..
+            }
+        ))
+    ));
+    assert_eq!(session.queued_edit_count(), 1);
+
+    let explicit = String::from_utf8(bytes)?;
+    for (malformed, expected_role, duplicate) in [
+        (
+            explicit.replace("220\n2\n", "").into_bytes(),
+            DxfBasicGeometryComponentRole::ExtrusionY,
+            false,
+        ),
+        (
+            explicit
+                .replace("210\n1\n", "210\n1\n210\n4\n")
+                .into_bytes(),
+            DxfBasicGeometryComponentRole::ExtrusionX,
+            true,
+        ),
+    ] {
+        let malformed_source = DxfMemorySource::new(&malformed, DxfResourceProfile::Safe)?;
+        let malformed_document = open_ascii(&malformed_source)?;
+        let malformed_view = DxfRawDocumentView::from(&malformed_document);
+        let malformed_evidence = malformed_view.entity_field_evidence_directory(&token())?;
+        let key = key_for_topic(&malformed_evidence, DxfEntityTopic::POINT)?;
+        let malformed_cancellation = token();
+        let mut malformed_session = malformed_view.entity_edit_session(
+            &malformed_evidence,
+            DxfResourceProfile::Safe,
+            &malformed_cancellation,
+        )?;
+        let outcome = malformed_session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION)),
+        )?;
+        assert!(if duplicate {
+            matches!(
+                outcome,
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+                    DxfPointEditIssue::DuplicateExtrusionComponent {
+                        role,
+                        occurrence_count: 2
+                    }
+                )) if role == expected_role
+            )
+        } else {
+            matches!(
+                outcome,
+                DxfEntityEditOutcome::Unavailable(DxfEntityEditIssue::Point(
+                    DxfPointEditIssue::MissingExtrusionComponent { role }
+                )) if role == expected_role
+            )
+        });
+        assert_eq!(malformed_session.queued_edit_count(), 0);
+    }
+    Ok(())
+}
+
+#[test]
+fn point_extrusion_composes_with_location_and_thickness() -> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::ExplicitExtrusion,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    for patch in [
+        DxfPointPatch::set_location(UPDATED),
+        DxfPointPatch::set_thickness(UPDATED_THICKNESS),
+        DxfPointPatch::set_extrusion(UPDATED_EXTRUSION),
+    ] {
+        assert!(matches!(
+            session.update(key, DxfEntityPatch::Point(patch))?,
+            DxfEntityEditOutcome::PointApplied(_)
+        ));
+    }
+    assert_eq!(session.queued_edit_count(), 3);
+    let plan = session.finish_verifiable()?;
+    assert_eq!(plan.edit_count(), 3);
+    assert_eq!(plan.transaction().patches().len(), 7);
+    let output = materialize(&bytes, plan.transaction())?;
+    let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let output_document = open_ascii(&output_source)?;
+    assert!(matches!(
+        plan.verify_post_image(
+            view,
+            DxfRawDocumentView::from(&output_document),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+    ));
+    Ok(())
+}
+
+#[test]
+fn point_extrusion_verifier_and_cancellation_fail_closed() -> Result<(), Box<dyn Error>> {
+    let bytes = fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        PointShape::ExplicitExtrusion,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = key_for_topic(&evidence, DxfEntityTopic::POINT)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        )?,
+        DxfEntityEditOutcome::PointApplied(_)
+    ));
+    let plan = session.finish_verifiable()?;
+    let output = materialize(&bytes, plan.transaction())?;
+    let tampered = replace_once(&output, b"210\n0.25\n", b"210\n0.35\n")?;
+    let tampered_source = DxfMemorySource::new(&tampered, DxfResourceProfile::Safe)?;
+    let tampered_document = open_ascii(&tampered_source)?;
+    assert!(matches!(
+        plan.verify_post_image(
+            view,
+            DxfRawDocumentView::from(&tampered_document),
+            DxfResourceProfile::Safe,
+            &token()
+        )?,
+        seacad_dxf_core::DxfEntityEditVerificationOutcome::Unavailable(
+            seacad_dxf_core::DxfEntityEditVerificationIssue::UpdatedPointExtrusionMismatch {
+                raw_record_ordinal
+            }
+        ) if raw_record_ordinal == key.raw_record_ordinal()
+    ));
+
+    let cancelled = token();
+    let mut cancelled_session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancelled)?;
+    cancelled.cancel();
+    assert!(matches!(
+        cancelled_session.update(
+            key,
+            DxfEntityPatch::Point(DxfPointPatch::set_extrusion(UPDATED_EXTRUSION))
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert_eq!(cancelled_session.queued_edit_count(), 0);
+    Ok(())
+}
+
 #[derive(Clone, Copy)]
 enum PointShape {
     Complete,
@@ -919,6 +1208,7 @@ enum PointShape {
     DuplicateX,
     MissingThickness,
     DuplicateThickness,
+    ExplicitExtrusion,
 }
 
 fn fixture(
@@ -935,9 +1225,10 @@ fn fixture(
 
 fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
     let point = match shape {
-        PointShape::Complete | PointShape::MissingThickness | PointShape::DuplicateThickness => {
-            "30\n3\n10\n1\n20\n2\n"
-        }
+        PointShape::Complete
+        | PointShape::MissingThickness
+        | PointShape::DuplicateThickness
+        | PointShape::ExplicitExtrusion => "30\n3\n10\n1\n20\n2\n",
         PointShape::MissingY => "30\n3\n10\n1\n",
         PointShape::DuplicateX => "30\n3\n10\n1\n20\n2\n10\n9\n",
     };
@@ -946,11 +1237,16 @@ fn ascii_fixture(version: DxfAcadVersion, shape: PointShape) -> Vec<u8> {
         PointShape::DuplicateThickness => "39\n2.5\n39\n3.5\n",
         _ => "39\n2.5\n",
     };
+    let extrusion = match shape {
+        PointShape::ExplicitExtrusion => "210\n1\n220\n2\n230\n3\n",
+        _ => "",
+    };
     format!(
-        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n60\n0\n{}{}50\n30\n0\nLINE\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
+        "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\n{}\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nPOINT\n60\n0\n{}{}{}50\n30\n0\nLINE\n10\n7\n20\n8\n30\n9\n11\n10\n21\n11\n31\n12\n0\nENDSEC\n0\nEOF\n",
         version.code(),
         point,
         thickness,
+        extrusion,
     )
     .into_bytes()
 }
@@ -980,6 +1276,11 @@ fn binary_fixture(version: DxfAcadVersion, shape: PointShape) -> Result<Vec<u8>,
     }
     if matches!(shape, PointShape::DuplicateThickness) {
         push_double(&mut bytes, version, 39, 3.5)?;
+    }
+    if matches!(shape, PointShape::ExplicitExtrusion) {
+        for (code, value) in [(210, 1.0), (220, 2.0), (230, 3.0)] {
+            push_double(&mut bytes, version, code, value)?;
+        }
     }
     push_double(&mut bytes, version, 50, 30.0)?;
     push_string(&mut bytes, version, 0, b"LINE")?;

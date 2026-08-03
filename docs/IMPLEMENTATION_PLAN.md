@@ -2544,5 +2544,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     restoration. Extrusion/angle updates, mixed insert/update sessions,
     clone/delete, and POINT `Complete` remain open.
 
+    M14.3bt adds atomic replacement of one complete explicit POINT extrusion
+    tuple through `DxfPointPatch::SetExtrusion`. Admission requires unique
+    source-backed groups `210`, `220`, and `230` and a nonzero requested
+    direction. Missing or duplicate components, a zero vector, wrong family,
+    duplicate extrusion patches, non-finite encoding, resource limits, and
+    cancellation queue nothing. Location, thickness, and extrusion retain
+    distinct patch identities and may compose as separate logical edits.
+    Verification resolves the same raw-record ordinal, requires the exact
+    requested tuple with all three components in the `Explicit` state, and
+    returns the byte-identical inverse. Paired ASCII/Binary fixtures cover all
+    nine Core dialects. Absent/default extrusion insertion or reset, angle
+    updates, mixed insert/update sessions, clone/delete, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

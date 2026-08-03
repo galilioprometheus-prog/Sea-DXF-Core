@@ -20,6 +20,7 @@ pub enum DxfPointPatch {
     SetLocation { location: [DxfDouble; 3] },
     SetThickness { thickness: DxfDouble },
     ResetThickness,
+    SetExtrusion { extrusion: [DxfDouble; 3] },
 }
 
 impl DxfPointPatch {
@@ -39,10 +40,16 @@ impl DxfPointPatch {
     }
 
     #[must_use]
+    pub const fn set_extrusion(extrusion: [DxfDouble; 3]) -> Self {
+        Self::SetExtrusion { extrusion }
+    }
+
+    #[must_use]
     pub const fn kind(self) -> DxfPointPatchKind {
         match self {
             Self::SetLocation { .. } => DxfPointPatchKind::Location,
             Self::SetThickness { .. } | Self::ResetThickness => DxfPointPatchKind::Thickness,
+            Self::SetExtrusion { .. } => DxfPointPatchKind::Extrusion,
         }
     }
 }
@@ -53,6 +60,7 @@ impl DxfPointPatch {
 pub enum DxfPointPatchKind {
     Location,
     Thickness,
+    Extrusion,
 }
 
 /// Typed reason why a POINT-family update was rejected.
@@ -83,6 +91,14 @@ pub enum DxfPointEditIssue {
     DuplicateThickness {
         occurrence_count: u32,
     },
+    MissingExtrusionComponent {
+        role: DxfBasicGeometryComponentRole,
+    },
+    DuplicateExtrusionComponent {
+        role: DxfBasicGeometryComponentRole,
+        occurrence_count: u32,
+    },
+    ZeroExtrusion,
     Encoding {
         group_code: i16,
         issue: DxfEntityGroupEncodeIssue,
@@ -121,6 +137,17 @@ pub(crate) enum DxfPointThicknessResetPlan {
 pub(crate) struct DxfPointLocationEditPlan {
     transaction: DxfTransactionPlan,
     location: [DxfDouble; 3],
+}
+
+pub(crate) struct DxfPointExtrusionEditPlan {
+    transaction: DxfTransactionPlan,
+    extrusion: [DxfDouble; 3],
+}
+
+impl DxfPointExtrusionEditPlan {
+    pub(crate) fn into_parts(self) -> (DxfTransactionPlan, [DxfDouble; 3]) {
+        (self.transaction, self.extrusion)
+    }
 }
 
 impl DxfPointLocationEditPlan {
@@ -330,6 +357,78 @@ pub(crate) fn plan_point_thickness_reset(
     let transaction = builder.finish(cancellation)?;
     ensure_not_cancelled(cancellation)?;
     Ok(Ok(DxfPointThicknessResetPlan::Planned(transaction)))
+}
+
+pub(crate) fn plan_point_extrusion_edit(
+    document: DxfRawDocumentView<'_>,
+    evidence: &DxfEntityFieldEvidenceDirectory,
+    key: DxfEntityKey,
+    extrusion: [DxfDouble; 3],
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<DxfPointExtrusionEditPlan, DxfPointEditIssue>, DxfError> {
+    ensure_not_cancelled(cancellation)?;
+    let (entity, version) = match point_edit_context(document, evidence, key)? {
+        Ok(context) => context,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    if extrusion.iter().all(|component| component.to_f64() == 0.0) {
+        return Ok(Err(DxfPointEditIssue::ZeroExtrusion));
+    }
+    let cards = document.basic_geometry_card_directory(cancellation)?;
+    let roles = [
+        DxfBasicGeometryComponentRole::ExtrusionX,
+        DxfBasicGeometryComponentRole::ExtrusionY,
+        DxfBasicGeometryComponentRole::ExtrusionZ,
+    ];
+    let group_codes = [210_i16, 220, 230];
+    let encoder = DxfEntityGroupEncoder::new(document.format(), version, profile);
+    let mut builder = document.transaction_plan_builder(profile)?;
+    for ((role, group_code), value) in roles.into_iter().zip(group_codes).zip(extrusion) {
+        ensure_not_cancelled(cancellation)?;
+        let card = cards
+            .card_for_role(entity.record().ordinal(), role)
+            .ok_or_else(invalid_internal_data)?;
+        match card.state() {
+            DxfBasicGeometryComponentCardState::Absent => {
+                return Ok(Err(DxfPointEditIssue::MissingExtrusionComponent { role }));
+            }
+            DxfBasicGeometryComponentCardState::Multiple { occurrence_count } => {
+                return Ok(Err(DxfPointEditIssue::DuplicateExtrusionComponent {
+                    role,
+                    occurrence_count,
+                }));
+            }
+            DxfBasicGeometryComponentCardState::Unique => {}
+        }
+        let members = cards
+            .members_for_card(card.ordinal())
+            .ok_or_else(invalid_internal_data)?;
+        let [member] = members else {
+            return Err(invalid_internal_data());
+        };
+        let component = cards
+            .component_for_member(*member)
+            .ok_or_else(invalid_internal_data)?;
+        let encoded = match encoder.encode_raw(
+            group_code,
+            DxfEntityFieldWireType::Double,
+            crate::DxfEntityEditValue::Double(value),
+            cancellation,
+        )? {
+            Ok(encoded) => encoded,
+            Err(issue) => {
+                return Ok(Err(DxfPointEditIssue::Encoding { group_code, issue }));
+            }
+        };
+        builder.replace_raw_span(component.group().full_span(), &encoded, cancellation)?;
+    }
+    let transaction = builder.finish(cancellation)?;
+    ensure_not_cancelled(cancellation)?;
+    Ok(Ok(DxfPointExtrusionEditPlan {
+        transaction,
+        extrusion,
+    }))
 }
 
 fn point_thickness_insertion_predecessor(
