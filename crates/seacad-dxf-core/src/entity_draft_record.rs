@@ -1,13 +1,14 @@
 //! Typed family-draft validation and canonical record-byte encoding.
 
 use crate::{
-    DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble,
-    DxfEntityCommonColorBookEditIssue, DxfEntityCommonLayoutEditIssue,
-    DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
-    DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
-    DxfEntityCommonSymbolEditOutcome, DxfEntityDraftApplicabilityPlan, DxfEntityDraftName,
-    DxfEntityEditValue, DxfEntityField, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue,
-    DxfEntityGroupEncoder, DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityNameClassification,
+    DXF_ENTITY_BINARY_CHUNK_MAX_BYTES, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument,
+    DxfCancellationToken, DxfDouble, DxfEntityCommonColorBookEditIssue,
+    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
+    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome,
+    DxfEntityDraftApplicabilityPlan, DxfEntityDraftName, DxfEntityEditValue, DxfEntityField,
+    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
+    DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityNameClassification,
     DxfEntityPlacementTarget, DxfEntityShadowMode, DxfEntitySpace, DxfEntityTopic,
     DxfEntityTransparency, DxfEntityTrueColor, DxfEntityVisibility, DxfError, DxfHandle,
     DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
@@ -30,6 +31,7 @@ pub struct DxfPointDraft<'a> {
     lineweight: Option<DxfEntityLineweight>,
     linetype_scale: Option<DxfDouble>,
     visibility: Option<DxfEntityVisibility>,
+    proxy_graphics: Option<&'a [u8]>,
     true_color: Option<DxfEntityTrueColor>,
     color_name: Option<&'a [u8]>,
     transparency: Option<DxfEntityTransparency>,
@@ -54,6 +56,7 @@ impl<'a> DxfPointDraft<'a> {
             lineweight: None,
             linetype_scale: None,
             visibility: None,
+            proxy_graphics: None,
             true_color: None,
             color_name: None,
             transparency: None,
@@ -125,6 +128,13 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn with_visibility(mut self, visibility: DxfEntityVisibility) -> Self {
         self.visibility = Some(visibility);
+        self
+    }
+
+    /// Emits group 92 and canonical group-310 chunks for opaque proxy bytes.
+    #[must_use]
+    pub const fn with_proxy_graphics(mut self, payload: &'a [u8]) -> Self {
+        self.proxy_graphics = Some(payload);
         self
     }
 
@@ -225,6 +235,11 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn visibility(self) -> Option<DxfEntityVisibility> {
         self.visibility
+    }
+
+    #[must_use]
+    pub const fn proxy_graphics(self) -> Option<&'a [u8]> {
+        self.proxy_graphics
     }
 
     #[must_use]
@@ -351,6 +366,9 @@ pub enum DxfEntityDraftRecordIssue {
     ColorBookRelatedFieldRequired {
         field: DxfEntityField,
     },
+    ProxyGraphicsTooLarge {
+        byte_count: u64,
+    },
     LayoutReference(DxfEntityCommonLayoutEditIssue),
     GroupEncode {
         group_code: i16,
@@ -387,6 +405,7 @@ struct DxfPointDraftCommonExpectation {
     linetype: Box<[u8]>,
     references: DxfPointDraftReferenceExpectation,
     color_name: Box<[u8]>,
+    proxy_graphics: Option<Box<[u8]>>,
 }
 
 #[derive(Clone, Copy)]
@@ -525,6 +544,10 @@ impl DxfPointDraftRecordExpectation {
 
     pub(crate) fn color_name(&self) -> Option<&[u8]> {
         (!self.common.color_name.is_empty()).then_some(self.common.color_name.as_ref())
+    }
+
+    pub(crate) fn proxy_graphics(&self) -> Option<&[u8]> {
+        self.common.proxy_graphics.as_deref()
     }
 
     pub(crate) const fn transparency(&self) -> Option<DxfEntityTransparency> {
@@ -703,6 +726,7 @@ fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpe
                 draft.plot_style(),
             ),
             color_name: copy_bytes(draft.color_name().unwrap_or_default())?,
+            proxy_graphics: draft.proxy_graphics().map(copy_bytes).transpose()?,
         }),
         space: draft.space(),
         indexed_color: draft.indexed_color(),
@@ -813,6 +837,12 @@ fn encode_point(
         for (field, present) in [
             (DxfEntityField::MATERIAL, draft.material().is_some()),
             (DxfEntityField::TRUE_COLOR, draft.true_color().is_some()),
+            (
+                DxfEntityField::PROXY_GRAPHICS_DATA,
+                draft
+                    .proxy_graphics()
+                    .is_some_and(|payload| !payload.is_empty()),
+            ),
             (DxfEntityField::COLOR_NAME, draft.color_name().is_some()),
             (DxfEntityField::TRANSPARENCY, draft.transparency().is_some()),
             (DxfEntityField::SHADOW, draft.shadow_mode().is_some()),
@@ -842,6 +872,13 @@ fn encode_point(
         {
             return Ok(Err(DxfEntityDraftRecordIssue::ColorBook(issue)));
         }
+    }
+    if let Some(payload) = draft.proxy_graphics()
+        && i32::try_from(payload.len()).is_err()
+    {
+        return Ok(Err(DxfEntityDraftRecordIssue::ProxyGraphicsTooLarge {
+            byte_count: u64::try_from(payload.len()).map_err(|_| invalid_internal_data())?,
+        }));
     }
     if draft
         .extrusion()
@@ -1024,6 +1061,29 @@ fn encode_point(
         )?
     {
         return Ok(Err(issue));
+    }
+    if let Some(payload) = draft.proxy_graphics() {
+        let byte_count = i32::try_from(payload.len()).map_err(|_| invalid_internal_data())?;
+        if let Some(issue) = record.push(
+            92,
+            DxfEntityFieldWireType::Int32,
+            DxfEntityEditValue::Int32(byte_count),
+            cancellation,
+        )? {
+            return Ok(Err(issue));
+        }
+        let chunk_bytes = usize::try_from(DXF_ENTITY_BINARY_CHUNK_MAX_BYTES)
+            .map_err(|_| invalid_internal_data())?;
+        for chunk in payload.chunks(chunk_bytes) {
+            if let Some(issue) = record.push(
+                310,
+                DxfEntityFieldWireType::BinaryChunk,
+                DxfEntityEditValue::BinaryChunk(chunk),
+                cancellation,
+            )? {
+                return Ok(Err(issue));
+            }
+        }
     }
     if let Some(color) = draft.true_color()
         && let Some(issue) = record.push(

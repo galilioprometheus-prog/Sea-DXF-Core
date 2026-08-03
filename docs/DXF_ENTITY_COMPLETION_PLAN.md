@@ -1275,6 +1275,15 @@ admission; strict post-image verification requires all three exact values.
 Every applicable ASCII/Binary dialect pair passes clone and inverse restoration.
 Graph common properties plus POINT `Complete` remain open.
 
+M14.3cj preserves matched AC1012+ proxy graphics during canonical POINT clone.
+The source group-92 declaration must equal the decoded length of the complete
+group-310 sequence. ASCII hexadecimal chunks are validated and decoded, Binary
+chunks retain their payload bytes, and the typed draft emits one canonical size
+plus bounded canonical chunks. Post-image verification compares both the size
+relation and exact decoded payload before releasing the inverse. Mismatched or
+malformed relations queue nothing. Graph-scoped handles, application groups,
+XDATA, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

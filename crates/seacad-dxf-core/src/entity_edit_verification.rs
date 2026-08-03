@@ -275,6 +275,9 @@ pub enum DxfEntityEditVerificationIssue {
     InsertedPointUcsXAxisAngleMismatch {
         handle: DxfHandle,
     },
+    InsertedPointProxyGraphicsMismatch {
+        handle: DxfHandle,
+    },
     UpdatedPointSemanticsMissing {
         raw_record_ordinal: u64,
     },
@@ -522,7 +525,7 @@ impl DxfEntityEditPlan {
         let semantics = post_image.entity_field_semantic_directory(cancellation)?;
         for expectation in &self.expectations {
             if let Some(issue) =
-                verify_expectation(post_image, &semantics, expectation, cancellation)?
+                verify_expectation(post_image, &semantics, expectation, profile, cancellation)?
             {
                 return Ok(DxfEntityEditVerificationOutcome::Unavailable(issue));
             }
@@ -678,6 +681,7 @@ fn verify_expectation(
     document: DxfRawDocumentView<'_>,
     semantics: &crate::DxfEntityFieldSemanticDirectory,
     expectation: &DxfEntityEditExpectation,
+    profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
 ) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
     match expectation {
@@ -685,7 +689,7 @@ fn verify_expectation(
             verify_field_expectation(document, semantics, expectation)
         }
         DxfEntityEditExpectation::PointInsert(expectation) => {
-            verify_point_insert(document, semantics, expectation, cancellation)
+            verify_point_insert(document, semantics, expectation, profile, cancellation)
         }
         DxfEntityEditExpectation::PointDelete(expectation) => {
             verify_point_delete(document, expectation, cancellation)
@@ -960,6 +964,7 @@ fn verify_point_insert(
     document: DxfRawDocumentView<'_>,
     semantics: &crate::DxfEntityFieldSemanticDirectory,
     expectation: &DxfPointInsertExpectation,
+    profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
 ) -> Result<Option<DxfEntityEditVerificationIssue>, DxfError> {
     let identities = document.handle_identity_directory(cancellation)?;
@@ -1106,6 +1111,32 @@ fn verify_point_insert(
         if let Some(issue) = verify_field_expectation(document, semantics, &field_expectation)? {
             return Ok(Some(issue));
         }
+    }
+    let proxy_directory = document.entity_proxy_graphics_directory(cancellation)?;
+    let proxy_entry = proxy_directory
+        .entry_for_entity(entity)?
+        .ok_or_else(invalid_internal_data)?;
+    let proxy_matches = match (expectation.point.proxy_graphics(), proxy_entry.state()) {
+        (None, crate::DxfEntityProxyGraphicsState::Absent) => true,
+        (Some(expected), crate::DxfEntityProxyGraphicsState::Matched { .. }) => {
+            crate::entity_proxy_graphics_relation::copy_matched_proxy_graphics_payload(
+                document,
+                &proxy_directory,
+                proxy_entry,
+                profile,
+                cancellation,
+            )?
+            .as_ref()
+                == expected
+        }
+        _ => false,
+    };
+    if !proxy_matches {
+        return Ok(Some(
+            DxfEntityEditVerificationIssue::InsertedPointProxyGraphicsMismatch {
+                handle: expectation.handle,
+            },
+        ));
     }
     let geometry = document.basic_geometry_semantic_directory(cancellation)?;
     let Some(point) = geometry.point_for_raw_record(raw_record_ordinal)? else {

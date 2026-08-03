@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3ci. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cj. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -293,6 +293,11 @@ preserves the AC1012+ indexed/true/color-book tuple as one validated relation:
 group 430 must have exactly one non-edge `$` separator and requires explicit,
 valid groups 62 and 420. Canonical encoding and post-image verification retain
 all three values; graph common-property clone plus POINT `Complete` remain open.
+M14.3cj preserves matched AC1012+ proxy graphics as opaque decoded bytes:
+group 92 must equal the combined group-310 payload length, ASCII hex is
+validated and decoded, Binary payloads remain byte-exact, and clone output is
+canonically rechunked and semantically compared. Graph-scoped handles,
+application groups/XDATA, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

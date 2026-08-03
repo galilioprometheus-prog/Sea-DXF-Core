@@ -7,10 +7,11 @@ use seacad_dxf_core::{
     DxfEntityCommonReferenceEditIssue, DxfEntityDeleteOutcome, DxfEntityDraft,
     DxfEntityDraftRecordIssue, DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField,
     DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityInsertIssue, DxfEntityInsertOutcome,
-    DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError,
-    DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft,
-    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch, DxfEntityProxyGraphicsState,
+    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
+    DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat,
+    DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -987,6 +988,88 @@ fn session_clone_rejects_invalid_color_book_tuple_without_queueing() -> Result<(
 }
 
 #[test]
+fn session_clone_preserves_proxy_graphics_across_modern_dialects() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED
+        .into_iter()
+        .filter(|version| *version >= DxfAcadVersion::Ac1012)
+    {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point_proxy_graphics(format, version, 3)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+                DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+            ));
+            let plan = session.finish_verifiable()?;
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("proxy clone identity").into());
+            };
+            let entities = post.entity_directory(&token())?;
+            let entity = entities
+                .entity_for_raw_ordinal(clone.record().ordinal())
+                .ok_or_else(|| io::Error::other("proxy clone entity"))?;
+            let proxy = post.entity_proxy_graphics_directory(&token())?;
+            assert!(matches!(
+                proxy.entry_for_entity(entity)?.map(|entry| entry.state()),
+                Some(DxfEntityProxyGraphicsState::Matched {
+                    declared_bytes: 3,
+                    payload_bytes: 3,
+                    chunk_count: 1,
+                })
+            ));
+            assert!(matches!(
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn session_clone_rejects_proxy_graphics_size_mismatch_without_queueing()
+-> Result<(), Box<dyn Error>> {
+    let bytes = fixture_with_existing_point_proxy_graphics(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        4,
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = existing_point_key(&evidence)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+        DxfEntityCloneOutcome::Unavailable(DxfEntityCloneIssue::ProxyGraphicsUnavailable {
+            key: observed,
+            state: DxfEntityProxyGraphicsState::CountMismatch {
+                declared_bytes: 4,
+                payload_bytes: 3,
+                chunk_count: 2,
+            },
+        }) if observed == key
+    ));
+    assert_eq!(session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
 fn session_clone_preserves_every_explicit_point_payload_field() -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
     let mut bytes = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
@@ -1245,6 +1328,24 @@ fn fixture_with_existing_point_color_book(
     Ok(bytes)
 }
 
+fn fixture_with_existing_point_proxy_graphics(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    declared_bytes: i32,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let marker = encoded_string_group(format, version, 100, b"AcDbPoint")?;
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT common-field boundary"))?;
+    let mut proxy = encoded_i32_group(format, version, 92, declared_bytes)?;
+    proxy.extend_from_slice(&encoded_binary_chunk_group(format, version, 310, &[1, 2])?);
+    proxy.extend_from_slice(&encoded_binary_chunk_group(format, version, 310, &[3])?);
+    bytes.splice(offset..offset, proxy);
+    Ok(bytes)
+}
+
 fn fixture_with_earlier_empty_entities(
     format: DxfRawDocumentFormat,
     version: DxfAcadVersion,
@@ -1310,6 +1411,32 @@ fn encoded_string_group(
             push_binary_code(&mut bytes, version, code)?;
             bytes.extend_from_slice(value);
             bytes.push(0);
+        }
+        _ => return Err(io::Error::other("format")),
+    }
+    Ok(bytes)
+}
+
+fn encoded_binary_chunk_group(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    code: i16,
+    value: &[u8],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => {
+            bytes.extend_from_slice(code.to_string().as_bytes());
+            bytes.push(b'\n');
+            for byte in value {
+                bytes.extend_from_slice(format!("{byte:02X}").as_bytes());
+            }
+            bytes.push(b'\n');
+        }
+        DxfRawDocumentFormat::Binary => {
+            push_binary_code(&mut bytes, version, code)?;
+            bytes.push(u8::try_from(value.len()).map_err(|_| io::Error::other("chunk"))?);
+            bytes.extend_from_slice(value);
         }
         _ => return Err(io::Error::other("format")),
     }

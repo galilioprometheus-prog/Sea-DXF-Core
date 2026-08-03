@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ci can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cj can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1354,6 +1354,14 @@ encoding and strict post-image verification retain the indexed color, true
 color, and exact color-book bytes across every applicable ASCII/Binary dialect.
 Malformed or incomplete tuples queue nothing. Graph common properties, display,
 and POINT `Complete` remain open.
+
+M14.3cj preserves matched AC1012+ proxy graphics (92/310) during canonical
+POINT clone. ASCII hexadecimal sequences and Binary chunks become the same
+bounded decoded-byte payload, canonical output rechunks that payload, and
+strict post-image verification compares the exact bytes as well as the declared
+size relation. Missing, mismatched, or malformed size/data relations queue
+nothing. Graph-scoped handles, application groups/XDATA, display, and POINT
+`Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

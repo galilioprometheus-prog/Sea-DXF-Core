@@ -35,14 +35,15 @@ use crate::{
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
     DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityIndexedColor, DxfEntityKey,
     DxfEntityLineweight, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
-    DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfEntityShadowMode, DxfEntitySpace,
-    DxfEntityTransparency, DxfEntityTrueColor, DxfEntityVisibility, DxfError, DxfHandle,
-    DxfHandleAllocationOutcome, DxfHandleAllocationPolicyState, DxfHandleGroupClass,
-    DxfHandleIdentityDirectory, DxfHandleIdentityLookup, DxfHandleIdentityState,
-    DxfHandleReservationPlanOutcome, DxfHandleResolutionState, DxfIoOperation,
-    DxfLayoutObjectDirectory, DxfNamedSymbolTableDirectory, DxfPointDraft, DxfPointEditIssue,
-    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentView, DxfResource, DxfResourceProfile,
-    DxfSemanticValueState, DxfSourceId, DxfTransactionPlan,
+    DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfEntityProxyGraphicsState,
+    DxfEntityShadowMode, DxfEntitySpace, DxfEntityTransparency, DxfEntityTrueColor,
+    DxfEntityVisibility, DxfError, DxfHandle, DxfHandleAllocationOutcome,
+    DxfHandleAllocationPolicyState, DxfHandleGroupClass, DxfHandleIdentityDirectory,
+    DxfHandleIdentityLookup, DxfHandleIdentityState, DxfHandleReservationPlanOutcome,
+    DxfHandleResolutionState, DxfIoOperation, DxfLayoutObjectDirectory,
+    DxfNamedSymbolTableDirectory, DxfPointDraft, DxfPointEditIssue, DxfPointPatch,
+    DxfPointPatchKind, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSemanticValueState,
+    DxfSourceId, DxfTransactionPlan,
 };
 
 /// One atomic replacement of the common indexed/true/color-book tuple.
@@ -452,6 +453,10 @@ pub enum DxfEntityCloneIssue {
         key: DxfEntityKey,
         kind: DxfPointPatchKind,
     },
+    ProxyGraphicsUnavailable {
+        key: DxfEntityKey,
+        state: DxfEntityProxyGraphicsState,
+    },
     Insert(DxfEntityInsertIssue),
 }
 
@@ -504,6 +509,7 @@ struct OwnedPointCloneDraft {
     lineweight: Option<DxfEntityLineweight>,
     linetype_scale: Option<crate::DxfDouble>,
     visibility: Option<DxfEntityVisibility>,
+    proxy_graphics: Option<Box<[u8]>>,
     true_color: Option<DxfEntityTrueColor>,
     color_name: Box<[u8]>,
     transparency: Option<DxfEntityTransparency>,
@@ -545,6 +551,9 @@ impl OwnedPointCloneDraft {
         }
         if let Some(visibility) = self.visibility {
             point = point.with_visibility(visibility);
+        }
+        if let Some(payload) = self.proxy_graphics.as_deref() {
+            point = point.with_proxy_graphics(payload);
         }
         if let Some(color) = self.true_color {
             point = point.with_true_color(color);
@@ -2076,11 +2085,13 @@ fn prepare_point_clone_draft(
                 | 60
                 | 62
                 | 67
+                | 92
                 | 100
                 | 210
                 | 220
                 | 230
                 | 284
+                | 310
                 | 330
                 | 347
                 | 370
@@ -2292,6 +2303,28 @@ fn prepare_point_clone_draft(
             Ok(value) => value,
             Err(issue) => return Ok(Err(issue)),
         };
+    let proxy_directory = document.entity_proxy_graphics_directory(cancellation)?;
+    let proxy_entry = proxy_directory
+        .entry_for_entity(entity)?
+        .ok_or_else(invalid_internal_data)?;
+    let proxy_graphics = match proxy_entry.state() {
+        DxfEntityProxyGraphicsState::Absent => None,
+        DxfEntityProxyGraphicsState::Matched { .. } => Some(
+            crate::entity_proxy_graphics_relation::copy_matched_proxy_graphics_payload(
+                document,
+                &proxy_directory,
+                proxy_entry,
+                profile,
+                cancellation,
+            )?,
+        ),
+        state => {
+            return Ok(Err(DxfEntityCloneIssue::ProxyGraphicsUnavailable {
+                key,
+                state,
+            }));
+        }
+    };
     let true_color =
         match clone_common_scalar(&common, entity, key, DxfEntityField::TRUE_COLOR, |value| {
             match value {
@@ -2420,6 +2453,7 @@ fn prepare_point_clone_draft(
         lineweight,
         linetype_scale,
         visibility,
+        proxy_graphics,
         true_color,
         color_name,
         transparency,

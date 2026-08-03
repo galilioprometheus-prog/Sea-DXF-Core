@@ -7,7 +7,8 @@ use crate::{
     DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainSemanticIssue,
     DxfEntityCommonFieldDomainSemantics, DxfEntityCommonFieldDomainValue, DxfEntityField,
     DxfEntityFieldSemantics, DxfEntityRef, DxfError, DxfIoOperation, DxfRawDocumentFormat,
-    DxfRawDocumentView, DxfRawValueProvenance, DxfSemanticValue, DxfSourceId,
+    DxfRawDocumentView, DxfRawValueProvenance, DxfResource, DxfResourceProfile, DxfSemanticValue,
+    DxfSourceId,
 };
 
 const SCAN_CHUNK_BYTES: usize = 256;
@@ -161,6 +162,87 @@ impl DxfEntityProxyGraphicsDirectory {
             .iter()
             .copied()
             .find(|entry| entry.entity().record().ordinal() == entity.record().ordinal()))
+    }
+}
+
+pub(crate) fn copy_matched_proxy_graphics_payload(
+    document: DxfRawDocumentView<'_>,
+    directory: &DxfEntityProxyGraphicsDirectory,
+    entry: DxfEntityProxyGraphicsEntry,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Box<[u8]>, DxfError> {
+    ensure_source(document.source_id(), directory.source_id())?;
+    ensure_source(document.source_id(), entry.entity().source_id())?;
+    ensure_not_cancelled(cancellation)?;
+    let DxfEntityProxyGraphicsState::Matched { payload_bytes, .. } = entry.state() else {
+        return Err(invalid_internal_data());
+    };
+    let limit = profile.limits().max_value_bytes();
+    if payload_bytes > limit {
+        return Err(DxfError::resource_limit(
+            DxfResource::ValueBytes,
+            limit,
+            payload_bytes,
+        ));
+    }
+    let capacity = usize::try_from(payload_bytes).map_err(|_| invalid_internal_data())?;
+    let data = directory
+        .domain_directory()
+        .entry_for_field(entry.entity(), DxfEntityField::PROXY_GRAPHICS_DATA)?
+        .ok_or_else(invalid_internal_data)?;
+    let source = data.source_semantics();
+    let members = directory
+        .domain_directory()
+        .source_directory()
+        .members_for_opaque_sequence(source)?
+        .ok_or_else(invalid_internal_data)?;
+    let mut payload = Vec::new();
+    payload
+        .try_reserve_exact(capacity)
+        .map_err(|_| out_of_memory())?;
+    for member in members.iter().copied() {
+        ensure_not_cancelled(cancellation)?;
+        let occurrence = directory
+            .domain_directory()
+            .source_directory()
+            .evidence_directory()
+            .occurrence_for_member(member)
+            .ok_or_else(invalid_internal_data)?;
+        let span = occurrence.group().value_payload_span();
+        let len = usize::try_from(span.len()).map_err(|_| invalid_internal_data())?;
+        let mut encoded = Vec::new();
+        encoded
+            .try_reserve_exact(len)
+            .map_err(|_| out_of_memory())?;
+        encoded.resize(len, 0);
+        document.read_span(span, &mut encoded)?;
+        if document.format() == DxfRawDocumentFormat::Ascii {
+            for pair in encoded.chunks_exact(2) {
+                let high = hex_nibble(pair[0]).ok_or_else(invalid_internal_data)?;
+                let low = hex_nibble(pair[1]).ok_or_else(invalid_internal_data)?;
+                payload.push((high << 4) | low);
+            }
+            if !encoded.len().is_multiple_of(2) {
+                return Err(invalid_internal_data());
+            }
+        } else {
+            payload.extend_from_slice(&encoded);
+        }
+    }
+    if payload.len() != capacity {
+        return Err(invalid_internal_data());
+    }
+    ensure_not_cancelled(cancellation)?;
+    Ok(payload.into_boxed_slice())
+}
+
+const fn hex_nibble(byte: u8) -> Option<u8> {
+    match byte {
+        b'0'..=b'9' => Some(byte - b'0'),
+        b'a'..=b'f' => Some(byte - b'a' + 10),
+        b'A'..=b'F' => Some(byte - b'A' + 10),
+        _ => None,
     }
 }
 

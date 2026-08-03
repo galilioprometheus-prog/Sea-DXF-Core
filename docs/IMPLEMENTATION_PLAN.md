@@ -2727,5 +2727,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     inverse restoration cover every applicable ASCII/Binary dialect. Graph
     common properties and POINT `Complete` remain open.
 
+    M14.3cj adds opaque proxy-graphics preservation for AC1012+ canonical POINT
+    clone. Only exact group-92/group-310 size relations are admitted. ASCII hex
+    and Binary chunks are normalized to bounded decoded bytes, canonically
+    rechunked, and compared byte-for-byte during strict post-image verification.
+    Invalid relations leave the queue unchanged. Graph-scoped handles,
+    application groups/XDATA, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
