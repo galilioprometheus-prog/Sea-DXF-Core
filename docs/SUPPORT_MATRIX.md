@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cr can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cs can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1450,6 +1450,19 @@ UTF-8, CIF surrogate pairs, all logical value families, and all fail-closed
 states have nine-dialect ASCII/Binary parity. Coordinate transforms, payload
 semantics, group-1005 target resolution/remap, clone/write, and POINT
 `Complete` remain open.
+
+M14.3cs adds validated and composable translation, uniform-scale, axis-rotation,
+and mirror-plane channels plus one source-bound transformed entry for every
+generic XDATA 3D tuple. AutoCAD 2027 Core Console observations establish the
+role split: group 1010 is invariant; group 1011 receives the complete position
+affine transform; group 1012 receives scale, rotation, and mirror but no
+translation; group 1013 receives rotation and mirror but neither translation
+nor scale. Transform factories reject non-finite inputs, zero scale, zero
+rotation axes, and zero mirror normals; composition overflow, partial tuples,
+invalid component values, and derived overflow remain typed unavailable states.
+All four roles and the composed oracle sequence have nine-dialect ASCII/Binary
+parity. Application-specific payload semantics, group-1005 target
+resolution/remap, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

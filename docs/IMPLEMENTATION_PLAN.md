@@ -2830,5 +2830,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     group-1005 target resolution/remap, clone/write, and POINT `Complete`
     remain open.
 
+    M14.3cs adds a validated, composable affine projection over every M14.3cp
+    XDATA 3D tuple. AutoCAD 2027 MOVE, SCALE, ROTATE, and MIRROR observations
+    establish four distinct channels: group 1010 remains unchanged; group 1011
+    receives translation, uniform scale, rotation, and mirror; group 1012 omits
+    translation; and group 1013 omits both translation and scale. Public
+    factories retain separate position, displacement, and direction matrices
+    and reject non-finite inputs, zero scale, zero axes/normals, and composition
+    overflow. One source-bound entry per tuple publishes original and transformed
+    values only when the tuple is complete, typed, and finite; partial, invalid,
+    and derived-overflow cases remain typed unavailable. The four roles, a
+    composed scale/rotate/move/mirror sequence, constructor failures, source
+    identity, cancellation, compact metadata, lookup bounds, and debug redaction
+    pass all nine paired ASCII/Binary Core dialects. Application payload
+    semantics, group-1005 target resolution/remap, clone/write, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

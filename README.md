@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cr. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3cs. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -357,6 +357,15 @@ decoding, and Unicode escape decoding all fail closed. The 16,383/16,384-byte
 boundary and every logical value family have parity across all nine
 ASCII/Binary dialect pairs. Coordinate transforms, payload meaning, group-1005
 target resolution/remap, clone/write, and POINT `Complete` remain open.
+M14.3cs projects every generic XDATA 3D tuple through validated, composable
+AutoCAD-compatible transform channels. Group 1010 stays unchanged; group 1011
+receives position translation, uniform scale, rotation, and mirror; group 1012
+receives the same linear effects without translation; and group 1013 receives
+rotation and mirror without translation or scale. Partial or invalid tuples,
+invalid transform inputs, and non-finite derived results fail typed. The four
+roles and a composed scale/rotate/move/mirror oracle have parity across all
+nine ASCII/Binary dialect pairs. Payload meaning, group-1005 target
+resolution/remap, clone/write, and POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

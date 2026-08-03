@@ -1388,6 +1388,21 @@ identity, cancellation, metadata bounds, and non-disclosing debug output.
 Coordinate transforms, application semantics, group-1005 target
 resolution/remap, clone/write, and POINT `Complete` remain open.
 
+M14.3cs transforms the four generic XDATA tuple roles through separately
+retained position, displacement, and direction affine channels. AutoCAD 2027
+behavior establishes that group 1010 is invariant, group 1011 receives move/
+uniform-scale/rotation/mirror effects, group 1012 omits movement, and group 1013
+also omits scale. Validated translation, base-point scale, axis rotation, and
+mirror-plane factories compose in source-independent order while rejecting
+non-finite inputs, zero scale, zero axes/normals, and derived matrix overflow.
+A source-bound directory emits one entry per M14.3cp tuple and publishes both
+original and transformed values only for complete finite typed tuples; partial,
+invalid, and derived-overflow inputs remain explicit. All nine ASCII/Binary
+dialect pairs cover the four roles, composed oracle sequence, invalid factories,
+source identity, cancellation, lookup and metadata bounds, and non-disclosing
+debug output. Application semantics, group-1005 target resolution/remap,
+clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
