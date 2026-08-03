@@ -2720,5 +2720,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     strict reparse, and exact inverse restoration. Color-book, graph common
     properties, and POINT `Complete` remain open.
 
+    M14.3ci adds atomic color-book tuple preservation for AC1012+ canonical
+    POINT clone. Explicit group 430 syntax is validated and admitted only with
+    usable explicit groups 62 and 420. Canonical encoding retains the exact
+    name bytes and typed colors; strict semantic post-image verification and
+    inverse restoration cover every applicable ASCII/Binary dialect. Graph
+    common properties and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -505,6 +505,7 @@ struct OwnedPointCloneDraft {
     linetype_scale: Option<crate::DxfDouble>,
     visibility: Option<DxfEntityVisibility>,
     true_color: Option<DxfEntityTrueColor>,
+    color_name: Box<[u8]>,
     transparency: Option<DxfEntityTransparency>,
     shadow_mode: Option<DxfEntityShadowMode>,
     location: [crate::DxfDouble; 3],
@@ -547,6 +548,9 @@ impl OwnedPointCloneDraft {
         }
         if let Some(color) = self.true_color {
             point = point.with_true_color(color);
+        }
+        if !self.color_name.is_empty() {
+            point = point.with_color_name(&self.color_name);
         }
         if let Some(transparency) = self.transparency {
             point = point.with_transparency(transparency);
@@ -2083,6 +2087,7 @@ fn prepare_point_clone_draft(
                 | 390
                 | 410
                 | 420
+                | 430
                 | 440
         ) {
             return Ok(Err(DxfEntityCloneIssue::UnsupportedSourceGroup {
@@ -2297,6 +2302,19 @@ fn prepare_point_clone_draft(
             Ok(value) => value,
             Err(issue) => return Ok(Err(issue)),
         };
+    let color_name = match clone_exact_text_field(
+        document,
+        &common,
+        entity,
+        key,
+        DxfEntityField::COLOR_NAME,
+        profile,
+        true,
+    )? {
+        Ok(Some(color_name)) => color_name,
+        Ok(None) => Box::default(),
+        Err(issue) => return Ok(Err(issue)),
+    };
     let transparency = match clone_common_scalar(
         &common,
         entity,
@@ -2403,6 +2421,7 @@ fn prepare_point_clone_draft(
         linetype_scale,
         visibility,
         true_color,
+        color_name,
         transparency,
         shadow_mode,
         location,

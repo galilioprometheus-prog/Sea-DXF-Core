@@ -1072,6 +1072,12 @@ fn verify_point_insert(
                 DxfEntityEditValue::Int32(color.raw()),
             )
         }),
+        expectation.point.color_name().map(|color_name| {
+            (
+                DxfEntityField::COLOR_NAME,
+                DxfEntityEditValue::ExactRawText(color_name),
+            )
+        }),
         expectation.point.transparency().map(|transparency| {
             (
                 DxfEntityField::TRANSPARENCY,

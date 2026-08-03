@@ -2,12 +2,12 @@
 
 use crate::{
     DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble,
-    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
-    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
-    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome,
-    DxfEntityDraftApplicabilityPlan, DxfEntityDraftName, DxfEntityEditValue, DxfEntityField,
-    DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
-    DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityNameClassification,
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonLayoutEditIssue,
+    DxfEntityCommonLayoutEditOutcome, DxfEntityCommonReferenceEditIssue,
+    DxfEntityCommonReferenceEditOutcome, DxfEntityCommonSymbolEditIssue,
+    DxfEntityCommonSymbolEditOutcome, DxfEntityDraftApplicabilityPlan, DxfEntityDraftName,
+    DxfEntityEditValue, DxfEntityField, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue,
+    DxfEntityGroupEncoder, DxfEntityIndexedColor, DxfEntityLineweight, DxfEntityNameClassification,
     DxfEntityPlacementTarget, DxfEntityShadowMode, DxfEntitySpace, DxfEntityTopic,
     DxfEntityTransparency, DxfEntityTrueColor, DxfEntityVisibility, DxfError, DxfHandle,
     DxfIoOperation, DxfRawDocumentView, DxfResource, DxfResourceProfile, DxfSourceId,
@@ -31,6 +31,7 @@ pub struct DxfPointDraft<'a> {
     linetype_scale: Option<DxfDouble>,
     visibility: Option<DxfEntityVisibility>,
     true_color: Option<DxfEntityTrueColor>,
+    color_name: Option<&'a [u8]>,
     transparency: Option<DxfEntityTransparency>,
     shadow_mode: Option<DxfEntityShadowMode>,
     location: [DxfDouble; 3],
@@ -54,6 +55,7 @@ impl<'a> DxfPointDraft<'a> {
             linetype_scale: None,
             visibility: None,
             true_color: None,
+            color_name: None,
             transparency: None,
             shadow_mode: None,
             location,
@@ -130,6 +132,13 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn with_true_color(mut self, color: DxfEntityTrueColor) -> Self {
         self.true_color = Some(color);
+        self
+    }
+
+    /// Emits a color-book name in group 430 with explicit groups 62 and 420.
+    #[must_use]
+    pub const fn with_color_name(mut self, color_name: &'a [u8]) -> Self {
+        self.color_name = Some(color_name);
         self
     }
 
@@ -221,6 +230,11 @@ impl<'a> DxfPointDraft<'a> {
     #[must_use]
     pub const fn true_color(self) -> Option<DxfEntityTrueColor> {
         self.true_color
+    }
+
+    #[must_use]
+    pub const fn color_name(self) -> Option<&'a [u8]> {
+        self.color_name
     }
 
     #[must_use]
@@ -333,6 +347,10 @@ pub enum DxfEntityDraftRecordIssue {
     LayerReference(DxfEntityCommonSymbolEditIssue),
     SymbolReference(DxfEntityCommonSymbolEditIssue),
     Reference(DxfEntityCommonReferenceEditIssue),
+    ColorBook(DxfEntityCommonColorBookEditIssue),
+    ColorBookRelatedFieldRequired {
+        field: DxfEntityField,
+    },
     LayoutReference(DxfEntityCommonLayoutEditIssue),
     GroupEncode {
         group_code: i16,
@@ -348,10 +366,7 @@ pub struct DxfEntityDraftRecordPlan {
 }
 
 pub(crate) struct DxfPointDraftRecordExpectation {
-    layer: Box<[u8]>,
-    layout: Option<Box<[u8]>>,
-    linetype: Option<Box<[u8]>>,
-    references: DxfPointDraftReferenceExpectation,
+    common: Box<DxfPointDraftCommonExpectation>,
     space: Option<DxfEntitySpace>,
     indexed_color: Option<DxfEntityIndexedColor>,
     lineweight: Option<DxfEntityLineweight>,
@@ -364,6 +379,14 @@ pub(crate) struct DxfPointDraftRecordExpectation {
     thickness: Option<DxfDouble>,
     extrusion: Option<[DxfDouble; 3]>,
     ucs_x_axis_angle: Option<DxfDouble>,
+}
+
+struct DxfPointDraftCommonExpectation {
+    layer: Box<[u8]>,
+    layout: Box<[u8]>,
+    linetype: Box<[u8]>,
+    references: DxfPointDraftReferenceExpectation,
+    color_name: Box<[u8]>,
 }
 
 #[derive(Clone, Copy)]
@@ -457,11 +480,11 @@ impl DxfEncodedEntityDraftRecord {
 
 impl DxfPointDraftRecordExpectation {
     pub(crate) fn layer(&self) -> &[u8] {
-        &self.layer
+        &self.common.layer
     }
 
     pub(crate) fn layout(&self) -> Option<&[u8]> {
-        self.layout.as_deref()
+        (!self.common.layout.is_empty()).then_some(self.common.layout.as_ref())
     }
 
     pub(crate) const fn space(&self) -> Option<DxfEntitySpace> {
@@ -473,15 +496,15 @@ impl DxfPointDraftRecordExpectation {
     }
 
     pub(crate) fn linetype(&self) -> Option<&[u8]> {
-        self.linetype.as_deref()
+        (!self.common.linetype.is_empty()).then_some(self.common.linetype.as_ref())
     }
 
     pub(crate) const fn material(&self) -> Option<DxfHandle> {
-        self.references.material()
+        self.common.references.material()
     }
 
     pub(crate) const fn plot_style(&self) -> Option<DxfHandle> {
-        self.references.plot_style()
+        self.common.references.plot_style()
     }
 
     pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
@@ -498,6 +521,10 @@ impl DxfPointDraftRecordExpectation {
 
     pub(crate) const fn true_color(&self) -> Option<DxfEntityTrueColor> {
         self.true_color
+    }
+
+    pub(crate) fn color_name(&self) -> Option<&[u8]> {
+        (!self.common.color_name.is_empty()).then_some(self.common.color_name.as_ref())
     }
 
     pub(crate) const fn transparency(&self) -> Option<DxfEntityTransparency> {
@@ -667,10 +694,16 @@ pub(crate) fn encode_entity_draft_record_parts(
 
 fn point_expectation(draft: DxfPointDraft<'_>) -> Result<DxfPointDraftRecordExpectation, DxfError> {
     Ok(DxfPointDraftRecordExpectation {
-        layer: copy_bytes(draft.layer())?,
-        layout: draft.layout().map(copy_bytes).transpose()?,
-        linetype: draft.linetype().map(copy_bytes).transpose()?,
-        references: DxfPointDraftReferenceExpectation::new(draft.material(), draft.plot_style()),
+        common: Box::new(DxfPointDraftCommonExpectation {
+            layer: copy_bytes(draft.layer())?,
+            layout: copy_bytes(draft.layout().unwrap_or_default())?,
+            linetype: copy_bytes(draft.linetype().unwrap_or_default())?,
+            references: DxfPointDraftReferenceExpectation::new(
+                draft.material(),
+                draft.plot_style(),
+            ),
+            color_name: copy_bytes(draft.color_name().unwrap_or_default())?,
+        }),
         space: draft.space(),
         indexed_color: draft.indexed_color(),
         lineweight: draft.lineweight(),
@@ -780,6 +813,7 @@ fn encode_point(
         for (field, present) in [
             (DxfEntityField::MATERIAL, draft.material().is_some()),
             (DxfEntityField::TRUE_COLOR, draft.true_color().is_some()),
+            (DxfEntityField::COLOR_NAME, draft.color_name().is_some()),
             (DxfEntityField::TRANSPARENCY, draft.transparency().is_some()),
             (DxfEntityField::SHADOW, draft.shadow_mode().is_some()),
             (DxfEntityField::PLOT_STYLE, draft.plot_style().is_some()),
@@ -790,6 +824,23 @@ fn encode_point(
                     version: context.version,
                 }));
             }
+        }
+    }
+    if let Some(color_name) = draft.color_name() {
+        for (field, present) in [
+            (DxfEntityField::COLOR, draft.indexed_color().is_some()),
+            (DxfEntityField::TRUE_COLOR, draft.true_color().is_some()),
+        ] {
+            if !present {
+                return Ok(Err(
+                    DxfEntityDraftRecordIssue::ColorBookRelatedFieldRequired { field },
+                ));
+            }
+        }
+        if let Err(issue) =
+            crate::entity_common_color_book_edit::validate_proposed_name(color_name, cancellation)?
+        {
+            return Ok(Err(DxfEntityDraftRecordIssue::ColorBook(issue)));
         }
     }
     if draft
@@ -979,6 +1030,16 @@ fn encode_point(
             420,
             DxfEntityFieldWireType::Int32,
             DxfEntityEditValue::Int32(color.raw()),
+            cancellation,
+        )?
+    {
+        return Ok(Err(issue));
+    }
+    if let Some(color_name) = draft.color_name()
+        && let Some(issue) = record.push(
+            430,
+            DxfEntityFieldWireType::ExactText,
+            DxfEntityEditValue::ExactRawText(color_name),
             cancellation,
         )?
     {

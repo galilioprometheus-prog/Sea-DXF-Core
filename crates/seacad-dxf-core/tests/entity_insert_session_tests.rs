@@ -3,14 +3,14 @@ use std::{error::Error, io};
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
     DxfCancellationToken, DxfDouble, DxfEntityCloneIssue, DxfEntityCloneOutcome,
-    DxfEntityCommonFieldPatch, DxfEntityCommonReferenceEditIssue, DxfEntityDeleteOutcome,
-    DxfEntityDraft, DxfEntityDraftRecordIssue, DxfEntityEditOutcome, DxfEntityEditValue,
-    DxfEntityField, DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityInsertIssue,
-    DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch,
-    DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue,
-    DxfMemorySource, DxfPointDraft, DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat,
-    DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, DxfSemanticValueState,
-    DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonFieldPatch,
+    DxfEntityCommonReferenceEditIssue, DxfEntityDeleteOutcome, DxfEntityDraft,
+    DxfEntityDraftRecordIssue, DxfEntityEditOutcome, DxfEntityEditValue, DxfEntityField,
+    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityInsertIssue, DxfEntityInsertOutcome,
+    DxfEntityInsertOwnerIssue, DxfEntityLineweight, DxfEntityPatch, DxfEntityTopic, DxfError,
+    DxfHandle, DxfHandleIdentityLookup, DxfHandseedValue, DxfMemorySource, DxfPointDraft,
+    DxfPointPatch, DxfPointPatchKind, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -896,6 +896,97 @@ fn session_clone_rejects_incompatible_object_reference_without_queueing()
 }
 
 #[test]
+fn session_clone_preserves_valid_color_book_tuple_across_modern_dialects()
+-> Result<(), Box<dyn Error>> {
+    const COLOR_NAME: &[u8] = b"RAL CLASSIC$RAL 1003";
+    for version in DxfAcadVersion::SUPPORTED
+        .into_iter()
+        .filter(|version| *version >= DxfAcadVersion::Ac1012)
+    {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let bytes = fixture_with_existing_point_color_book(format, version, COLOR_NAME)?;
+            let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+            let document = open_document(&source, format)?;
+            let view = document.view();
+            let evidence = view.entity_field_evidence_directory(&token())?;
+            let key = existing_point_key(&evidence)?;
+            let cancellation = token();
+            let mut session =
+                view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+            assert!(matches!(
+                session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+                DxfEntityCloneOutcome::Applied(receipt) if receipt.handle() == handle(0x40)
+            ));
+            let plan = session.finish_verifiable()?;
+            let output = materialize(&bytes, plan.transaction())?;
+            let output_source = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+            let output_document = open_document(&output_source, format)?;
+            let post = output_document.view();
+            let identities = post.handle_identity_directory(&token())?;
+            let DxfHandleIdentityLookup::Unique(clone) = identities.lookup(handle(0x40)) else {
+                return Err(io::Error::other("color-book clone identity").into());
+            };
+            let semantics = post.entity_field_semantic_directory(&token())?;
+            let entity = semantics
+                .evidence_directory()
+                .entity_directory()
+                .entity_for_raw_ordinal(clone.record().ordinal())
+                .ok_or_else(|| io::Error::other("color-book clone entity"))?;
+            assert_explicit_scalar(
+                &semantics,
+                entity,
+                DxfEntityField::COLOR,
+                DxfEntityFieldValue::Int16(40),
+            )?;
+            assert_explicit_scalar(
+                &semantics,
+                entity,
+                DxfEntityField::TRUE_COLOR,
+                DxfEntityFieldValue::Int32(16_235_019),
+            )?;
+            assert_exact_text_field(
+                post,
+                clone.record().ordinal(),
+                DxfEntityField::COLOR_NAME,
+                COLOR_NAME,
+            )?;
+            assert!(matches!(
+                plan.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
+                seacad_dxf_core::DxfEntityEditVerificationOutcome::Verified(_)
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn session_clone_rejects_invalid_color_book_tuple_without_queueing() -> Result<(), Box<dyn Error>> {
+    let bytes = fixture_with_existing_point_color_book(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        b"MISSING_SEPARATOR",
+    )?;
+    let source = DxfMemorySource::new(&bytes, DxfResourceProfile::Safe)?;
+    let document = open_ascii(&source)?;
+    let view = DxfRawDocumentView::from(&document);
+    let evidence = view.entity_field_evidence_directory(&token())?;
+    let key = existing_point_key(&evidence)?;
+    let cancellation = token();
+    let mut session =
+        view.entity_edit_session(&evidence, DxfResourceProfile::Safe, &cancellation)?;
+    assert!(matches!(
+        session.clone_entity(key, only_placement(view)?, handle(0x10))?,
+        DxfEntityCloneOutcome::Unavailable(DxfEntityCloneIssue::Insert(
+            DxfEntityInsertIssue::Record(DxfEntityDraftRecordIssue::ColorBook(
+                DxfEntityCommonColorBookEditIssue::MissingSeparator { .. }
+            ))
+        ))
+    ));
+    assert_eq!(session.queued_edit_count(), 0);
+    Ok(())
+}
+
+#[test]
 fn session_clone_preserves_every_explicit_point_payload_field() -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
     let mut bytes = fixture_with_existing_point(DxfRawDocumentFormat::Ascii, version)?;
@@ -1133,6 +1224,24 @@ fn fixture_with_existing_point_reference_values(
     let mut references = encoded_string_group(format, version, 347, material)?;
     references.extend_from_slice(&encoded_string_group(format, version, 390, plot_style)?);
     bytes.splice(offset..offset, references);
+    Ok(bytes)
+}
+
+fn fixture_with_existing_point_color_book(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    color_name: &[u8],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture_with_existing_point(format, version)?;
+    let marker = encoded_string_group(format, version, 100, b"AcDbPoint")?;
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT common-field boundary"))?;
+    let mut tuple = encoded_i16_group(format, version, 62, 40)?;
+    tuple.extend_from_slice(&encoded_i32_group(format, version, 420, 16_235_019)?);
+    tuple.extend_from_slice(&encoded_string_group(format, version, 430, color_name)?);
+    bytes.splice(offset..offset, tuple);
     Ok(bytes)
 }
 

@@ -1267,6 +1267,14 @@ post-image verifier requires both explicit handles. All applicable modern
 ASCII/Binary dialect pairs pass strict reparse and exact inverse restoration.
 Color-book and graph common properties plus POINT `Complete` remain open.
 
+M14.3ci preserves the AC1012+ common color-book tuple during canonical POINT
+clone. An explicit group 430 must have exactly one `$` separator with non-empty
+book and color names, and requires valid explicit indexed and true colors in
+groups 62 and 420. The typed draft rejects incomplete or malformed tuples before
+admission; strict post-image verification requires all three exact values.
+Every applicable ASCII/Binary dialect pair passes clone and inverse restoration.
+Graph common properties plus POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
