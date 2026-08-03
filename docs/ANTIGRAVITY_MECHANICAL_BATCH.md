@@ -2,15 +2,15 @@
 
 Status: `READY`
 
-Batch ID: `seacad-point-delete-verification-2026-08-03`
+Batch ID: `seacad-point-clone-verification-2026-08-03`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3ca — POINT reference-safe delete`
+Target code checkpoint: `M14.3cb — canonical POINT clone`
 
-Target checkpoint commit: `e1388672463d9bddeece24f1733185cb7b01ab28`
+Target checkpoint commit: `181946d52524fbc7f6b7b46738abf9482353d163`
 
-Target annotated tag: `m14.3ca-point-reference-safe-delete`
+Target annotated tag: `m14.3cb-canonical-point-clone`
 
 Prepared: `2026-08-03` (`Asia/Saigon`)
 
@@ -79,7 +79,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `e1388672463d9bddeece24f1733185cb7b01ab28`.
+  than `181946d52524fbc7f6b7b46738abf9482353d163`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The only path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -130,10 +130,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3ca-point-reference-safe-delete
-git rev-list -n 1 m14.3ca-point-reference-safe-delete
-git merge-base --is-ancestor e1388672463d9bddeece24f1733185cb7b01ab28 HEAD
-git diff --name-only m14.3ca-point-reference-safe-delete..HEAD
+git cat-file -t m14.3cb-canonical-point-clone
+git rev-list -n 1 m14.3cb-canonical-point-clone
+git merge-base --is-ancestor 181946d52524fbc7f6b7b46738abf9482353d163 HEAD
+git diff --name-only m14.3cb-canonical-point-clone..HEAD
 ```
 
 Expected evidence:
@@ -143,7 +143,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `e1388672463d9bddeece24f1733185cb7b01ab28`.
+  `181946d52524fbc7f6b7b46738abf9482353d163`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
@@ -159,8 +159,6 @@ For each tag below, run `git cat-file -t <tag>` and then
 `git rev-list -n 1 <tag>`, preserving the listed order:
 
 ```powershell
-git cat-file -t m14.3bw-point-extrusion-reset
-git rev-list -n 1 m14.3bw-point-extrusion-reset
 git cat-file -t m14.3bx-point-ucs-x-axis-angle-set
 git rev-list -n 1 m14.3bx-point-ucs-x-axis-angle-set
 git cat-file -t m14.3by-point-ucs-x-axis-angle-reset
@@ -169,17 +167,19 @@ git cat-file -t m14.3bz-mixed-entity-insert-update-session
 git rev-list -n 1 m14.3bz-mixed-entity-insert-update-session
 git cat-file -t m14.3ca-point-reference-safe-delete
 git rev-list -n 1 m14.3ca-point-reference-safe-delete
+git cat-file -t m14.3cb-canonical-point-clone
+git rev-list -n 1 m14.3cb-canonical-point-clone
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
 
 | Tag | Expected commit |
 | --- | --- |
-| `m14.3bw-point-extrusion-reset` | `4c83bad585b9598ff626e69c093cc217c7780ada` |
 | `m14.3bx-point-ucs-x-axis-angle-set` | `bab60370cdf2feb1e436fe63aff28cc905a2cb45` |
 | `m14.3by-point-ucs-x-axis-angle-reset` | `e53106994609f74f6d9afe7b8e9893a644225af2` |
 | `m14.3bz-mixed-entity-insert-update-session` | `6a865c6397132bc614e3dbd7db287fa299b12815` |
 | `m14.3ca-point-reference-safe-delete` | `e1388672463d9bddeece24f1733185cb7b01ab28` |
+| `m14.3cb-canonical-point-clone` | `181946d52524fbc7f6b7b46738abf9482353d163` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -200,7 +200,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
 ```
 
 The `entity_insert_session_tests` target must report exactly
-`6 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
+`9 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
 `38 passed; 0 failed`.
 For every other target, report its exact observed count rather than guessing.
 
@@ -233,7 +233,7 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `950 passed; 0 failed` across its
+- The workspace test command reports exactly `953 passed; 0 failed` across its
   complete output. Preserve every per-target summary needed to substantiate the
   aggregate count.
 - The final `git diff --check` emits no error output.
@@ -254,17 +254,17 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3b[w-z]|M14\.3ca|POINT delete|reference-safe|Handleless deletion" README.md docs
-Get-Item docs/audits/M14_3BW_POINT_EXTRUSION_RESET.md,docs/audits/M14_3BX_POINT_UCS_X_AXIS_ANGLE_SET.md,docs/audits/M14_3BY_POINT_UCS_X_AXIS_ANGLE_RESET.md,docs/audits/M14_3BZ_MIXED_ENTITY_INSERT_UPDATE_SESSION.md,docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md | Select-Object FullName,Length
+rg -n "M14\.3b[x-z]|M14\.3c[ab]|POINT clone|reference-safe|Handleless deletion" README.md docs
+Get-Item docs/audits/M14_3BX_POINT_UCS_X_AXIS_ANGLE_SET.md,docs/audits/M14_3BY_POINT_UCS_X_AXIS_ANGLE_RESET.md,docs/audits/M14_3BZ_MIXED_ENTITY_INSERT_UPDATE_SESSION.md,docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed POINT edit checkpoint is M14.3ca.
-- Audit files exist for M14.3bw, M14.3bx, M14.3by, M14.3bz, and M14.3ca.
+- The current documented completed POINT edit checkpoint is M14.3cb.
+- Audit files exist for M14.3bx, M14.3by, M14.3bz, M14.3ca, and M14.3cb.
 - The documentation does not claim completed support for handleless deletion,
-  mixed/multi-delete, clone, or complete entity editing.
+  mixed/multi-delete, cross-container clone, or complete entity editing.
 
 If the evidence is ambiguous, record `FAIL` for this phase and quote the
 ambiguous lines. Do not decide how the text should be changed.
@@ -301,16 +301,16 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 350 | `0ccd414422ddc9900a579a92e83d38aef2c91ff16274015a4a3dc86567f207ec` |
-| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 1919 | `0dd9c783d2dc6a6f7482c2c81db3680352d326c6d480ecbe328cdab02b6ab769` |
+| `README.md` | 357 | `e3744dfa8740bf08b6710700d4784b409923ed34080f4dcc1355131050585950` |
+| `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2402 | `d8daa5e6447d8f3ee29898ffdb8dc7558bc2930e19b23dee416031d6dfc17ea7` |
 | `crates/seacad-dxf-core/src/entity_edit_verification.rs` | 1200 | `e924044499ac0f7514ed93b4535f803ff7c2d29efde17882e82f2f7454361bfb` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1067 | `c9aad48b64260382bc5bb606e6b5d75114f7431ece321bd4b29d4f8480c7505a` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1067 | `ed1594613135774715dfe0d318c9609ce67cb42a9fbd5251b4f79ab798247138` |
 | `crates/seacad-dxf-core/src/point_edit.rs` | 1084 | `bcef8c022f2c17e5bf672a06692a9c28787ef7e56fbc24194c0ab44a33c46e51` |
-| `crates/seacad-dxf-core/tests/entity_insert_session_tests.rs` | 822 | `181b363ce28728a82e4d80966b411c0d3c7d2728dc94c304ccd06ff9a3bb40fd` |
+| `crates/seacad-dxf-core/tests/entity_insert_session_tests.rs` | 1027 | `a58c0c0b979a176093ec5f15716c0d512d54d9f83c9592d60c2235328bfe69d8` |
 | `crates/seacad-dxf-core/tests/point_edit_session_tests.rs` | 3005 | `286656da41a43692d73dfe3fe3280f7f7f4ef331b40971941e7746bff6fc3d61` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1220 | `f94dfcdbc0d658aa8f9981998189504c13e16659d2bcd97fe3e8243ec1916082` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2649 | `05ae4be67bae3d79e3ecc73b1054e8b2c1fb0b33edeab58d8a39cae3f99059f5` |
-| `docs/SUPPORT_MATRIX.md` | 2300 | `c54411de609bf1b1ce36c8efce7b304906f3b5eaf3744789e3b59835c4ffe3a8` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1235 | `78cbb6deeef4be78e6c4c6671dbdc49fdd30dd92c5a1f199d0892d97552c6058` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2663 | `a844cfd86e3dd576aa9065b9af1ca829063de95dae2992dda492cc8bbe0c5092` |
+| `docs/SUPPORT_MATRIX.md` | 2314 | `c4c5d4e7f4174cdb56d64ff78ec0eb502e3e75f919697bd81217fa08c8252b9f` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -347,10 +347,10 @@ The batch is `PASS` only if all of these are true:
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
 3. All five recent tags are annotated and peel to their expected commits.
-4. Every focused test target passes, including exactly 6 entity insert session
+4. Every focused test target passes, including exactly 9 entity insert session
    tests and exactly 38 POINT edit tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 950 workspace tests.
+6. All full repository gates pass, including exactly 953 workspace tests.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -368,7 +368,7 @@ Return only one YAML-shaped report block using this schema. Do not add prose
 before or after it. Do not omit commands, including commands with empty output.
 
 ```yaml
-batch_id: seacad-point-delete-verification-2026-08-03
+batch_id: seacad-point-clone-verification-2026-08-03
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
 started_at:
@@ -380,7 +380,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3ca-point-reference-safe-delete
+  tag: m14.3cb-canonical-point-clone
   tag_type:
   peeled_commit:
   ancestor_exit_code:
