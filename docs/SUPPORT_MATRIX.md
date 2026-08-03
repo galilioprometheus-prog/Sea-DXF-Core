@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cs can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ct can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1463,6 +1463,17 @@ invalid component values, and derived overflow remain typed unavailable states.
 All four roles and the composed oracle sequence have nine-dialect ASCII/Binary
 parity. Application-specific payload semantics, group-1005 target
 resolution/remap, clone/write, and POINT `Complete` remain open.
+
+M14.3ct adds `DxfEntityXDataHandleResolutionDirectory` over every retained
+generic XDATA group-1005 value. It composes typed XDATA scope with the existing
+document-local handle reference/identity index, preserving invalid, null,
+missing, ambiguous, and unique states. Only a unique result carries its exact
+`DxfHandleIdentityMatch`, including target record and identity candidate;
+application values and orphans remain independently addressable. Group-1005
+payload inside group-102 application controls remains excluded by the XDATA
+scope boundary even though generic handle evidence retains it. All states have
+nine-dialect ASCII/Binary parity. Cross-document handle remap, application-
+specific payload semantics, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

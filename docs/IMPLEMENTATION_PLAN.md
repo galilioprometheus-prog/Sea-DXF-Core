@@ -2846,5 +2846,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     semantics, group-1005 target resolution/remap, clone/write, and POINT
     `Complete` remain open.
 
+    M14.3ct composes M14.3co typed XDATA group-1005 values with the existing
+    document-local generic handle resolution. One compact source-bound entry is
+    emitted per retained group-1005 application value or orphan. Invalid, null,
+    missing, ambiguous, and unique states remain exact; only unique resolution
+    retains the target record and identity candidate. Typed and generic lexical
+    states are cross-checked, foreign entries fail lookup, and group-1005-shaped
+    values inside group-102 application controls remain outside the XDATA
+    projection. Invalid/null/missing/ambiguous/unique cases, application/orphan
+    context, group-102 exclusion, source identity, cancellation, lookup and
+    metadata bounds, and debug redaction pass all nine paired ASCII/Binary Core
+    dialects. Cross-document remap, application-specific payload semantics,
+    clone/write, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

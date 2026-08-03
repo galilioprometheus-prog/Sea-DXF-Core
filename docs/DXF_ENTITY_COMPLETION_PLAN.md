@@ -1403,6 +1403,19 @@ source identity, cancellation, lookup and metadata bounds, and non-disclosing
 debug output. Application semantics, group-1005 target resolution/remap,
 clone/write, and POINT `Complete` remain open.
 
+M14.3ct resolves every generic XDATA group-1005 occurrence through the shared
+document-local handle identity/reference directories. One compact source-bound
+entry links back to its exact typed occurrence and generic resolution. Invalid,
+null, missing, ambiguous, and unique states remain distinct; a unique state
+alone retains the exact target record and identity candidate. Application
+values and orphan occurrences stay separately visible, while group-1005-shaped
+data inside group-102 application controls never enters the projection. All
+nine ASCII/Binary dialect pairs cover every state, duplicate identities,
+application/orphan context, group-102 exclusion, foreign-source rejection,
+cancellation, lookup and metadata bounds, and non-disclosing debug output.
+Cross-document handle remap, application semantics, clone/write, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
