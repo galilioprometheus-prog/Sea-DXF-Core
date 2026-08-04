@@ -5,6 +5,7 @@ use seacad_dxf_core::{
     DxfCancellationToken, DxfEntityXDataHandleDestinationState, DxfEntityXDataHandleRemap,
     DxfEntityXDataHandleRemapState, DxfEntityXDataHandleReplacementDirectory,
     DxfEntityXDataHandleReplacementEntry, DxfEntityXDataHandleReplacementPatch,
+    DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetState,
     DxfEntityXDataHandleReplacementState, DxfError, DxfHandle, DxfHandleParseIssue,
     DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
     NoopDxfReadObserver,
@@ -31,6 +32,15 @@ fn every_supported_destination_dialect_encodes_one_exact_complete_group()
                 )?;
                 assert_eq!(directory.destination_format(), destination_format);
                 assert_directory(&directory, version, destination_format)?;
+                let sets = source
+                    .view()
+                    .entity_xdata_handle_replacement_set_directory(
+                        destination.view(),
+                        &mappings()?,
+                        DxfResourceProfile::Safe,
+                        &token(),
+                    )?;
+                assert_sets(&sets)?;
             }
         }
     }
@@ -88,6 +98,7 @@ fn unavailable_destinations_publish_no_replacement_bytes() -> Result<(), Box<dyn
 fn directory_is_cancellable_dual_source_bound_bounded_and_non_disclosing()
 -> Result<(), Box<dyn Error>> {
     assert_send_sync::<DxfEntityXDataHandleReplacementDirectory>();
+    assert_send_sync::<DxfEntityXDataHandleReplacementSetDirectory>();
     assert_copy::<DxfEntityXDataHandleReplacementEntry>();
     assert_copy::<DxfEntityXDataHandleReplacementPatch>();
     assert!(size_of::<DxfEntityXDataHandleReplacementEntry>() <= 160);
@@ -102,6 +113,15 @@ fn directory_is_cancellable_dual_source_bound_bounded_and_non_disclosing()
     cancelled.cancel();
     assert!(matches!(
         source.view().entity_xdata_handle_replacement_directory(
+            destination.view(),
+            &[],
+            DxfResourceProfile::Safe,
+            &cancelled
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(matches!(
+        source.view().entity_xdata_handle_replacement_set_directory(
             destination.view(),
             &[],
             DxfResourceProfile::Safe,
@@ -200,6 +220,54 @@ fn assert_directory(
     Ok(())
 }
 
+fn assert_sets(directory: &DxfEntityXDataHandleReplacementSetDirectory) -> Result<(), io::Error> {
+    let entries = directory.entries();
+    assert_eq!(entries.len(), 3);
+    assert_eq!(
+        entries[0].state(),
+        DxfEntityXDataHandleReplacementSetState::Ready {
+            replacement_count: 1
+        }
+    );
+    assert_eq!(
+        entries[1].state(),
+        DxfEntityXDataHandleReplacementSetState::Unavailable {
+            replacement_count: 1,
+            unavailable_count: 1,
+            first_unavailable_ordinal: 1,
+        }
+    );
+    assert_eq!(
+        entries[2].state(),
+        DxfEntityXDataHandleReplacementSetState::Unavailable {
+            replacement_count: 2,
+            unavailable_count: 2,
+            first_unavailable_ordinal: 2,
+        }
+    );
+    for (ordinal, entry) in entries.iter().copied().enumerate() {
+        assert_eq!(entry.ordinal(), ordinal as u64);
+        assert_eq!(entry.source_id(), directory.source_id());
+        assert_eq!(entry.destination_id(), directory.destination_id());
+        let replacements = directory
+            .replacements_for_entry(entry)
+            .ok_or(io::Error::other("set replacements"))?;
+        for replacement in replacements.iter().copied() {
+            assert_eq!(
+                directory
+                    .patch_for_replacement(entry, replacement)
+                    .is_some(),
+                matches!(
+                    replacement.state(),
+                    DxfEntityXDataHandleReplacementState::Ready { .. }
+                )
+            );
+        }
+    }
+    assert_eq!(directory.entry(u64::MAX), None);
+    Ok(())
+}
+
 fn expected_group(version: DxfAcadVersion, format: DxfRawDocumentFormat) -> Vec<u8> {
     let mut bytes = Vec::new();
     match format {
@@ -244,14 +312,16 @@ fn source_fixture(format: DxfRawDocumentFormat, version: DxfAcadVersion) -> io::
             &[
                 Group(0, b"POINT"),
                 Group(5, b"1"),
-                Group(0, b"POINT"),
-                Group(5, b"2"),
-                Group(0, b"POINT"),
-                Group(5, b"3"),
                 Group(1001, b"APP"),
                 Group(1000, b"SECRET_REPLACEMENT_SOURCE"),
                 Group(1005, b"1"),
+                Group(0, b"POINT"),
+                Group(5, b"2"),
+                Group(1001, b"APP"),
                 Group(1005, b"2"),
+                Group(0, b"POINT"),
+                Group(5, b"3"),
+                Group(1001, b"APP"),
                 Group(1005, b"3"),
                 Group(1005, b"0x1"),
             ],

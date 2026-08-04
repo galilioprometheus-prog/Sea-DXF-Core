@@ -88,6 +88,7 @@ mod entity_xdata_coordinate_transform_math;
 mod entity_xdata_handle_destination;
 mod entity_xdata_handle_remap;
 mod entity_xdata_handle_replacement;
+mod entity_xdata_handle_replacement_set;
 mod entity_xdata_handle_resolution;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
@@ -573,6 +574,10 @@ pub use entity_xdata_handle_remap::{
 pub use entity_xdata_handle_replacement::{
     DxfEntityXDataHandleReplacementDirectory, DxfEntityXDataHandleReplacementEntry,
     DxfEntityXDataHandleReplacementPatch, DxfEntityXDataHandleReplacementState,
+};
+pub use entity_xdata_handle_replacement_set::{
+    DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetEntry,
+    DxfEntityXDataHandleReplacementSetState,
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,

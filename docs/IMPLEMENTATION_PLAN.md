@@ -2910,5 +2910,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     specific payload semantics, transaction composition, clone/write, and POINT
     `Complete` remain open.
 
+    M14.3cy groups every source-ordered M14.3cx candidate by its exact source
+    entity and publishes all-or-nothing replacement-set readiness. `Ready`
+    requires every retained group-1005 member to own a valid patch. Unavailable
+    sets retain exact total and unavailable counts plus the first unavailable
+    replacement ordinal, while per-member states remain reachable through the
+    owned M14.3cw directory. Set and patch lookup revalidate source identity,
+    destination identity, and membership. Ready, mixed, and wholly unavailable
+    entities pass all four format pairings and nine Core dialects with
+    cancellation, lookup bounds, and foreign rejection. Application-specific
+    payload semantics, transaction composition, clone/write, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

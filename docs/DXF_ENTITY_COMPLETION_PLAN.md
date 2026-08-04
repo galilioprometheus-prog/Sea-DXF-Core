@@ -1463,6 +1463,16 @@ Core dialects with cancellation, lookup bounds, and debug redaction. Application
 semantics, transaction composition, clone/write, and POINT `Complete` remain
 open.
 
+M14.3cy groups source-ordered M14.3cx replacement candidates by exact source
+entity. A compact set becomes ready only if every retained group-1005 member has
+a ready patch; mixed or wholly unavailable sets retain total member count,
+unavailable count, first unavailable ordinal, and their original per-member
+states. Slice and patch lookup revalidate set identity and membership before
+exposing evidence. Ready, mixed, and unavailable sets cover all four
+source/destination format pairs and all nine Core dialects with cancellation,
+metadata bounds, and foreign-entry rejection. Application semantics,
+transaction composition, clone/write, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

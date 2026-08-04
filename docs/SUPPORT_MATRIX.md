@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cx can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cy can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1517,6 +1517,16 @@ unavailable replacement states expose no byte slice. Source-span association
 and foreign rejection pass all four format pairings across all nine Core
 dialects. Application-specific payload semantics, transaction composition,
 clone/write, and POINT `Complete` remain open.
+
+M14.3cy adds entity-level all-or-nothing replacement readiness. Source-ordered
+group-1005 entries are grouped by exact `DxfEntityRef`; a set is `Ready` only
+when every member can publish an M14.3cx patch. Unavailable sets retain exact
+member count, unavailable count, and first unavailable replacement ordinal.
+Set membership and patch lookup bind both document identities, preventing a
+foreign member or a partially remapped entity from entering later assembly.
+Ready, mixed, and fully unavailable entities pass all four format pairings
+across all nine Core dialects. Application-specific payload semantics,
+transaction composition, clone/write, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
