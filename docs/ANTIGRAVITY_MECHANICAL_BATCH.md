@@ -94,7 +94,8 @@ conditions occur:
   than `915fd73b53c68587de973211f0c28504f68ffd9f`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The paths changed after the target checkpoint are not exactly `README.md`,
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and `docs/TOOLCHAIN.md`.
+  `README.vi.md`, `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and
+  `docs/TOOLCHAIN.md`.
 - A required installed tool is missing and running the command would require an
   installation or update.
 - A repository mutation is detected.
@@ -157,7 +158,7 @@ Expected evidence:
 - `git rev-list -n 1` prints
   `915fd73b53c68587de973211f0c28504f68ffd9f`.
 - `git merge-base --is-ancestor` exits `0`.
-- `git diff --name-only` prints exactly `README.md`,
+- `git diff --name-only` prints exactly `README.md`, `README.vi.md`,
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and `docs/TOOLCHAIN.md`, and no other
   path.
 
@@ -367,7 +368,7 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3(c[a-z]|da)|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md docs
+rg -n "M14\.3(c[a-z]|da)|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md README.vi.md docs
 Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md,docs/audits/M14_3CX_ENTITY_XDATA_HANDLE_REPLACEMENT_PATCH.md,docs/audits/M14_3CY_ENTITY_XDATA_HANDLE_REPLACEMENT_SET.md,docs/audits/M14_3CZ_ENTITY_XDATA_HANDLE_REPLACEMENT_TRANSACTION.md,docs/audits/M14_3DA_ENTITY_XDATA_HANDLE_REPLACEMENT_VERIFICATION.md | Select-Object FullName,Length
 ```
 
@@ -390,6 +391,7 @@ Run the following exact PowerShell block:
 ```powershell
 $batchArtifacts = @(
   'README.md',
+  'README.vi.md',
   'docs/TOOLCHAIN.md',
   'crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs',
   'crates/seacad-dxf-core/src/lib.rs',
@@ -413,7 +415,8 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 149 | `0d83e0446bbe6afd89ca5deebdef3d63f19fca78bdc97c81b799ebad0e832c20` |
+| `README.md` | 151 | `0d5d0f29b160e31ed5faea78d4fedb82a0ee0421a7d6851c3ac20f5ce50573b3` |
+| `README.vi.md` | 150 | `b183b508bb97b6a9811adc47502c05be6a38f82d244e6620e14254f2d258c661` |
 | `docs/TOOLCHAIN.md` | 299 | `f646419f9753c80e70a152c0e5dc84a2e226265f93ce25e95736d8c6d83ded17` |
 | `crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs` | 210 | `f1ee466a10c83f0a5ab6661fb8734f1f5c3a31c2984007bf642628d9025e0ce1` |
 | `crates/seacad-dxf-core/src/lib.rs` | 1155 | `88ce593c5b1381e53b0fffdd00c837d0a04e5d37b3e49f238d41482b59e96905` |
