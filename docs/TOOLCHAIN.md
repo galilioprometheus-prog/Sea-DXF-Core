@@ -14,10 +14,33 @@ M0 baseline recorded on 2026-07-26:
 - Windows SDK
 - AutoCAD 2027 `acad.exe` and `accoreconsole.exe` available as future M3
   behavioral oracles
-- MicroStation V8i available for the later DGN program
+- MicroStation V8i SELECTseries `08.11.09.578` is installed at
+  `C:\Program Files (x86)\Bentley\MicroStation V8i (SELECTseries)\MicroStation\ustation.exe`
+  and is the sole behavioral oracle selected for the later DGN program
 
 OpenSpace, ODA File Converter, GUI frameworks, scripting runtimes, Wasmtime,
 and extra Cargo QA tools are intentionally not installed by M0.
+
+## Deferred DGN oracle and research decision
+
+As confirmed on 2026-08-04, the later DGN program will use only the already
+installed MicroStation V8i SELECTseries `08.11.09.578` as its initial vendor
+behavioral oracle. No newer MicroStation release, PowerDraft, unofficial
+installer, Bentley SDK, or ODA component is currently required or planned.
+That decision may change only at a named DGN milestone with a separate license,
+dependency, and provenance review.
+
+DGN V7 is the intended first native research target because its legacy
+element-oriented binary layout is smaller and has more accessible public
+low-level structural material and independent observations. DGN V8 has broader
+modern user/API documentation, but its on-disk object model and application
+extensions are substantially more complex and are not comparably covered by a
+complete public binary specification. MicroStation V8i will therefore serve as
+the isolated behavioral oracle for both V7 compatibility observations and V8
+experiments; it is never a runtime dependency or a source-code source.
+
+This records tooling and research order only. It does not change the support
+matrix: DGN V7 and V8 remain out of scope until their own milestones begin.
 
 ## Q2.1/Q2.1a/Q2.1b native CI matrix
 
