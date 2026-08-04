@@ -1,5 +1,7 @@
 # SeaCad
 
+**English** | [Tiếng Việt](README.vi.md)
+
 SeaCad is a clean-room CAD kernel written in Rust. The first release target is
 a lossless, resource-bounded core for ASCII and Binary DXF from AC1009 through
 AC1032.
