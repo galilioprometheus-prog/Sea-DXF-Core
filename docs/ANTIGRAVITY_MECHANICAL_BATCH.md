@@ -2,7 +2,7 @@
 
 Status: `READY`
 
-Batch ID: `seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04`
+Batch ID: `seacad-m14.3da-public-readme-toolchain-2026-08-04`
 
 Repository root: `D:\SeaCad\SeaCad`
 
@@ -12,7 +12,7 @@ Target checkpoint commit: `915fd73b53c68587de973211f0c28504f68ffd9f`
 
 Target annotated tag: `m14.3da-entity-xdata-handle-replacement-verification`
 
-Required report file: `D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04.yaml`
+Required report file: `D:\SeaCad\AntigravityReports\seacad-m14.3da-public-readme-toolchain-2026-08-04.yaml`
 
 Prepared: `2026-08-04` (`Asia/Saigon`)
 
@@ -49,7 +49,7 @@ and `cargo-deny` commands normally use.
 One additional write is required: create the parent directory when absent and
 write exactly one complete report file at:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3da-public-readme-toolchain-2026-08-04.yaml`
 
 This path is outside the Git repository. It is the only non-ephemeral output
 file permitted by this batch. If the file already exists for this same batch,
@@ -93,8 +93,8 @@ conditions occur:
 - The target tag is missing, is not an annotated tag, or peels to a commit other
   than `915fd73b53c68587de973211f0c28504f68ffd9f`.
 - The target checkpoint is not an ancestor of current `HEAD`.
-- The only path changed after the target checkpoint is not exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
+- The paths changed after the target checkpoint are not exactly `README.md`,
+  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and `docs/TOOLCHAIN.md`.
 - A required installed tool is missing and running the command would require an
   installation or update.
 - A repository mutation is detected.
@@ -157,8 +157,9 @@ Expected evidence:
 - `git rev-list -n 1` prints
   `915fd73b53c68587de973211f0c28504f68ffd9f`.
 - `git merge-base --is-ancestor` exits `0`.
-- `git diff --name-only` prints exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and no other path.
+- `git diff --name-only` prints exactly `README.md`,
+  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`, and `docs/TOOLCHAIN.md`, and no other
+  path.
 
 Record the initial branch/status text and `HEAD` verbatim for postflight
 comparison. The workflow documentation commit is intentionally newer than the
@@ -389,6 +390,7 @@ Run the following exact PowerShell block:
 ```powershell
 $batchArtifacts = @(
   'README.md',
+  'docs/TOOLCHAIN.md',
   'crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs',
   'crates/seacad-dxf-core/src/lib.rs',
   'crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs',
@@ -411,7 +413,8 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 515 | `c5359fc5ca355d0ad21f906734e34c4c12e94746be7109873cd2c4aadb2c6a98` |
+| `README.md` | 149 | `0d83e0446bbe6afd89ca5deebdef3d63f19fca78bdc97c81b799ebad0e832c20` |
+| `docs/TOOLCHAIN.md` | 299 | `f646419f9753c80e70a152c0e5dc84a2e226265f93ce25e95736d8c6d83ded17` |
 | `crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs` | 210 | `f1ee466a10c83f0a5ab6661fb8734f1f5c3a31c2984007bf642628d9025e0ce1` |
 | `crates/seacad-dxf-core/src/lib.rs` | 1155 | `88ce593c5b1381e53b0fffdd00c837d0a04e5d37b3e49f238d41482b59e96905` |
 | `crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs` | 605 | `194e6ed726becebf33c2be0ef046b3f6685e682af4f22469347725039cdd76c5` |
@@ -484,7 +487,7 @@ makes it `BLOCKED`.
 Write one complete UTF-8 YAML-shaped report using the schema below to this exact
 path, even when the batch ends as `FAIL` or `BLOCKED`:
 
-`D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3da-public-readme-toolchain-2026-08-04.yaml`
 
 Do not omit commands, including commands with empty output. The report file must
 contain no prose before or after the YAML-shaped report. After the file is fully
@@ -492,10 +495,10 @@ written and closed, print only its absolute path and final status to the
 Antigravity chat. Chat output without the report file is not delivery.
 
 ```yaml
-batch_id: seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04
+batch_id: seacad-m14.3da-public-readme-toolchain-2026-08-04
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-entity-xdata-handle-replacement-post-image-verification-2026-08-04.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-m14.3da-public-readme-toolchain-2026-08-04.yaml
 started_at:
 finished_at:
 head_before:
