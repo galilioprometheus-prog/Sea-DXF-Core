@@ -90,6 +90,7 @@ mod entity_xdata_handle_remap;
 mod entity_xdata_handle_replacement;
 mod entity_xdata_handle_replacement_set;
 mod entity_xdata_handle_replacement_transaction;
+mod entity_xdata_handle_replacement_verification;
 mod entity_xdata_handle_resolution;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
@@ -584,6 +585,12 @@ pub use entity_xdata_handle_replacement_transaction::{
     DxfEntityXDataHandleReplacementTransactionIssue,
     DxfEntityXDataHandleReplacementTransactionOutcome,
     DxfEntityXDataHandleReplacementTransactionPlan,
+};
+pub use entity_xdata_handle_replacement_verification::{
+    DxfEntityXDataHandleReplacementVerificationIssue,
+    DxfEntityXDataHandleReplacementVerificationJournal,
+    DxfEntityXDataHandleReplacementVerificationOutcome,
+    DxfEntityXDataHandleReplacementVerificationReceipt,
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,

@@ -2933,5 +2933,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     checks. Destination clone/write verification, application-specific payload
     semantics, and POINT `Complete` remain open.
 
+    M14.3da verifies the complete M14.3cz post-image before releasing an inverse
+    journal. Shared streaming transaction verification proves every unchanged
+    region and replacement byte; format-neutral handle projection then requires
+    each original group occurrence to parse as the exact M14.3cx destination
+    target. The compact receipt binds source, destination, post-image, and member
+    count. Same-format ASCII/Binary coverage spans all nine Core dialects with
+    exact inverse restoration, cancellation, and tamper rejection. Destination
+    clone/write integration, application-specific payload semantics, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

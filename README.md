@@ -7,7 +7,7 @@ through AC1032.
 ## Current status
 
 Release-evidence implementation is complete through M13.2g and entity-semantic
-expansion is complete through M14.3cz. SeaCad opens bounded lossless ASCII
+expansion is complete through M14.3da. SeaCad opens bounded lossless ASCII
 and Binary DXF AC1009 through AC1032, preserves exact source identity and raw
 evidence, exposes the reviewed HEADER/record/entity semantics and geometry,
 plans reversible handle and unique common-field edits, writes verified
@@ -418,6 +418,12 @@ mismatch, dialect mismatch, foreign evidence, and cancellation produce no
 transaction. This is a staging primitive, not yet a destination-document clone
 or write claim. Application payload meaning, clone/write integration, and POINT
 `Complete` remain open.
+M14.3da strictly verifies each staging post-image against the complete
+transaction bytes and reparsed group-1005 target values, then releases an exact
+inverse journal only after every member matches. Tampering, missing/non-handle
+occurrences, invalid or wrong handles, foreign evidence, and cancellation fail
+closed. Destination clone/write integration, application payload meaning, and
+POINT `Complete` remain open.
 SPLINE now exposes an analytic-readiness projection that composes exact knots,
 weighted WCS control/fit points, degree, declared counts, knot order and
 multiplicity, active parameter domain, flags, optional tangents, and planar

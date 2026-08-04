@@ -1483,6 +1483,15 @@ pass all nine Core dialects with source precondition and exact inverse checks.
 Destination clone/write verification, application semantics, and POINT
 `Complete` remain open.
 
+M14.3da strictly verifies the complete staged post-image before exposing an
+inverse journal. The shared transaction verifier proves unchanged regions and
+replacement bytes; format-neutral handle projection then proves each original
+group occurrence reparses to its expected destination target. The receipt binds
+source, destination, post-image, and exact replacement count. Same-format
+ASCII/Binary post-images across all nine Core dialects cover exact inverse
+restoration, cancellation, and tamper rejection. Destination clone/write
+integration, application semantics, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

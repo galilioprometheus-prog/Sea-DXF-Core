@@ -7,9 +7,10 @@ use seacad_dxf_core::{
     DxfEntityXDataHandleReplacementEntry, DxfEntityXDataHandleReplacementPatch,
     DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetState,
     DxfEntityXDataHandleReplacementState, DxfEntityXDataHandleReplacementTransactionIssue,
-    DxfEntityXDataHandleReplacementTransactionOutcome, DxfError, DxfHandle, DxfHandleParseIssue,
+    DxfEntityXDataHandleReplacementTransactionOutcome,
+    DxfEntityXDataHandleReplacementVerificationOutcome, DxfError, DxfHandle, DxfHandleParseIssue,
     DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    NoopDxfReadObserver,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 #[test]
@@ -43,6 +44,7 @@ fn every_supported_destination_dialect_encodes_one_exact_complete_group()
                     )?;
                 assert_sets(&sets)?;
                 assert_transaction(
+                    &source_bytes,
                     source.view(),
                     &sets,
                     version,
@@ -277,6 +279,7 @@ fn assert_sets(directory: &DxfEntityXDataHandleReplacementSetDirectory) -> Resul
 }
 
 fn assert_transaction(
+    source_bytes: &[u8],
     source: DxfRawDocumentView<'_>,
     sets: &DxfEntityXDataHandleReplacementSetDirectory,
     version: DxfAcadVersion,
@@ -333,7 +336,80 @@ fn assert_transaction(
         plan.transaction().inverse_bytes_for_patch_ordinal(0),
         Some(inverse.as_slice())
     );
+    let post_bytes = apply_plan(source_bytes, plan.transaction())?;
+    let post_storage = DxfMemorySource::new(&post_bytes, DxfResourceProfile::Safe)?;
+    let post = open(&post_storage, source_format)?;
+    let verified = plan.verify_post_image(
+        sets,
+        source,
+        post.view(),
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    let DxfEntityXDataHandleReplacementVerificationOutcome::Verified(journal) = verified else {
+        return Err(io::Error::other("post-image verification unavailable").into());
+    };
+    assert_eq!(journal.receipt().source_id(), sets.source_id());
+    assert_eq!(journal.receipt().destination_id(), sets.destination_id());
+    assert_eq!(journal.receipt().post_image_id(), post.view().source_id());
+    assert_eq!(journal.receipt().replacement_count(), 1);
+    assert_eq!(
+        apply_plan(&post_bytes, journal.inverse_plan())?,
+        source_bytes
+    );
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        plan.verify_post_image(
+            sets,
+            source,
+            post.view(),
+            DxfResourceProfile::Safe,
+            &cancelled,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    let mut tampered = post_bytes.clone();
+    let handle_start = tampered
+        .windows(16)
+        .position(|window| window == b"FFFFFFFFFFFFFFFF")
+        .ok_or(io::Error::other("replacement handle"))?;
+    tampered[handle_start] = b'E';
+    let tampered_storage = DxfMemorySource::new(&tampered, DxfResourceProfile::Safe)?;
+    let tampered_document = open(&tampered_storage, source_format)?;
+    assert!(matches!(
+        plan.verify_post_image(
+            sets,
+            source,
+            tampered_document.view(),
+            DxfResourceProfile::Safe,
+            &token(),
+        ),
+        Err(DxfError::TransactionPostImageMismatch { .. })
+    ));
     Ok(())
+}
+
+fn apply_plan(source: &[u8], plan: &DxfTransactionPlan) -> Result<Vec<u8>, DxfError> {
+    let capacity = usize::try_from(plan.projected_len()).map_err(|_| DxfError::Cancelled)?;
+    let mut output = Vec::with_capacity(capacity);
+    let mut cursor = 0_usize;
+    for patch in plan.patches().iter().copied() {
+        let start =
+            usize::try_from(patch.source_span().start()).map_err(|_| DxfError::Cancelled)?;
+        let end = usize::try_from(patch.source_span().end()).map_err(|_| DxfError::Cancelled)?;
+        output.extend_from_slice(source.get(cursor..start).ok_or(DxfError::Cancelled)?);
+        output.extend_from_slice(
+            plan.replacement_bytes_for_patch_ordinal(patch.ordinal())
+                .ok_or(DxfError::Cancelled)?,
+        );
+        cursor = end;
+    }
+    output.extend_from_slice(source.get(cursor..).ok_or(DxfError::Cancelled)?);
+    if output.len() != capacity {
+        return Err(DxfError::Cancelled);
+    }
+    Ok(output)
 }
 
 fn expected_group(version: DxfAcadVersion, format: DxfRawDocumentFormat) -> Vec<u8> {
