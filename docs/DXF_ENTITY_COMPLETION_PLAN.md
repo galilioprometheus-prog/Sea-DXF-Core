@@ -1473,6 +1473,16 @@ source/destination format pairs and all nine Core dialects with cancellation,
 metadata bounds, and foreign-entry rejection. Application semantics,
 transaction composition, clone/write, and POINT `Complete` remain open.
 
+M14.3cz creates an all-or-nothing staging transaction for one M14.3cy ready set
+when source and destination have identical format and supported dialect state.
+Every member's exact complete group span is replaced with its destination-
+validated canonical bytes; inverse capture retains each original group. Typed
+unavailable outcomes cover incomplete sets and format/dialect mismatch before a
+builder escapes. Same-format ASCII/Binary plans and every cross-format rejection
+pass all nine Core dialects with source precondition and exact inverse checks.
+Destination clone/write verification, application semantics, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3cy can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3cz can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1527,6 +1527,16 @@ foreign member or a partially remapped entity from entering later assembly.
 Ready, mixed, and fully unavailable entities pass all four format pairings
 across all nine Core dialects. Application-specific payload semantics,
 transaction composition, clone/write, and POINT `Complete` remain open.
+
+M14.3cz composes one complete M14.3cy ready set into a source-bound
+`DxfTransactionPlan` only when source and destination format plus supported
+`$ACADVER` state match exactly. Every member replaces its complete source group
+with M14.3cw canonical bytes in source order, while inverse bytes retain the
+exact original groups. Unavailable sets and format/dialect mismatch return typed
+outcomes without patches. Same-format ASCII and Binary transactions plus all
+cross-format rejections pass all nine Core dialects. The plan is a staging
+primitive; destination clone/write verification, application-specific payload
+semantics, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

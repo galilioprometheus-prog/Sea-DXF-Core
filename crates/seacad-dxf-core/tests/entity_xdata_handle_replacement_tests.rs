@@ -6,7 +6,8 @@ use seacad_dxf_core::{
     DxfEntityXDataHandleRemapState, DxfEntityXDataHandleReplacementDirectory,
     DxfEntityXDataHandleReplacementEntry, DxfEntityXDataHandleReplacementPatch,
     DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetState,
-    DxfEntityXDataHandleReplacementState, DxfError, DxfHandle, DxfHandleParseIssue,
+    DxfEntityXDataHandleReplacementState, DxfEntityXDataHandleReplacementTransactionIssue,
+    DxfEntityXDataHandleReplacementTransactionOutcome, DxfError, DxfHandle, DxfHandleParseIssue,
     DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
     NoopDxfReadObserver,
 };
@@ -41,6 +42,13 @@ fn every_supported_destination_dialect_encodes_one_exact_complete_group()
                         &token(),
                     )?;
                 assert_sets(&sets)?;
+                assert_transaction(
+                    source.view(),
+                    &sets,
+                    version,
+                    source_format,
+                    destination_format,
+                )?;
             }
         }
     }
@@ -268,6 +276,66 @@ fn assert_sets(directory: &DxfEntityXDataHandleReplacementSetDirectory) -> Resul
     Ok(())
 }
 
+fn assert_transaction(
+    source: DxfRawDocumentView<'_>,
+    sets: &DxfEntityXDataHandleReplacementSetDirectory,
+    version: DxfAcadVersion,
+    source_format: DxfRawDocumentFormat,
+    destination_format: DxfRawDocumentFormat,
+) -> Result<(), Box<dyn Error>> {
+    let unavailable = source.plan_entity_xdata_handle_replacement_set(
+        sets,
+        sets.entries()[1],
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert!(matches!(
+        unavailable,
+        DxfEntityXDataHandleReplacementTransactionOutcome::Unavailable(
+            DxfEntityXDataHandleReplacementTransactionIssue::SetUnavailable(
+                DxfEntityXDataHandleReplacementSetState::Unavailable { .. }
+            )
+        )
+    ));
+    let outcome = source.plan_entity_xdata_handle_replacement_set(
+        sets,
+        sets.entries()[0],
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    if source_format != destination_format {
+        assert!(matches!(
+            outcome,
+            DxfEntityXDataHandleReplacementTransactionOutcome::Unavailable(
+                DxfEntityXDataHandleReplacementTransactionIssue::FormatMismatch {
+                    source,
+                    destination,
+                }
+            ) if source == source_format && destination == destination_format
+        ));
+        return Ok(());
+    }
+    let DxfEntityXDataHandleReplacementTransactionOutcome::Planned(plan) = outcome else {
+        return Err(io::Error::other("same-dialect transaction unavailable").into());
+    };
+    assert_eq!(plan.source_id(), sets.source_id());
+    assert_eq!(plan.destination_id(), sets.destination_id());
+    assert_eq!(plan.set(), sets.entries()[0]);
+    plan.transaction().validate_source_precondition(source)?;
+    assert_eq!(plan.transaction().patches().len(), 1);
+    let replacement = expected_group(version, destination_format);
+    assert_eq!(
+        plan.transaction().replacement_bytes_for_patch_ordinal(0),
+        Some(replacement.as_slice())
+    );
+    let inverse = expected_original_group(version, source_format);
+    assert_eq!(
+        plan.transaction().inverse_bytes_for_patch_ordinal(0),
+        Some(inverse.as_slice())
+    );
+    Ok(())
+}
+
 fn expected_group(version: DxfAcadVersion, format: DxfRawDocumentFormat) -> Vec<u8> {
     let mut bytes = Vec::new();
     match format {
@@ -282,6 +350,19 @@ fn expected_group(version: DxfAcadVersion, format: DxfRawDocumentFormat) -> Vec<
     match format {
         DxfRawDocumentFormat::Ascii => bytes.push(b'\n'),
         DxfRawDocumentFormat::Binary => bytes.push(0),
+        _ => {}
+    }
+    bytes
+}
+
+fn expected_original_group(version: DxfAcadVersion, format: DxfRawDocumentFormat) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    match format {
+        DxfRawDocumentFormat::Ascii => bytes.extend_from_slice(b"1005\n1\n"),
+        DxfRawDocumentFormat::Binary if version == DxfAcadVersion::Ac1009 => {
+            bytes.extend_from_slice(&[u8::MAX, 0xED, 0x03, b'1', 0]);
+        }
+        DxfRawDocumentFormat::Binary => bytes.extend_from_slice(&[0xED, 0x03, b'1', 0]),
         _ => {}
     }
     bytes

@@ -2922,5 +2922,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     payload semantics, transaction composition, clone/write, and POINT
     `Complete` remain open.
 
+    M14.3cz composes one M14.3cy ready set into an immutable source-bound staging
+    transaction only when source and destination format and supported dialect
+    state match exactly. Each M14.3cx patch replaces its complete source group
+    with canonical destination bytes; the transaction captures exact inverse
+    groups and preserves source-order conflict checks. Incomplete sets and
+    format/dialect mismatch remain typed unavailable before a builder escapes.
+    Same-format ASCII/Binary staging plans and cross-format rejection pass all
+    nine Core dialects with source preconditions, cancellation, and exact inverse
+    checks. Destination clone/write verification, application-specific payload
+    semantics, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
