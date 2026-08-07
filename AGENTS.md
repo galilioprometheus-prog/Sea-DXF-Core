@@ -2,13 +2,19 @@
 
 ## Mission
 
-Build the independent SeaCad DXF core in small, evidence-backed milestones.
-DXF Core 1.0 covers ASCII and Binary DXF AC1009 through AC1032. Unknown,
-custom, proxy, and non-public payloads remain exact opaque data.
+Build SeaCad as independent, reusable CAD format cores and a workflow-driven
+CAD product in small, evidence-backed milestones. The current active product
+program remains DXF Core 1.0, covering ASCII and Binary DXF AC1009 through
+AC1032. Unknown, custom, proxy, and non-public payloads remain exact opaque
+data.
 
 ## Milestone discipline
 
-- Follow `docs/IMPLEMENTATION_PLAN.md` in order.
+- Follow the roadmap order in `docs/IMPLEMENTATION_PLAN.md`.
+- While DXF Core 1.0 is active, also follow
+  `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` and its linked entity
+  completion subplan in order. The master plan never overrides a stricter
+  active-subplan contract.
 - Stop after every micro-milestone for user approval.
 - Use one commit and one annotated checkpoint tag per approved milestone.
 - Do not increase a support claim without fixtures, tests, evidence, and an
@@ -52,8 +58,9 @@ custom, proxy, and non-public payloads remain exact opaque data.
   read-only, regardless of later path moves. Known legacy trees include sibling
   directories matching `D:\SeaCad\cad_*` and the former `D:\Backups` location.
 - Do not fork, vendor, copy, translate, or line-by-line port an external parser.
-- Official Autodesk documentation is normative. External implementations may
-  be isolated behavioral oracles only.
+- Official Autodesk documentation remains normative for DXF and applicable DWG
+  evidence. Official Bentley documentation is normative for future DGN work.
+  External implementations may be isolated behavioral oracles only.
 - Move an old test, fixture, or observation into SeaCad only after M1 records
   its ownership, license, provenance, and SHA-256 when applicable.
 - Keep private CAD corpus data outside this repository.
@@ -68,10 +75,24 @@ custom, proxy, and non-public payloads remain exact opaque data.
   text.
 - Writers create a new destination and never overwrite the source file.
 
+## Localization
+
+- SeaCad is multilingual. English (`en`) is the canonical fallback and
+  Vietnamese (`vi`) is a first-class locale with complete user-facing catalog
+  coverage before a feature is released.
+- Additional languages use normalized BCP 47 locale tags and the same catalog
+  contract; do not add language-specific branches to format, geometry,
+  command, transaction, or rendering logic.
+- Stable command ids, error codes, JSON keys and values, WIT/RPC/MCP schemas,
+  logs, and receipts remain locale-neutral English identifiers.
+- Never translate drawing text, layer/level names, symbol names, file payloads,
+  or user script source automatically.
+
 ## Dependencies
 
-- The core is standard-library-only until a named milestone approves an
-  exception.
+- Each format core is standard-library-first until a named milestone approves
+  an exact exception. Existing reviewed DXF exceptions remain governed by
+  `docs/DEPENDENCY_POLICY.md`.
 - Run a license, feature, transitive dependency, and security review before
   changing any `Cargo.toml` dependency.
 - Do not install agent frameworks, MCP servers, GUI frameworks, ODA, Wasmtime,

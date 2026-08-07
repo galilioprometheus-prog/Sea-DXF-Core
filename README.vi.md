@@ -50,7 +50,7 @@ thể:
 Ranh giới hỗ trợ chính xác luôn hẹp hơn raw inventory. Nhận diện được tên entity
 không đồng nghĩa đã hỗ trợ đầy đủ semantic hoặc edit. Xem
 [support matrix](docs/SUPPORT_MATRIX.md) và
-[kế hoạch hoàn thiện entity](docs/DXF_ENTITY_COMPLETION_PLAN.md) để biết chi
+[subplan hoàn thiện DXF entity](docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md) để biết chi
 tiết chuẩn tắc.
 
 ## Chưa hỗ trợ
@@ -62,9 +62,10 @@ tiết chuẩn tắc.
 - Không bao giờ ghi đè trực tiếp file nguồn.
 - Rust API chưa ổn định.
 
-DWG và DGN trong tương lai dự kiến kết hợp native parsing, opaque preservation
-chính xác và vendor bridge tùy chọn cho những chức năng không thể tái hiện đáng
-tin cậy chỉ bằng implementation clean-room.
+Roadmap dài hạn triển khai DGN V7, DGN V8 và DWG native clean-room sau DXF Core
+1.0. Base plan không dùng ODA, RealDWG, Bentley SDK hoặc format runtime độc
+quyền khác; evidence chưa đủ sẽ giữ capability ở opaque hoặc read-only thay vì
+suy đoán parser hay writer.
 
 ## Workspace
 
@@ -76,9 +77,10 @@ tin cậy chỉ bằng implementation clean-room.
 
 Tài liệu quan trọng:
 
-- [Kế hoạch implementation](docs/IMPLEMENTATION_PLAN.md)
+- [Master implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Support matrix](docs/SUPPORT_MATRIX.md)
-- [Kế hoạch hoàn thiện DXF entity](docs/DXF_ENTITY_COMPLETION_PLAN.md)
+- [Subplan implementation DXF Core 1.0](docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
+- [Subplan hoàn thiện DXF entity](docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)
 - [Chính sách dependency](docs/DEPENDENCY_POLICY.md)
 - [Chính sách toolchain và oracle](docs/TOOLCHAIN.md)
 - [Hợp đồng CLI JSON v1](docs/CLI_JSON_V1.md)

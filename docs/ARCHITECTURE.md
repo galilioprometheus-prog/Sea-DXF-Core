@@ -1,5 +1,13 @@
 # Architecture
 
+## Status
+
+Only the DXF runtime described below exists today. The multi-format, CAD-model,
+renderer, desktop, automation, and plugin boundaries in this document are
+planned contracts from the [master implementation plan](IMPLEMENTATION_PLAN.md),
+not current support claims. The detailed active DXF program is preserved under
+[`plans/dxf-core-1.0/`](plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md).
+
 ## Core boundary
 
 `seacad-dxf-core` owns DXF source access, lossless group records, dialects,
@@ -29,9 +37,100 @@ is never silently dropped.
 
 ## Future boundaries
 
-After DXF Core 1.0, a format-neutral command API will serve Luau, Python,
-CadLisp, sandboxed WASM plugins, and the GUI. These hosts must depend on the
-command/core interfaces; the core must not depend on them.
+After DXF Core 1.0, the planned open format layer consists of one minimal
+`seacad-format-foundation` crate plus independent DXF, DWG, DGN V7, and DGN V8
+cores. A small DGN facade may select V7 or V8, but neither implementation may
+depend on the other. Format cores expose their native physical and semantic
+models and do not depend on a universal CAD entity enum.
+
+Proprietary product-layer adapters translate reviewed format semantics into an
+immutable CAD snapshot. The CAD model depends on a format-neutral geometry
+kernel; commands depend on the CAD model; rendering consumes snapshots; and
+the desktop depends on the command and rendering interfaces. No dependency may
+point from a format core into the product layer.
+
+A format-neutral command API serves the GUI, CLI, `.scr`, Rhai, CadLisp,
+process-isolated Python and Luau workers, sandboxed WASM/WIT plugins, SDKs, and
+MCP. These hosts cannot mutate parser memory or bypass validated document
+transactions.
+
+```mermaid
+flowchart TB
+    subgraph FORMAT["Planned format layer"]
+        FOUNDATION["format foundation"]
+        DXF["DXF core"] --> FOUNDATION
+        DWG["DWG core"] --> FOUNDATION
+        D7["DGN V7 core"] --> FOUNDATION
+        D8["DGN V8 core"] --> FOUNDATION
+    end
+
+    subgraph PRODUCT["Planned product layer"]
+        ADAPTERS["format adapters"] --> DXF
+        ADAPTERS --> DWG
+        ADAPTERS --> D7
+        ADAPTERS --> D8
+        ADAPTERS --> MODEL["immutable CAD model"]
+        MODEL --> GEOMETRY["geometry kernel"]
+        COMMANDS["commands and transactions"] --> MODEL
+        RENDERER["renderer"] --> MODEL
+        DESKTOP["desktop"] --> COMMANDS
+        DESKTOP --> RENDERER
+        AUTOMATION["automation and extensions"] --> COMMANDS
+    end
+```
+
+## Planned command and write contracts
+
+CAD snapshots use stable document/entity identifiers, explicit units and
+coordinate frames, and monotonically increasing revisions. The planned
+`seacad.command/v1` protocol requires a stable command id, schema version,
+arguments, expected revision, and capability context. Revision mismatch fails
+closed; it never triggers an implicit merge.
+
+Every native write follows this sequence:
+
+```text
+source bytes -> immutable format snapshot -> immutable CAD snapshot
+             -> command preview/apply -> native format transaction
+             -> create-new destination -> strict reopen
+             -> semantic verification -> receipt and undo evidence
+```
+
+An adapter rejects an edit when it cannot prove that the target format can
+represent the change without damaging unsupported data. Source files are never
+overwritten in place.
+
+## Theme boundary
+
+The planned distributable theme format is a `.seacad-theme` ZIP archive with
+`manifest.toml`, `theme.toml`, optional `icons/`, optional licensed `fonts/`, an
+optional `preview.png`, and asset license files. Development mode may load the
+same structure from an unpacked directory for hot reload.
+
+Theme schema `seacad.theme/v1` permits one parent theme and stable semantic
+tokens for colors, viewport roles, typography, spacing, radii, borders, and
+icons. Colors use `#RRGGBB` or `#RRGGBBAA` sRGB spelling and dimensions use
+logical device-independent pixels. Missing values fall back through the parent
+and built-in base theme before user accessibility overrides are applied.
+
+Themes cannot contain CSS, HTML, JavaScript, native code, network references,
+layout selectors, command overrides, or message translations. The loader
+rejects traversal, absolute paths, symlinks, executable assets, duplicate
+normalized paths, oversized entries, inheritance cycles, and unlicensed
+bundled assets. Invalid themes fall back to the built-in safe theme without
+preventing application startup.
+
+## Platform boundary
+
+Format, geometry, command, CLI, and SDK contracts target Windows, Linux, and
+macOS on x64 and ARM64. GUI support is evidence-tiered: Windows x64 first,
+followed by Linux x64 and macOS ARM64; another target is promoted only after
+real GPU, text, font, IME, packaging, and workflow evidence passes there.
+
+World coordinates remain `f64`. Rendering rebases data to a camera- or
+chunk-local origin rather than narrowing document truth. Units, axis order,
+CRS identity, grid-data version, and transform provenance remain explicit; no
+layer silently guesses or converts a CRS.
 
 ## Internationalization boundary
 

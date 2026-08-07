@@ -2,536 +2,308 @@
 
 Status: `READY`
 
-Batch ID: `seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07`
+Batch ID: `seacad-r0.1-master-plan-reset-2026-08-08`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3dc - entity XDATA APPID destination`
+Target milestone: `R0.1 - master plan reset`
 
-Target checkpoint commit: `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`
+Baseline commit: `76883bbdda527a828ee01136835714bfb3b4c38e`
 
-Target annotated tag: `m14.3dc-entity-xdata-appid-destination`
+Required report file:
+`D:\SeaCad\AntigravityReports\seacad-r0.1-master-plan-reset-2026-08-08.yaml`
 
-Required report file: `D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
-
-Prepared: `2026-08-07` (`Asia/Saigon`)
+Prepared: `2026-08-08` (`Asia/Saigon`)
 
 ## 1. Authority and purpose
 
-You are the mechanical verification worker for SeaCad. Execute this batch and
-collect raw evidence. You do not own architecture, milestone scope, normative
-interpretation, provenance, dependencies, support claims, or release decisions.
-Codex and the user retain that authority.
+You are the mechanical verification worker for SeaCad. Verify the proposed
+R0.1 documentation-only worktree and collect raw evidence. You do not own
+architecture, milestone scope, normative interpretation, provenance,
+dependencies, support claims, licensing, commit, tag, merge, or release
+decisions. Codex and the user retain that authority.
 
-Do not use Agent Hub, an MCP server, a coordination service, or another agent.
-This file is the sole task specification for the current batch. Do not infer,
+Do not use Agent Hub, an MCP server, another agent, or an external coordination
+service. This file is the complete task specification. Do not infer, repair,
 add, remove, reorder, or expand work.
 
 ## 2. Mandatory read-first procedure
 
 1. Set the working directory to exactly `D:\SeaCad\SeaCad`.
-2. Read `D:\SeaCad\SeaCad\AGENTS.md` completely.
+2. Read `AGENTS.md` completely.
 3. Read this file completely.
-4. Confirm that this file has exactly one active batch and its status is
-   `READY`.
-5. Execute the phases below in their stated order.
+4. Confirm that this file contains exactly one batch marked `READY`.
+5. Execute every phase below in order unless an immediate stop condition fires.
 
-If `AGENTS.md` conflicts with this batch, stop and report the conflict. If the
-root is not exact, stop before running repository commands.
+If `AGENTS.md` conflicts with this batch, stop and report the conflict.
 
 ## 3. Allowed writes
 
-The repository is logically read-only. The only tolerated writes are ordinary
-ephemeral compiler, linker, test, and analysis outputs under the existing
-repository `target` directory, plus tool caches that the already-installed Rust
-and `cargo-deny` commands normally use.
+The repository is logically read-only. Ordinary ignored compiler/test output
+under the existing `target` directory and already-provisioned tool caches are
+tolerated. No project source, documentation, manifest, lockfile, schema,
+fixture, release artifact, Git metadata, tag, or branch may be changed.
 
-One additional write is required: create the parent directory when absent and
-write exactly one complete report file at:
+Create or replace exactly one non-ephemeral output outside the repository:
 
-`D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
+`D:\SeaCad\AntigravityReports\seacad-r0.1-master-plan-reset-2026-08-08.yaml`
 
-This path is outside the Git repository. It is the only non-ephemeral output
-file permitted by this batch. If the file already exists for this same batch,
-replace it with the complete result of the current run. Do not create a second
-report, sidecar, temporary project file, or copy inside `D:\SeaCad\SeaCad`.
-
-No project source, test, fixture, documentation, configuration, lockfile, Git
-metadata, or untracked project file may be created, edited, deleted, renamed, or
-reformatted. `cargo fmt` is allowed only with `--check`.
-
-Do not install or update a toolchain, component, binary, crate, dependency, or
-system package. If an exact command cannot run without an installation, update,
-network download, permission change, or credential prompt, do not approve it;
-stop and report the blocker.
+Do not create a sidecar, temporary report, repository report, or second output.
+Do not install or update a tool, target, dependency, package, or runtime.
 
 ## 4. Prohibited actions
 
-- Do not edit or fix any failure.
+- Do not edit or fix a failure.
 - Do not run a formatter in write mode.
-- Do not run `cargo update` or change `Cargo.lock` or any `Cargo.toml`.
-- Do not change file permissions, ownership, environment policy, or security
-  settings.
-- Do not run Git operations that mutate history, index, worktree, branches,
-  remotes, or tags. This includes `add`, `commit`, `amend`, `reset`, `restore`,
-  `checkout`, `switch`, `merge`, `rebase`, `cherry-pick`, `clean`, and `stash`.
-- Do not fetch, pull, push, force-push, create/delete tags, open/update a pull
-  request, publish a release, or dispatch/cancel/re-run a workflow.
-- Do not invoke `gh` or any hosting-provider mutation.
-- Do not use Agent Hub, MCP, another agent, or an external coordination layer.
-- Do not make architecture, scope, support, dependency, provenance, milestone,
-  commit, tag, merge, or release decisions.
-- Do not replace an exact command with an alternative command.
+- Do not run `cargo update` or a command that changes generated evidence.
+- Do not mutate Git state with add, commit, tag, reset, restore, checkout,
+  switch, stash, clean, merge, rebase, fetch, pull, push, or hosting commands.
+- Do not run ODA, RealDWG, Bentley SDK, AutoCAD, MicroStation, a GUI, an MCP
+  server, a scripting runtime, or a network-dependent command.
+- Do not inspect external parser source or any legacy source tree.
+- Do not reinterpret support, licensing, architecture, or historical receipts.
 
-## 5. Stop and failure policy
+## 5. Expected preflight state
 
-Stop the batch immediately and report `BLOCKED` if any of these preflight
-conditions occur:
+The exact root and baseline commit above are required. The tracked changed-path
+set must contain exactly:
 
-- The root differs from `D:\SeaCad\SeaCad`.
-- The initial worktree is not clean.
-- The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`.
-- The target checkpoint is not an ancestor of current `HEAD`.
-- The path changed after the target checkpoint is not exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
-- A required installed tool is missing and running the command would require an
-  installation or update.
-- A repository mutation is detected.
+```text
+AGENTS.md
+README.md
+README.vi.md
+crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs
+crates/seacad-dxf-core/src/lib.rs
+docs/ANTIGRAVITY_MECHANICAL_BATCH.md
+docs/ARCHITECTURE.md
+docs/DXF_ENTITY_COMPLETION_PLAN.md
+docs/IMPLEMENTATION_PLAN.md
+```
 
-After preflight succeeds, an ordinary test, check, scan, or hash mismatch is a
-`FAIL`, not permission to fix anything. Continue running later independent
-read-only commands so the report contains the full failure surface. Stop
-immediately only if a repository mutation, destructive prompt, credential
-prompt, required installation/update, or other prohibited action is encountered.
+`docs/DXF_ENTITY_COMPLETION_PLAN.md` is expected to be a tracked deletion. The
+exact untracked-path set must contain:
 
-Never hide, retry away, or repair a failure. A retry is permitted only for a
-clearly transient process-launch failure, and both attempts must appear in the
-report with the reason for the retry.
+```text
+crates/seacad-dxf-core/src/named_symbol_destination.rs
+docs/audits/R0_1_MASTER_PLAN_RESET.md
+docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md
+docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
+```
 
-## 6. Evidence capture rules
+The three code paths are concurrent code work outside R0.1. Their required
+preflight and postflight receipts are:
 
-For every command, capture:
+| Path | Lines | SHA-256 |
+| --- | ---: | --- |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,162 | `18d9dfec0f1d87cb719aa80122faed59faa56dbeea24e8639d4aee9919536e02` |
+| `crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs` | 313 | `e3c65574d17d4f8c0fddaadb9bfd945949ebe8ccf23835a62bf0c7be5571374b` |
+| `crates/seacad-dxf-core/src/named_symbol_destination.rs` | 129 | `474b3f8d48af6c00d62046c059adc476dc619630424f90059be9c41694b3807d` |
 
-- its ordinal number and phase;
-- the exact command text;
-- exact working directory;
-- start and finish timestamps with UTC offset;
-- process exit code;
-- raw standard output and standard error, kept separate when possible;
-- the exact test summary when the command runs tests;
-- any deviation or retry.
+Stop and report `BLOCKED` before quality commands if the root, baseline commit,
+changed path sets, or either code receipt differs. A test or documentation
+failure after valid preflight is `FAIL`, not permission to edit.
 
-Do not replace raw evidence with a verbal conclusion. Shorten output only when
-it is repetitive; if shortened, retain the first relevant lines, last summary,
-and exact omitted-line count.
+## 6. Phase 1 - Preflight evidence
 
-For the prohibited-API `rg` scan, exit code `1` with empty output means no match
-and is the expected pass result. Exit code `0` means findings exist and is a
-failure. Any other exit code is a command error.
-
-## 7. Phase 0 — Repository preflight
-
-Run these exact commands in order:
+Run each command exactly and record stdout, stderr, exit code, timestamps, and
+working directory:
 
 ```powershell
 Get-Location
-Get-Content -Raw AGENTS.md
-Get-Content -Raw docs/ANTIGRAVITY_MECHANICAL_BATCH.md
 git status --short --branch
 git rev-parse HEAD
-git diff --check
-git tag --points-at HEAD
-git cat-file -t m14.3dc-entity-xdata-appid-destination
-git rev-list -n 1 m14.3dc-entity-xdata-appid-destination
-git merge-base --is-ancestor d23ee4ec92f940b3c8ef7ae6d971945becf9bdac HEAD
-git diff --name-only m14.3dc-entity-xdata-appid-destination..HEAD
+git diff --name-only
+git ls-files --others --exclude-standard
 ```
 
-Expected evidence:
-
-- `Get-Location` resolves exactly to `D:\SeaCad\SeaCad`.
-- Initial `git status --short --branch` reports a clean worktree.
-- `git diff --check` exits `0` with no error output.
-- `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
-- `git rev-list -n 1` prints
-  `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`.
-- `git merge-base --is-ancestor` exits `0`.
-- `git diff --name-only` prints exactly
-  `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
-
-Record the initial branch/status text and `HEAD` verbatim for postflight
-comparison. The workflow documentation commit is intentionally newer than the
-target code checkpoint, so current `HEAD` is not expected to equal the target
-checkpoint commit.
-
-## 8. Phase 1 — Recent checkpoint lineage and annotated tags
-
-For each tag below, run `git cat-file -t <tag>` and then
-`git rev-list -n 1 <tag>`, preserving the listed order:
+Compare changed paths as sets, not by incidental output order. Then run:
 
 ```powershell
-git cat-file -t m14.3ca-point-reference-safe-delete
-git rev-list -n 1 m14.3ca-point-reference-safe-delete
-git cat-file -t m14.3cb-canonical-point-clone
-git rev-list -n 1 m14.3cb-canonical-point-clone
-git cat-file -t m14.3cc-handleless-point-delete
-git rev-list -n 1 m14.3cc-handleless-point-delete
-git cat-file -t m14.3cd-multi-point-delete
-git rev-list -n 1 m14.3cd-multi-point-delete
-git cat-file -t m14.3ce-mixed-point-delete-session
-git rev-list -n 1 m14.3ce-mixed-point-delete-session
-git cat-file -t m14.3cf-point-scalar-common-clone
-git rev-list -n 1 m14.3cf-point-scalar-common-clone
-git cat-file -t m14.3cg-point-linetype-clone
-git rev-list -n 1 m14.3cg-point-linetype-clone
-git cat-file -t m14.3ch-point-object-reference-clone
-git rev-list -n 1 m14.3ch-point-object-reference-clone
-git cat-file -t m14.3ci-point-color-book-clone
-git rev-list -n 1 m14.3ci-point-color-book-clone
-git cat-file -t m14.3cj-point-proxy-graphics-clone
-git rev-list -n 1 m14.3cj-point-proxy-graphics-clone
-git cat-file -t m14.3ck-point-delete-graph-scope
-git rev-list -n 1 m14.3ck-point-delete-graph-scope
-git cat-file -t m14.3cl-entity-xdata-evidence
-git rev-list -n 1 m14.3cl-entity-xdata-evidence
-git cat-file -t m14.3cm-entity-xdata-appid-resolution
-git rev-list -n 1 m14.3cm-entity-xdata-appid-resolution
-git cat-file -t m14.3cn-entity-xdata-structure
-git rev-list -n 1 m14.3cn-entity-xdata-structure
-git cat-file -t m14.3co-entity-xdata-typed-values
-git rev-list -n 1 m14.3co-entity-xdata-typed-values
-git cat-file -t m14.3cp-entity-xdata-point-tuples
-git rev-list -n 1 m14.3cp-entity-xdata-point-tuples
-git cat-file -t m14.3cq-entity-xdata-layer-resolution
-git rev-list -n 1 m14.3cq-entity-xdata-layer-resolution
-git cat-file -t m14.3cr-entity-xdata-capacity
-git rev-list -n 1 m14.3cr-entity-xdata-capacity
-git cat-file -t m14.3cs-entity-xdata-coordinate-transform
-git rev-list -n 1 m14.3cs-entity-xdata-coordinate-transform
-git cat-file -t m14.3ct-entity-xdata-handle-resolution
-git rev-list -n 1 m14.3ct-entity-xdata-handle-resolution
-git cat-file -t m14.3cu-entity-xdata-handle-remap
-git rev-list -n 1 m14.3cu-entity-xdata-handle-remap
-git cat-file -t m14.3cv-entity-xdata-handle-destination
-git rev-list -n 1 m14.3cv-entity-xdata-handle-destination
-git cat-file -t m14.3cw-entity-xdata-handle-replacement
-git rev-list -n 1 m14.3cw-entity-xdata-handle-replacement
-git cat-file -t m14.3cx-entity-xdata-handle-replacement-patch
-git rev-list -n 1 m14.3cx-entity-xdata-handle-replacement-patch
-git cat-file -t m14.3cy-entity-xdata-handle-replacement-set
-git rev-list -n 1 m14.3cy-entity-xdata-handle-replacement-set
-git cat-file -t m14.3cz-entity-xdata-handle-replacement-transaction
-git rev-list -n 1 m14.3cz-entity-xdata-handle-replacement-transaction
-git cat-file -t m14.3da-entity-xdata-handle-replacement-verification
-git rev-list -n 1 m14.3da-entity-xdata-handle-replacement-verification
-git cat-file -t m14.3db-entity-xdata-handle-replacement-write-integration
-git rev-list -n 1 m14.3db-entity-xdata-handle-replacement-write-integration
-git cat-file -t m14.3dc-entity-xdata-appid-destination
-git rev-list -n 1 m14.3dc-entity-xdata-appid-destination
+$userPaths = @(
+  'crates/seacad-dxf-core/src/lib.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs',
+  'crates/seacad-dxf-core/src/named_symbol_destination.rs'
+)
+foreach ($userPath in $userPaths) {
+  [PSCustomObject]@{
+    Path = $userPath
+    Lines = (Get-Content -LiteralPath $userPath).Count
+    Sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $userPath).Hash.ToLowerInvariant()
+  }
+}
 ```
 
-Every `git cat-file -t` must print `tag`. Expected peeled commits:
-
-| Tag | Expected commit |
-| --- | --- |
-| `m14.3ca-point-reference-safe-delete` | `e1388672463d9bddeece24f1733185cb7b01ab28` |
-| `m14.3cb-canonical-point-clone` | `181946d52524fbc7f6b7b46738abf9482353d163` |
-| `m14.3cc-handleless-point-delete` | `bfd35a4a9f5cb9a8947974554fd635c6daddd381` |
-| `m14.3cd-multi-point-delete` | `f8d8dfa456515bad11bf358e5ec3de48eca1c638` |
-| `m14.3ce-mixed-point-delete-session` | `e91d2fe174649fef04c35b587d5452a174e704f8` |
-| `m14.3cf-point-scalar-common-clone` | `9228f0c51d75522d67962946ecfe83ba59c0238b` |
-| `m14.3cg-point-linetype-clone` | `c7abb77aabae6be265d4529d67b1f90864097443` |
-| `m14.3ch-point-object-reference-clone` | `347cceb79f1a6bf3a73313417d84951e3b025fa6` |
-| `m14.3ci-point-color-book-clone` | `562964ec107321781407cf7b491301936d74c7f6` |
-| `m14.3cj-point-proxy-graphics-clone` | `78f1e916bfe0cb7c51912a4d942337087ab67391` |
-| `m14.3ck-point-delete-graph-scope` | `13ebd4acf15d7b59afb2829176af278c6a51e11b` |
-| `m14.3cl-entity-xdata-evidence` | `96bacc15dd6693b1dbf8d1083ab271b5f6b9b65a` |
-| `m14.3cm-entity-xdata-appid-resolution` | `bc1288b62a398fcf45fb96d3360ff018adc4fa27` |
-| `m14.3cn-entity-xdata-structure` | `3a51ea061118b42c582f5d09aa40f52b65f99b06` |
-| `m14.3co-entity-xdata-typed-values` | `0961c02cf1565fdfa45b243610949b30e99a2b5f` |
-| `m14.3cp-entity-xdata-point-tuples` | `167bc04a253a60655361208059559c12931c7ef8` |
-| `m14.3cq-entity-xdata-layer-resolution` | `38cdf2ad74be1fda6ea04ec5e16478fe204ab3c3` |
-| `m14.3cr-entity-xdata-capacity` | `a33791ef7289514d846722f3acb7074b742e28b8` |
-| `m14.3cs-entity-xdata-coordinate-transform` | `fbdb3e2de5170d853dfc9d96f3ed522fca061754` |
-| `m14.3ct-entity-xdata-handle-resolution` | `caba1f3e919b5632af40bff62ec119a89c4368ea` |
-| `m14.3cu-entity-xdata-handle-remap` | `073ece05a46ef06d62f36cc857ff684338f82349` |
-| `m14.3cv-entity-xdata-handle-destination` | `d5be5b0c1b2c6ca5ff1013b8af42065bac6d9e3e` |
-| `m14.3cw-entity-xdata-handle-replacement` | `c60e394bb0ad0278b78edc83eef5d67a026cb145` |
-| `m14.3cx-entity-xdata-handle-replacement-patch` | `931754056d86f992f193e68cfc02e1509c48e8e7` |
-| `m14.3cy-entity-xdata-handle-replacement-set` | `a085f3a47b5f5e5c935f4ee53d803502d9a6ce3b` |
-| `m14.3cz-entity-xdata-handle-replacement-transaction` | `4cacb97a324d5d395d2bfe43faa3e4d756115784` |
-| `m14.3da-entity-xdata-handle-replacement-verification` | `915fd73b53c68587de973211f0c28504f68ffd9f` |
-| `m14.3db-entity-xdata-handle-replacement-write-integration` | `d2b70278eb35d1de31775a88cc6eb2860b4014dd` |
-| `m14.3dc-entity-xdata-appid-destination` | `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac` |
-
-## 9. Phase 2 — Focused semantic and edit tests
-
-Run each test target independently and preserve its exact test count:
-
-```powershell
-cargo +1.97.1 test -p seacad-dxf-core --test basic_geometry_tests
-cargo +1.97.1 test -p seacad-dxf-core --test basic_geometry_semantic_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_draft_record_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_insert_session_tests
-cargo +1.97.1 test -p seacad-dxf-core --test point_edit_session_tests
-cargo +1.97.1 test -p seacad-dxf-core --test transaction_plan_tests
-cargo +1.97.1 test -p seacad-dxf-core --test transaction_plan_composition_tests
-cargo +1.97.1 test -p seacad-dxf-core --test transaction_inverse_tests
-cargo +1.97.1 test -p seacad-dxf-core --test transaction_write_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_verification_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_resolution_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_destination_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_structure_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_value_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_point_tuple_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_layer_resolution_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_capacity_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_coordinate_transform_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_resolution_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_remap_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_destination_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_handle_replacement_tests
-```
-
-The `entity_insert_session_tests` target must report exactly
-`18 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
-`44 passed; 0 failed`. The `entity_xdata_tests` target must report exactly
-`3 passed; 0 failed`. The `entity_xdata_appid_resolution_tests` target must
-also report exactly `3 passed; 0 failed`. The
-`entity_xdata_appid_destination_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_structure_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_value_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_point_tuple_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_layer_resolution_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_capacity_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_coordinate_transform_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_handle_resolution_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_handle_remap_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_handle_destination_tests` target must report exactly
-`3 passed; 0 failed`.
-The `entity_xdata_handle_replacement_tests` target must report exactly
-`6 passed; 0 failed`.
-For every other target, report its exact observed count rather than guessing.
-
-## 10. Phase 3 — Generated schema and release evidence
+## 7. Phase 2 - Plan preservation and navigation
 
 Run:
 
 ```powershell
-cargo +1.97.1 run --locked -p seacad-schema-gen -- --check
-cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence -- --check
+$planPaths = @(
+  'docs/IMPLEMENTATION_PLAN.md',
+  'docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md',
+  'docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md',
+  'docs/audits/R0_1_MASTER_PLAN_RESET.md'
+)
+foreach ($planPath in $planPaths) {
+  [PSCustomObject]@{
+    Path = $planPath
+    Lines = (Get-Content -LiteralPath $planPath).Count
+    Sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $planPath).Hash.ToLowerInvariant()
+  }
+}
 ```
 
-Both commands must exit `0`. They are check-only commands and must not change
-tracked or untracked project files.
+Required receipts:
 
-## 11. Phase 4 — Full repository quality gates
+| Path | Lines | SHA-256 |
+| --- | ---: | --- |
+| `docs/IMPLEMENTATION_PLAN.md` | 413 | `28193ac61e1a2222e26d30d31063df09425c7827f0797af56583b8131bb87baf` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 2,977 | `ceef1e69d38a0160979d875f6c9955e02bf943a17f98d4ca11698bf302fcf706` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,550 | `c3c622870f0176a3138beba293f7013cdcd41279451b0a2942ec78ff22ca1584` |
+| `docs/audits/R0_1_MASTER_PLAN_RESET.md` | 86 | `c9c2bb9ea31ab1e870b02366eb8ed7c964d9c852b50a0b5cca6ea3c6a7058f16` |
+
+Validate local Markdown links in the R0.1 document set with this exact block:
+
+```powershell
+$files = @(
+  'AGENTS.md',
+  'README.md',
+  'README.vi.md',
+  'docs/ARCHITECTURE.md',
+  'docs/IMPLEMENTATION_PLAN.md',
+  'docs/audits/R0_1_MASTER_PLAN_RESET.md',
+  'docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md',
+  'docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md'
+)
+$failures = @()
+foreach ($file in $files) {
+  $directory = Split-Path -Parent (Resolve-Path -LiteralPath $file)
+  $lineNumber = 0
+  foreach ($line in Get-Content -LiteralPath $file) {
+    $lineNumber++
+    foreach ($match in [regex]::Matches($line, '\]\(([^)]+)\)')) {
+      $target = $match.Groups[1].Value
+      if ($target -match '^(https?://|mailto:|#)') { continue }
+      $pathPart = ($target -split '#', 2)[0].Trim('<','>')
+      if ([string]::IsNullOrWhiteSpace($pathPart)) { continue }
+      $resolved = Join-Path $directory $pathPart
+      if (-not (Test-Path -LiteralPath $resolved)) {
+        $failures += [PSCustomObject]@{
+          File = $file
+          Line = $lineNumber
+          Target = $target
+          Resolved = $resolved
+        }
+      }
+    }
+  }
+}
+if ($failures.Count -gt 0) {
+  $failures | Format-Table -AutoSize
+  exit 1
+}
+'All local Markdown links in the R0.1 document set resolve.'
+```
+
+Expected output is the single success sentence and exit `0`.
+
+Run the stale live-link scan:
+
+```powershell
+rg -n "docs/DXF_ENTITY_COMPLETION_PLAN\.md" AGENTS.md README.md README.vi.md docs -g '*.md' -g '!docs/audits/**' -g '!docs/ANTIGRAVITY_MECHANICAL_BATCH.md'
+```
+
+Expected result is no output and exit `1`. Historical audit receipts are
+excluded intentionally and must remain unchanged.
+
+## 8. Phase 3 - Documentation and support boundaries
+
+Run:
+
+```powershell
+rg -n "R0\.1|M14\.3dc|DXF Core 1\.0|support matrix|MIT OR Apache-2\.0|seacad\.theme/v1|English|Vietnamese|BCP 47|ODA|RealDWG|Bentley SDK" AGENTS.md README.md README.vi.md docs/ARCHITECTURE.md docs/IMPLEMENTATION_PLAN.md docs/audits/R0_1_MASTER_PLAN_RESET.md
+git diff -- docs/SUPPORT_MATRIX.md Cargo.toml Cargo.lock crates schema release
+git diff --check
+```
+
+Required evidence:
+
+- The master plan identifies R0.1 and points to both preserved DXF subplans.
+- M14.3dc remains the documented completed checkpoint.
+- `docs/SUPPORT_MATRIX.md` remains normative and unchanged.
+- The open-source license is described only as a future audited target; the
+  current proprietary license remains authoritative.
+- English is the canonical fallback, Vietnamese is a first-class locale, later
+  languages use normalized BCP 47 catalogs, and stable protocol/document
+  identifiers remain locale-neutral.
+- DWG, DGN, renderer, themes, GUI, plugins, AI, and B-rep are planned, not
+  claimed implemented.
+- The scoped non-document diff command emits only the concurrent code-work
+  diff, with no manifest, lockfile, schema, fixture, or release change.
+- `git diff --check` exits `0` with no error output.
+
+## 9. Phase 4 - Required repository gates
 
 Run in this exact order:
 
 ```powershell
 cargo deny --locked check
 cargo +1.97.1 fmt --all -- --check
+cargo +1.97.1 run --locked -p seacad-schema-gen -- --check
+cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence -- --check
 cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 git diff --check
 ```
 
-Expected results:
+Every command must exit `0`. Formatting and generators are check-only. Record
+the exact observed workspace test count; do not guess or repair a mismatch.
 
-- Every command exits `0`.
-- Formatting is check-only.
-- Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `1010 passed; 0 failed` across 192
-  targets in its complete output. Preserve every per-target summary needed to
-  substantiate the aggregate count.
-- The final `git diff --check` emits no error output.
+## 10. Phase 5 - Postflight mutation audit
 
-## 12. Phase 5 — Prohibited production Rust API scan
+Repeat the Phase 1 Git commands and user-code receipt block. Then repeat the
+Phase 2 plan-receipt block. Initial and final `HEAD`, changed path sets, user
+code hashes, and plan hashes must match exactly. List any new ignored output
+under `target` as tolerated ephemeral output.
 
-Run this exact command:
+## 11. Batch acceptance criteria
 
-```powershell
-rg -n "unsafe\s*\{|panic!\(|unwrap\(|expect\(|todo!\(|unimplemented!\(" crates/seacad-dxf-core/src crates/seacad-cli/src crates/seacad-schema-gen/src
-```
+The batch is `PASS` only when:
 
-Expected result: no output and exit code `1`. Report that exit code as the
-expected clean-scan result, not as a command failure.
+1. Preflight root, commit, path sets, and user-code receipts match.
+2. Both preserved DXF plans and the new master plan match their receipts.
+3. Every checked local Markdown link resolves and the stale live-link scan is
+   clean with expected exit `1`.
+4. Support matrix, production Rust, manifests, lockfile, schemas, fixtures, and
+   release evidence receive no R0.1 mutation.
+5. Every required quality gate passes.
+6. Postflight matches preflight and no repository mutation occurs.
+7. The complete report is written to the exact required external path.
 
-## 13. Phase 6 — Documentation, support, and audit consistency
+An unmet criterion is `FAIL` unless an explicit immediate stop condition makes
+the result `BLOCKED`.
 
-Run:
+## 12. Required report format
 
-```powershell
-rg -n "M14\.3(c[a-z]|d[a-c])|entity XDATA|APPID resolution|APPID destination|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md README.vi.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md,docs/audits/M14_3CX_ENTITY_XDATA_HANDLE_REPLACEMENT_PATCH.md,docs/audits/M14_3CY_ENTITY_XDATA_HANDLE_REPLACEMENT_SET.md,docs/audits/M14_3CZ_ENTITY_XDATA_HANDLE_REPLACEMENT_TRANSACTION.md,docs/audits/M14_3DA_ENTITY_XDATA_HANDLE_REPLACEMENT_VERIFICATION.md,docs/audits/M14_3DB_ENTITY_XDATA_HANDLE_REPLACEMENT_WRITE_INTEGRATION.md,docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md | Select-Object FullName,Length
-```
-
-Mechanically verify and report whether the output establishes all of the
-following, without editing or reinterpreting the documents:
-
-- The current documented completed entity checkpoint is M14.3dc.
-- Audit files exist for M14.3ca through M14.3dc.
-- The documentation does not claim completed support for cross-container clone,
-  destination APPID creation/edit, XDATA insertion into a separately parsed
-  destination document, application-specific XDATA semantics, graph payload
-  clone, or complete entity editing.
-
-If the evidence is ambiguous, record `FAIL` for this phase and quote the
-ambiguous lines. Do not decide how the text should be changed.
-
-## 14. Phase 7 — Checkpoint artifact receipts
-
-Run the following exact PowerShell block:
-
-```powershell
-$batchArtifacts = @(
-  'README.md',
-  'README.vi.md',
-  'crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs',
-  'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/src/source_span.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_appid_destination_tests.rs',
-  'docs/DXF_ENTITY_COMPLETION_PLAN.md',
-  'docs/IMPLEMENTATION_PLAN.md',
-  'docs/SUPPORT_MATRIX.md',
-  'docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md'
-)
-foreach ($batchArtifact in $batchArtifacts) {
-  $batchLines = (Get-Content -LiteralPath $batchArtifact).Count
-  $batchHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $batchArtifact).Hash.ToLowerInvariant()
-  [PSCustomObject]@{
-    Path = $batchArtifact
-    Lines = $batchLines
-    Sha256 = $batchHash
-  }
-}
-```
-
-Compare the raw output with these exact expected receipts:
-
-| Path | Lines | SHA-256 |
-| --- | ---: | --- |
-| `README.md` | 152 | `d051b14ae84c45f0e6c39f2cae19edd9b0ce1bd29a092a9f0ca2ae77e20e2f1d` |
-| `README.vi.md` | 151 | `36e422d6158c411f741a70d30f0f887714a27b60838160431abb761cdc0b4ad2` |
-| `crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs` | 375 | `d9a3787ebd6cdea97a53f70fed6dc0b973fb91bfd5ad33f4ea571274226439f6` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1,161 | `2bfa5e252406a2032abcc9394297a925de729763cdd610ab9d5288b81ed76af3` |
-| `crates/seacad-dxf-core/src/source_span.rs` | 131 | `73c4e4ab7ee20cffb0efae9460573492bbb075209ece7be083d10644ba1d4a1d` |
-| `crates/seacad-dxf-core/tests/entity_xdata_appid_destination_tests.rs` | 549 | `ca68832f3ced39a62b429cfd18f1280e7149371b9b2c8b9323bb794f8f9c578e` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1,550 | `c3c622870f0176a3138beba293f7013cdcd41279451b0a2942ec78ff22ca1584` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2,977 | `a3b180c50812c8ec8b1d605a819c89ab752a30dea6053ada96c2389344cb5a52` |
-| `docs/SUPPORT_MATRIX.md` | 2,602 | `39c7fec8aee41e7b27b4f7a6e0d6563b3119f97fab18d474d6667398b5fc158a` |
-| `docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md` | 75 | `04d6c030194f5894895bbfeb31d38f3aca34a1ac88cd36ff83bed032b3d6e86f` |
-
-Any line-count or hash mismatch is a failure. Do not regenerate an expected
-receipt and do not edit the artifact.
-
-## 15. Phase 8 — Mutation audit and postflight
-
-Run:
-
-```powershell
-git diff --check
-git diff --name-only
-git ls-files --others --exclude-standard
-git status --short --branch
-git rev-parse HEAD
-```
-
-Expected results:
-
-- `git diff --check` exits `0`.
-- `git diff --name-only` is empty.
-- `git ls-files --others --exclude-standard` is empty.
-- Final branch/status text is byte-for-byte identical to the initial
-  branch/status text.
-- Final `HEAD` is identical to initial `HEAD`.
-- No project mutation occurred. Normal ignored `target` outputs are tolerated
-  but must still be listed under `tolerated_ephemeral_outputs` if newly observed.
-
-## 16. Batch acceptance criteria
-
-The batch is `PASS` only if all of these are true:
-
-1. Preflight succeeds and all exact commands are attempted in order unless a
-   defined immediate stop condition occurs.
-2. Every command has a recorded exit code, timestamps, working directory, and
-   output evidence.
-3. All twenty-nine recent tags are annotated and peel to their expected commits.
-4. Every focused test target passes, including exactly 18 entity insert session
-    tests, exactly 44 POINT edit tests, exactly 3 entity XDATA tests, and
-    exactly 3 entity XDATA APPID-resolution tests, exactly 3 entity XDATA
-    APPID-destination tests, exactly 3 entity XDATA structure tests, exactly 3
-    entity XDATA typed-value tests, exactly 3 entity XDATA point-tuple tests,
-    exactly 3 entity XDATA layer-resolution tests, exactly 3 entity XDATA
-    capacity tests, exactly 3 entity XDATA coordinate-transform tests, exactly
-    3 entity XDATA handle-resolution tests, exactly 3 entity XDATA handle-remap
-    tests, exactly 3 entity XDATA handle-destination tests, and exactly 6 entity
-    XDATA handle-replacement tests.
-5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 1010 workspace tests
-   across 192 targets.
-7. The prohibited-API scan is empty with expected exit code `1`.
-8. Documentation and audit evidence satisfies the stated mechanical checks.
-9. Every artifact line count and SHA-256 matches.
-10. Initial and final Git state and `HEAD` are identical, with no tracked or
-    untracked project mutation.
-11. There are no undeclared deviations, retries, installations, updates,
-    credential prompts, or prohibited actions.
-12. The complete report is written as one UTF-8 file at the exact required
-    report path outside the repository, and no other report file is created.
-
-Any unmet criterion makes the batch `FAIL`, unless an immediate stop condition
-makes it `BLOCKED`.
-
-## 17. Required report format
-
-Write one complete UTF-8 YAML-shaped report using the schema below to this exact
-path, even when the batch ends as `FAIL` or `BLOCKED`:
-
-`D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
-
-Do not omit commands, including commands with empty output. The report file must
-contain no prose before or after the YAML-shaped report. After the file is fully
-written and closed, print only its absolute path and final status to the
-Antigravity chat. Chat output without the report file is not delivery.
+Write one UTF-8 YAML-shaped report with no prose before or after it:
 
 ```yaml
-batch_id: seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07
+batch_id: seacad-r0.1-master-plan-reset-2026-08-08
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-r0.1-master-plan-reset-2026-08-08.yaml
 started_at:
 finished_at:
 head_before:
 head_after:
 git_before: |
-  <verbatim initial git status --short --branch>
+  <verbatim>
 git_after: |
-  <verbatim final git status --short --branch>
-checkpoint:
-  tag: m14.3dc-entity-xdata-appid-destination
-  tag_type:
-  peeled_commit:
-  ancestor_exit_code:
-  post_checkpoint_paths:
-    - <path or none>
-tag_receipts:
-  - tag:
-    tag_type:
-    peeled_commit:
+  <verbatim>
+changed_paths_before:
+  - <path>
+changed_paths_after:
+  - <path>
 commands:
   - ordinal:
     phase:
@@ -541,45 +313,30 @@ commands:
     finished_at:
     exit_code:
     stdout: |
-      <raw output or empty>
+      <verbatim or empty>
     stderr: |
-      <raw output or empty>
-    test_summary: <exact count or not_applicable>
+      <verbatim or empty>
     result: PASS | FAIL | EXPECTED_NO_MATCH | BLOCKED
-focused_test_total:
-point_edit_test_count:
-entity_xdata_test_count:
-entity_xdata_appid_resolution_test_count:
-entity_xdata_appid_destination_test_count:
-entity_xdata_structure_test_count:
-entity_xdata_value_test_count:
-entity_xdata_point_tuple_test_count:
-entity_xdata_layer_resolution_test_count:
-entity_xdata_capacity_test_count:
-entity_xdata_coordinate_transform_test_count:
-entity_xdata_handle_resolution_test_count:
-entity_xdata_handle_remap_test_count:
-entity_xdata_handle_destination_test_count:
-entity_xdata_handle_replacement_test_count:
-workspace_test_total:
-workspace_target_total:
-documentation_checks:
-  current_checkpoint:
-  required_audits_exist:
-  unsupported_features_not_claimed:
 hash_receipts:
   - path:
     observed_lines:
     expected_lines:
     observed_sha256:
     expected_sha256:
-    result:
+    result: PASS | FAIL
+link_validation:
+stale_link_scan:
+support_matrix_unchanged:
+non_document_scope_unchanged:
+workspace_test_total:
 mutations: none | <exact list>
-unexpected_untracked: none | <exact list>
 tolerated_ephemeral_outputs: none | <exact list>
 deviations: none | <exact list>
-retries: none | <exact list with both attempts>
+retries: none | <exact list>
 failures: none | <exact list>
 blocker: none | <exact blocker>
-final_assessment: <one literal sentence stating why PASS, FAIL, or BLOCKED>
+final_assessment: <one literal sentence explaining PASS, FAIL, or BLOCKED>
 ```
+
+After closing the report, print only its absolute path and final status to the
+Antigravity chat. Chat output without the report file is not delivery.

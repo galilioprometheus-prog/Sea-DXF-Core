@@ -48,7 +48,7 @@ Development is complete through checkpoint **M14.3dc**. The current core can:
 The exact support boundary is intentionally narrower than the raw inventory.
 Recognizing an entity name does not imply complete semantic or editing support.
 See [the support matrix](docs/SUPPORT_MATRIX.md) and
-[the entity completion plan](docs/DXF_ENTITY_COMPLETION_PLAN.md) for normative
+[the DXF entity completion subplan](docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md) for normative
 details.
 
 ## Not supported yet
@@ -61,9 +61,10 @@ details.
 - Source files are never overwritten in place.
 - The Rust API is not yet stable.
 
-Future DWG and DGN work is expected to combine native parsing, exact opaque
-preservation, and optional vendor bridges for features that cannot be matched
-reliably by a clean-room implementation alone.
+The long-term roadmap stages native clean-room DGN V7, DGN V8, and DWG work
+after DXF Core 1.0. The base plan does not use ODA, RealDWG, Bentley SDK, or
+another proprietary format runtime; insufficient evidence remains explicit
+opaque or read-only support rather than guessed parsing or writing.
 
 ## Workspace
 
@@ -75,9 +76,10 @@ reliably by a clean-room implementation alone.
 
 Important project documents:
 
-- [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
+- [Master implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Support matrix](docs/SUPPORT_MATRIX.md)
-- [DXF entity completion plan](docs/DXF_ENTITY_COMPLETION_PLAN.md)
+- [DXF Core 1.0 implementation subplan](docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
+- [DXF entity completion subplan](docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)
 - [Dependency policy](docs/DEPENDENCY_POLICY.md)
 - [Toolchain and oracle policy](docs/TOOLCHAIN.md)
 - [CLI JSON v1 contract](docs/CLI_JSON_V1.md)
