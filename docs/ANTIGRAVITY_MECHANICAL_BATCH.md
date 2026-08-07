@@ -2,17 +2,17 @@
 
 Status: `READY`
 
-Batch ID: `seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07`
+Batch ID: `seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target code checkpoint: `M14.3db - entity XDATA handle replacement write integration`
+Target code checkpoint: `M14.3dc - entity XDATA APPID destination`
 
-Target checkpoint commit: `d2b70278eb35d1de31775a88cc6eb2860b4014dd`
+Target checkpoint commit: `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`
 
-Target annotated tag: `m14.3db-entity-xdata-handle-replacement-write-integration`
+Target annotated tag: `m14.3dc-entity-xdata-appid-destination`
 
-Required report file: `D:\SeaCad\AntigravityReports\seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07.yaml`
+Required report file: `D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
 
 Prepared: `2026-08-07` (`Asia/Saigon`)
 
@@ -49,7 +49,7 @@ and `cargo-deny` commands normally use.
 One additional write is required: create the parent directory when absent and
 write exactly one complete report file at:
 
-`D:\SeaCad\AntigravityReports\seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
 
 This path is outside the Git repository. It is the only non-ephemeral output
 file permitted by this batch. If the file already exists for this same batch,
@@ -91,7 +91,7 @@ conditions occur:
 - The root differs from `D:\SeaCad\SeaCad`.
 - The initial worktree is not clean.
 - The target tag is missing, is not an annotated tag, or peels to a commit other
-  than `d2b70278eb35d1de31775a88cc6eb2860b4014dd`.
+  than `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`.
 - The target checkpoint is not an ancestor of current `HEAD`.
 - The path changed after the target checkpoint is not exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md`.
@@ -142,10 +142,10 @@ git status --short --branch
 git rev-parse HEAD
 git diff --check
 git tag --points-at HEAD
-git cat-file -t m14.3db-entity-xdata-handle-replacement-write-integration
-git rev-list -n 1 m14.3db-entity-xdata-handle-replacement-write-integration
-git merge-base --is-ancestor d2b70278eb35d1de31775a88cc6eb2860b4014dd HEAD
-git diff --name-only m14.3db-entity-xdata-handle-replacement-write-integration..HEAD
+git cat-file -t m14.3dc-entity-xdata-appid-destination
+git rev-list -n 1 m14.3dc-entity-xdata-appid-destination
+git merge-base --is-ancestor d23ee4ec92f940b3c8ef7ae6d971945becf9bdac HEAD
+git diff --name-only m14.3dc-entity-xdata-appid-destination..HEAD
 ```
 
 Expected evidence:
@@ -155,7 +155,7 @@ Expected evidence:
 - `git diff --check` exits `0` with no error output.
 - `git cat-file -t` prints `tag`, proving the checkpoint is annotated.
 - `git rev-list -n 1` prints
-  `d2b70278eb35d1de31775a88cc6eb2860b4014dd`.
+  `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac`.
 - `git merge-base --is-ancestor` exits `0`.
 - `git diff --name-only` prints exactly
   `docs/ANTIGRAVITY_MECHANICAL_BATCH.md` and no other path.
@@ -227,6 +227,8 @@ git cat-file -t m14.3da-entity-xdata-handle-replacement-verification
 git rev-list -n 1 m14.3da-entity-xdata-handle-replacement-verification
 git cat-file -t m14.3db-entity-xdata-handle-replacement-write-integration
 git rev-list -n 1 m14.3db-entity-xdata-handle-replacement-write-integration
+git cat-file -t m14.3dc-entity-xdata-appid-destination
+git rev-list -n 1 m14.3dc-entity-xdata-appid-destination
 ```
 
 Every `git cat-file -t` must print `tag`. Expected peeled commits:
@@ -261,6 +263,7 @@ Every `git cat-file -t` must print `tag`. Expected peeled commits:
 | `m14.3cz-entity-xdata-handle-replacement-transaction` | `4cacb97a324d5d395d2bfe43faa3e4d756115784` |
 | `m14.3da-entity-xdata-handle-replacement-verification` | `915fd73b53c68587de973211f0c28504f68ffd9f` |
 | `m14.3db-entity-xdata-handle-replacement-write-integration` | `d2b70278eb35d1de31775a88cc6eb2860b4014dd` |
+| `m14.3dc-entity-xdata-appid-destination` | `d23ee4ec92f940b3c8ef7ae6d971945becf9bdac` |
 
 ## 9. Phase 2 — Focused semantic and edit tests
 
@@ -280,6 +283,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_verification_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_edit_write_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_resolution_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_destination_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_structure_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_value_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_point_tuple_tests
@@ -296,7 +300,9 @@ The `entity_insert_session_tests` target must report exactly
 `18 passed; 0 failed`. The `point_edit_session_tests` target must report exactly
 `44 passed; 0 failed`. The `entity_xdata_tests` target must report exactly
 `3 passed; 0 failed`. The `entity_xdata_appid_resolution_tests` target must
-also report exactly `3 passed; 0 failed`.
+also report exactly `3 passed; 0 failed`. The
+`entity_xdata_appid_destination_tests` target must report exactly
+`3 passed; 0 failed`.
 The `entity_xdata_structure_tests` target must report exactly
 `3 passed; 0 failed`.
 The `entity_xdata_value_tests` target must report exactly
@@ -348,9 +354,9 @@ Expected results:
 - Every command exits `0`.
 - Formatting is check-only.
 - Clippy emits no warnings because warnings are denied.
-- The workspace test command reports exactly `1007 passed; 0 failed` across its
-  complete output. Preserve every per-target summary needed to substantiate the
-  aggregate count.
+- The workspace test command reports exactly `1010 passed; 0 failed` across 192
+  targets in its complete output. Preserve every per-target summary needed to
+  substantiate the aggregate count.
 - The final `git diff --check` emits no error output.
 
 ## 12. Phase 5 — Prohibited production Rust API scan
@@ -369,18 +375,19 @@ expected clean-scan result, not as a command failure.
 Run:
 
 ```powershell
-rg -n "M14\.3(c[a-z]|d[ab])|entity XDATA|APPID resolution|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md README.vi.md docs
-Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md,docs/audits/M14_3CX_ENTITY_XDATA_HANDLE_REPLACEMENT_PATCH.md,docs/audits/M14_3CY_ENTITY_XDATA_HANDLE_REPLACEMENT_SET.md,docs/audits/M14_3CZ_ENTITY_XDATA_HANDLE_REPLACEMENT_TRANSACTION.md,docs/audits/M14_3DA_ENTITY_XDATA_HANDLE_REPLACEMENT_VERIFICATION.md,docs/audits/M14_3DB_ENTITY_XDATA_HANDLE_REPLACEMENT_WRITE_INTEGRATION.md | Select-Object FullName,Length
+rg -n "M14\.3(c[a-z]|d[a-c])|entity XDATA|APPID resolution|APPID destination|XDATA structure|typed values|point tuples|layer resolution|capacity|coordinate transform|handle resolution|handle remap|handle destination|handle replacement|graph.scope|proxy-graphics clone|color-book clone|object-reference clone|linetype clone|scalar common|mixed POINT|multi-POINT|reference-safe|handleless" README.md README.vi.md docs
+Get-Item docs/audits/M14_3CA_POINT_REFERENCE_SAFE_DELETE.md,docs/audits/M14_3CB_CANONICAL_POINT_CLONE.md,docs/audits/M14_3CC_HANDLELESS_POINT_DELETE.md,docs/audits/M14_3CD_MULTI_POINT_DELETE.md,docs/audits/M14_3CE_MIXED_POINT_DELETE_SESSION.md,docs/audits/M14_3CF_POINT_SCALAR_COMMON_CLONE.md,docs/audits/M14_3CG_POINT_LINETYPE_CLONE.md,docs/audits/M14_3CH_POINT_OBJECT_REFERENCE_CLONE.md,docs/audits/M14_3CI_POINT_COLOR_BOOK_CLONE.md,docs/audits/M14_3CJ_POINT_PROXY_GRAPHICS_CLONE.md,docs/audits/M14_3CK_POINT_DELETE_GRAPH_SCOPE.md,docs/audits/M14_3CL_ENTITY_XDATA_EVIDENCE.md,docs/audits/M14_3CM_ENTITY_XDATA_APPID_RESOLUTION.md,docs/audits/M14_3CN_ENTITY_XDATA_STRUCTURE.md,docs/audits/M14_3CO_ENTITY_XDATA_TYPED_VALUES.md,docs/audits/M14_3CP_ENTITY_XDATA_POINT_TUPLES.md,docs/audits/M14_3CQ_ENTITY_XDATA_LAYER_RESOLUTION.md,docs/audits/M14_3CR_ENTITY_XDATA_CAPACITY.md,docs/audits/M14_3CS_ENTITY_XDATA_COORDINATE_TRANSFORM.md,docs/audits/M14_3CT_ENTITY_XDATA_HANDLE_RESOLUTION.md,docs/audits/M14_3CU_ENTITY_XDATA_HANDLE_REMAP.md,docs/audits/M14_3CV_ENTITY_XDATA_HANDLE_DESTINATION.md,docs/audits/M14_3CW_ENTITY_XDATA_HANDLE_REPLACEMENT.md,docs/audits/M14_3CX_ENTITY_XDATA_HANDLE_REPLACEMENT_PATCH.md,docs/audits/M14_3CY_ENTITY_XDATA_HANDLE_REPLACEMENT_SET.md,docs/audits/M14_3CZ_ENTITY_XDATA_HANDLE_REPLACEMENT_TRANSACTION.md,docs/audits/M14_3DA_ENTITY_XDATA_HANDLE_REPLACEMENT_VERIFICATION.md,docs/audits/M14_3DB_ENTITY_XDATA_HANDLE_REPLACEMENT_WRITE_INTEGRATION.md,docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md | Select-Object FullName,Length
 ```
 
 Mechanically verify and report whether the output establishes all of the
 following, without editing or reinterpreting the documents:
 
-- The current documented completed entity checkpoint is M14.3db.
-- Audit files exist for M14.3ca through M14.3db.
+- The current documented completed entity checkpoint is M14.3dc.
+- Audit files exist for M14.3ca through M14.3dc.
 - The documentation does not claim completed support for cross-container clone,
-  insertion into a separately parsed destination document, application-specific
-  XDATA semantics, graph payload clone, or complete entity editing.
+  destination APPID creation/edit, XDATA insertion into a separately parsed
+  destination document, application-specific XDATA semantics, graph payload
+  clone, or complete entity editing.
 
 If the evidence is ambiguous, record `FAIL` for this phase and quote the
 ambiguous lines. Do not decide how the text should be changed.
@@ -393,13 +400,14 @@ Run the following exact PowerShell block:
 $batchArtifacts = @(
   'README.md',
   'README.vi.md',
-  'crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs',
   'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs',
+  'crates/seacad-dxf-core/src/source_span.rs',
+  'crates/seacad-dxf-core/tests/entity_xdata_appid_destination_tests.rs',
   'docs/DXF_ENTITY_COMPLETION_PLAN.md',
   'docs/IMPLEMENTATION_PLAN.md',
   'docs/SUPPORT_MATRIX.md',
-  'docs/audits/M14_3DB_ENTITY_XDATA_HANDLE_REPLACEMENT_WRITE_INTEGRATION.md'
+  'docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md'
 )
 foreach ($batchArtifact in $batchArtifacts) {
   $batchLines = (Get-Content -LiteralPath $batchArtifact).Count
@@ -416,15 +424,16 @@ Compare the raw output with these exact expected receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 151 | `e991b79dfb1668054b52f1a256e8a6f3c6bb116f17f54435efe5d3181f27b2e1` |
-| `README.vi.md` | 150 | `8d285bf4e57d60a00b33c15bb9e52d6a3232670e30d8f4b5aa22be823eb04917` |
-| `crates/seacad-dxf-core/src/entity_xdata_handle_replacement_verification.rs` | 421 | `1e38b13f0b70541ee8080d525dccddcbf7fa262cebf211045c450d322b75b3cd` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1156 | `33a26deb45397c19aae89a2cfd0ef722ecdcd08daf388fb6f12c632868c14d84` |
-| `crates/seacad-dxf-core/tests/entity_xdata_handle_replacement_tests.rs` | 985 | `c16081a354b96ca85326360b956c3a0c247d9d209f736be67836d679942c200c` |
-| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1534 | `03e0a4f3e776e71acea08913b8e2629e21e5896d148e2868a1a4e1c81f74775e` |
-| `docs/IMPLEMENTATION_PLAN.md` | 2961 | `3b64d2a6a82b7d04f04f098d1db8930a799616f09f24ad7ccb558115f4c392b4` |
-| `docs/SUPPORT_MATRIX.md` | 2587 | `5868b325424d938f9f91f4f9571c2cbfb15365c6d16b4da8f52bb931ae9703f6` |
-| `docs/audits/M14_3DB_ENTITY_XDATA_HANDLE_REPLACEMENT_WRITE_INTEGRATION.md` | 54 | `1601b10fbbbc6f982c0f316d6d3ac2e66a682fd0c2ac8f8f9f72fda461bb15e8` |
+| `README.md` | 152 | `d051b14ae84c45f0e6c39f2cae19edd9b0ce1bd29a092a9f0ca2ae77e20e2f1d` |
+| `README.vi.md` | 151 | `36e422d6158c411f741a70d30f0f887714a27b60838160431abb761cdc0b4ad2` |
+| `crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs` | 375 | `d9a3787ebd6cdea97a53f70fed6dc0b973fb91bfd5ad33f4ea571274226439f6` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,161 | `2bfa5e252406a2032abcc9394297a925de729763cdd610ab9d5288b81ed76af3` |
+| `crates/seacad-dxf-core/src/source_span.rs` | 131 | `73c4e4ab7ee20cffb0efae9460573492bbb075209ece7be083d10644ba1d4a1d` |
+| `crates/seacad-dxf-core/tests/entity_xdata_appid_destination_tests.rs` | 549 | `ca68832f3ced39a62b429cfd18f1280e7149371b9b2c8b9323bb794f8f9c578e` |
+| `docs/DXF_ENTITY_COMPLETION_PLAN.md` | 1,550 | `c3c622870f0176a3138beba293f7013cdcd41279451b0a2942ec78ff22ca1584` |
+| `docs/IMPLEMENTATION_PLAN.md` | 2,977 | `a3b180c50812c8ec8b1d605a819c89ab752a30dea6053ada96c2389344cb5a52` |
+| `docs/SUPPORT_MATRIX.md` | 2,602 | `39c7fec8aee41e7b27b4f7a6e0d6563b3119f97fab18d474d6667398b5fc158a` |
+| `docs/audits/M14_3DC_ENTITY_XDATA_APPID_DESTINATION.md` | 75 | `04d6c030194f5894895bbfeb31d38f3aca34a1ac88cd36ff83bed032b3d6e86f` |
 
 Any line-count or hash mismatch is a failure. Do not regenerate an expected
 receipt and do not edit the artifact.
@@ -460,19 +469,20 @@ The batch is `PASS` only if all of these are true:
    defined immediate stop condition occurs.
 2. Every command has a recorded exit code, timestamps, working directory, and
    output evidence.
-3. All twenty-eight recent tags are annotated and peel to their expected commits.
+3. All twenty-nine recent tags are annotated and peel to their expected commits.
 4. Every focused test target passes, including exactly 18 entity insert session
     tests, exactly 44 POINT edit tests, exactly 3 entity XDATA tests, and
-    exactly 3 entity XDATA APPID-resolution tests, and exactly 3 entity XDATA
-    structure tests, exactly 3 entity XDATA typed-value tests, and exactly 3
-    entity XDATA point-tuple tests, exactly 3 entity XDATA layer-resolution
-    tests, exactly 3 entity XDATA capacity tests, and exactly 3 entity XDATA
-    coordinate-transform tests, and exactly 3 entity XDATA handle-resolution
-    tests, exactly 3 entity XDATA handle-remap tests, exactly 3 entity XDATA
-    handle-destination tests, and exactly 6 entity XDATA handle-replacement
-    tests.
+    exactly 3 entity XDATA APPID-resolution tests, exactly 3 entity XDATA
+    APPID-destination tests, exactly 3 entity XDATA structure tests, exactly 3
+    entity XDATA typed-value tests, exactly 3 entity XDATA point-tuple tests,
+    exactly 3 entity XDATA layer-resolution tests, exactly 3 entity XDATA
+    capacity tests, exactly 3 entity XDATA coordinate-transform tests, exactly
+    3 entity XDATA handle-resolution tests, exactly 3 entity XDATA handle-remap
+    tests, exactly 3 entity XDATA handle-destination tests, and exactly 6 entity
+    XDATA handle-replacement tests.
 5. Both generated-artifact checks pass without mutation.
-6. All full repository gates pass, including exactly 1007 workspace tests.
+6. All full repository gates pass, including exactly 1010 workspace tests
+   across 192 targets.
 7. The prohibited-API scan is empty with expected exit code `1`.
 8. Documentation and audit evidence satisfies the stated mechanical checks.
 9. Every artifact line count and SHA-256 matches.
@@ -491,7 +501,7 @@ makes it `BLOCKED`.
 Write one complete UTF-8 YAML-shaped report using the schema below to this exact
 path, even when the batch ends as `FAIL` or `BLOCKED`:
 
-`D:\SeaCad\AntigravityReports\seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml`
 
 Do not omit commands, including commands with empty output. The report file must
 contain no prose before or after the YAML-shaped report. After the file is fully
@@ -499,10 +509,10 @@ written and closed, print only its absolute path and final status to the
 Antigravity chat. Chat output without the report file is not delivery.
 
 ```yaml
-batch_id: seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07
+batch_id: seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-m14.3db-entity-xdata-handle-replacement-write-integration-2026-08-07.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-m14.3dc-entity-xdata-appid-destination-2026-08-07.yaml
 started_at:
 finished_at:
 head_before:
@@ -512,7 +522,7 @@ git_before: |
 git_after: |
   <verbatim final git status --short --branch>
 checkpoint:
-  tag: m14.3db-entity-xdata-handle-replacement-write-integration
+  tag: m14.3dc-entity-xdata-appid-destination
   tag_type:
   peeled_commit:
   ancestor_exit_code:
@@ -540,6 +550,7 @@ focused_test_total:
 point_edit_test_count:
 entity_xdata_test_count:
 entity_xdata_appid_resolution_test_count:
+entity_xdata_appid_destination_test_count:
 entity_xdata_structure_test_count:
 entity_xdata_value_test_count:
 entity_xdata_point_tuple_test_count:
@@ -551,6 +562,7 @@ entity_xdata_handle_remap_test_count:
 entity_xdata_handle_destination_test_count:
 entity_xdata_handle_replacement_test_count:
 workspace_test_total:
+workspace_target_total:
 documentation_checks:
   current_checkpoint:
   required_audits_exist:
