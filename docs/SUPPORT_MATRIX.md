@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3da can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3db can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1546,6 +1546,19 @@ Cancellation and any byte tampering fail closed. Verification and exact inverse
 restoration pass same-format ASCII/Binary across all nine Core dialects.
 Destination clone/write integration, application-specific payload semantics,
 and POINT `Complete` remain open.
+
+M14.3db executes one ready replacement-set transaction through the existing
+create-new writer, strictly reparses the written file in its exact ASCII/Binary
+format, and reruns M14.3da byte and handle verification before releasing a
+combined write/verification receipt and executable inverse. Exact source,
+destination, set, post-image, patch-count, and replacement-count bindings are
+preserved. Existing paths are never modified; foreign evidence, source
+mismatch, cancellation, strict-reparse failure, and raw tampering leave no
+partial destination. The verified write and byte-identical inverse pass all
+nine same-format ASCII/Binary dialect pairs. The output remains a staged source
+clone rather than an insertion into the separately parsed destination document;
+cross-container clone, application-specific payload semantics, and POINT
+`Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

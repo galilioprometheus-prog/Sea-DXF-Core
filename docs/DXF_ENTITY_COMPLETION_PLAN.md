@@ -1492,6 +1492,18 @@ ASCII/Binary post-images across all nine Core dialects cover exact inverse
 restoration, cancellation, and tamper rejection. Destination clone/write
 integration, application semantics, and POINT `Complete` remain open.
 
+M14.3db writes one M14.3da-verifiable staging plan to a create-new path through
+the shared bounded transaction writer, then strictly reparses the exact ASCII or
+Binary output and reruns replacement verification before releasing a combined
+write/verification journal and executable inverse. Source, destination, set,
+post-image, patch-count, and replacement-count bindings remain exact. Foreign
+evidence, source mismatch, existing paths, cancellation, strict-reparse failure,
+and raw tampering fail closed; every post-creation failure removes the output.
+Same-format ASCII/Binary writes and byte-identical inverse restoration cover all
+nine Core dialects. This is a verified staged source clone, not insertion into
+the separately parsed destination document. Cross-container clone, application
+semantics, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

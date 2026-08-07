@@ -1,4 +1,9 @@
-use std::{error::Error, io};
+use std::{
+    error::Error,
+    fs, io,
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
@@ -8,10 +13,275 @@ use seacad_dxf_core::{
     DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetState,
     DxfEntityXDataHandleReplacementState, DxfEntityXDataHandleReplacementTransactionIssue,
     DxfEntityXDataHandleReplacementTransactionOutcome,
-    DxfEntityXDataHandleReplacementVerificationOutcome, DxfError, DxfHandle, DxfHandleParseIssue,
-    DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfTransactionPlan, NoopDxfReadObserver,
+    DxfEntityXDataHandleReplacementTransactionPlan,
+    DxfEntityXDataHandleReplacementVerificationIssue,
+    DxfEntityXDataHandleReplacementVerificationOutcome,
+    DxfEntityXDataHandleReplacementWriteJournal, DxfEntityXDataHandleReplacementWriteOutcome,
+    DxfError, DxfHandle, DxfHandleParseIssue, DxfIoOperation, DxfMemorySource,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadControl, DxfReadObserver, DxfReadOptions,
+    DxfReadProgress, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
 };
+
+static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
+
+#[test]
+fn every_supported_same_format_write_verifies_and_restores() -> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityXDataHandleReplacementWriteJournal>();
+    assert_send_sync::<DxfEntityXDataHandleReplacementWriteOutcome>();
+    let directory = TestDirectory::new()?;
+    for version in DxfAcadVersion::SUPPORTED {
+        for format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let source_bytes = source_fixture(format, version)?;
+            let destination_bytes = destination_fixture(format, version)?;
+            let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+            let destination_storage =
+                DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+            let source = open(&source_storage, format)?;
+            let destination = open(&destination_storage, format)?;
+            let sets = source
+                .view()
+                .entity_xdata_handle_replacement_set_directory(
+                    destination.view(),
+                    &mappings()?,
+                    DxfResourceProfile::Safe,
+                    &token(),
+                )?;
+            let plan = planned(source.view(), &sets)?;
+            let kind = match format {
+                DxfRawDocumentFormat::Ascii => "ascii",
+                DxfRawDocumentFormat::Binary => "binary",
+                _ => return Err(io::Error::other("unsupported test format").into()),
+            };
+            let output = directory
+                .path()
+                .join(format!("{}-{kind}.dxf", version.code()));
+            let mut progress = Vec::new();
+            let mut observer = |value: DxfReadProgress| {
+                progress.push((value.processed_bytes(), value.total_bytes()));
+                DxfReadControl::Continue
+            };
+            let journal = written(plan.write_reparse_verify_and_journal_to_new_file(
+                &sets,
+                source.view(),
+                &output,
+                DxfResourceProfile::Safe,
+                &token(),
+                &mut observer,
+            )?)?;
+            let output_bytes = fs::read(&output)?;
+            let output_storage = DxfMemorySource::new(&output_bytes, DxfResourceProfile::Safe)?;
+            let output_document = open(&output_storage, format)?;
+            let write = journal.write_receipt();
+            let verification = journal.verification_receipt();
+            assert_eq!(write.source_id(), source.view().source_id());
+            assert_eq!(write.output_id(), output_document.view().source_id());
+            assert_eq!(write.bytes_written(), plan.transaction().projected_len());
+            assert_eq!(write.patch_count(), 1);
+            assert_eq!(verification.source_id(), write.source_id());
+            assert_eq!(
+                verification.destination_id(),
+                destination.view().source_id()
+            );
+            assert_eq!(verification.post_image_id(), write.output_id());
+            assert_eq!(verification.replacement_count(), 1);
+            assert_eq!(journal.inverse_plan().source_id(), write.output_id());
+            assert_eq!(
+                apply_plan(&output_bytes, journal.inverse_plan())?,
+                source_bytes
+            );
+            assert!(!progress.is_empty());
+            assert!(progress.windows(2).all(|pair| pair[0].0 <= pair[1].0));
+            assert!(!format!("{journal:?}").contains("SECRET_REPLACEMENT_SOURCE"));
+            let (write_part, verification_part, inverse) = journal.into_parts();
+            assert_eq!(write_part, write);
+            assert_eq!(verification_part, verification);
+            assert_eq!(apply_plan(&output_bytes, &inverse)?, source_bytes);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn write_preconditions_preserve_existing_and_leave_no_partial_output() -> Result<(), Box<dyn Error>>
+{
+    let directory = TestDirectory::new()?;
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let sets = source
+        .view()
+        .entity_xdata_handle_replacement_set_directory(
+            destination.view(),
+            &mappings()?,
+            DxfResourceProfile::Safe,
+            &token(),
+        )?;
+    let plan = planned(source.view(), &sets)?;
+    let mut noop = NoopDxfReadObserver;
+
+    let other_bytes = source_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1027)?;
+    let other_destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1027)?;
+    let other_storage = DxfMemorySource::new(&other_bytes, DxfResourceProfile::Safe)?;
+    let other_destination_storage =
+        DxfMemorySource::new(&other_destination_bytes, DxfResourceProfile::Safe)?;
+    let other = open(&other_storage, DxfRawDocumentFormat::Ascii)?;
+    let other_destination = open(&other_destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let other_sets = other.view().entity_xdata_handle_replacement_set_directory(
+        other_destination.view(),
+        &mappings()?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    let foreign = directory.path().join("foreign-evidence.dxf");
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &other_sets,
+            source.view(),
+            &foreign,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut noop,
+        )?,
+        DxfEntityXDataHandleReplacementWriteOutcome::Unavailable(
+            DxfEntityXDataHandleReplacementVerificationIssue::EvidenceMismatch
+        )
+    ));
+    assert!(!foreign.exists());
+
+    let existing = directory.path().join("existing.dxf");
+    fs::write(&existing, b"KEEP")?;
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            source.view(),
+            &existing,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut noop,
+        ),
+        Err(DxfError::Io {
+            operation: DxfIoOperation::Create,
+            kind: io::ErrorKind::AlreadyExists,
+            ..
+        })
+    ));
+    assert_eq!(fs::read(&existing)?, b"KEEP");
+
+    let mismatch = directory.path().join("source-mismatch.dxf");
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            other.view(),
+            &mismatch,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut noop,
+        ),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+    assert!(!mismatch.exists());
+
+    let cancelled = directory.path().join("observer-cancelled.dxf");
+    let mut cancel_after_start = |progress: DxfReadProgress| {
+        if progress.processed_bytes() == 0 {
+            DxfReadControl::Continue
+        } else {
+            DxfReadControl::Cancel
+        }
+    };
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            source.view(),
+            &cancelled,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut cancel_after_start,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(!cancelled.exists());
+
+    let pre_cancelled = directory.path().join("pre-cancelled.dxf");
+    let cancelled_token = token();
+    cancelled_token.cancel();
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            source.view(),
+            &pre_cancelled,
+            DxfResourceProfile::Safe,
+            &cancelled_token,
+            &mut noop,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(!pre_cancelled.exists());
+    Ok(())
+}
+
+#[test]
+fn post_write_reparse_and_raw_failures_remove_the_destination() -> Result<(), Box<dyn Error>> {
+    let directory = TestDirectory::new()?;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let sets = source
+        .view()
+        .entity_xdata_handle_replacement_set_directory(
+            destination.view(),
+            &mappings()?,
+            DxfResourceProfile::Safe,
+            &token(),
+        )?;
+    let plan = planned(source.view(), &sets)?;
+
+    let invalid = directory.path().join("strict-reparse-failure.dxf");
+    let mut invalid_observer = FinalTamperObserver::new(&invalid, b"EOF", b"EOG");
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            source.view(),
+            &invalid,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut invalid_observer,
+        ),
+        Err(DxfError::MissingAsciiEof { .. })
+    ));
+    invalid_observer.finish()?;
+    assert!(!invalid.exists());
+
+    let tampered = directory.path().join("raw-mismatch.dxf");
+    let mut tamper_observer = FinalTamperObserver::new(
+        &tampered,
+        b"SECRET_REPLACEMENT_SOURCE",
+        b"BROKEN_REPLACEMENT_SOURCE",
+    );
+    assert!(matches!(
+        plan.write_reparse_verify_and_journal_to_new_file(
+            &sets,
+            source.view(),
+            &tampered,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut tamper_observer,
+        ),
+        Err(DxfError::TransactionPostImageMismatch { .. })
+    ));
+    tamper_observer.finish()?;
+    assert!(!tampered.exists());
+    Ok(())
+}
 
 #[test]
 fn every_supported_destination_dialect_encodes_one_exact_complete_group()
@@ -390,6 +660,32 @@ fn assert_transaction(
     Ok(())
 }
 
+fn planned(
+    source: DxfRawDocumentView<'_>,
+    sets: &DxfEntityXDataHandleReplacementSetDirectory,
+) -> Result<Box<DxfEntityXDataHandleReplacementTransactionPlan>, Box<dyn Error>> {
+    match source.plan_entity_xdata_handle_replacement_set(
+        sets,
+        sets.entries()[0],
+        DxfResourceProfile::Safe,
+        &token(),
+    )? {
+        DxfEntityXDataHandleReplacementTransactionOutcome::Planned(plan) => Ok(plan),
+        other => Err(io::Error::other(format!("unexpected plan outcome: {other:?}")).into()),
+    }
+}
+
+fn written(
+    outcome: DxfEntityXDataHandleReplacementWriteOutcome,
+) -> Result<DxfEntityXDataHandleReplacementWriteJournal, io::Error> {
+    match outcome {
+        DxfEntityXDataHandleReplacementWriteOutcome::Written(journal) => Ok(journal),
+        other => Err(io::Error::other(format!(
+            "unexpected write outcome: {other:?}"
+        ))),
+    }
+}
+
 fn apply_plan(source: &[u8], plan: &DxfTransactionPlan) -> Result<Vec<u8>, DxfError> {
     let capacity = usize::try_from(plan.projected_len()).map_err(|_| DxfError::Cancelled)?;
     let mut output = Vec::with_capacity(capacity);
@@ -599,6 +895,90 @@ fn open<'a>(
 
 fn token() -> DxfCancellationToken {
     DxfCancellationToken::default()
+}
+
+struct FinalTamperObserver<'a> {
+    path: &'a Path,
+    from: &'a [u8],
+    to: &'a [u8],
+    attempted: bool,
+    error: Option<io::Error>,
+}
+
+impl<'a> FinalTamperObserver<'a> {
+    const fn new(path: &'a Path, from: &'a [u8], to: &'a [u8]) -> Self {
+        Self {
+            path,
+            from,
+            to,
+            attempted: false,
+            error: None,
+        }
+    }
+
+    fn finish(&mut self) -> Result<(), io::Error> {
+        if !self.attempted {
+            return Err(io::Error::other("tamper observer was not reached"));
+        }
+        match self.error.take() {
+            Some(error) => Err(error),
+            None => Ok(()),
+        }
+    }
+}
+
+impl DxfReadObserver for FinalTamperObserver<'_> {
+    fn on_progress(&mut self, progress: DxfReadProgress) -> DxfReadControl {
+        if !self.attempted && progress.processed_bytes() == progress.total_bytes() {
+            self.attempted = true;
+            if let Err(error) = tamper_once(self.path, self.from, self.to) {
+                self.error = Some(error);
+            }
+        }
+        DxfReadControl::Continue
+    }
+}
+
+fn tamper_once(path: &Path, from: &[u8], to: &[u8]) -> Result<(), io::Error> {
+    if from.len() != to.len() {
+        return Err(io::Error::other("tamper length"));
+    }
+    let mut bytes = fs::read(path)?;
+    let start = bytes
+        .windows(from.len())
+        .rposition(|value| value == from)
+        .ok_or(io::Error::other("tamper source"))?;
+    bytes
+        .get_mut(start..start + from.len())
+        .ok_or(io::Error::other("tamper range"))?
+        .copy_from_slice(to);
+    fs::write(path, bytes)
+}
+
+struct TestDirectory {
+    path: PathBuf,
+}
+
+impl TestDirectory {
+    fn new() -> Result<Self, io::Error> {
+        let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "seacad-xdata-handle-replacement-write-{}-{id}",
+            std::process::id()
+        ));
+        fs::create_dir(&path)?;
+        Ok(Self { path })
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for TestDirectory {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
 }
 
 fn assert_copy<T: Copy>() {}

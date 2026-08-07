@@ -2943,5 +2943,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     clone/write integration, application-specific payload semantics, and POINT
     `Complete` remain open.
 
+    M14.3db executes one M14.3da-verifiable staging plan through the existing
+    create-new transaction writer. Exact source, destination, and set evidence
+    is checked before file creation; the writer streams, hashes, flushes, syncs,
+    and reopens the complete output in Strict mode for its exact physical format.
+    The M14.3da verifier must then bind the write and replacement receipts and
+    release one byte-exact inverse. Existing destinations remain untouched, and
+    cancellation, strict-reparse failure, raw mismatch, or unavailable
+    verification after creation removes the output. Same-format ASCII/Binary
+    coverage spans all nine Core dialects with source/evidence preconditions,
+    receipt identities and counts, and exact inverse restoration. This writes a
+    verified staged source clone; insertion into a separately parsed destination
+    document, cross-container clone, application-specific payload semantics, and
+    POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

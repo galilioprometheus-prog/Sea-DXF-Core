@@ -591,6 +591,7 @@ pub use entity_xdata_handle_replacement_verification::{
     DxfEntityXDataHandleReplacementVerificationJournal,
     DxfEntityXDataHandleReplacementVerificationOutcome,
     DxfEntityXDataHandleReplacementVerificationReceipt,
+    DxfEntityXDataHandleReplacementWriteJournal, DxfEntityXDataHandleReplacementWriteOutcome,
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,
