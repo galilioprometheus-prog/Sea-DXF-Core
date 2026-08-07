@@ -1504,6 +1504,22 @@ nine Core dialects. This is a verified staged source clone, not insertion into
 the separately parsed destination document. Cross-container clone, application
 semantics, and POINT `Complete` remain open.
 
+M14.3dc adds destination APPID validation without mutating either document.
+`DxfEntityXDataAppIdDestinationDirectory` owns the M14.3cm source-resolution
+directory and the independently parsed destination named-symbol directory.
+Source-missing and source-ambiguous states take precedence. Each source-unique
+group-1001 name is narrowed through a sorted SHA-256 destination index and then
+compared byte-for-byte against exact group-2 names from completely closed APPID
+tables. Results publish destination missing, unique, or ambiguous state; only a
+unique result derives the exact owned destination APPID record. Four
+ASCII/Binary source-destination pairings span all nine Core dialects, plus
+cross-dialect boundary cases, long chunked names, malformed and wrong-table
+evidence, case-near rejection, dual-source identity, cancellation, bounds, and
+debug redaction. This does not validate APPID syntax or the 31-byte limit,
+create or edit APPID records, interpret group-1002 or application payloads,
+compose coordinate/layer/handle transforms, encode or insert XDATA, mutate a
+destination, implement cross-container clone, or advance POINT to `Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

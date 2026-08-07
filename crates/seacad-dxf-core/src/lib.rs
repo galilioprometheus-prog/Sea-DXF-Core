@@ -80,6 +80,7 @@ mod entity_proxy_graphics_relation;
 mod entity_transparency;
 mod entity_value_encoder;
 mod entity_xdata;
+mod entity_xdata_appid_destination;
 mod entity_xdata_appid_resolution;
 mod entity_xdata_capacity;
 mod entity_xdata_capacity_measure;
@@ -546,6 +547,10 @@ pub use entity_value_encoder::{
 pub use entity_xdata::{
     DxfEntityXDataApplication, DxfEntityXDataApplicationState, DxfEntityXDataDirectory,
     DxfEntityXDataOccurrence, DxfEntityXDataOccurrenceKind, DxfEntityXDataOccurrenceRange,
+};
+pub use entity_xdata_appid_destination::{
+    DxfEntityXDataAppIdDestinationDirectory, DxfEntityXDataAppIdDestinationEntry,
+    DxfEntityXDataAppIdDestinationState,
 };
 pub use entity_xdata_appid_resolution::{
     DxfEntityXDataAppIdResolutionDirectory, DxfEntityXDataAppIdResolutionEntry,

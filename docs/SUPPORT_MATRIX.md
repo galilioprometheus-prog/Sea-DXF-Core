@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3db can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dc can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1559,6 +1559,21 @@ nine same-format ASCII/Binary dialect pairs. The output remains a staged source
 clone rather than an insertion into the separately parsed destination document;
 cross-container clone, application-specific payload semantics, and POINT
 `Complete` remain open.
+
+M14.3dc adds `DxfEntityXDataAppIdDestinationDirectory`, binding the M14.3cm
+source APPID resolution evidence to a separately opened destination symbol
+directory. Missing or ambiguous source APPIDs propagate before destination
+lookup. For a source-unique application, a sorted SHA-256 index narrows exact
+destination APPID candidates and bounded byte comparison across both documents
+remains authoritative. Destination missing, unique, and ambiguous states retain
+dual-source identity and exact counts; only the unique state publishes an owned
+destination APPID target. All four ASCII/Binary format pairings cover every
+Core dialect, cross-dialect AC1009/AC1032 boundaries, long chunked names,
+near-case and duplicate names, malformed, wrong-table, and unclosed evidence,
+cancellation, foreign identity, bounds, and debug redaction. APPID syntax and
+length, record creation/edit, group-1002 and payload semantics,
+coordinate/layer/handle composition, XDATA encoding/insertion, destination
+mutation, cross-container clone, and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

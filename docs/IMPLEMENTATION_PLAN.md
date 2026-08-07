@@ -2957,5 +2957,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     document, cross-container clone, application-specific payload semantics, and
     POINT `Complete` remain open.
 
+    M14.3dc composes the exact M14.3cm source APPID resolutions with an
+    independently parsed destination named-symbol directory. Source-missing and
+    source-ambiguous states propagate without destination selection. Only a
+    source-unique application is compared against group-2 names admitted from
+    exact, completely closed destination APPID tables. A sorted SHA-256 index
+    bounds candidate lookup, but bounded cross-document byte comparison remains
+    authoritative. Destination-missing, unique, and ambiguous results retain
+    exact dual-source identity, ambiguity counts, and unique destination target
+    evidence. All four ASCII/Binary source-destination format pairings cover all
+    nine Core dialects, with cross-dialect boundary cases, malformed and
+    wrong-table exclusion, cancellation, identity rejection, metadata bounds,
+    and non-disclosing debug output. APPID syntax and length, missing-record
+    creation, group-1002 structure, application-specific payload semantics,
+    coordinate/layer/handle composition, XDATA encoding or insertion,
+    cross-container clone, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

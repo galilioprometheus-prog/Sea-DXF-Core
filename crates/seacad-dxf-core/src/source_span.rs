@@ -27,15 +27,25 @@ pub(crate) fn spans_equal(
     right: ByteSpan,
     cancellation: &DxfCancellationToken,
 ) -> Result<bool, DxfError> {
+    spans_equal_across_documents(document, left, document, right, cancellation)
+}
+
+pub(crate) fn spans_equal_across_documents(
+    left_document: DxfRawDocumentView<'_>,
+    left: ByteSpan,
+    right_document: DxfRawDocumentView<'_>,
+    right: ByteSpan,
+    cancellation: &DxfCancellationToken,
+) -> Result<bool, DxfError> {
     if left.len() != right.len() {
         return Ok(false);
     }
     let mut right_bytes = [0_u8; IO_CHUNK_BYTES];
     let mut consumed = 0_u64;
-    visit_span(document, left, cancellation, |left_bytes| {
+    visit_span(left_document, left, cancellation, |left_bytes| {
         let chunk_len = left_bytes.len();
         let chunk_len_u64 = u64::try_from(chunk_len).map_err(|_| invalid_internal_data())?;
-        document.read_span(
+        right_document.read_span(
             chunk_span(right, consumed, chunk_len_u64)?,
             &mut right_bytes[..chunk_len],
         )?;
