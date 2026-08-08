@@ -2,71 +2,54 @@
 
 Status: `READY`
 
-Batch ID: `seacad-r0.2-provenance-ownership-boundary-2026-08-08`
+Batch ID: `seacad-r0.3-public-formats-workspace-export-design-2026-08-08`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Target milestone: `R0.2 - provenance, ownership, and boundary inventory`
+Target milestone: `R0.3 - public seacad-formats workspace export design`
 
-Baseline commit: `a84d1985958d58949326f2c857d4e3e8e4e51210`
+Baseline commit: `a0e5ec66b856d22dc278187da5937b17f8e083ba`
 
 Required report file:
-`D:\SeaCad\AntigravityReports\seacad-r0.2-provenance-ownership-boundary-2026-08-08.yaml`
+`D:\SeaCad\AntigravityReports\seacad-r0.3-public-formats-workspace-export-design-2026-08-08.yaml`
 
 Prepared: `2026-08-08` (`Asia/Saigon`)
 
 ## 1. Authority and purpose
 
 You are the mechanical verification worker for SeaCad. Verify the proposed
-R0.2 engineering inventory and collect raw evidence. You do not decide legal
-ownership, relicensing authority, public/private architecture, support claims,
-milestone scope, provenance interpretation, commit, tag, merge, or release.
-Codex and the user retain those decisions.
+R0.3 design-only workspace export contract and collect raw evidence. You do not
+approve ownership, licensing, architecture, support, publication, commit, tag,
+merge, or release decisions. Codex and the user retain that authority.
 
-This inventory explicitly does not activate an open-source license. The current
+R0.3 must not create an export tree or activate an open license. The current
 SeaCad Proprietary License remains authoritative.
 
-## 2. Mandatory read-first procedure
+## 2. Mandatory procedure
 
-1. Set the working directory to exactly `D:\SeaCad\SeaCad`.
+1. Use exactly `D:\SeaCad\SeaCad` as the working directory.
 2. Read `AGENTS.md` completely.
-3. Read this file completely.
-4. Confirm this file contains exactly one batch marked `READY`.
-5. Execute every phase below in order unless an immediate stop condition fires.
+3. Read this batch completely.
+4. Confirm exactly one batch is marked `READY`.
+5. Execute every phase in order unless a preflight stop condition fires.
 
 If `AGENTS.md` conflicts with this batch, stop and report the conflict.
 
-## 3. Allowed writes
+## 3. Allowed writes and prohibited actions
 
-The repository is logically read-only. Ordinary ignored compiler/test output
-under the existing `target` directory and provisioned tool caches are tolerated.
-No source, documentation, manifest, lockfile, schema, fixture, legal artifact,
-release artifact, Git metadata, tag, or branch may be changed.
+The repository is read-only. Ignored build output under existing `target` and
+provisioned tool caches is tolerated. Create or replace exactly one persistent
+file outside the repository:
 
-Create or replace exactly one non-ephemeral output outside the repository:
+`D:\SeaCad\AntigravityReports\seacad-r0.3-public-formats-workspace-export-design-2026-08-08.yaml`
 
-`D:\SeaCad\AntigravityReports\seacad-r0.2-provenance-ownership-boundary-2026-08-08.yaml`
+Do not edit, format in write mode, regenerate, export, copy source, create an
+archive, install/update tools, mutate Git, access a private corpus or legacy
+tree, run vendor CAD software, use network commands, or infer legal authority.
 
-Do not create a sidecar, temporary report, repository report, or second output.
-Do not install or update a tool, target, dependency, package, or runtime.
+## 4. Expected preflight state
 
-## 4. Prohibited actions
-
-- Do not edit or fix a failure.
-- Do not run a formatter or generator in write mode.
-- Do not run `cargo update`.
-- Do not mutate Git with add, commit, tag, reset, restore, checkout, switch,
-  stash, clean, merge, rebase, fetch, pull, push, or hosting commands.
-- Do not inspect a legacy source tree, private corpus, Cargo registry source, or
-  external parser implementation.
-- Do not run AutoCAD, MicroStation, ODA, RealDWG, a GUI, an MCP server, or a
-  network-dependent command.
-- Do not infer a legal owner or approve `MIT OR Apache-2.0`.
-
-## 5. Expected preflight state
-
-The exact root and baseline commit above are required. The tracked changed-path
-set must contain exactly:
+The tracked changed-path set must contain exactly:
 
 ```text
 crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs
@@ -79,11 +62,10 @@ The exact untracked-path set must contain:
 
 ```text
 crates/seacad-dxf-core/src/named_symbol_destination.rs
-docs/audits/R0_2_PROVENANCE_OWNERSHIP_BOUNDARY.md
+docs/audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md
 ```
 
-The three code paths are concurrent DXF work outside R0.2. Their required
-preflight and postflight receipts are:
+The three code paths are concurrent DXF work outside R0.3:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
@@ -91,13 +73,12 @@ preflight and postflight receipts are:
 | `crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs` | 313 | `e3c65574d17d4f8c0fddaadb9bfd945949ebe8ccf23835a62bf0c7be5571374b` |
 | `crates/seacad-dxf-core/src/named_symbol_destination.rs` | 129 | `474b3f8d48af6c00d62046c059adc476dc619630424f90059be9c41694b3807d` |
 
-Stop and report `BLOCKED` before quality commands if the root, baseline commit,
-changed path sets, or code receipts differ.
+Stop `BLOCKED` before quality commands if root, baseline commit, path sets, or
+code receipts differ.
 
-## 6. Phase 1 - Preflight evidence
+## 5. Phase 1 - Preflight
 
-Run each command exactly and record stdout, stderr, exit code, timestamps, and
-working directory:
+Run and record:
 
 ```powershell
 Get-Location
@@ -105,17 +86,12 @@ git status --short --branch
 git rev-parse HEAD
 git diff --name-only
 git ls-files --others --exclude-standard
-```
-
-Compare changed paths as sets. Then run:
-
-```powershell
-$concurrentPaths = @(
+$paths = @(
   'crates/seacad-dxf-core/src/lib.rs',
   'crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs',
   'crates/seacad-dxf-core/src/named_symbol_destination.rs'
 )
-foreach ($path in $concurrentPaths) {
+foreach ($path in $paths) {
   [PSCustomObject]@{
     Path = $path
     Lines = (Get-Content -LiteralPath $path).Count
@@ -124,14 +100,16 @@ foreach ($path in $concurrentPaths) {
 }
 ```
 
-## 7. Phase 2 - R0.2 document receipts and links
+Compare changed paths as sets.
+
+## 6. Phase 2 - Design document receipts and links
 
 Run:
 
 ```powershell
 $paths = @(
   'docs/IMPLEMENTATION_PLAN.md',
-  'docs/audits/R0_2_PROVENANCE_OWNERSHIP_BOUNDARY.md'
+  'docs/audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md'
 )
 foreach ($path in $paths) {
   [PSCustomObject]@{
@@ -146,137 +124,137 @@ Required receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `docs/IMPLEMENTATION_PLAN.md` | 417 | `cbfee301fceb02b83b3c8deee51042460d53dd41656c30f2220f1b527dd1c65e` |
-| `docs/audits/R0_2_PROVENANCE_OWNERSHIP_BOUNDARY.md` | 237 | `9d504a797b58dcc73c631365af6db7f696d49b0dc565af3d413ab0e0ed59de3e` |
+| `docs/IMPLEMENTATION_PLAN.md` | 419 | `ce3ef316c5f78fa351665c63e0a31cdd658464dcb3c28688bbc973ad03a513cb` |
+| `docs/audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md` | 375 | `3a97c6362137335502d4fa3e4fde7f94f9fb9c9e0eb454f37cc9d5125392b9ec` |
 
-Validate local Markdown links in both files. Resolve each non-HTTP, non-mail,
-non-anchor target relative to its containing file. Expected result: no missing
-target and exit `0`.
+Validate every non-HTTP, non-mail, non-anchor Markdown link in both files
+relative to its containing file. Expected: no missing link and exit `0`.
 
-## 8. Phase 3 - Git ownership evidence
+## 7. Phase 3 - Source/layout evidence
 
 Run:
 
 ```powershell
-git rev-list --count HEAD
-git shortlog -sne HEAD
-git log HEAD --format='%aN|%aE' | Sort-Object -Unique
-git log HEAD --format='%cN|%cE' | Sort-Object -Unique
-git log HEAD --format='%G?' | Group-Object | Select-Object Name,Count
-$signedOff = @(git log HEAD --format='%B' | Select-String -Pattern '^Signed-off-by:' -CaseSensitive).Count
-"signed_off_by_count=$signedOff"
-$rightsPaths = @(git ls-tree -r --name-only HEAD | Where-Object { $_ -match '(^|/)(CLA|DCO|CONTRIBUTING|COPYRIGHT|AUTHORS)(\.|$)' })
-"rights_artifact_path_count=$($rightsPaths.Count)"
-$rightsPaths
-$tracked = @(git ls-tree -r --name-only HEAD)
-"tracked_path_count=$($tracked.Count)"
-$cad = @($tracked | Where-Object { $_ -match '\.(dxf|dxb|dwg|dgn)$' })
-"tracked_cad_path_count=$($cad.Count)"
-$cad
+$core = @(git ls-files 'crates/seacad-dxf-core/**')
+$schema = @(git ls-files 'schema/dxf/v1/**')
+$generator = @(git ls-files 'crates/seacad-schema-gen/**')
+$coreBytes = ($core | ForEach-Object { (Get-Item -LiteralPath $_).Length } | Measure-Object -Sum).Sum
+$schemaBytes = ($schema | ForEach-Object { (Get-Item -LiteralPath $_).Length } | Measure-Object -Sum).Sum
+$generatorBytes = ($generator | ForEach-Object { (Get-Item -LiteralPath $_).Length } | Measure-Object -Sum).Sum
+[PSCustomObject]@{
+  CoreFiles = $core.Count
+  CoreBytes = $coreBytes
+  SchemaFiles = $schema.Count
+  SchemaBytes = $schemaBytes
+  GeneratorFiles = $generator.Count
+  GeneratorBytes = $generatorBytes
+}
+if ($core.Count -ne 433 -or $coreBytes -ne 6240044 -or
+    $schema.Count -ne 7 -or $schemaBytes -ne 103938 -or
+    $generator.Count -ne 5 -or $generatorBytes -ne 207705) {
+  throw 'R0.3 source/layout count drift.'
+}
+$generator | Sort-Object
+$main = 'crates/seacad-schema-gen/src/main.rs'
+"generator_main_lines=$((Get-Content -LiteralPath $main).Count)"
+"generator_main_bytes=$((Get-Item -LiteralPath $main).Length)"
+"generator_main_sha256=$((Get-FileHash -Algorithm SHA256 -LiteralPath $main).Hash.ToLowerInvariant())"
+rg -n 'const (MANIFEST|HEADER_OUTPUT|ENTITY_OUTPUT)_PATH|CARGO_MANIFEST_DIR|name = "seacad-(schema-gen|release-evidence|release-packager|release-receipts)"' crates/seacad-schema-gen
 ```
 
 Required evidence:
 
-- commit count `363`;
-- one author and one committer identity, both exactly
-  `SeaCad|209146803+seaflower205@users.noreply.github.com`;
-- signature state exactly `N: 363`;
-- zero `Signed-off-by` trailers;
-- zero tracked CLA, DCO, CONTRIBUTING, COPYRIGHT, or AUTHORS artifacts;
-- 907 tracked paths;
-- zero tracked `.dxf`, `.dxb`, `.dwg`, or `.dgn` paths.
+- core `433` files / `6,240,044` bytes;
+- schema `7` files / `103,938` bytes;
+- mixed generator `5` files / `207,705` bytes;
+- generator main `3,006` lines / `118,048` bytes / SHA-256
+  `4c6f5074fd5f7654d9ca74fe3f56d1386c3f4ffd75519e6ff52026f70c96fdb2`;
+- one schema generator and three separately named release binaries;
+- root resolution remains `CARGO_MANIFEST_DIR/../..` with paths under
+  `schema/dxf/v1` and `crates/seacad-dxf-core/src/generated`.
 
-These are metadata observations only. Do not infer legal ownership.
+## 8. Phase 4 - Dependency closure evidence
 
-## 9. Phase 4 - License, generated data, and dependency evidence
+Run this read-only metadata traversal:
+
+```powershell
+$meta = cargo metadata --locked --format-version 1 | ConvertFrom-Json
+$byId = @{}
+foreach ($package in $meta.packages) { $byId[$package.id] = $package }
+$nodes = @{}
+foreach ($node in $meta.resolve.nodes) { $nodes[$node.id] = $node }
+$roots = @($meta.packages | Where-Object {
+  $_.name -in @('seacad-dxf-core', 'seacad-schema-gen')
+} | ForEach-Object { $_.id })
+$seen = @{}
+$queue = [Collections.Generic.Queue[string]]::new()
+foreach ($id in $roots) { $queue.Enqueue($id) }
+while ($queue.Count -gt 0) {
+  $id = $queue.Dequeue()
+  if ($seen.ContainsKey($id)) { continue }
+  $seen[$id] = $true
+  foreach ($dependency in $nodes[$id].dependencies) { $queue.Enqueue($dependency) }
+}
+$included = @($seen.Keys | ForEach-Object { $byId[$_] } | Sort-Object name)
+$excluded = @($meta.packages | Where-Object { -not $seen.ContainsKey($_.id) } | Sort-Object name)
+"included_count=$($included.Count)"
+$included | ForEach-Object { "$($_.name)|$($_.version)|$($_.license)" }
+"excluded_count=$($excluded.Count)"
+$excluded | ForEach-Object { "$($_.name)|$($_.version)" }
+$expectedExcluded = @('anstyle', 'clap', 'clap_builder', 'clap_lex', 'seacad-cli', 'strsim')
+if ($included.Count -ne 23 -or
+    @(Compare-Object $expectedExcluded @($excluded.name)).Count -ne 0) {
+  throw 'R0.3 dependency closure drift.'
+}
+```
+
+Expected inclusion count `23`. Expected excluded set exactly:
+`anstyle`, `clap`, `clap_builder`, `clap_lex`, `seacad-cli`, and `strsim`.
+
+## 9. Phase 5 - Generated, docs, CI, and non-authorization evidence
 
 Run:
 
 ```powershell
 $paths = @(
-  'LICENSE',
-  'NOTICE',
-  'THIRD_PARTY_NOTICES.md',
-  'Cargo.toml',
-  'Cargo.lock',
-  'crates/seacad-dxf-core/src/johab_decode_le.bin',
-  'schema/dxf/v1/manifest.json',
-  'schema/dxf/v1/sources.json',
   'crates/seacad-dxf-core/src/generated/header_schema.rs',
-  'crates/seacad-dxf-core/src/generated/entity_schema.rs',
-  'release/sbom.cdx.json',
-  'release/legal/manifest.json',
-  'audits/m1/legacy-dxf-fixtures.csv'
+  'crates/seacad-dxf-core/src/generated/entity_schema.rs'
 )
 foreach ($path in $paths) {
-  [PSCustomObject]@{
-    Path = $path
-    Bytes = (Get-Item -LiteralPath $path).Length
-    Sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant()
-  }
+  "$path|$((Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant())"
 }
-```
-
-Required SHA-256 values:
-
-| Path | SHA-256 |
-| --- | --- |
-| `LICENSE` | `131b152ed468c95e5cd12f97a5dbeabffc73a20f4dd0c6d5d9c16dc619480b1d` |
-| `NOTICE` | `4b7ab578a58970d42a8ff9d2b81133eab04c901ebbee7d0db6ebd823197a3cdb` |
-| `THIRD_PARTY_NOTICES.md` | `47aab18e969b87c863a404998970e187e5d180c6395be11f2cc442a40dda86aa` |
-| `Cargo.toml` | `45bf631ead2fd0681597a2d313976d79ac22d6088d0d97a451a54dcf42080259` |
-| `Cargo.lock` | `f48f459ed5a7c7b9fb9d184d78099c5c6b31b260b3d13df632dbf539ea07ad70` |
-| `crates/seacad-dxf-core/src/johab_decode_le.bin` | `d04a1a13d5f4706df6fa46394cda98a817570e774d601acd042e0fa57249f7ea` |
-| `schema/dxf/v1/manifest.json` | `2b3ca697a91b29d68ba8b3a850abf10ce017023919540d87d382da2b902718c0` |
-| `schema/dxf/v1/sources.json` | `1d233ace387be55f8691699307de8d0e560255ba094d4279a6dec56d9564c028` |
-| `generated/header_schema.rs` | `34675e171859d3075f70344e80c96217ed7994c7dd4e38b6bf09de33b6699b7c` |
-| `generated/entity_schema.rs` | `0872b9e0bb85361a549fc77ee5265d05d4420cc8796ddb75ffd2ce6c83eaa610` |
-| `release/sbom.cdx.json` | `ca7c5d001cf2f2745392def707e46c699d6fdc7f163fe514886fd526af8830d0` |
-| `release/legal/manifest.json` | `83a7ca58381bdde9371a23bda94a224ead894c51b07241246cc662ed20b1dfb0` |
-| `audits/m1/legacy-dxf-fixtures.csv` | `ac73ecd420e23b11334805931abd2f1a7ba330f29c0eeb0ae92e72b1c1529783` |
-
-Run:
-
-```powershell
-Get-Content -Raw LICENSE
-rg -n '^publish = false$|^license-file\.workspace = true$' crates -g Cargo.toml
-$legal = Get-Content -Raw release/legal/manifest.json | ConvertFrom-Json
-$sbom = Get-Content -Raw release/sbom.cdx.json | ConvertFrom-Json
-"legal_package_count=$(@($legal.packages).Count)"
-"sbom_component_count=$(@($sbom.components).Count)"
-rg -n 'Direct transfers approved|approved zero direct transfers|direct_transfer_approved' docs/audits/M1_LEGACY_DXF_AUDIT.md audits/m1/legacy-dxf-fixtures.csv
-rg -n '@generated by seacad-schema-gen|Normalized .* SHA-256' crates/seacad-dxf-core/src/generated -g '*.rs'
-```
-
-Expected: proprietary root text; three `publish = false` and three inherited
-license-file declarations; 26 legal packages; 29 SBOM components; M1 direct
-transfers remain zero/false; both generated modules identify the generator and
-normalized input hash.
-
-## 10. Phase 5 - Boundary and non-mutation review
-
-Run:
-
-```powershell
-rg -n 'Public candidate|Private|Mixed|relicens|authority|DCO|CLA|assignment|Autodesk|Johab|fixture|corpus|seacad-dxf-core|seacad-cli|seacad-schema-gen|schema/dxf/v1|release/|\.github|\.agents' docs/audits/R0_2_PROVENANCE_OWNERSHIP_BOUNDARY.md
+$expectedGenerated = @(
+  '34675e171859d3075f70344e80c96217ed7994c7dd4e38b6bf09de33b6699b7c',
+  '0872b9e0bb85361a549fc77ee5265d05d4420cc8796ddb75ffd2ce6c83eaa610'
+)
+for ($index = 0; $index -lt $paths.Count; $index++) {
+  $observed = (Get-FileHash -Algorithm SHA256 -LiteralPath $paths[$index]).Hash.ToLowerInvariant()
+  if ($observed -ne $expectedGenerated[$index]) { throw 'R0.3 generated output drift.' }
+}
+$auditCount = @(git ls-files 'docs/audits/*.md').Count
+"audit_count=$auditCount"
+if ($auditCount -ne 339) { throw 'R0.3 committed audit count drift.' }
+rg -n 'exactly two workspace members|seacad-dxf-schema-gen|23 packages|21 third-party|excluded exactly|all 339|Linux x64|Windows x64|macOS x64|publish = false|does not authorize|prohibited until|Proprietary' docs/audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md
+git ls-files '.github/workflows/**'
 git diff -- docs/SUPPORT_MATRIX.md Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md crates schema corpus release .github .agents
 git diff --check
 ```
 
-Required evidence:
+Required generated hashes:
 
-- the audit names all three workspace crates and every root class that could
-  cross the export boundary;
-- the license target remains a non-authorized future proposal;
-- the scoped non-document diff contains only the three expected concurrent DXF
-  code paths;
-- no support matrix, manifest, lockfile, current legal file, schema, corpus
-  policy, release artifact, workflow, or agent-skill change exists;
-- `git diff --check` exits `0`.
+- header: `34675e171859d3075f70344e80c96217ed7994c7dd4e38b6bf09de33b6699b7c`;
+- entity: `0872b9e0bb85361a549fc77ee5265d05d4420cc8796ddb75ffd2ce6c83eaa610`.
 
-## 11. Phase 6 - Required repository gates
+Expected current audit count: `339`. The design must specify two members, 23
+SBOM components, 21 legal packages, exact CLI exclusions, six public native
+targets, `publish = false`, and explicit non-authorization. The scoped diff may
+contain only the three concurrent DXF code paths. No support matrix, manifest,
+lockfile, license, schema, corpus, release, workflow, or skill mutation is
+allowed.
 
-Run in this exact order:
+## 10. Phase 6 - Required gates
+
+Run in order:
 
 ```powershell
 cargo deny --locked check
@@ -288,42 +266,40 @@ cargo +1.97.1 test --workspace
 git diff --check
 ```
 
-Every command must exit `0`. Record the exact workspace test count. Formatting
-and generators are check-only.
+Every command must exit `0`. Record the exact workspace test count.
 
-## 12. Phase 7 - Postflight mutation audit
+## 11. Phase 7 - Postflight
 
-Repeat Phase 1 Git commands and concurrent-code receipts. Repeat Phase 2
-document receipts and Phase 4 artifact hashes/counts. Initial and final `HEAD`,
-changed path sets, receipts, and artifact hashes must match exactly. List only
-ignored `target` output as tolerated ephemeral output.
+Repeat Phase 1 Git commands/receipts, Phase 2 document receipts, Phase 3
+counts/hash, Phase 4 closure, and Phase 5 generated hashes/audit count. Initial
+and final state must match exactly. Only ignored `target` output is tolerated.
 
-## 13. Acceptance criteria
+## 12. Acceptance criteria
 
-The batch is `PASS` only when:
+The result is `PASS` only if:
 
-1. root, commit, changed path sets, and concurrent-code receipts match;
-2. R0.2 document receipts and local links match;
-3. Git contribution observations match without a legal inference;
-4. current license, M1, generated data, SBOM, and legal evidence match;
-5. the boundary inventory covers every required class and grants no license;
-6. no R0.2-prohibited repository surface changes;
-7. every quality gate passes;
-8. postflight matches preflight with no repository mutation;
-9. the complete report is written to the exact external path.
+1. root, baseline, path sets, and concurrent-code receipts match;
+2. design receipts and links match;
+3. source/layout counts, generator targets, and path assumptions match;
+4. public closure is exactly 23 with the exact six exclusions;
+5. generated hashes and 339-audit exclusion evidence match;
+6. design explicitly grants no license and performs no export/publication;
+7. protected repository surfaces are unchanged;
+8. all quality gates pass;
+9. postflight matches preflight;
+10. the complete external report is written.
 
-An unmet criterion is `FAIL` unless a preflight stop condition makes it
-`BLOCKED`.
+An unmet criterion is `FAIL` unless preflight requires `BLOCKED`.
 
-## 14. Required report format
+## 13. Required report format
 
-Write one UTF-8 YAML-shaped report with no prose before or after it:
+Write one UTF-8 YAML-shaped report:
 
 ```yaml
-batch_id: seacad-r0.2-provenance-ownership-boundary-2026-08-08
+batch_id: seacad-r0.3-public-formats-workspace-export-design-2026-08-08
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-r0.2-provenance-ownership-boundary-2026-08-08.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-r0.3-public-formats-workspace-export-design-2026-08-08.yaml
 started_at:
 finished_at:
 head_before:
@@ -348,7 +324,7 @@ commands:
       <verbatim or empty>
     stderr: |
       <verbatim or empty>
-    result: PASS | FAIL | EXPECTED_NO_MATCH | BLOCKED
+    result: PASS | FAIL | BLOCKED
 hash_receipts:
   - path:
     observed_lines:
@@ -356,29 +332,27 @@ hash_receipts:
     observed_sha256:
     expected_sha256:
     result: PASS | FAIL
-git_commit_count:
-git_author_count:
-git_committer_count:
-git_signature_states:
-signed_off_by_count:
-tracked_path_count:
-tracked_cad_path_count:
-legal_package_count:
-sbom_component_count:
+core_file_count:
+core_bytes:
+schema_file_count:
+schema_bytes:
+generator_file_count:
+generator_bytes:
+public_dependency_count:
+excluded_dependencies:
+current_audit_count:
 workspace_test_total:
 links: PASS | FAIL
-current_license_unchanged: PASS | FAIL
-relicense_authorized: false
+license_activated: false
+export_created: false
 support_matrix_unchanged: PASS | FAIL
-non_document_scope_unchanged: PASS | FAIL
+protected_surfaces_unchanged: PASS | FAIL
 mutations: none | <exact list>
-tolerated_ephemeral_outputs: none | <exact list>
 deviations: none | <exact list>
-retries: none | <exact list>
 failures: none | <exact list>
 blocker: none | <exact blocker>
-final_assessment: <one literal sentence explaining PASS, FAIL, or BLOCKED>
+final_assessment: <one literal sentence>
 ```
 
-After closing the report, print only its absolute path and final status to the
-Antigravity chat. Chat output without the report file is not delivery.
+After writing the report, print only its absolute path and final status to the
+Antigravity chat. Chat output without the file is not delivery.

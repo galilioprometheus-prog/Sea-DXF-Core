@@ -1,10 +1,10 @@
 # SeaCad Master Implementation Plan
 
-Status: R0.1 master-plan reset is complete at checkpoint
-`r0.1-master-plan-reset`. R0.2 provenance, ownership, and boundary inventory is
-ready for verification. DXF Core 1.0 remains the only active product
-implementation program, currently documented through checkpoint M14.3dc. Its
-preserved detailed plans are:
+Status: R0.1 and R0.2 are complete at checkpoints `r0.1-master-plan-reset` and
+`r0.2-provenance-ownership-boundary`. R0.3 public `seacad-formats` workspace
+export design is ready for verification. DXF Core 1.0 remains the only active
+product implementation program, currently documented through checkpoint
+M14.3dc. Its preserved detailed plans are:
 
 - [DXF Core 1.0 implementation subplan](plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
 - [DXF entity semantic completion subplan](plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)
@@ -225,7 +225,9 @@ startup with the built-in default theme.
    Its engineering inventory and non-authorization verdict are recorded in
    [the R0.2 audit](audits/R0_2_PROVENANCE_OWNERSHIP_BOUNDARY.md).
 3. R0.3 designs a public `seacad-formats` workspace export without changing the
-   current DXF core or publishing code.
+   current DXF core or publishing code. The exact two-member layout, generator
+   split, allowlists, legal/SBOM closure, CI matrix, and non-authorization gates
+   are recorded in [the R0.3 design](audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md).
 4. R0 exits only after legal/provenance review authorizes an explicit license
    checkpoint. No current support claim changes during R0.
 
