@@ -1591,6 +1591,19 @@ destination-only, dual-source, cancellation, bounds, and redaction cases.
 Handle remaps, payload semantics, encoding/insertion, mutation, cross-container
 clone, and POINT `Complete` remain open.
 
+M14.3di adds per-entity handle composition without mutating either document.
+`DxfEntityXDataHandleComposedDestinationDirectory` owns M14.3dh coordinate
+readiness and M14.3cv destination-validated group-1005 evidence built from
+caller-supplied remaps. Ready requires the coordinate state ready and every
+entity handle uniquely present in the destination; zero-handle entities remain
+ready. Unavailable preserves the complete coordinate state and exact total and
+unavailable handle counts, while the owned handle directory retains every
+typed remap/destination result. Four format pairings span all nine dialects plus
+AC1009/AC1032 cross-dialect boundaries, independent coordinate and handle
+failures, zero handles, dual-source identity, cancellation, bounds, and
+redaction. Application payload semantics, encoding/insertion, mutation, cross-
+container clone, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

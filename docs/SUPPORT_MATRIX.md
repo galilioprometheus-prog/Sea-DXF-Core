@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dh can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3di can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1190,6 +1190,20 @@ versus 1011 behavior, destination-only failure, partial tuples, dual-source
 identity, cancellation, bounds, and redaction. Handle remaps, payload semantics,
 encoding/insertion, mutation, cross-container clone, and POINT `Complete`
 remain open.
+
+M14.3di adds `DxfEntityXDataHandleComposedDestinationDirectory`, composing each
+M14.3dh coordinate-readiness entry with caller-supplied group-1005 remaps that
+M14.3cv validates against the independently parsed destination identity index.
+Ready requires coordinate readiness and a unique destination identity for every
+entity-bound group-1005 occurrence; entities with no handles remain ready when
+their coordinate/base state is ready. Unavailable retains the complete
+coordinate state plus exact total and unavailable handle counts, while every
+typed remap/destination state remains reachable through the owned handle
+directory. Four ASCII/Binary pairings cover all nine Core dialects plus
+AC1009/AC1032 cross-dialect boundaries, independent coordinate and handle
+failures, zero handles, dual-source identity, cancellation, bounds, and
+redaction. Application payload semantics, encoding/insertion, destination
+mutation, cross-container clone, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

@@ -3040,5 +3040,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Handle remaps, payload semantics, encoding/insertion, cross-container clone,
     and POINT `Complete` remain open.
 
+    M14.3di composes M14.3dh coordinate/entity readiness with caller-supplied
+    group-1005 remaps validated against the exact M14.3cv destination identity
+    evidence. Ready requires coordinate readiness and every entity handle to
+    resolve uniquely in the destination; zero-handle entities remain ready.
+    Unavailable preserves the complete coordinate state and exact handle/
+    unavailable-handle counts, with every typed remap and destination state
+    derived from the two owned directories. Four format pairings span all nine
+    Core dialects plus AC1009/AC1032 cross-dialect boundaries, independent
+    coordinate and handle failures, zero handles, dual-source identity,
+    cancellation, bounds, and redaction. Application payload semantics,
+    encoding/insertion, destination mutation, cross-container clone, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

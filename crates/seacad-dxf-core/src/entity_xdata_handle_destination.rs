@@ -3,8 +3,8 @@
 use std::io;
 
 use crate::{
-    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityXDataHandleRemap,
-    DxfEntityXDataHandleRemapDirectory, DxfEntityXDataHandleRemapEntry,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityRef,
+    DxfEntityXDataHandleRemap, DxfEntityXDataHandleRemapDirectory, DxfEntityXDataHandleRemapEntry,
     DxfEntityXDataHandleRemapState, DxfError, DxfHandle, DxfHandleIdentityDirectory,
     DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfIoOperation, DxfRawDocumentView,
     DxfSourceId,
@@ -164,6 +164,50 @@ impl DxfEntityXDataHandleDestinationDirectory {
         match self.destination_identities.lookup(target) {
             DxfHandleIdentityLookup::Unique(identity) => Some(identity),
             DxfHandleIdentityLookup::Missing | DxfHandleIdentityLookup::Ambiguous(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub fn source_entity_for_entry(
+        &self,
+        entry: DxfEntityXDataHandleDestinationEntry,
+    ) -> Option<DxfEntityRef> {
+        let remap = self.remap_for_entry(entry)?;
+        let resolutions = self.remaps.resolution_directory();
+        let resolution = self.remaps.resolution_for_entry(remap)?;
+        Some(
+            resolutions
+                .typed_for_entry(resolution)?
+                .occurrence()
+                .entity(),
+        )
+    }
+
+    pub fn entries_for_entity(
+        &self,
+        entity: DxfEntityRef,
+    ) -> Result<&[DxfEntityXDataHandleDestinationEntry], DxfError> {
+        ensure_source(self.source_id, entity.source_id())?;
+        let ordinal = entity.record().ordinal();
+        let start = self.entries.partition_point(|entry| {
+            self.source_entity_for_entry(*entry)
+                .is_some_and(|source| source.record().ordinal() < ordinal)
+        });
+        let end = self.entries.partition_point(|entry| {
+            self.source_entity_for_entry(*entry)
+                .is_some_and(|source| source.record().ordinal() <= ordinal)
+        });
+        let entries = self
+            .entries
+            .get(start..end)
+            .ok_or_else(invalid_internal_data)?;
+        if entries.iter().copied().all(|entry| {
+            self.source_entity_for_entry(entry)
+                .is_some_and(|source| source == entity)
+        }) {
+            Ok(entries)
+        } else {
+            Err(invalid_internal_data())
         }
     }
 }
