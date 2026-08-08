@@ -2973,5 +2973,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     coordinate/layer/handle composition, XDATA encoding or insertion,
     cross-container clone, and POINT `Complete` remain open.
 
+    M14.3dd composes every retained M14.3cq group-1003 source LAYER resolution
+    with an independently parsed destination named-symbol directory.
+    Source-missing and source-ambiguous states propagate without destination
+    selection. Only source-unique names are compared against exact group-2
+    names admitted from completely closed destination LAYER tables. A shared
+    sorted SHA-256 index bounds candidate lookup, but bounded cross-document
+    byte comparison remains authoritative. Destination-missing, unique, and
+    ambiguous results retain exact dual-source identity, ambiguity counts, and
+    unique destination target evidence. All four ASCII/Binary source-
+    destination pairings cover all nine Core dialects, with cross-dialect
+    boundary cases, orphan and application occurrences, malformed and wrong-
+    table exclusion, cancellation, identity rejection, metadata bounds, and
+    non-disclosing debug output. Layer-name syntax and length, missing-record
+    creation, application-specific payload semantics, coordinate/handle
+    composition, XDATA encoding or insertion, cross-container clone, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

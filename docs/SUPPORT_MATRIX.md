@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dc can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dd can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1574,6 +1574,22 @@ cancellation, foreign identity, bounds, and debug redaction. APPID syntax and
 length, record creation/edit, group-1002 and payload semantics,
 coordinate/layer/handle composition, XDATA encoding/insertion, destination
 mutation, cross-container clone, and POINT `Complete` remain open.
+
+M14.3dd adds `DxfEntityXDataLayerDestinationDirectory`, binding every retained
+M14.3cq group-1003 source LAYER resolution to a separately opened destination
+symbol directory. Source-missing and source-ambiguous states take precedence.
+Only source-unique layer names enter a shared sorted SHA-256 destination index;
+bounded byte comparison across both documents remains authoritative.
+Destination missing, unique, and ambiguous states retain dual-source identity
+and exact counts, and only a unique result publishes an owned destination LAYER
+target. All four ASCII/Binary source-destination pairings cover every Core
+dialect plus AC1009/AC1032 cross-dialect boundaries, long chunked names,
+orphan and application occurrences, case-near and duplicate names, malformed,
+wrong-table, multi-name, and unclosed evidence, cancellation, foreign identity,
+bounds, and debug redaction. Layer-name syntax and length, record creation/edit,
+application payload semantics, coordinate/handle composition, XDATA encoding
+or insertion, destination mutation, cross-container clone, and POINT
+`Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual

@@ -93,6 +93,7 @@ mod entity_xdata_handle_replacement_set;
 mod entity_xdata_handle_replacement_transaction;
 mod entity_xdata_handle_replacement_verification;
 mod entity_xdata_handle_resolution;
+mod entity_xdata_layer_destination;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
 mod entity_xdata_structure;
@@ -170,6 +171,7 @@ mod mtext_xdata_column_evidence;
 mod mtext_xdata_defined_height;
 mod mtext_xdata_linked_column;
 mod mtext_xdata_linked_column_resolution;
+mod named_symbol_destination;
 mod named_symbol_table;
 mod owner_evidence_comparison;
 mod ownership_evidence;
@@ -600,6 +602,10 @@ pub use entity_xdata_handle_replacement_verification::{
 };
 pub use entity_xdata_handle_resolution::{
     DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,
+};
+pub use entity_xdata_layer_destination::{
+    DxfEntityXDataLayerDestinationDirectory, DxfEntityXDataLayerDestinationEntry,
+    DxfEntityXDataLayerDestinationState,
 };
 pub use entity_xdata_layer_resolution::{
     DxfEntityXDataLayerResolutionDirectory, DxfEntityXDataLayerResolutionEntry,

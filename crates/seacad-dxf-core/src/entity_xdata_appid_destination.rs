@@ -7,19 +7,16 @@
 use std::io;
 
 use crate::{
-    ByteSpan, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityRef,
+    DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityRef,
     DxfEntityXDataAppIdResolutionDirectory, DxfEntityXDataAppIdResolutionEntry,
     DxfEntityXDataAppIdResolutionState, DxfEntityXDataApplication, DxfError, DxfIoOperation,
     DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
-    DxfRawDocumentView, DxfSourceId,
-    source_span::{sha256_span, spans_equal_across_documents},
+    DxfRawDocumentView, DxfSourceId, named_symbol_destination::NamedSymbolDestinationIndex,
 };
 
-type NameDigest = [u8; 32];
-
+/// Exact source-resolution precedence followed by destination APPID lookup.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
-/// Exact source-resolution precedence followed by destination APPID lookup.
 pub enum DxfEntityXDataAppIdDestinationState {
     /// The source application's group-1001 name has no exact source APPID record.
     SourceMissing,
@@ -69,12 +66,6 @@ impl DxfEntityXDataAppIdDestinationEntry {
     }
 }
 
-#[derive(Clone, Copy)]
-struct AppIdIndexEntry {
-    digest: NameDigest,
-    target: DxfNamedSymbolTableEntry,
-}
-
 /// Exact source APPID states composed with a separately opened destination.
 ///
 /// The directory owns both the source-resolution evidence and the destination symbol-table
@@ -100,7 +91,12 @@ impl DxfEntityXDataAppIdDestinationDirectory {
         let destination_symbols = destination.named_symbol_table_directory(cancellation)?;
         ensure_source(source.source_id(), source_resolutions.source_id())?;
         ensure_source(destination.source_id(), destination_symbols.source_id())?;
-        let index = build_index(destination, &destination_symbols, cancellation)?;
+        let index = NamedSymbolDestinationIndex::from_directory(
+            destination,
+            &destination_symbols,
+            DxfNamedSymbolTableKind::AppId,
+            cancellation,
+        )?;
 
         let mut entries = Vec::new();
         entries
@@ -245,41 +241,11 @@ macro_rules! document_appid_destination_directory {
 document_appid_destination_directory!(DxfAsciiRawDocument<'_>);
 document_appid_destination_directory!(DxfBinaryRawDocument<'_>);
 
-fn build_index(
-    destination: DxfRawDocumentView<'_>,
-    symbols: &DxfNamedSymbolTableDirectory,
-    cancellation: &DxfCancellationToken,
-) -> Result<Box<[AppIdIndexEntry]>, DxfError> {
-    let count = symbols
-        .entries()
-        .iter()
-        .filter(|entry| entry.kind() == DxfNamedSymbolTableKind::AppId)
-        .count();
-    let mut index = Vec::new();
-    index
-        .try_reserve_exact(count)
-        .map_err(|_| out_of_memory())?;
-    for target in symbols
-        .entries()
-        .iter()
-        .copied()
-        .filter(|entry| entry.kind() == DxfNamedSymbolTableKind::AppId)
-    {
-        ensure_not_cancelled(cancellation)?;
-        index.push(AppIdIndexEntry {
-            digest: sha256_span(destination, target.name().value_span(), cancellation)?,
-            target,
-        });
-    }
-    index.sort_unstable_by_key(|entry| (entry.digest, entry.target.record().ordinal()));
-    Ok(index.into_boxed_slice())
-}
-
 fn destination_state(
     source: DxfRawDocumentView<'_>,
     destination: DxfRawDocumentView<'_>,
     resolution: DxfEntityXDataAppIdResolutionEntry,
-    index: &[AppIdIndexEntry],
+    index: &NamedSymbolDestinationIndex,
     cancellation: &DxfCancellationToken,
 ) -> Result<DxfEntityXDataAppIdDestinationState, DxfError> {
     match resolution.state() {
@@ -295,7 +261,7 @@ fn destination_state(
                 .application_name()
                 .value_payload_span();
             let (target, target_count) =
-                exact_matches(source, destination, index, span, cancellation)?;
+                index.exact_matches(source, span, destination, cancellation)?;
             match (target, target_count) {
                 (None, 0) => Ok(DxfEntityXDataAppIdDestinationState::DestinationMissing),
                 (Some(target), 1) => {
@@ -308,34 +274,6 @@ fn destination_state(
             }
         }
     }
-}
-
-fn exact_matches(
-    source: DxfRawDocumentView<'_>,
-    destination: DxfRawDocumentView<'_>,
-    index: &[AppIdIndexEntry],
-    source_name: ByteSpan,
-    cancellation: &DxfCancellationToken,
-) -> Result<(Option<DxfNamedSymbolTableEntry>, u32), DxfError> {
-    let digest = sha256_span(source, source_name, cancellation)?;
-    let start = index.partition_point(|entry| entry.digest < digest);
-    let end = index.partition_point(|entry| entry.digest <= digest);
-    let mut first = None;
-    let mut count = 0_u32;
-    for candidate in index.get(start..end).ok_or_else(invalid_internal_data)? {
-        ensure_not_cancelled(cancellation)?;
-        if spans_equal_across_documents(
-            source,
-            source_name,
-            destination,
-            candidate.target.name().value_span(),
-            cancellation,
-        )? {
-            count = count.checked_add(1).ok_or_else(invalid_internal_data)?;
-            first.get_or_insert(candidate.target);
-        }
-    }
-    Ok((first, count))
 }
 
 fn compact_len(value: usize) -> Result<u32, DxfError> {

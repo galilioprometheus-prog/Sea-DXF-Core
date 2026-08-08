@@ -1,11 +1,11 @@
 # SeaCad Master Implementation Plan
 
-Status: R0.1-R0.3 are complete. The R0 exit decision authorizing Apache-2.0
-only for the exact future public `seacad-formats` boundary is ready for
-verification; the current mixed repository remains proprietary and no export
-or publication has occurred. DXF Core 1.0 remains the only active product
-implementation program, currently documented through checkpoint M14.3dc. Its
-preserved detailed plans are:
+Status: R0 is complete through checkpoint
+`r0-exit-apache-2.0-authorization`. Apache-2.0 only is authorized for the exact
+future public `seacad-formats` boundary; the current mixed repository remains
+proprietary and no export or publication has occurred. DXF Core 1.0 remains the
+only active product implementation program, currently documented through
+checkpoint M14.3dd. Its preserved detailed plans are:
 
 - [DXF Core 1.0 implementation subplan](plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
 - [DXF entity semantic completion subplan](plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)

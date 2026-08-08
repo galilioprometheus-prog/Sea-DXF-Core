@@ -1520,6 +1520,23 @@ create or edit APPID records, interpret group-1002 or application payloads,
 compose coordinate/layer/handle transforms, encode or insert XDATA, mutate a
 destination, implement cross-container clone, or advance POINT to `Complete`.
 
+M14.3dd adds destination LAYER validation without mutating either document.
+`DxfEntityXDataLayerDestinationDirectory` owns the M14.3cq source-resolution
+directory and the independently parsed destination named-symbol directory.
+Source-missing and source-ambiguous states take precedence. Each source-unique
+group-1003 name is narrowed through a shared sorted SHA-256 destination index
+and then compared byte-for-byte against exact group-2 names from completely
+closed LAYER tables. Results publish destination missing, unique, or ambiguous
+state; only a unique result derives the exact owned destination LAYER record.
+Four ASCII/Binary source-destination pairings span all nine Core dialects plus
+cross-dialect boundary cases, long chunked names, orphan and application
+occurrences, malformed and wrong-table evidence, case-near rejection, dual-
+source identity, cancellation, bounds, and debug redaction. This does not
+validate layer-name syntax or length, create or edit LAYER records, interpret
+application payloads, compose coordinate or handle transforms, encode or insert
+XDATA, mutate a destination, implement cross-container clone, or advance POINT
+to `Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
