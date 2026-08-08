@@ -3340,6 +3340,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     CRUD/write, or completion claim is added; the reviewed AC1024 MESH
     applicability boundary is unchanged.
 
+    M14.4b types only 25 globally unambiguous HATCH roles from the M14.4a raw
+    scopes. Exact text stays source-backed, doubles retain binary64 bits, flags
+    and group 78 use signed Int16, and path/seed plus 450-453 counts use signed
+    Int32; duplicates and invalid ASCII values remain exact ordered evidence.
+    Duplicate `AcDbHatch` subclasses remain independent, while MESH and near or
+    missing subclass markers contribute no scalar entries. All nine dialects
+    have paired ASCII/Binary evidence. AC1009 omits group 450-470 in both
+    formats because the one-byte Binary entity grammar cannot encode them;
+    HATCH applicability is still unreviewed. Codes with nested-state roles,
+    cardinality, defaults/domains, tuples, boundary paths, pattern lines,
+    gradient relations, geometry, CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

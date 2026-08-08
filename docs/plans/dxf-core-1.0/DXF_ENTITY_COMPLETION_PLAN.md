@@ -1881,6 +1881,22 @@ semantic validity, boundary/path roles, mesh topology, geometry, subdivision,
 CRUD/write, or `Complete` support. HATCH applicability remains unreviewed and
 the existing AC1024 MESH boundary remains unchanged.
 
+M14.4b consumes M14.4a but assigns roles only to 25 HATCH codes that do not
+collide anywhere in Autodesk's boundary-path, pattern-line, seed-point, or
+gradient grammar. Pattern/gradient names remain exact source-backed text;
+elevation Z, extrusion components, pattern angle/scale, pixel size, and
+gradient doubles retain exact binary64 bits; flags/style/type/group 78 decode
+as signed Int16; path/seed counts and groups 450-453 decode as signed Int32.
+Invalid ASCII numerics and duplicates remain ordered evidence. Every exact
+`AcDbHatch` occurrence is independent, including duplicate subclasses, while
+MESH and absent/near subclass markers contribute no scalar entries. All nine
+Core dialects have paired ASCII/Binary evidence; AC1009 omits group 450-470 in
+both formats because its Binary entity group-code grammar cannot encode those
+codes. This wire boundary does not establish HATCH applicability. Cardinality,
+semantic defaults/domains, elevation/seed tuples, nested-state partitioning,
+boundary paths, pattern lines, gradient relations, geometry, CRUD/write, and
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

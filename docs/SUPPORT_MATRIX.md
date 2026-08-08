@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4a can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4b can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1519,6 +1519,20 @@ all nine Core dialects. Recognition remains dialect-neutral and does not raise
 HATCH applicability or weaken the reviewed AC1024 MESH applicability boundary.
 Cardinality, typed values, boundary paths, topology, geometry, subdivision,
 CRUD/write, and completion status remain open.
+
+M14.4b projects only the 25 HATCH roles whose group codes are unambiguous across
+the top-level, boundary-path, pattern-line, seed-point, and gradient grammar.
+Exact text spans remain source-backed; doubles retain IEEE-754 bits; codes in
+the 60-79 range decode as signed Int16, including group 78 pattern-line count;
+codes 90-99 and 450-459 decode as signed Int32. Invalid ASCII numerics and all
+duplicates remain source ordered. Each exact `AcDbHatch` subclass receives an
+independent compact range, while MESH and near/missing subclass markers remain
+excluded. The AC1009 paired fixture omits group 450-470 because its Binary DXF
+entity group-code grammar is one byte; this is a wire observation, not HATCH
+applicability evidence. Codes whose roles depend on nested state remain raw.
+Cardinality, defaults/domains, tuple assembly, boundary/path partitioning,
+pattern lines, gradients relations, geometry, CRUD/write, applicability, and
+completion status remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
