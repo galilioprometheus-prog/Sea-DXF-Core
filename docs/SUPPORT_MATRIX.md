@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dz can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ea can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1456,6 +1456,23 @@ public topics remain unaudited in this ledger rather than receiving inferred
 levels. Rendering, POINT display behavior, application-specific XDATA meaning,
 and automatic symbol creation remain separate capabilities, not additional
 entity-completion levels.
+
+M14.3ea adds bounded on-demand point evaluation for analytically ready SPLINE
+records. A source-bound raw-record lookup accepts one finite parameter inside
+the exact active knot interval and evaluates unit or explicit positive weights
+in four-dimensional homogeneous coordinates with the De Boor recurrence. The
+fixed degree ceiling is 64, bounding scratch storage to 65 homogeneous points
+and the quadratic recurrence to 4,096 interpolation steps; higher degrees
+remain typed rather than consuming unbounded CPU. Endpoints, internal spans,
+rational division, canonical positive zero, cancellation, fallible allocation,
+and derived non-finite arithmetic are explicit. All nine Core dialects in both
+ASCII and Binary produce identical evaluated bits for the authored quadratic
+fixture. Missing records return no result; unavailable analytic inputs,
+non-finite/out-of-domain parameters, non-finite stored coordinates/weights,
+degenerate active knot intervals, overflow, and invalid homogeneous weights
+remain typed. This is point evaluation, not adaptive sampling, derivatives,
+tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, or SPLINE
+`Complete` support.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

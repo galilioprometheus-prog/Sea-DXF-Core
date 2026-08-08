@@ -240,6 +240,7 @@ mod spline_auxiliary_semantic;
 mod spline_card;
 mod spline_count_relation;
 mod spline_evidence;
+mod spline_point_evaluation;
 mod spline_point_tuple;
 mod spline_relation;
 mod spline_scalar_semantic;
@@ -1157,6 +1158,10 @@ pub use spline_count_relation::{
 pub use spline_evidence::{
     DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
     DxfSplineRecordKind, DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,
+};
+pub use spline_point_evaluation::{
+    DXF_SPLINE_EVALUATION_MAX_DEGREE, DxfSplineEvaluatedPoint, DxfSplineEvaluationInputKind,
+    DxfSplinePointEvaluation, DxfSplinePointEvaluationIssue, DxfSplinePointEvaluationState,
 };
 pub use spline_point_tuple::{
     DxfSplinePointComponentCounts, DxfSplinePointComponents, DxfSplinePointKind,

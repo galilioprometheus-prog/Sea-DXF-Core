@@ -1821,6 +1821,21 @@ behavior, application-specific XDATA interpretation, and automatic symbol
 creation remain separate capabilities and do not prevent the evidenced level-5
 assessment. POINT is not called `Complete`.
 
+M14.3ea consumes only M14.3q2 `Available` SPLINE analytic data and evaluates
+one requested point through a bounded homogeneous De Boor recurrence. The
+source-bound lookup accepts the closed active knot interval, selects the
+deterministic active span, preserves positive rational weights, and
+canonicalizes derived zero without changing source evidence. Degree 64 is the
+public hard ceiling, bounding scratch space
+to 65 four-component points and recurrence work to 4,096 interpolation steps.
+Unavailable analytic records, non-finite or out-of-domain parameters,
+non-finite inputs, degenerate denominators, arithmetic overflow, cancellation,
+allocation failure, and missing record ordinals remain distinct outcomes. All
+nine dialects have ASCII/Binary endpoint/midpoint parity, and an independent
+rational fixture proves homogeneous division. Sampling, derivatives,
+tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

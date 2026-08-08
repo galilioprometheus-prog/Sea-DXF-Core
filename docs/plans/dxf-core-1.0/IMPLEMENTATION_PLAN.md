@@ -3280,6 +3280,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     application-specific XDATA interpretation, and automatic symbol creation
     remain separate capabilities. POINT is not called `Complete`.
 
+    M14.3ea consumes only M14.3q2 `Available` SPLINE analytic data and
+    evaluates one requested point through a bounded homogeneous De Boor
+    recurrence. Source-bound lookup accepts the closed active knot interval,
+    selects a deterministic span, preserves positive rational weights, and
+    canonicalizes derived zero without changing source evidence. Degree 64 is
+    the hard public ceiling, bounding scratch storage to 65 homogeneous points
+    and recurrence work to 4,096 interpolation steps. Unavailable analytic
+    records, non-finite/out-of-domain parameters, non-finite inputs,
+    degenerate denominators, arithmetic overflow, cancellation, allocation
+    failure, and missing records remain explicit. All nine dialects have
+    ASCII/Binary endpoint/midpoint parity, and an independent rational fixture
+    proves homogeneous division. Sampling, derivatives, tessellation,
+    rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE `Complete`
+    remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
