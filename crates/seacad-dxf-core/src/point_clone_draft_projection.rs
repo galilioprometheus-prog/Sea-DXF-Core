@@ -1,11 +1,14 @@
 //! Cross-document POINT semantic projection into one destination draft record.
 
+use std::io;
+
 use crate::entity_edit_session::{PointCloneSnapshot, prepare_point_clone_snapshot};
 use crate::{
     DxfAcadVersion, DxfCancellationToken, DxfEntityCloneIssue, DxfEntityDraftApplicabilityPlan,
     DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfEntityField, DxfEntityKey,
-    DxfEntityLineweight, DxfEntityPlacementTarget, DxfError, DxfHandle, DxfRawDocumentView,
-    DxfResourceProfile, DxfSourceId,
+    DxfEntityLineweight, DxfEntityPlacementTarget, DxfError, DxfHandle, DxfIoOperation,
+    DxfRawDocumentView, DxfResourceProfile, DxfSourceId, DxfTextTranscodeIssue,
+    DxfTextTranscodePlan, DxfTextTranscodeReceipt,
 };
 
 /// Caller-owned destination bindings for common fields whose identities are
@@ -150,6 +153,10 @@ pub enum DxfPointCloneDraftProjectionIssue {
         source_version: DxfAcadVersion,
         destination_version: DxfAcadVersion,
     },
+    TextTranscode {
+        field: DxfEntityField,
+        issue: DxfTextTranscodeIssue,
+    },
     Destination(DxfEntityDraftRecordIssue),
 }
 
@@ -162,6 +169,7 @@ pub struct DxfPointCloneDraftProjectionPlan {
     source_placement: DxfEntityPlacementTarget,
     source_owner: Option<DxfHandle>,
     adaptations: DxfPointCloneDialectAdaptations,
+    color_name_transcode: Option<DxfTextTranscodeReceipt>,
     destination: DxfEntityDraftRecordPlan,
 }
 
@@ -197,6 +205,11 @@ impl DxfPointCloneDraftProjectionPlan {
     }
 
     #[must_use]
+    pub const fn color_name_transcode(&self) -> Option<DxfTextTranscodeReceipt> {
+        self.color_name_transcode
+    }
+
+    #[must_use]
     pub const fn destination_id(&self) -> DxfSourceId {
         self.destination.source_id()
     }
@@ -222,6 +235,10 @@ impl std::fmt::Debug for DxfPointCloneDraftProjectionPlan {
             .field("source_placement", &self.source_placement)
             .field("has_source_owner", &self.source_owner.is_some())
             .field("adaptations", &self.adaptations)
+            .field(
+                "has_color_name_transcode",
+                &self.color_name_transcode.is_some(),
+            )
             .field("destination", &self.destination)
             .finish()
     }
@@ -279,10 +296,25 @@ impl DxfRawDocumentView<'_> {
                     ));
                 }
             };
+        let color_name_transcode =
+            match transcode_color_name(source, self, &snapshot, profile, cancellation)? {
+                Ok(plan) => plan,
+                Err(issue) => {
+                    return Ok(Err(DxfPointCloneDraftProjectionIssue::TextTranscode {
+                        field: DxfEntityField::COLOR_NAME,
+                        issue,
+                    }));
+                }
+            };
+        let color_name = color_name_transcode
+            .as_ref()
+            .map(|plan| plan.encoded_bytes())
+            .or_else(|| snapshot.color_name().map(|value| value.bytes()));
         let draft = snapshot.borrowed_for_destination(
             destination_applicability.identity().owner_handle(),
             lineweight,
             bindings,
+            color_name,
         );
         let destination = match self.encode_entity_draft_record(
             destination_applicability,
@@ -303,6 +335,9 @@ impl DxfRawDocumentView<'_> {
             source_placement: snapshot.placement(),
             source_owner: snapshot.owner(),
             adaptations,
+            color_name_transcode: color_name_transcode
+                .as_ref()
+                .map(DxfTextTranscodePlan::receipt),
             destination,
         }))
     }
@@ -330,6 +365,11 @@ fn destination_common_adaptations(
             adaptations: DxfPointCloneDialectAdaptations(0),
         };
     }
+    if snapshot.color_name().is_some() {
+        return DestinationCommonAdaptation::NotRepresentable {
+            field: DxfEntityField::COLOR_NAME,
+        };
+    }
     let mut adaptations = 0_u8;
     if snapshot.has_layout() {
         adaptations |= DxfPointCloneDialectAdaptations::LEGACY_PLACEMENT_LAYOUT;
@@ -349,6 +389,60 @@ fn destination_common_adaptations(
         lineweight: None,
         adaptations: DxfPointCloneDialectAdaptations(adaptations),
     }
+}
+
+fn transcode_color_name(
+    source: DxfRawDocumentView<'_>,
+    destination: DxfRawDocumentView<'_>,
+    snapshot: &PointCloneSnapshot,
+    profile: DxfResourceProfile,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<Option<DxfTextTranscodePlan>, DxfTextTranscodeIssue>, DxfError> {
+    let Some(color_name) = snapshot.color_name() else {
+        return Ok(Ok(None));
+    };
+    let source_text = color_name.source();
+    if source_text.source_id() != source.source_id()
+        || source_text.encoding() != source.text_encoding_report().resolution()
+    {
+        return Err(invalid_internal_data());
+    }
+    if portable_text(source, destination, color_name.bytes()) {
+        return Ok(Ok(None));
+    }
+    let plan = match source.transcode_text_span_to(
+        source_text.value_span(),
+        destination,
+        profile,
+        cancellation,
+    )? {
+        Ok(plan) => plan,
+        Err(issue) => return Ok(Err(issue)),
+    };
+    let receipt = plan.receipt();
+    if receipt.source_id() != source.source_id()
+        || receipt.destination_id() != destination.source_id()
+        || receipt.source_span() != source_text.value_span()
+        || receipt.source_encoding() != source_text.encoding()
+    {
+        return Err(invalid_internal_data());
+    }
+    Ok(Ok(Some(plan)))
+}
+
+fn portable_text(
+    source: DxfRawDocumentView<'_>,
+    destination: DxfRawDocumentView<'_>,
+    bytes: &[u8],
+) -> bool {
+    bytes.is_ascii()
+        || source.text_encoding_report().resolution().decoder()
+            == destination.text_encoding_report().resolution().decoder()
+            && source
+                .text_encoding_report()
+                .resolution()
+                .decoder()
+                .is_some()
 }
 
 fn validate_bindings(
@@ -407,4 +501,11 @@ fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfEr
     } else {
         Ok(())
     }
+}
+
+fn invalid_internal_data() -> DxfError {
+    DxfError::from_io(
+        DxfIoOperation::Write,
+        &io::Error::from(io::ErrorKind::InvalidData),
+    )
 }

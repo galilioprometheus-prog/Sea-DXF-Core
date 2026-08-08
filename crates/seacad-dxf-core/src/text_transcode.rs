@@ -236,7 +236,13 @@ impl DxfRawDocumentView<'_> {
         let destination_decoder = destination_encoding
             .decoder()
             .ok_or_else(invalid_internal_data)?;
-        let round_trip_capacity = decoded.len().max(4);
+        // `encoding_rs` may need one scalar of terminal slack even when the
+        // final UTF-8 output is exactly `decoded.len()`. This bounded scratch
+        // overhead does not increase the accepted value-byte count.
+        let round_trip_capacity = decoded
+            .len()
+            .checked_add(4)
+            .ok_or_else(invalid_internal_data)?;
         let mut round_trip = zeroed(round_trip_capacity)?;
         let round_trip_result = destination_decoder
             .decode_complete_to_utf8_without_replacement(&encoded, &mut round_trip);

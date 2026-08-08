@@ -9,6 +9,7 @@ use crate::{
     DxfEntityXDataEncodedEntityDestinationState, DxfError, DxfHandle, DxfIoOperation,
     DxfPointCloneDestinationBindings, DxfPointCloneDialectAdaptations,
     DxfPointCloneDraftProjectionIssue, DxfRawDocumentView, DxfResourceProfile, DxfSourceId,
+    DxfTextTranscodeReceipt,
 };
 
 /// One exact encoded-XDATA source entry selected for POINT projection.
@@ -73,6 +74,7 @@ pub struct DxfPointCloneXDataDraftPlan {
     source_placement: DxfEntityPlacementTarget,
     source_owner: Option<DxfHandle>,
     adaptations: DxfPointCloneDialectAdaptations,
+    color_name_transcode: Option<DxfTextTranscodeReceipt>,
     xdata: DxfEntityXDataDraftRecordPlan,
 }
 
@@ -105,6 +107,11 @@ impl DxfPointCloneXDataDraftPlan {
     #[must_use]
     pub const fn dialect_adaptations(&self) -> DxfPointCloneDialectAdaptations {
         self.adaptations
+    }
+
+    #[must_use]
+    pub const fn color_name_transcode(&self) -> Option<DxfTextTranscodeReceipt> {
+        self.color_name_transcode
     }
 
     #[must_use]
@@ -152,6 +159,10 @@ impl std::fmt::Debug for DxfPointCloneXDataDraftPlan {
             .field("source_placement", &self.source_placement)
             .field("has_source_owner", &self.source_owner.is_some())
             .field("adaptations", &self.adaptations)
+            .field(
+                "has_color_name_transcode",
+                &self.color_name_transcode.is_some(),
+            )
             .field("xdata", &self.xdata)
             .finish()
     }
@@ -189,6 +200,7 @@ impl DxfRawDocumentView<'_> {
         let source_placement = projection.source_placement();
         let source_owner = projection.source_owner();
         let adaptations = projection.dialect_adaptations();
+        let color_name_transcode = projection.color_name_transcode();
         let composed = match xdata.directory.compose_entity_draft_record(
             xdata.entry(),
             projection.into_destination(),
@@ -208,6 +220,7 @@ impl DxfRawDocumentView<'_> {
             source_placement,
             source_owner,
             adaptations,
+            color_name_transcode,
             xdata: composed,
         }))
     }

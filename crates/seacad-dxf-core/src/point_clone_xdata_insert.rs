@@ -8,7 +8,8 @@ use crate::{
     DxfEntityXDataDraftVerificationOutcome, DxfEntityXDataDraftVerificationReceipt,
     DxfEntityXDataDraftWriteJournal, DxfEntityXDataDraftWriteOutcome, DxfError, DxfHandle,
     DxfIoOperation, DxfPointCloneDialectAdaptations, DxfPointCloneXDataDraftPlan,
-    DxfRawDocumentView, DxfReadObserver, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    DxfRawDocumentView, DxfReadObserver, DxfResourceProfile, DxfSourceId, DxfTextTranscodeReceipt,
+    DxfTransactionPlan,
 };
 
 /// Compact immutable source semantic provenance retained through POINT clone
@@ -58,6 +59,7 @@ impl DxfPointCloneSourceEvidence {
 /// Atomic destination insertion plan retaining source POINT provenance.
 pub struct DxfPointCloneXDataInsertPlan {
     source: DxfPointCloneSourceEvidence,
+    color_name_transcode: Option<DxfTextTranscodeReceipt>,
     insert: DxfEntityXDataDraftInsertPlan,
 }
 
@@ -65,6 +67,11 @@ impl DxfPointCloneXDataInsertPlan {
     #[must_use]
     pub const fn source_evidence(&self) -> DxfPointCloneSourceEvidence {
         self.source
+    }
+
+    #[must_use]
+    pub const fn color_name_transcode(&self) -> Option<DxfTextTranscodeReceipt> {
+        self.color_name_transcode
     }
 
     #[must_use]
@@ -115,6 +122,7 @@ impl DxfPointCloneXDataInsertPlan {
                 DxfPointCloneXDataVerificationOutcome::Verified(Box::new(
                     DxfPointCloneXDataVerificationJournal {
                         source: self.source,
+                        color_name_transcode: self.color_name_transcode,
                         xdata: journal,
                     },
                 ))
@@ -144,6 +152,7 @@ impl DxfPointCloneXDataInsertPlan {
             DxfEntityXDataDraftWriteOutcome::Written(journal) => {
                 DxfPointCloneXDataWriteOutcome::Written(Box::new(DxfPointCloneXDataWriteJournal {
                     source: self.source,
+                    color_name_transcode: self.color_name_transcode,
                     xdata: journal,
                 }))
             }
@@ -156,6 +165,10 @@ impl std::fmt::Debug for DxfPointCloneXDataInsertPlan {
         formatter
             .debug_struct("DxfPointCloneXDataInsertPlan")
             .field("source", &self.source)
+            .field(
+                "has_color_name_transcode",
+                &self.color_name_transcode.is_some(),
+            )
             .field("insert", &self.insert)
             .finish()
     }
@@ -165,6 +178,7 @@ impl std::fmt::Debug for DxfPointCloneXDataInsertPlan {
 #[derive(Debug)]
 pub struct DxfPointCloneXDataVerificationJournal {
     source: DxfPointCloneSourceEvidence,
+    color_name_transcode: Option<DxfTextTranscodeReceipt>,
     xdata: Box<DxfEntityXDataDraftVerificationJournal>,
 }
 
@@ -172,6 +186,11 @@ impl DxfPointCloneXDataVerificationJournal {
     #[must_use]
     pub const fn source_evidence(&self) -> DxfPointCloneSourceEvidence {
         self.source
+    }
+
+    #[must_use]
+    pub const fn color_name_transcode(&self) -> Option<DxfTextTranscodeReceipt> {
+        self.color_name_transcode
     }
 
     #[must_use]
@@ -201,6 +220,7 @@ pub enum DxfPointCloneXDataVerificationOutcome {
 #[derive(Debug)]
 pub struct DxfPointCloneXDataWriteJournal {
     source: DxfPointCloneSourceEvidence,
+    color_name_transcode: Option<DxfTextTranscodeReceipt>,
     xdata: Box<DxfEntityXDataDraftWriteJournal>,
 }
 
@@ -208,6 +228,11 @@ impl DxfPointCloneXDataWriteJournal {
     #[must_use]
     pub const fn source_evidence(&self) -> DxfPointCloneSourceEvidence {
         self.source
+    }
+
+    #[must_use]
+    pub const fn color_name_transcode(&self) -> Option<DxfTextTranscodeReceipt> {
+        self.color_name_transcode
     }
 
     #[must_use]
@@ -248,6 +273,7 @@ impl DxfRawDocumentView<'_> {
             source_owner: draft.source_owner(),
             adaptations: draft.dialect_adaptations(),
         };
+        let color_name_transcode = draft.color_name_transcode();
         let insert = self.plan_entity_xdata_draft_insert(
             draft.into_xdata_draft_record(),
             profile,
@@ -259,7 +285,11 @@ impl DxfRawDocumentView<'_> {
             return Err(invalid_internal_data());
         }
         ensure_not_cancelled(cancellation)?;
-        Ok(DxfPointCloneXDataInsertPlan { source, insert })
+        Ok(DxfPointCloneXDataInsertPlan {
+            source,
+            color_name_transcode,
+            insert,
+        })
     }
 }
 

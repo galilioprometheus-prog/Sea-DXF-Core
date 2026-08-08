@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.3dx**. The current core can:
+Development is complete through checkpoint **M14.3dy**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -54,6 +54,9 @@ Development is complete through checkpoint **M14.3dx**. The current core can:
 - apply that verified conversion to group-1000 XDATA strings, retain compact
   per-occurrence receipts through application/entity grouping and POINT clone
   writing, and keep APPID/LAYER names destination-bound rather than translated;
+- transcode a POINT color-book name in group 430 with exact source-field
+  provenance and retain its receipt through family/XDATA draft, insertion,
+  strict verification, and create-new write journals;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

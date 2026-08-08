@@ -410,6 +410,98 @@ fn point_clone_writes_transcoded_xdata_and_verifies_exact_inverse() -> Result<()
 }
 
 #[test]
+fn point_clone_carries_color_name_transcode_through_verify_and_write_journals()
+-> Result<(), Box<dyn Error>> {
+    let source_version = DxfAcadVersion::Ac1018;
+    let destination_version = DxfAcadVersion::Ac1021;
+    let source_bytes = source_fixture_with_xdata_and_color(
+        DxfRawDocumentFormat::Binary,
+        source_version,
+        b"ASCII_XDATA",
+        Some(b"SECRET_\xE9$COLOR_\xE9"),
+    )?;
+    let destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Ascii, destination_version, 0x40)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Binary)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+    let draft = point_clone_xdata_draft(
+        &directory,
+        entry,
+        source.view(),
+        destination.view(),
+        destination_version,
+    )?;
+    let receipt = draft
+        .color_name_transcode()
+        .ok_or_else(|| io::Error::other("draft color-name receipt"))?;
+    assert_eq!(receipt.source_id(), source.view().source_id());
+    assert_eq!(receipt.destination_id(), destination.view().source_id());
+    assert_eq!(
+        receipt.source_byte_count(),
+        b"SECRET_\xE9$COLOR_\xE9".len() as u64
+    );
+    assert_eq!(
+        receipt.encoded_byte_count(),
+        "SECRET_é$COLOR_é".len() as u64
+    );
+    assert!(
+        draft
+            .bytes()
+            .windows("SECRET_é$COLOR_é".len())
+            .any(|window| window == "SECRET_é$COLOR_é".as_bytes())
+    );
+    let insert = destination.view().plan_point_clone_xdata_insert(
+        draft,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert_eq!(insert.color_name_transcode(), Some(receipt));
+    let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;
+    let output_storage = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let post = open_document(&output_storage, DxfRawDocumentFormat::Ascii)?;
+    let DxfPointCloneXDataVerificationOutcome::Verified(verified) = insert.verify_post_image(
+        destination.view(),
+        post.view(),
+        DxfResourceProfile::Safe,
+        &token(),
+    )?
+    else {
+        return Err(io::Error::other("color-name verification").into());
+    };
+    assert_eq!(verified.color_name_transcode(), Some(receipt));
+    assert_eq!(
+        materialize(&output, verified.inverse_plan())?,
+        destination_bytes
+    );
+
+    let temporary = TestDirectory::new()?;
+    let output_path = temporary
+        .path()
+        .join("point-clone-color-name-transcode.dxf");
+    let mut observer = NoopDxfReadObserver;
+    let DxfPointCloneXDataWriteOutcome::Written(written) = insert
+        .write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &output_path,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut observer,
+        )?
+    else {
+        return Err(io::Error::other("color-name write").into());
+    };
+    assert_eq!(written.color_name_transcode(), Some(receipt));
+    assert_eq!(fs::read(&output_path)?, output);
+    let debug = format!("{insert:?} {verified:?} {written:?}");
+    assert!(!debug.contains("SECRET"));
+    Ok(())
+}
+
+#[test]
 fn point_clone_xdata_composition_is_fail_closed_and_keeps_standalone_projection_strict()
 -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
@@ -1151,6 +1243,15 @@ fn source_fixture_with_xdata(
     version: DxfAcadVersion,
     xdata: &[u8],
 ) -> Result<Vec<u8>, io::Error> {
+    source_fixture_with_xdata_and_color(format, version, xdata, None)
+}
+
+fn source_fixture_with_xdata_and_color(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    xdata: &[u8],
+    color_name: Option<&[u8]>,
+) -> Result<Vec<u8>, io::Error> {
     let mut groups = header(version, 0x30);
     groups.extend([
         group(0, b"SECTION"),
@@ -1201,6 +1302,13 @@ fn source_fixture_with_xdata(
     groups.push(group(8, b"Layer0"));
     if version >= DxfAcadVersion::Ac1015 {
         groups.push(group(370, b"-1"));
+    }
+    if let Some(color_name) = color_name {
+        groups.extend([
+            group(62, b"40"),
+            group(420, b"16235019"),
+            group(430, color_name),
+        ]);
     }
     if version >= DxfAcadVersion::Ac1012 {
         groups.push(group(100, b"AcDbPoint"));
@@ -1320,12 +1428,19 @@ fn encode_fixture(
                         .parse::<f64>()
                         .map_err(|_| io::Error::other("double value"))?;
                     bytes.extend_from_slice(&number.to_bits().to_le_bytes());
-                } else if *code == 370 {
+                } else if matches!(*code, 62 | 370) {
                     let text =
                         std::str::from_utf8(value).map_err(|_| io::Error::other("int16 text"))?;
                     let number = text
                         .parse::<i16>()
                         .map_err(|_| io::Error::other("int16 value"))?;
+                    bytes.extend_from_slice(&number.to_le_bytes());
+                } else if *code == 420 {
+                    let text =
+                        std::str::from_utf8(value).map_err(|_| io::Error::other("int32 text"))?;
+                    let number = text
+                        .parse::<i32>()
+                        .map_err(|_| io::Error::other("int32 value"))?;
                     bytes.extend_from_slice(&number.to_le_bytes());
                 } else {
                     bytes.extend_from_slice(value);

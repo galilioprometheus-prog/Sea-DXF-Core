@@ -18,8 +18,8 @@ use seacad_dxf_core::{
     DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
     DxfNamedSymbolTableKind, DxfPointCloneDestinationBindings, DxfPointCloneDialectAdaptations,
     DxfPointCloneDraftProjectionIssue, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
-    NoopDxfReadObserver,
+    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTextEncodeStatus,
+    DxfTextTranscodeIssue, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -208,6 +208,116 @@ fn point_clone_draft_projects_all_format_pairs_and_dialects() -> Result<(), Box<
             }
         }
     }
+    Ok(())
+}
+
+#[test]
+fn point_clone_color_name_transcodes_both_directions_for_all_format_pairs()
+-> Result<(), Box<dyn Error>> {
+    for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            assert_color_name_projection_pair(
+                source_format,
+                DxfAcadVersion::Ac1018,
+                b"SECRET_\xE9$COLOR_\xE9",
+                destination_format,
+                DxfAcadVersion::Ac1021,
+                "SECRET_é$COLOR_é".as_bytes(),
+                "SECRET_é$COLOR_é".len(),
+                true,
+            )?;
+            assert_color_name_projection_pair(
+                source_format,
+                DxfAcadVersion::Ac1021,
+                "SECRET_é$COLOR_é".as_bytes(),
+                destination_format,
+                DxfAcadVersion::Ac1018,
+                b"SECRET_\xE9$COLOR_\xE9",
+                "SECRET_é$COLOR_é".len(),
+                true,
+            )?;
+        }
+    }
+    assert_color_name_projection_pair(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1018,
+        b"BOOK_\xE9$COLOR_\xE9",
+        DxfRawDocumentFormat::Binary,
+        DxfAcadVersion::Ac1018,
+        b"BOOK_\xE9$COLOR_\xE9",
+        "BOOK_é$COLOR_é".len(),
+        false,
+    )?;
+    Ok(())
+}
+
+#[test]
+fn point_clone_color_name_transcode_is_typed_and_legacy_fail_closed() -> Result<(), Box<dyn Error>>
+{
+    let source_bytes = point_color_name_source_fixture(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1021,
+        "BOOK$你".as_bytes(),
+    )?;
+    let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let source_document = open_ascii(&source_memory)?;
+    let source = DxfRawDocumentView::from(&source_document);
+    let key = point_key(&source.entity_field_evidence_directory(&token())?)?;
+    let destination_bytes = fixture(DxfRawDocumentFormat::Binary, DxfAcadVersion::Ac1018, 0x40)?;
+    let destination_memory = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let destination_document = open_binary(&destination_memory)?;
+    let destination = DxfRawDocumentView::from(&destination_document);
+    assert!(matches!(
+        destination.project_point_clone_draft_from(
+            source,
+            key,
+            admitted_plan(
+                destination,
+                DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+            )?,
+            DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?,
+        Err(DxfPointCloneDraftProjectionIssue::TextTranscode {
+            field: DxfEntityField::COLOR_NAME,
+            issue: DxfTextTranscodeIssue::DestinationEncode {
+                status: DxfTextEncodeStatus::Unmappable { .. }
+            }
+        })
+    ));
+
+    let legacy_source_bytes = point_color_name_source_fixture(
+        DxfRawDocumentFormat::Binary,
+        DxfAcadVersion::Ac1018,
+        b"BOOK$COLOR",
+    )?;
+    let legacy_source_memory =
+        DxfMemorySource::new(&legacy_source_bytes, DxfResourceProfile::Safe)?;
+    let legacy_source_document = open_binary(&legacy_source_memory)?;
+    let legacy_source = DxfRawDocumentView::from(&legacy_source_document);
+    let legacy_key = point_key(&legacy_source.entity_field_evidence_directory(&token())?)?;
+    let old_bytes = fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1009, 0x40)?;
+    let old_memory = DxfMemorySource::new(&old_bytes, DxfResourceProfile::Safe)?;
+    let old_document = open_ascii(&old_memory)?;
+    let old = DxfRawDocumentView::from(&old_document);
+    assert!(matches!(
+        old.project_point_clone_draft_from(
+            legacy_source,
+            legacy_key,
+            admitted_plan(old, DxfEntityDraftName::canonical(DxfEntityTopic::POINT))?,
+            DxfPointCloneDestinationBindings::new(b"Layer0"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?,
+        Err(
+            DxfPointCloneDraftProjectionIssue::DestinationFieldNotRepresentable {
+                field: DxfEntityField::COLOR_NAME,
+                source_version: DxfAcadVersion::Ac1018,
+                destination_version: DxfAcadVersion::Ac1009,
+            }
+        )
+    ));
     Ok(())
 }
 
@@ -1266,6 +1376,7 @@ enum ExpectedGroup<'a> {
     Text(i16, &'a [u8]),
     Handle(i16, u64),
     Int16(i16, i16),
+    Int32(i16, i32),
     Double(i16, DxfDouble),
 }
 
@@ -1280,6 +1391,7 @@ fn encode_expected(
             ExpectedGroup::Text(code, _)
             | ExpectedGroup::Handle(code, _)
             | ExpectedGroup::Int16(code, _)
+            | ExpectedGroup::Int32(code, _)
             | ExpectedGroup::Double(code, _) => *code,
         };
         match format {
@@ -1292,6 +1404,9 @@ fn encode_expected(
                         bytes.extend_from_slice(format!("{value:X}").as_bytes());
                     }
                     ExpectedGroup::Int16(_, value) => {
+                        bytes.extend_from_slice(value.to_string().as_bytes());
+                    }
+                    ExpectedGroup::Int32(_, value) => {
                         bytes.extend_from_slice(value.to_string().as_bytes());
                     }
                     ExpectedGroup::Double(_, value) => {
@@ -1316,6 +1431,9 @@ fn encode_expected(
                         bytes.push(0);
                     }
                     ExpectedGroup::Int16(_, value) => {
+                        bytes.extend_from_slice(&value.to_le_bytes());
+                    }
+                    ExpectedGroup::Int32(_, value) => {
                         bytes.extend_from_slice(&value.to_le_bytes());
                     }
                     ExpectedGroup::Double(_, value) => {
@@ -1362,6 +1480,117 @@ fn point_reference_source_fixture(
     )?);
     bytes.splice(offset..offset, references);
     Ok(bytes)
+}
+
+fn point_color_name_source_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    color_name: &[u8],
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = point_source_fixture(format, version)?;
+    let marker = encode_expected(format, version, &[ExpectedGroup::Text(100, b"AcDbPoint")])?;
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT subclass marker"))?;
+    let color = encode_expected(
+        format,
+        version,
+        &[
+            ExpectedGroup::Int16(62, 40),
+            ExpectedGroup::Int32(420, 16_235_019),
+            ExpectedGroup::Text(430, color_name),
+        ],
+    )?;
+    bytes.splice(offset..offset, color);
+    Ok(bytes)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn assert_color_name_projection_pair(
+    source_format: DxfRawDocumentFormat,
+    source_version: DxfAcadVersion,
+    source_name: &[u8],
+    destination_format: DxfRawDocumentFormat,
+    destination_version: DxfAcadVersion,
+    expected_name: &[u8],
+    expected_utf8_count: usize,
+    expect_transcode: bool,
+) -> Result<(), Box<dyn Error>> {
+    let source_bytes = point_color_name_source_fixture(source_format, source_version, source_name)?;
+    let destination_bytes = fixture(destination_format, destination_version, 0x40)?;
+    let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_memory = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source_document = open_document(&source_memory, source_format)?;
+    let destination_document = open_document(&destination_memory, destination_format)?;
+    let source = source_document.view();
+    let destination = destination_document.view();
+    let key = point_key(&source.entity_field_evidence_directory(&token())?)?;
+    let projected = match destination.project_point_clone_draft_from(
+        source,
+        key,
+        admitted_plan(
+            destination,
+            DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+        )?,
+        DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+        DxfResourceProfile::Safe,
+        &token(),
+    )? {
+        Ok(plan) => plan,
+        Err(issue) => return Err(io::Error::other(format!("color name: {issue:?}")).into()),
+    };
+    let receipt = projected.color_name_transcode();
+    assert_eq!(receipt.is_some(), expect_transcode);
+    if let Some(receipt) = receipt {
+        assert_eq!(receipt.source_id(), source.source_id());
+        assert_eq!(receipt.destination_id(), destination.source_id());
+        assert_eq!(receipt.source_byte_count(), source_name.len() as u64);
+        assert_eq!(receipt.utf8_byte_count(), expected_utf8_count as u64);
+        assert_eq!(receipt.encoded_byte_count(), expected_name.len() as u64);
+        assert_eq!(
+            receipt.source_encoding(),
+            source.text_encoding_report().resolution()
+        );
+        assert_eq!(
+            receipt.destination_encoding(),
+            destination.text_encoding_report().resolution()
+        );
+        let common = source.entity_field_semantic_directory(&token())?;
+        let entity = common
+            .evidence_directory()
+            .entity_directory()
+            .entities()
+            .iter()
+            .copied()
+            .find(|entity| entity.key() == key)
+            .ok_or_else(|| io::Error::other("source color entity"))?;
+        let color = common
+            .entry_for_field(entity, DxfEntityField::COLOR_NAME)?
+            .ok_or_else(|| io::Error::other("source color field"))?;
+        let DxfEntityFieldSemantics::Singleton(value) = color.semantics() else {
+            return Err(io::Error::other("source color singleton").into());
+        };
+        let Some(DxfEntityFieldValue::ExactText(text)) = value.value() else {
+            return Err(io::Error::other("source color text").into());
+        };
+        assert_eq!(receipt.source_span(), text.value_span());
+    }
+    let expected = encode_expected(
+        destination_format,
+        destination_version,
+        &[ExpectedGroup::Text(430, expected_name)],
+    )?;
+    assert!(
+        projected
+            .destination()
+            .bytes()
+            .windows(expected.len())
+            .any(|window| window == expected)
+    );
+    let debug = format!("{projected:?}");
+    assert!(!debug.contains("SECRET"));
+    Ok(())
 }
 
 fn inject_reference_targets(
@@ -1438,6 +1667,8 @@ fn reference_fixture(
         (2, "HEADER"),
         (9, "$ACADVER"),
         (1, version.code()),
+        (9, "$DWGCODEPAGE"),
+        (3, "ANSI_1252"),
         (9, "$HANDSEED"),
         (5, handseed.as_str()),
         (0, "ENDSEC"),

@@ -33,6 +33,26 @@ fn utf8_and_windows1252_transcode_both_directions_for_all_format_pairs()
                 None,
                 "é".as_bytes(),
             )?;
+            assert_pair(
+                source_format,
+                DxfAcadVersion::Ac1018,
+                Some(b"ANSI_1252"),
+                b"SECRET_\xE9$COLOR_\xE9",
+                destination_format,
+                DxfAcadVersion::Ac1021,
+                None,
+                "SECRET_é$COLOR_é".as_bytes(),
+            )?;
+            assert_pair(
+                source_format,
+                DxfAcadVersion::Ac1021,
+                None,
+                "SECRET_é$COLOR_é".as_bytes(),
+                destination_format,
+                DxfAcadVersion::Ac1018,
+                Some(b"ANSI_1252"),
+                b"SECRET_\xE9$COLOR_\xE9",
+            )?;
         }
     }
     Ok(())

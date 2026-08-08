@@ -3251,6 +3251,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     closed. Application-specific meaning, automatic symbol creation, other
     entity text fields, higher families, and POINT `Complete` remain open.
 
+    M14.3dy integrates verified storage transcoding for the reviewed POINT
+    group-430 color-book name. Clone snapshots retain exact field provenance
+    and bytes for common text, while layer/layout/linetype remain explicit
+    destination bindings and only color name may convert storage. Portable
+    ASCII and matching available decoders stay byte-exact. The successful
+    receipt binds field span, dual identities/resolutions, and counts through
+    family/XDATA draft, insertion, strict verification, and create-new write
+    journals. UTF-8/Windows-1252 both ways span all four ASCII/Binary pairs;
+    one Binary AC1018-to-ASCII AC1021 clone passes write/reparse, color and
+    XDATA postconditions, and exact inverse. Unmappable text is typed and
+    AC1009 rejects group 430 as non-representable. A four-byte bounded verifier
+    slack fixes exact-length legacy round trips without raising payload
+    ceilings. Other free-text common fields, application-specific XDATA
+    meaning, automatic symbol creation, higher families, and POINT `Complete`
+    remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

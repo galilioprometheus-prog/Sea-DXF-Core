@@ -33,8 +33,8 @@ use crate::{
     DxfEntityField, DxfEntityFieldCardState, DxfEntityFieldEvidenceDirectory,
     DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldReplacementIssue,
     DxfEntityFieldReplacementOutcome, DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome,
-    DxfEntityFieldSemantics, DxfEntityFieldValue, DxfEntityIndexedColor, DxfEntityKey,
-    DxfEntityLineweight, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
+    DxfEntityFieldSemantics, DxfEntityFieldTextValue, DxfEntityFieldValue, DxfEntityIndexedColor,
+    DxfEntityKey, DxfEntityLineweight, DxfEntityPlacement, DxfEntityPlacementOwnerIssue,
     DxfEntityPlacementOwnerOutcome, DxfEntityPlacementTarget, DxfEntityProxyGraphicsState,
     DxfEntityShadowMode, DxfEntitySpace, DxfEntityTransparency, DxfEntityTrueColor,
     DxfEntityVisibility, DxfError, DxfHandle, DxfHandleAllocationOutcome,
@@ -509,9 +509,9 @@ pub(crate) struct PointCloneSnapshot {
     version: DxfAcadVersion,
     placement: DxfEntityPlacementTarget,
     owner: Option<DxfHandle>,
-    layer: Box<[u8]>,
-    layout: Option<Box<[u8]>>,
-    linetype: Option<Box<[u8]>>,
+    layer: PointCloneText,
+    layout: Option<PointCloneText>,
+    linetype: Option<PointCloneText>,
     material: Option<DxfHandle>,
     plot_style: Option<DxfHandle>,
     space: Option<DxfEntitySpace>,
@@ -521,7 +521,7 @@ pub(crate) struct PointCloneSnapshot {
     visibility: Option<DxfEntityVisibility>,
     proxy_graphics: Option<Box<[u8]>>,
     true_color: Option<DxfEntityTrueColor>,
-    color_name: Box<[u8]>,
+    color_name: Option<PointCloneText>,
     transparency: Option<DxfEntityTransparency>,
     shadow_mode: Option<DxfEntityShadowMode>,
     location: [crate::DxfDouble; 3],
@@ -530,19 +530,34 @@ pub(crate) struct PointCloneSnapshot {
     ucs_x_axis_angle: Option<crate::DxfDouble>,
 }
 
-type PointCloneTextResult = Result<Option<Box<[u8]>>, DxfEntityCloneIssue>;
+pub(crate) struct PointCloneText {
+    source: DxfEntityFieldTextValue,
+    bytes: Box<[u8]>,
+}
+
+impl PointCloneText {
+    pub(crate) const fn source(&self) -> DxfEntityFieldTextValue {
+        self.source
+    }
+
+    pub(crate) fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+}
+
+type PointCloneTextResult = Result<Option<PointCloneText>, DxfEntityCloneIssue>;
 
 impl PointCloneSnapshot {
     fn borrowed(&self, owner: DxfHandle) -> DxfEntityDraft<'_> {
-        let mut point = DxfPointDraft::new(&self.layer, self.location);
-        if let Some(layout) = self.layout.as_deref() {
-            point = point.with_layout(layout);
+        let mut point = DxfPointDraft::new(self.layer.bytes(), self.location);
+        if let Some(layout) = self.layout.as_ref() {
+            point = point.with_layout(layout.bytes());
         }
         if let Some(space) = self.space {
             point = point.with_space(space);
         }
-        if let Some(linetype) = self.linetype.as_deref() {
-            point = point.with_linetype(linetype);
+        if let Some(linetype) = self.linetype.as_ref() {
+            point = point.with_linetype(linetype.bytes());
         }
         if let Some(material) = self.material {
             point = point.with_material(material);
@@ -568,8 +583,8 @@ impl PointCloneSnapshot {
         if let Some(color) = self.true_color {
             point = point.with_true_color(color);
         }
-        if !self.color_name.is_empty() {
-            point = point.with_color_name(&self.color_name);
+        if let Some(color_name) = self.color_name.as_ref() {
+            point = point.with_color_name(color_name.bytes());
         }
         if let Some(transparency) = self.transparency {
             point = point.with_transparency(transparency);
@@ -629,11 +644,16 @@ impl PointCloneSnapshot {
         self.plot_style
     }
 
+    pub(crate) fn color_name(&self) -> Option<&PointCloneText> {
+        self.color_name.as_ref()
+    }
+
     pub(crate) fn borrowed_for_destination<'a>(
         &'a self,
         owner: DxfHandle,
         lineweight: Option<DxfEntityLineweight>,
         bindings: crate::DxfPointCloneDestinationBindings<'a>,
+        color_name: Option<&'a [u8]>,
     ) -> DxfEntityDraft<'a> {
         let mut point = DxfPointDraft::new(bindings.layer(), self.location);
         if let Some(layout) = bindings.layout() {
@@ -669,8 +689,8 @@ impl PointCloneSnapshot {
         if let Some(color) = self.true_color {
             point = point.with_true_color(color);
         }
-        if !self.color_name.is_empty() {
-            point = point.with_color_name(&self.color_name);
+        if let Some(color_name) = color_name {
+            point = point.with_color_name(color_name);
         }
         if let Some(transparency) = self.transparency {
             point = point.with_transparency(transparency);
@@ -2484,8 +2504,7 @@ pub(crate) fn prepare_point_clone_snapshot(
         profile,
         true,
     )? {
-        Ok(Some(color_name)) => color_name,
-        Ok(None) => Box::default(),
+        Ok(color_name) => color_name,
         Err(issue) => return Ok(Err(issue)),
     };
     let transparency = match clone_common_scalar(
@@ -2741,7 +2760,10 @@ fn clone_exact_text_field(
             bytes.try_reserve_exact(len).map_err(|_| out_of_memory())?;
             bytes.resize(len, 0);
             document.read_span(text.value_span(), &mut bytes)?;
-            Ok(Ok(Some(bytes.into_boxed_slice())))
+            Ok(Ok(Some(PointCloneText {
+                source: text,
+                bytes: bytes.into_boxed_slice(),
+            })))
         }
         state => Ok(Err(DxfEntityCloneIssue::CommonFieldUnavailable {
             key,
