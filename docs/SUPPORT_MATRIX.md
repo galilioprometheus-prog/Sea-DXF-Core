@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ec can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4a can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1506,6 +1506,19 @@ evaluation unqualified. Its additional blocker is
 is sorted by canonical topic ordinal and uses deterministic binary lookup; the
 other 42 topics remain unaudited rather than inferred. Neither curve is called
 `Complete`, and mutation closure remains assigned to M14.11.
+
+M14.4a starts fills and meshes with one deliberately untyped evidence layer.
+Exact canonical uppercase HATCH and MESH records in complete BLOCKS or ENTITIES
+sections retain each exact `AcDbHatch` or `AcDbSubDMesh` subclass occurrence
+and every non-application raw field until the next subclass marker. Record,
+subclass, and field ranges preserve source order, group occurrence, group code,
+payload span, source identity, and family kind. Missing, reversed, near-case,
+and duplicate subclass markers remain distinguishable; nested HATCH and MESH
+code collisions are not assigned premature roles. ASCII/Binary fixtures cover
+all nine Core dialects. Recognition remains dialect-neutral and does not raise
+HATCH applicability or weaken the reviewed AC1024 MESH applicability boundary.
+Cardinality, typed values, boundary paths, topology, geometry, subdivision,
+CRUD/write, and completion status remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

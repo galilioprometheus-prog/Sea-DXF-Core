@@ -114,6 +114,7 @@ mod entity_xdata_structure;
 mod entity_xdata_symbol_destination;
 mod entity_xdata_value;
 mod error;
+mod fill_mesh_evidence;
 mod format_probe;
 #[allow(dead_code)]
 mod generated;
@@ -706,6 +707,10 @@ pub use entity_xdata_value::{
     DxfEntityXDataTypedEntry, DxfEntityXDataValue, DxfEntityXDataValueIssue,
 };
 pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+pub use fill_mesh_evidence::{
+    DxfFillMeshEvidenceDirectory, DxfFillMeshFamily, DxfFillMeshField, DxfFillMeshRange,
+    DxfFillMeshRecordEntry, DxfFillMeshSubclassEntry,
+};
 pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
 pub use generated::entity_schema::{
     DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_APPLICABILITY,

@@ -3327,6 +3327,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     remain unaudited. Neither curve is called `Complete`; family mutation
     closure remains M14.11.
 
+    M14.4a starts fills and meshes with a shared exact raw-evidence directory.
+    Canonical uppercase HATCH and MESH records are recognized only in complete
+    BLOCKS/ENTITIES ranges, and each exact `AcDbHatch` or `AcDbSubDMesh`
+    occurrence creates an independent subclass scope. Every ordinary raw field
+    retains source identity, record boundary, group occurrence/code, payload
+    span, source order, family, and subclass ordinal. Missing, reversed,
+    duplicate, case-variant, and near markers remain fail-closed; application
+    groups and XDATA stay in their existing raw layers. All nine Core dialects
+    have ASCII/Binary shape parity. No HATCH applicability, nested boundary
+    role, MESH topology role, typed semantics, geometry, subdivision,
+    CRUD/write, or completion claim is added; the reviewed AC1024 MESH
+    applicability boundary is unchanged.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -1866,6 +1866,21 @@ evidence blockers. POINT remains level 5, the three assessments are sorted by
 topic ordinal, and the other 42 topics remain unaudited. This checkpoint does
 not call either curve `Complete`; family mutation closure remains M14.11.
 
+M14.4a introduces an exact, fail-closed evidence foundation shared by HATCH
+and modern MESH without interpreting their nested structures. Canonical exact
+uppercase records are admitted only from complete BLOCKS and ENTITIES ranges.
+Each exact `AcDbHatch` or `AcDbSubDMesh` marker creates a separate subclass
+scope, so missing, reversed, duplicate, case-variant, and near markers remain
+observable without leaking fields across scope boundaries. Every ordinary raw
+group in a matching scope retains its source occurrence, code, payload span,
+family, subclass ordinal, record boundary, and source identity; application
+groups and XDATA remain available through the existing raw layers rather than
+being mislabeled as family fields. All nine Core dialects have ASCII/Binary
+shape parity. This evidence recognition does not imply dialect applicability,
+semantic validity, boundary/path roles, mesh topology, geometry, subdivision,
+CRUD/write, or `Complete` support. HATCH applicability remains unreviewed and
+the existing AC1024 MESH boundary remains unchanged.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

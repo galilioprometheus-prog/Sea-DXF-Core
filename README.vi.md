@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3ec**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4a**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -70,6 +70,9 @@ thể:
   evaluated point cùng tangent vector trong một kết quả;
 - báo cáo mức hoàn thiện curve family đã audit một cách tường minh: SPLINE ở
   geometry 4/6, HELIX ở typed semantics 3/6 và chưa entity nào được gọi complete;
+- giữ raw evidence HATCH và MESH hiện đại theo đúng subclass, gồm cả subclass
+  lặp và group code lồng nhau bị trùng, nhưng chưa gán role, decode topology hay
+  suy diễn applicability;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,
