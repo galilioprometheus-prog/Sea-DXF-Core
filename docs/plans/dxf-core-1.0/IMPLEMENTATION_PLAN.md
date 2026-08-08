@@ -3066,5 +3066,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     value projection, encoding/insertion, destination mutation, cross-container
     clone, and POINT `Complete` remain open.
 
+    M14.3dk projects one logical destination state for every M14.3dj typed
+    occurrence. Exact source strings, controls, binary chunks, non-coordinate
+    doubles, and integers remain source-referenced. Group-1001/1003 values bind
+    exact destination APPID/LAYER targets; group-1005 binds only a unique
+    remapped destination handle; complete coordinate components bind their
+    transformed values. Orphan, invalid-source, APPID, LAYER, handle, and
+    coordinate failures remain independent typed states. Four format pairings
+    span all nine Core dialects plus AC1009/AC1032 cross-dialect boundaries,
+    every generic logical family, per-entity slicing, dual-source identity,
+    cancellation, bounds, and redaction. Application-specific meaning,
+    destination text transcoding, byte encoding/insertion, destination mutation,
+    cross-container clone, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

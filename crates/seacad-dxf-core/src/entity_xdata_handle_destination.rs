@@ -5,9 +5,9 @@ use std::io;
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityRef,
     DxfEntityXDataHandleRemap, DxfEntityXDataHandleRemapDirectory, DxfEntityXDataHandleRemapEntry,
-    DxfEntityXDataHandleRemapState, DxfError, DxfHandle, DxfHandleIdentityDirectory,
-    DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfIoOperation, DxfRawDocumentView,
-    DxfSourceId,
+    DxfEntityXDataHandleRemapState, DxfEntityXDataTypedEntry, DxfError, DxfHandle,
+    DxfHandleIdentityDirectory, DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfIoOperation,
+    DxfRawDocumentView, DxfSourceId,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -181,6 +181,21 @@ impl DxfEntityXDataHandleDestinationDirectory {
                 .occurrence()
                 .entity(),
         )
+    }
+
+    #[must_use]
+    pub fn entry_for_typed(
+        &self,
+        typed: DxfEntityXDataTypedEntry,
+    ) -> Option<DxfEntityXDataHandleDestinationEntry> {
+        let resolutions = self.remaps.resolution_directory();
+        let resolution = resolutions.entry_for_typed(typed)?;
+        let remap = self
+            .remaps
+            .entry(resolution.ordinal())
+            .filter(|entry| self.remaps.resolution_for_entry(*entry) == Some(resolution))?;
+        self.entry(remap.ordinal())
+            .filter(|entry| self.remap_for_entry(*entry) == Some(remap))
     }
 
     pub fn entries_for_entity(

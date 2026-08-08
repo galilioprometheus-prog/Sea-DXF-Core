@@ -1618,6 +1618,18 @@ redaction. Application-specific meaning, destination logical-value projection,
 encoding/insertion, mutation, cross-container clone, and POINT `Complete`
 remain open.
 
+M14.3dk adds per-occurrence logical destination projection without encoding or
+mutating either document. `DxfEntityXDataLogicalDestinationDirectory` owns
+M14.3dj and emits exact source-referenced string/control/binary/scalar/integer
+values, destination APPID/LAYER targets, remapped destination handles, and
+transformed coordinate components. Orphan, invalid-source, APPID, LAYER,
+handle, and coordinate failures remain independent typed unavailable states.
+Four format pairings span all nine dialects plus AC1009/AC1032 cross-dialect
+boundaries, every generic logical family, specialized/source-exact independence,
+per-entity slicing, dual-source identity, cancellation, bounds, and redaction.
+Application-specific meaning, destination text transcoding, byte encoding/
+insertion, mutation, cross-container clone, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

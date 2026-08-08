@@ -137,6 +137,11 @@ impl DxfEntityXDataPayloadDestinationDirectory {
     }
 
     #[must_use]
+    pub fn typed_directory(&self) -> &DxfEntityXDataTypedDirectory {
+        typed_directory(&self.compositions)
+    }
+
+    #[must_use]
     pub fn entries(&self) -> &[DxfEntityXDataPayloadDestinationEntry] {
         &self.entries
     }
