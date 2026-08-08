@@ -3018,5 +3018,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     handle remaps, payload semantics, encoding/insertion, cross-container clone,
     and POINT `Complete` remain open.
 
+    M14.3dg composes source-order M14.3df application readiness with the exact
+    M14.3cr per-entity 16,383-byte capacity result. Ready requires every
+    application ready and capacity within limit; zero-XDATA indexed records
+    remain explicit ready entries. Unavailable retains total/unavailable
+    application counts and the unchanged within-limit, exceeded, or
+    indeterminate capacity state. Four ASCII/Binary pairings span all nine Core
+    dialects with cross-dialect boundaries, destination-only, structure-
+    indeterminate, capacity-exceeded, zero-XDATA, dual-source, cancellation,
+    bounds, and redaction cases. Coordinate transforms, handle remaps, payload
+    semantics, encoding/insertion, cross-container clone, and POINT `Complete`
+    remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

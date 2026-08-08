@@ -1567,6 +1567,19 @@ application results. This does not compose per-entity capacity, transformed
 coordinates, handle remaps, payload semantics, encoding/insertion, destination
 mutation, cross-container clone, or POINT `Complete`.
 
+M14.3dg adds per-entity capacity composition without mutating either document.
+`DxfEntityXDataEntityDestinationDirectory` owns the M14.3df application
+destination directory and M14.3cr capacity directory. An indexed entity is
+ready only when all applications are ready and source XDATA is within the exact
+16,383-byte limit. Unavailable entries preserve application counts and the full
+capacity state, distinguishing destination-only failure, indeterminate source
+capacity, and independently exceeded capacity. Zero-XDATA indexed records stay
+visible as ready zero-byte entries. Four ASCII/Binary pairings span all nine
+Core dialects plus cross-dialect boundaries, dual-source identity,
+cancellation, bounds, and debug redaction. Coordinate transforms, handle
+remaps, payload semantics, encoding/insertion, destination mutation, cross-
+container clone, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
