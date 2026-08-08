@@ -1604,6 +1604,20 @@ failures, zero handles, dual-source identity, cancellation, bounds, and
 redaction. Application payload semantics, encoding/insertion, mutation, cross-
 container clone, and POINT `Complete` remain open.
 
+M14.3dj adds per-entity payload-envelope readiness without mutating either
+document. `DxfEntityXDataPayloadDestinationDirectory` owns M14.3di and reuses
+its exact typed occurrence/application evidence instead of rebuilding a source
+directory. Payload counts exclude group-1001 names; orphan values receive a
+direct count. Ready requires M14.3di Ready and no orphan values. Unavailable
+preserves the complete handle-composed state plus exact payload and orphan
+counts, while callers can recover the complete typed and application slices.
+Four format pairings span all nine dialects plus AC1009/AC1032 cross-dialect
+boundaries, enclosed payloads, orphans, independent handle and coordinate
+failures, zero payloads, dual-source identity, cancellation, bounds, and
+redaction. Application-specific meaning, destination logical-value projection,
+encoding/insertion, mutation, cross-container clone, and POINT `Complete`
+remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

@@ -4,9 +4,9 @@ use std::io;
 
 use crate::{
     DxfAsciiNumericIssue, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
-    DxfDouble, DxfEntityXDataApplication, DxfEntityXDataDirectory, DxfEntityXDataOccurrence,
-    DxfError, DxfHandle, DxfHandleParseIssue, DxfIoOperation, DxfRawDocumentFormat,
-    DxfRawDocumentView, DxfRawValueProvenance, DxfSourceId,
+    DxfDouble, DxfEntityRef, DxfEntityXDataApplication, DxfEntityXDataDirectory,
+    DxfEntityXDataOccurrence, DxfError, DxfHandle, DxfHandleParseIssue, DxfIoOperation,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfRawValueProvenance, DxfSourceId,
     raw_double::decode_raw_double,
     raw_handle::parse_raw_group_handle,
     raw_integer::{decode_raw_i16, decode_raw_i32},
@@ -217,6 +217,32 @@ impl DxfEntityXDataTypedDirectory {
                     ..usize::try_from(range.end()).map_err(|_| invalid_internal_data())?,
             )
             .ok_or_else(invalid_internal_data)
+    }
+
+    pub fn entries_for_entity(
+        &self,
+        entity: DxfEntityRef,
+    ) -> Result<&[DxfEntityXDataTypedEntry], DxfError> {
+        ensure_source(self.source_id, entity.source_id())?;
+        let ordinal = entity.record().ordinal();
+        let start = self
+            .entries
+            .partition_point(|entry| entry.occurrence().entity().record().ordinal() < ordinal);
+        let end = self
+            .entries
+            .partition_point(|entry| entry.occurrence().entity().record().ordinal() <= ordinal);
+        let entries = self
+            .entries
+            .get(start..end)
+            .ok_or_else(invalid_internal_data)?;
+        if entries
+            .iter()
+            .all(|entry| entry.occurrence().entity() == entity)
+        {
+            Ok(entries)
+        } else {
+            Err(invalid_internal_data())
+        }
     }
 
     /// Decodes one validated group-1004 chunk into an exact caller-owned buffer.

@@ -99,6 +99,7 @@ mod entity_xdata_handle_replacement_verification;
 mod entity_xdata_handle_resolution;
 mod entity_xdata_layer_destination;
 mod entity_xdata_layer_resolution;
+mod entity_xdata_payload_destination;
 mod entity_xdata_point_tuple;
 mod entity_xdata_structure;
 mod entity_xdata_symbol_destination;
@@ -631,6 +632,10 @@ pub use entity_xdata_layer_destination::{
 pub use entity_xdata_layer_resolution::{
     DxfEntityXDataLayerResolutionDirectory, DxfEntityXDataLayerResolutionEntry,
     DxfEntityXDataLayerResolutionState,
+};
+pub use entity_xdata_payload_destination::{
+    DxfEntityXDataPayloadDestinationDirectory, DxfEntityXDataPayloadDestinationEntry,
+    DxfEntityXDataPayloadDestinationState,
 };
 pub use entity_xdata_point_tuple::{
     DxfEntityXDataPointComponents, DxfEntityXDataPointKind, DxfEntityXDataPointMember,

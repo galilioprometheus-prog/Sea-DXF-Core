@@ -3053,5 +3053,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     encoding/insertion, destination mutation, cross-container clone, and POINT
     `Complete` remain open.
 
+    M14.3dj composes each M14.3di entity result with exact typed occurrence and
+    application slices from the already owned coordinate chain. Payload values
+    exclude group-1001 application names; orphan values remain an explicit
+    direct count instead of requiring callers to infer them from capacity
+    issues. Ready requires M14.3di Ready and zero orphan values. Unavailable
+    retains the complete handle-composed state plus exact payload/orphan counts.
+    Four format pairings span all nine Core dialects plus AC1009/AC1032 cross-
+    dialect boundaries, enclosed payloads, orphans, independent handle and
+    coordinate failures, zero payloads, dual-source identity, cancellation,
+    bounds, and redaction. Application-specific meaning, destination logical-
+    value projection, encoding/insertion, destination mutation, cross-container
+    clone, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.
