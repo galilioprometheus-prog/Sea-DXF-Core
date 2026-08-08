@@ -128,6 +128,7 @@ mod handle_reservation_plan;
 mod handle_resolution;
 mod handle_role;
 mod handseed;
+mod hatch_scalar_card;
 mod hatch_scalar_evidence;
 mod header_handle;
 mod header_index;
@@ -751,6 +752,10 @@ pub use handle_resolution::{
 };
 pub use handle_role::{DxfHandleRoleDirectory, DxfHandleRoleEntry, DxfHandleRoleEvidence};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
+pub use hatch_scalar_card::{
+    DxfHatchScalarCard, DxfHatchScalarCardDirectory, DxfHatchScalarCardMember,
+    DxfHatchScalarCardMemberRange, DxfHatchScalarCardState,
+};
 pub use hatch_scalar_evidence::{
     DXF_HATCH_SCALAR_ROLES, DxfHatchScalarDirectory, DxfHatchScalarEntry, DxfHatchScalarIssue,
     DxfHatchScalarOccurrence, DxfHatchScalarRole, DxfHatchScalarValue,

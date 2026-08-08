@@ -1897,6 +1897,18 @@ semantic defaults/domains, elevation/seed tuples, nested-state partitioning,
 boundary paths, pattern lines, gradient relations, geometry, CRUD/write, and
 `Complete` remain open.
 
+M14.4c builds 25 fixed cards for every exact M14.4b `AcDbHatch` subclass.
+Cards remain ordered by the public role inventory and retain the subclass
+entry, compact member range, and explicit absent/unique/multiple state. Members
+reference global typed-occurrence ordinals, so raw groups and payloads are not
+copied. Duplicate subclass markers in one raw record remain independent; a
+record-level lookup exposes the contiguous aggregate without merging roles.
+Invalid numeric values retain their members and do not change cardinality. All
+nine Core dialects have paired ASCII/Binary card/member parity; AC1009 exposes
+the nine high-code roles as absent. This checkpoint does not select values or
+add defaults, domains, semantic relations, tuples, nested HATCH state,
+geometry, applicability, CRUD/write, or `Complete` support.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

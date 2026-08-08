@@ -3352,6 +3352,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     cardinality, defaults/domains, tuples, boundary paths, pattern lines,
     gradient relations, geometry, CRUD/write, and completion remain open.
 
+    M14.4c adds 25 fixed cardinality cards per exact M14.4b HATCH subclass.
+    Cards preserve public role order, subclass identity, compact member ranges,
+    and absent/unique/multiple state; members refer back to typed occurrence
+    ordinals without copying raw payloads. Duplicate subclass markers remain
+    independent even within one record, and invalid numeric values do not alter
+    occurrence count. All nine dialects have ASCII/Binary card/member parity,
+    with nine absent high-code cards in AC1009. Value selection, defaults,
+    domains, relations, tuples, nested HATCH state, geometry, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

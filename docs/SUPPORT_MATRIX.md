@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4b can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4c can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1533,6 +1533,17 @@ applicability evidence. Codes whose roles depend on nested state remain raw.
 Cardinality, defaults/domains, tuple assembly, boundary/path partitioning,
 pattern lines, gradients relations, geometry, CRUD/write, applicability, and
 completion status remain open.
+
+M14.4c adds exactly 25 source-stable cardinality cards per exact `AcDbHatch`
+subclass in the M14.4b directory. Each card retains its subclass entry, role,
+compact member range, and `Absent`, `Unique`, or `Multiple` state; members are
+ordinal references back to the original typed occurrences rather than copied
+payloads. Duplicate subclass markers in one raw record receive independent card
+sets, and raw-record lookup returns their contiguous aggregate. Invalid numeric
+payloads do not alter occurrence count or cause value selection. All nine Core
+dialects have ASCII/Binary card/member parity, including nine absent high-code
+cards for AC1009. Defaults, domains, semantic relations, tuples, nested HATCH
+state, geometry, applicability, CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
