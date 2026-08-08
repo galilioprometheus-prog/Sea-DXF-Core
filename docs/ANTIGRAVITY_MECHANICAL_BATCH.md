@@ -2,22 +2,22 @@
 
 Status: READY
 
-Checkpoint: `M14.3dr-M14.3eb-spline-first-derivative`
+Checkpoint: `M14.3dr-M14.3ec-curve-completion-ledger`
 Repository root: `D:\SeaCad\SeaCad`
 Baseline: `028d726b7f04709927e0d6c8c8d419dc1eb49fcb`
-Review target: annotated tag `m14.3eb-spline-first-derivative`
-Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.3eb-spline-first-derivative-2026-08-09.yaml`
+Review target: annotated tag `m14.3ec-curve-completion-ledger`
+Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.3ec-curve-completion-ledger-2026-08-09.yaml`
 Prepared: `2026-08-09` (`Asia/Saigon`)
 
 The preceding M14.3dl-M14.3dq cumulative batch was independently reviewed PASS
 at exact baseline HEAD. Its external report SHA-256 is
 `b27b982faee5ad86a47ca87346b4ac383a210097596ab80c9ed9c41ceec8e665`.
 Do not repeat that retired batch. This READY batch intentionally accumulates
-M14.3dr through M14.3eb so implementation does not pause between checkpoints.
+M14.3dr through M14.3ec so implementation does not pause between checkpoints.
 
 ## Authority, procedure, and writes
 
-Mechanically verify M14.3dr-M14.3eb only. Codex/user retain architecture,
+Mechanically verify M14.3dr-M14.3ec only. Codex/user retain architecture,
 support, license, commit/tag/merge/release decisions. Use the exact root, read
 `AGENTS.md` and this note completely, confirm exactly one READY, and run phases
 in order. The repository is read-only; ignored target/cache activity is
@@ -32,7 +32,8 @@ status, HEAD, all target annotated-tag objects/messages/peeled commits, the
 baseline tag target, and the baseline-to-target changed path set. Require:
 
 ```text
-HEAD == m14.3eb-spline-first-derivative^{}
+HEAD == m14.3ec-curve-completion-ledger^{}
+m14.3ec-curve-completion-ledger^1 == m14.3eb-spline-first-derivative^{}
 m14.3eb-spline-first-derivative^1 == m14.3ea-spline-point-evaluation^{}
 m14.3ea-spline-point-evaluation^1 == m14.3dz-point-completion-ledger^{}
 m14.3dz-point-completion-ledger^1 == m14.3dy-point-color-name-transcode^{}
@@ -45,7 +46,7 @@ m14.3dt-point-clone-xdata-draft^1 == m14.3ds-point-clone-draft-projection^{}
 m14.3ds-point-clone-draft-projection^1 == m14.3dr-entity-xdata-draft-write^{}
 m14.3dr-entity-xdata-draft-write^1 == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
 m14.3dq-entity-xdata-draft-verification^{} == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
-all eleven review tags are annotated tag objects
+all twelve review tags are annotated tag objects
 ```
 
 The baseline-to-target changed path set must be exactly:
@@ -89,6 +90,7 @@ docs/audits/M14_3DY_POINT_COLOR_NAME_TRANSCODE.md
 docs/audits/M14_3DZ_POINT_COMPLETION_LEDGER.md
 docs/audits/M14_3EA_SPLINE_POINT_EVALUATION.md
 docs/audits/M14_3EB_SPLINE_FIRST_DERIVATIVE.md
+docs/audits/M14_3EC_CURVE_COMPLETION_LEDGER.md
 docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md
 docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
 ```
@@ -99,10 +101,10 @@ Compare paths as sets.
 
 | Path | Lines | SHA-256 |
 |---|---:|---|
-| `README.md` | 187 | `fcad7c660362a4a8cd033d87d376859a7c0ba40ccaba165a1f362560b7521fdd` |
-| `README.vi.md` | 185 | `713915f7a2582d92f235b411b13e7654a2748082241a8976c029f93c3f81e7eb` |
+| `README.md` | 189 | `5a75b7ffe78067e66e30449e5c665d69bf29dc42fb70bca092ca2af2b42a06b3` |
+| `README.vi.md` | 187 | `a0a524f31515512fdf220d66c237364ffa329dd38abd5a2fab74188097995072` |
 | `crates/seacad-dxf-core/src/encoding.rs` | 788 | `246e8f228588680d408dd7ae71f37e16094ab687c3c0fe55d8a48e4aef75a9a7` |
-| `crates/seacad-dxf-core/src/entity_completion.rs` | 100 | `9611cc56db530b71c662479e19dcc3234fe3fafecc500165c462156a80bee5d8` |
+| `crates/seacad-dxf-core/src/entity_completion.rs` | 129 | `0be29a16b5cc3c1d08075678461acc017531f5ac0eb2a3c0f1436470f81f5aa6` |
 | `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2,972 | `ecbc34c75c2c6c03467ea66448f55ddddaaa5550cf087b528239bd214e890207` |
 | `crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs` | 680 | `c4363b3f36799a4cf1b05b0dde28292169a92b5bbca12b0832135a432386d97b` |
 | `crates/seacad-dxf-core/src/entity_xdata_draft_write.rs` | 206 | `bbcf63d4f01a6f0d6baa3eae84bd92f71cd21371e36b9bd6b69cc8e9b80691ee` |
@@ -116,15 +118,15 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/src/text_encoder.rs` | 156 | `914fac5c7237a60ccc418cecfec8104fc759725f31a9fa6874a90665ece89d88` |
 | `crates/seacad-dxf-core/src/text_transcode.rs` | 330 | `0bc7bfedcadabd98bc882baf4cb234c5775495622d7f183a3690a51961d24a5d` |
 | `crates/seacad-dxf-core/tests/entity_draft_record_tests.rs` | 1,924 | `2d053ec4c981df8ad0b13aade304e4ca2c41d59f7d977ab3a5280cab5ed10537` |
-| `crates/seacad-dxf-core/tests/entity_completion_tests.rs` | 101 | `2dafe50d9587a85f8a4055522930e849ce8167a640acde4bba69ce815d40a3bb` |
+| `crates/seacad-dxf-core/tests/entity_completion_tests.rs` | 152 | `1eb2a2fd6bf3eee59fbffd0fb6d60979cbc49e6445fff5792f98499ecc65cbf1` |
 | `crates/seacad-dxf-core/tests/entity_xdata_draft_record_tests.rs` | 1,630 | `84ad2245a954fbf221439abf26d9863c73b33b6937b555e31e161a612867eb08` |
 | `crates/seacad-dxf-core/tests/entity_xdata_encoded_destination_tests.rs` | 1,234 | `e6450275eb747cf8fc2d4caf9546738fdd1c711b93f15399644409fdc7f5e619` |
 | `crates/seacad-dxf-core/tests/entity_xdata_text_transcode_tests.rs` | 627 | `70e5d77b74566aab2cc70e4ef5b40d3fe3d522f2a880b1b160a0563575180485` |
 | `crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs` | 367 | `4b6306081db5d1ca6cba239f0fecc09dbcf3506e87e3d04920a9c0a09a9c3dbb` |
 | `crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs` | 348 | `bc72c88c95a4fc983ff0e64a409d539f8d8d6b460d8e9c5d37e6cb0972e2fdc3` |
 | `crates/seacad-dxf-core/tests/text_transcode_tests.rs` | 476 | `9bda1ee19362b058ab9a174705cc0d5893f73d13bdb8e008b6e4a7d2d2340a40` |
-| `docs/IMPLEMENTATION_PLAN.md` | 423 | `6734e1e3c6d9819378021e3769c5372b04094e689f308aae4406f3f3e230e62f` |
-| `docs/SUPPORT_MATRIX.md` | 2,974 | `de66db8edb6aa6201f9c54b97728097db39d4bbe497f7878fc3f22675ee4752c` |
+| `docs/IMPLEMENTATION_PLAN.md` | 423 | `c1c58260bfcab2caacde5cf99b9abe0e10322211e8b46effae53ccff12f6259d` |
+| `docs/SUPPORT_MATRIX.md` | 2,989 | `b67bf7d16bae277cfa08dd3494150d433229f043a1c6c1b9711e3b250bf1bf40` |
 | `docs/audits/M14_3DR_ENTITY_XDATA_DRAFT_WRITE.md` | 55 | `0475c6d1c6f73507f1c63e9da586c7078e39c25c91f0fd1b2a13848af264d540` |
 | `docs/audits/M14_3DS_POINT_CLONE_DRAFT_PROJECTION.md` | 50 | `0ab9ac7a5274f38ad9cb8309a53c3b9f04f1d79512c7159f8434c7b6d4f911cc` |
 | `docs/audits/M14_3DT_POINT_CLONE_XDATA_DRAFT.md` | 46 | `c9ff7377bfe2c674a0eddcb029e32f34a4c6e4b488adf76bef638e0788e04905` |
@@ -136,8 +138,9 @@ Compare paths as sets.
 | `docs/audits/M14_3DZ_POINT_COMPLETION_LEDGER.md` | 54 | `a5e56f3813ceb079aa699e1537a8d72eb5364a3bdff5f5abaa443947c9f71308` |
 | `docs/audits/M14_3EA_SPLINE_POINT_EVALUATION.md` | 66 | `a5aea63b5fe3565533f74046e72af1d0ad12c4845702ab2823777a936e580768` |
 | `docs/audits/M14_3EB_SPLINE_FIRST_DERIVATIVE.md` | 76 | `72bd840ad7da890989d45de3aa47e19e66baa6a5ab5db736bf97773c7f34ce28` |
-| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,897 | `bcc0520465692444a95595c46f75667cca23c96b595eecb1df6f4e87c7fc132f` |
-| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,329 | `1308537631b0c59f7785db6ede0220675848e7c8f139fcbc82046d27b418cf7e` |
+| `docs/audits/M14_3EC_CURVE_COMPLETION_LEDGER.md` | 60 | `9ee25e9da9433116db22df1c8ac0f9a37681d0b18162b033fd07c80b264c0706` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,911 | `8964ee57a06833f2dc00714441275ed4e4b42dbe2e4450d830b7d64b80a7089d` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,344 | `2568296c60b4cc78444d9d49b64d1627cd063961835dcce08af7df2221788699` |
 
 Compute every line count and lowercase SHA-256 and require exact matches. The
 active batch note intentionally omits its self-referential receipt.
@@ -165,12 +168,12 @@ rg -n 'DxfPointCloneDialectAdaptations|legacy_placement_owns_layout|omitted_by_l
 rg -n 'DxfTextEncoder|DxfTextEncodeStatus|DxfTextTranscodeIssue|DxfTextTranscodePlan|transcode_text_span_to|round_trip|Unmappable|Unavailable|ValueBytes' crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/tests/text_transcode_tests.rs crates/seacad-dxf-core/src/lib.rs
 rg -n 'DxfTextTranscodeReceipt|text_transcode_for_entry|TextTranscode|TranscodedTextTooLong|DXF_XDATA_STRING_MAX_BYTES|point_clone_writes_transcoded_xdata' crates/seacad-dxf-core/src/text_transcode.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/tests/entity_xdata_text_transcode_tests.rs crates/seacad-dxf-core/tests/entity_xdata_encoded_destination_tests.rs crates/seacad-dxf-core/tests/entity_xdata_draft_record_tests.rs crates/seacad-dxf-core/src/lib.rs
 rg -n 'PointCloneText|color_name_transcode|TextTranscode|COLOR_NAME|transcode_color_name|point_clone_color_name|point_clone_carries_color_name' crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/text_transcode.rs crates/seacad-dxf-core/tests/entity_draft_record_tests.rs crates/seacad-dxf-core/tests/entity_xdata_draft_record_tests.rs crates/seacad-dxf-core/tests/text_transcode_tests.rs
-rg -n 'DxfEntityCompletion(Level|Blocker|Assessment)|DXF_ENTITY_COMPLETION_ASSESSMENTS|dxf_entity_completion_assessment|VerifiedMutation|ReleaseQualified|PrivateCorpusQualification|CurrentCheckpointSixNativeCi' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/tests/entity_completion_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3DZ_POINT_COMPLETION_LEDGER.md
+rg -n 'DxfEntityCompletion(Level|Blocker|Assessment)|DXF_ENTITY_COMPLETION_ASSESSMENTS|dxf_entity_completion_assessment|TypedSemantics|Geometry|VerifiedMutation|ReleaseQualified|PublicGeometryQualification|PrivateCorpusQualification|CurrentCheckpointSixNativeCi' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/tests/entity_completion_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3DZ_POINT_COMPLETION_LEDGER.md docs/audits/M14_3EC_CURVE_COMPLETION_LEDGER.md
 rg -n 'DXF_SPLINE_EVALUATION_MAX_DEGREE|evaluate_point_for_raw_record|DxfSpline(PointEvaluation|EvaluatedPoint|EvaluationInputKind)|DegreeLimitExceeded|NonFiniteParameter|ParameterOutOfDomain|DegenerateKnotInterval|ArithmeticOverflow|NonPositiveHomogeneousWeight' crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EA_SPLINE_POINT_EVALUATION.md
 rg -n 'evaluate_first_derivative_for_raw_record|DxfSpline(EvaluatedDifferential|EvaluatedVector|FirstDerivative)|prepare_evaluation|evaluate_homogeneous|homogeneous_to_point|DegenerateKnotInterval|ArithmeticOverflow' crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EB_SPLINE_FIRST_DERIVATIVE.md
 ```
 
-Expected 6/6, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, and 10/10. For M14.3dr prove create-new-only behavior,
+Expected 8/8, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, and 10/10. For M14.3dr prove create-new-only behavior,
 strict reparse/verification, cleanup, exact inverse, all formats/dialects, zero
 and non-empty XDATA, identity, bounds, cancellation, tamper rejection, and
 redaction. For M14.3ds prove all four format pairs and nine Core dialects,
@@ -209,9 +212,8 @@ inverse, matching-decoder exact bytes, typed unmappable failure, AC1009 non-
 representability, bounded legacy-decoder terminal slack, cancellation, traits,
 identity, and redaction. For M14.3dz prove POINT is exactly level 5, satisfies
 levels 1-5 but not level 6, retains exactly the two release-evidence blockers,
-is not complete, has unique deterministic compact metadata, and leaves the
-other 44 public topics unaudited. Confirm the audit maps every satisfied level
-to existing evidence and does not treat rendering, POINT display behavior,
+is not complete, and has compact stable metadata. Confirm the audit maps every
+satisfied level to existing evidence and does not treat rendering, POINT display behavior,
 application-specific XDATA interpretation, or automatic symbol creation as an
 entity-completion blocker. For M14.3ea prove all 18 ASCII/Binary dialect
 variants evaluate identical quadratic endpoint/midpoint bits, rational weights
@@ -228,7 +230,14 @@ rational weights satisfy the homogeneous quotient rule; degree 64 bounds both
 scratch sets and the combined 4,096 recurrences; typed failures, cancellation,
 lookup, traits, and metadata bounds remain explicit; zero derivative stays
 valid; and no normalization, frame, curvature, sampling, tessellation, HELIX,
-CRUD/write, or `Complete` claim is added. Require zero production matches:
+CRUD/write, or `Complete` claim is added. For M14.3ec prove POINT remains
+exactly level 5 with its two release blockers;
+SPLINE is exactly level 4 with mutation plus two release blockers; HELIX is
+exactly level 3 with public-geometry, mutation, and two release blockers; all
+three remain incomplete; the public list is unique and sorted by canonical
+topic ordinal; binary lookup is deterministic; 42 topics remain unaudited; and
+the HELIX Autodesk warning is not converted into a geometry claim. Require zero
+production matches:
 
 ```powershell
 rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/src/entity_xdata_draft_write.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/src/text_decoder.rs crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs
@@ -238,8 +247,8 @@ Validate every local Markdown link in all changed overview/plan/audit files.
 Require empty protected diff and clean whitespace:
 
 ```powershell
-git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3eb-spline-first-derivative -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3eb-spline-first-derivative
+git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3ec-curve-completion-ledger -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3ec-curve-completion-ledger
 ```
 
 ## Required gates and postflight
@@ -254,18 +263,18 @@ cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence --
 cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 $listed = @(cargo +1.97.1 test --workspace -- --list 2>$null | Select-String ': test$')
-if ($listed.Count -ne 1087) { throw 'Workspace test count drift.' }
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3eb-spline-first-derivative
+if ($listed.Count -ne 1089) { throw 'Workspace test count drift.' }
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.3ec-curve-completion-ledger
 ```
 
 Repeat preflight, receipts, protected diff, and whitespace. HEAD/tag/path sets/
 hashes must match and worktree remain clean. PASS requires exact state,
-receipts, 6/6, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, 10/10, all
-contract/safety/link/protected checks, all gates, exactly 1,087 tests, no mutation, and the
+receipts, 8/8, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, 10/10, all
+contract/safety/link/protected checks, all gates, exactly 1,089 tests, no mutation, and the
 external report.
 
 Write UTF-8 YAML-shaped evidence with batch id
-`seacad-m14.3dr-m14.3eb-spline-first-derivative-2026-08-09`, status/root/
+`seacad-m14.3dr-m14.3ec-curve-completion-ledger-2026-08-09`, status/root/
 report/timestamps, HEAD/tags/Git/path sets before/after, every command and hash
 receipt, focused tests, workspace total, links, forbidden scan, protected
 surfaces, mutations, deviations, failures, blocker, and final assessment. After

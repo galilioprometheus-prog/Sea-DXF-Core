@@ -3312,6 +3312,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     adaptive sampling, tessellation, rendering, HELIX evaluation, SPLINE CRUD/
     write, and SPLINE `Complete` remain open.
 
+    M14.3ec audits the curve-family boundary before advancing to M14.4. SPLINE
+    is recorded at `Geometry`, level 4: M14.3a/q2 prove exact evidence,
+    cardinality, and typed analytic readiness, while M14.3ea/eb prove bounded
+    rational WCS point and first-derivative evaluation. Its blockers are
+    verified mutation plus private-corpus and current-checkpoint six-native
+    release evidence. HELIX is recorded at `TypedSemantics`, level 3:
+    M14.3r-w prove exact subclass evidence, cardinality, scalar/vector
+    semantics, relations, and embedded-SPLINE readiness. Autodesk's warning
+    that inherited NURBS operations on HELIX have unknown behavior and are not
+    recommended remains `PublicGeometryQualification`; verified mutation and
+    release evidence are also open. POINT remains level 5, all three audited
+    entries are sorted by canonical topic ordinal, and the other 42 topics
+    remain unaudited. Neither curve is called `Complete`; family mutation
+    closure remains M14.11.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

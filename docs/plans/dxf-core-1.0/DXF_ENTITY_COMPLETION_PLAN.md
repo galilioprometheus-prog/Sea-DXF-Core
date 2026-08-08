@@ -1852,6 +1852,20 @@ rejected. Tangent normalization/frame policy, higher derivatives, curvature,
 adaptive sampling, tessellation, rendering, HELIX evaluation, SPLINE CRUD/
 write, and SPLINE `Complete` remain open.
 
+M14.3ec audits the curve-family boundary before advancing to M14.4. SPLINE is
+recorded at `Geometry`, level 4: M14.3a/q2 prove levels 1-3, while M14.3ea/eb
+prove bounded rational WCS point and first-derivative evaluation. Its typed
+blockers are verified mutation plus the private-corpus and current-checkpoint
+six-native release gates. HELIX is recorded at `TypedSemantics`, level 3:
+M14.3r-w prove exact subclass evidence, cardinality, scalar/vector semantics,
+cross-field relations, and embedded-SPLINE readiness. Autodesk's explicit
+warning that inherited NURBS operations on HELIX have unknown behavior and are
+not recommended prevents a public stored-curve evaluation claim; this remains
+`PublicGeometryQualification`, followed by verified mutation and release
+evidence blockers. POINT remains level 5, the three assessments are sorted by
+topic ordinal, and the other 42 topics remain unaudited. This checkpoint does
+not call either curve `Complete`; family mutation closure remains M14.11.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

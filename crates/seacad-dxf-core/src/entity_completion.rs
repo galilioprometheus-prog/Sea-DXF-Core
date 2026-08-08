@@ -12,10 +12,12 @@ pub enum DxfEntityCompletionLevel {
     ReleaseQualified = 6,
 }
 
-/// Release evidence that prevents an audited entity from reaching level 6.
+/// Typed evidence gap that prevents an audited entity from advancing.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[repr(u8)]
 pub enum DxfEntityCompletionBlocker {
+    PublicGeometryQualification,
+    VerifiedMutation,
     PrivateCorpusQualification,
     CurrentCheckpointSixNativeCi,
 }
@@ -80,14 +82,40 @@ const POINT_BLOCKERS: &[DxfEntityCompletionBlocker] = &[
     DxfEntityCompletionBlocker::CurrentCheckpointSixNativeCi,
 ];
 
+const SPLINE_BLOCKERS: &[DxfEntityCompletionBlocker] = &[
+    DxfEntityCompletionBlocker::VerifiedMutation,
+    DxfEntityCompletionBlocker::PrivateCorpusQualification,
+    DxfEntityCompletionBlocker::CurrentCheckpointSixNativeCi,
+];
+
+const HELIX_BLOCKERS: &[DxfEntityCompletionBlocker] = &[
+    DxfEntityCompletionBlocker::PublicGeometryQualification,
+    DxfEntityCompletionBlocker::VerifiedMutation,
+    DxfEntityCompletionBlocker::PrivateCorpusQualification,
+    DxfEntityCompletionBlocker::CurrentCheckpointSixNativeCi,
+];
+
 /// Audited assessments only. A missing topic is unaudited, not unsupported.
-pub static DXF_ENTITY_COMPLETION_ASSESSMENTS: &[DxfEntityCompletionAssessment] =
-    &[DxfEntityCompletionAssessment::new(
+pub static DXF_ENTITY_COMPLETION_ASSESSMENTS: &[DxfEntityCompletionAssessment] = &[
+    DxfEntityCompletionAssessment::new(
+        DxfEntityTopic::HELIX,
+        DxfEntityCompletionLevel::TypedSemantics,
+        HELIX_BLOCKERS,
+        "m14.3ec-curve-completion-ledger",
+    ),
+    DxfEntityCompletionAssessment::new(
         DxfEntityTopic::POINT,
         DxfEntityCompletionLevel::VerifiedMutation,
         POINT_BLOCKERS,
         "m14.3dz-point-completion-ledger",
-    )];
+    ),
+    DxfEntityCompletionAssessment::new(
+        DxfEntityTopic::SPLINE,
+        DxfEntityCompletionLevel::Geometry,
+        SPLINE_BLOCKERS,
+        "m14.3ec-curve-completion-ledger",
+    ),
+];
 
 /// Returns the explicit assessment for `topic`, or `None` when it is unaudited.
 #[must_use]
@@ -95,6 +123,7 @@ pub fn dxf_entity_completion_assessment(
     topic: DxfEntityTopic,
 ) -> Option<&'static DxfEntityCompletionAssessment> {
     DXF_ENTITY_COMPLETION_ASSESSMENTS
-        .iter()
-        .find(|assessment| assessment.topic() == topic)
+        .binary_search_by_key(&topic.ordinal(), |assessment| assessment.topic().ordinal())
+        .ok()
+        .and_then(|index| DXF_ENTITY_COMPLETION_ASSESSMENTS.get(index))
 }

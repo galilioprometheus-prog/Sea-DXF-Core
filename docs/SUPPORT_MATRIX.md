@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3eb can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ec can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1491,6 +1491,21 @@ degree-limit outcomes are reused. A zero derivative remains a valid vector;
 normalization, tangent-frame policy, curvature, adaptive sampling,
 tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE
 `Complete` remain open.
+
+M14.3ec audits the curve-family completion boundary before M14.4. SPLINE now
+has an explicit `Geometry` assessment, level 4 of 6: exact evidence,
+cardinality, typed analytic readiness, bounded rational point evaluation, and
+bounded rational first derivatives are evidenced. Its remaining blockers are
+`VerifiedMutation`, `PrivateCorpusQualification`, and
+`CurrentCheckpointSixNativeCi`. HELIX has an explicit `TypedSemantics`
+assessment, level 3 of 6: exact subclass-scoped fields, fixed cardinality,
+vectors/scalars/relations, and embedded-SPLINE readiness are evidenced, but
+Autodesk's warning against inherited NURBS operations leaves exact stored-curve
+evaluation unqualified. Its additional blocker is
+`PublicGeometryQualification`. POINT remains unchanged at level 5. The ledger
+is sorted by canonical topic ordinal and uses deterministic binary lookup; the
+other 42 topics remain unaudited rather than inferred. Neither curve is called
+`Complete`, and mutation closure remains assigned to M14.11.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

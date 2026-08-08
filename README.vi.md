@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3eb**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3ec**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -68,6 +68,8 @@ thể:
 - đánh giá first derivative tương ứng của SPLINE rational bằng derivative
   control polygon có giới hạn và homogeneous quotient rule, đồng thời giữ
   evaluated point cùng tangent vector trong một kết quả;
+- báo cáo mức hoàn thiện curve family đã audit một cách tường minh: SPLINE ở
+  geometry 4/6, HELIX ở typed semantics 3/6 và chưa entity nào được gọi complete;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,
