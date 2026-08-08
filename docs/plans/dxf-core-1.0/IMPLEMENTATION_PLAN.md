@@ -1320,6 +1320,7 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     archive/service digest is treated as the payload receipt, no signing or
     reproducible-build claim is made, and corpus/nightly/final authorization
     remain open.
+
     M13.2c adds a bounded verifier after all six native package jobs. It
     requires exactly one package for every reviewed target and rejects target,
     package, version, Rust, or source-commit disagreement. Every downloaded
@@ -3294,6 +3295,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     proves homogeneous division. Sampling, derivatives, tessellation,
     rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE `Complete`
     remain open.
+
+    M14.3eb refactors M14.3ea's validated homogeneous-control preparation and
+    De Boor recurrence into one internal math path, then adds a source-bound
+    rational first derivative. Degree-scaled differences form the local
+    derivative control polygon over the trimmed knot vector; a degree-minus-
+    one recurrence produces the homogeneous derivative, and the rational
+    quotient rule projects it into the WCS Cartesian derivative while
+    returning the evaluated point beside it. The degree-64 ceiling bounds
+    simultaneous scratch storage to 129 four-component points and both
+    triangular recurrences to 4,096 combined steps. All nine dialects have
+    ASCII/Binary point-and-derivative bit parity at endpoints and midpoint; a
+    nonconstant-weight fixture proves the quotient rule. The M14.3ea typed
+    failure/cancellation contract is reused, and zero derivative remains valid.
+    Tangent normalization/frame policy, higher derivatives, curvature,
+    adaptive sampling, tessellation, rendering, HELIX evaluation, SPLINE CRUD/
+    write, and SPLINE `Complete` remain open.
 
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the

@@ -137,16 +137,60 @@ fn evaluate_available(
     parameter: DxfDouble,
     cancellation: &DxfCancellationToken,
 ) -> Result<DxfSplinePointEvaluationState, DxfError> {
+    let prepared = match prepare_evaluation(directory, data, parameter, cancellation)? {
+        DxfSplineEvaluationMath::Available(prepared) => prepared,
+        DxfSplineEvaluationMath::Unavailable(issue) => return Ok(unavailable(issue)),
+    };
+    let mut work = prepared.homogeneous;
+    let homogeneous = match evaluate_homogeneous(
+        prepared.knots,
+        prepared.degree,
+        prepared.span,
+        0,
+        prepared.parameter,
+        &mut work,
+        cancellation,
+    )? {
+        DxfSplineEvaluationMath::Available(value) => value,
+        DxfSplineEvaluationMath::Unavailable(issue) => return Ok(unavailable(issue)),
+    };
+    Ok(match homogeneous_to_point(homogeneous) {
+        DxfSplineEvaluationMath::Available(point) => {
+            DxfSplinePointEvaluationState::Available(point)
+        }
+        DxfSplineEvaluationMath::Unavailable(issue) => unavailable(issue),
+    })
+}
+
+pub(crate) enum DxfSplineEvaluationMath<T> {
+    Available(T),
+    Unavailable(DxfSplinePointEvaluationIssue),
+}
+
+pub(crate) struct DxfPreparedSplineEvaluation<'a> {
+    pub(crate) knots: &'a [crate::DxfSplineAnalyticKnot],
+    pub(crate) degree: usize,
+    pub(crate) span: usize,
+    pub(crate) parameter: f64,
+    pub(crate) homogeneous: Vec<[f64; 4]>,
+}
+
+pub(crate) fn prepare_evaluation<'a>(
+    directory: &'a DxfSplineAnalyticDirectory,
+    data: crate::DxfSplineAnalyticData,
+    parameter: DxfDouble,
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfSplineEvaluationMath<DxfPreparedSplineEvaluation<'a>>, DxfError> {
     let value = parameter.to_f64();
     if !value.is_finite() {
-        return Ok(unavailable(
+        return Ok(DxfSplineEvaluationMath::Unavailable(
             DxfSplinePointEvaluationIssue::NonFiniteParameter,
         ));
     }
     let start = data.parameter_start.to_f64();
     let end = data.parameter_end.to_f64();
     if value < start || value > end {
-        return Ok(unavailable(
+        return Ok(DxfSplineEvaluationMath::Unavailable(
             DxfSplinePointEvaluationIssue::ParameterOutOfDomain {
                 parameter_start: data.parameter_start,
                 parameter_end: data.parameter_end,
@@ -154,7 +198,7 @@ fn evaluate_available(
         ));
     }
     if data.degree > DXF_SPLINE_EVALUATION_MAX_DEGREE {
-        return Ok(unavailable(
+        return Ok(DxfSplineEvaluationMath::Unavailable(
             DxfSplinePointEvaluationIssue::DegreeLimitExceeded {
                 degree: data.degree,
                 maximum: DXF_SPLINE_EVALUATION_MAX_DEGREE,
@@ -171,10 +215,12 @@ fn evaluate_available(
         .ok_or_else(invalid_internal_data)?;
     for (ordinal, knot) in knots.iter().enumerate() {
         if !knot.value.is_finite() {
-            return Ok(unavailable(DxfSplinePointEvaluationIssue::NonFiniteInput {
-                kind: DxfSplineEvaluationInputKind::Knot,
-                ordinal: u32::try_from(ordinal).map_err(|_| invalid_internal_data())?,
-            }));
+            return Ok(DxfSplineEvaluationMath::Unavailable(
+                DxfSplinePointEvaluationIssue::NonFiniteInput {
+                    kind: DxfSplineEvaluationInputKind::Knot,
+                    ordinal: u32::try_from(ordinal).map_err(|_| invalid_internal_data())?,
+                },
+            ));
         }
     }
     let degree = usize::from(data.degree);
@@ -197,17 +243,21 @@ fn evaluate_available(
             control.point.z.to_f64(),
         ];
         if coordinates.iter().any(|component| !component.is_finite()) {
-            return Ok(unavailable(DxfSplinePointEvaluationIssue::NonFiniteInput {
-                kind: DxfSplineEvaluationInputKind::ControlPoint,
-                ordinal: control.point.tuple_ordinal,
-            }));
+            return Ok(DxfSplineEvaluationMath::Unavailable(
+                DxfSplinePointEvaluationIssue::NonFiniteInput {
+                    kind: DxfSplineEvaluationInputKind::ControlPoint,
+                    ordinal: control.point.tuple_ordinal,
+                },
+            ));
         }
         let weight = control.weight.to_f64();
         if !weight.is_finite() {
-            return Ok(unavailable(DxfSplinePointEvaluationIssue::NonFiniteInput {
-                kind: DxfSplineEvaluationInputKind::Weight,
-                ordinal: u32::try_from(control_index).map_err(|_| invalid_internal_data())?,
-            }));
+            return Ok(DxfSplineEvaluationMath::Unavailable(
+                DxfSplinePointEvaluationIssue::NonFiniteInput {
+                    kind: DxfSplineEvaluationInputKind::Weight,
+                    ordinal: u32::try_from(control_index).map_err(|_| invalid_internal_data())?,
+                },
+            ));
         }
         let homogeneous = [
             coordinates[0] * weight,
@@ -216,62 +266,89 @@ fn evaluate_available(
             weight,
         ];
         if homogeneous.iter().any(|component| !component.is_finite()) {
-            return Ok(unavailable(
+            return Ok(DxfSplineEvaluationMath::Unavailable(
                 DxfSplinePointEvaluationIssue::ArithmeticOverflow,
             ));
         }
         work.push(homogeneous);
     }
+    Ok(DxfSplineEvaluationMath::Available(
+        DxfPreparedSplineEvaluation {
+            knots,
+            degree,
+            span,
+            parameter: value,
+            homogeneous: work,
+        },
+    ))
+}
 
+pub(crate) fn evaluate_homogeneous(
+    knots: &[crate::DxfSplineAnalyticKnot],
+    degree: usize,
+    span: usize,
+    knot_offset: usize,
+    parameter: f64,
+    work: &mut [[f64; 4]],
+    cancellation: &DxfCancellationToken,
+) -> Result<DxfSplineEvaluationMath<[f64; 4]>, DxfError> {
+    if work.len() != degree + 1 {
+        return Err(invalid_internal_data());
+    }
     for level in 1..=degree {
         ensure_not_cancelled(cancellation)?;
         for local in (level..=degree).rev() {
-            let knot_index = span - degree + local;
+            let knot_index = span - degree + local + knot_offset;
             let left = finite_knot(knots, knot_index)?;
             let right = finite_knot(knots, knot_index + degree - level + 1)?;
             let denominator = right - left;
             if denominator == 0.0 {
-                return Ok(unavailable(
+                return Ok(DxfSplineEvaluationMath::Unavailable(
                     DxfSplinePointEvaluationIssue::DegenerateKnotInterval,
                 ));
             }
-            let alpha = (value - left) / denominator;
+            let alpha = (parameter - left) / denominator;
             let previous = work[local - 1];
             let current = work[local];
             work[local] = std::array::from_fn(|component| {
                 (1.0 - alpha) * previous[component] + alpha * current[component]
             });
             if work[local].iter().any(|component| !component.is_finite()) {
-                return Ok(unavailable(
+                return Ok(DxfSplineEvaluationMath::Unavailable(
                     DxfSplinePointEvaluationIssue::ArithmeticOverflow,
                 ));
             }
         }
     }
+    work.get(degree)
+        .copied()
+        .map(DxfSplineEvaluationMath::Available)
+        .ok_or_else(invalid_internal_data)
+}
 
-    let result = work.get(degree).ok_or_else(invalid_internal_data)?;
-    if result[3] <= 0.0 {
-        return Ok(unavailable(
+pub(crate) fn homogeneous_to_point(
+    homogeneous: [f64; 4],
+) -> DxfSplineEvaluationMath<DxfSplineEvaluatedPoint> {
+    if homogeneous[3] <= 0.0 {
+        return DxfSplineEvaluationMath::Unavailable(
             DxfSplinePointEvaluationIssue::NonPositiveHomogeneousWeight,
-        ));
+        );
     }
     let point = [
-        result[0] / result[3],
-        result[1] / result[3],
-        result[2] / result[3],
+        homogeneous[0] / homogeneous[3],
+        homogeneous[1] / homogeneous[3],
+        homogeneous[2] / homogeneous[3],
     ];
     if point.iter().any(|component| !component.is_finite()) {
-        return Ok(unavailable(
+        return DxfSplineEvaluationMath::Unavailable(
             DxfSplinePointEvaluationIssue::ArithmeticOverflow,
-        ));
+        );
     }
-    Ok(DxfSplinePointEvaluationState::Available(
-        DxfSplineEvaluatedPoint {
-            x: canonical(point[0]),
-            y: canonical(point[1]),
-            z: canonical(point[2]),
-        },
-    ))
+    DxfSplineEvaluationMath::Available(DxfSplineEvaluatedPoint {
+        x: canonical(point[0]),
+        y: canonical(point[1]),
+        z: canonical(point[2]),
+    })
 }
 
 fn find_span(
@@ -318,7 +395,7 @@ fn canonical(value: f64) -> DxfDouble {
     DxfDouble::from_f64(if value == 0.0 { 0.0 } else { value })
 }
 
-fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
+pub(crate) fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
     if cancellation.is_cancelled() {
         Err(DxfError::Cancelled)
     } else {

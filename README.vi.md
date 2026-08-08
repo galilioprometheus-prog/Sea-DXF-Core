@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3ea**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3eb**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -65,6 +65,9 @@ thể:
 - đánh giá point của SPLINE rational hoặc non-rational đã đạt analytic readiness
   bằng phép tính De Boor homogeneous có giới hạn, kiểm tra đúng parameter domain,
   giữ failure typed và không tự động tessellate;
+- đánh giá first derivative tương ứng của SPLINE rational bằng derivative
+  control polygon có giới hạn và homogeneous quotient rule, đồng thời giữ
+  evaluated point cùng tangent vector trong một kết quả;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

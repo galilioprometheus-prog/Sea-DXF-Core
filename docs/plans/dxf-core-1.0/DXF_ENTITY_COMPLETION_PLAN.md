@@ -1836,6 +1836,22 @@ rational fixture proves homogeneous division. Sampling, derivatives,
 tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE
 `Complete` remain open.
 
+M14.3eb refactors M14.3ea's validated homogeneous-control preparation and De
+Boor recurrence into one internal math path, then adds a source-bound rational
+first derivative. Degree-scaled differences form the local derivative control
+polygon over the trimmed knot vector; a degree-minus-one recurrence produces
+the homogeneous derivative, and the rational quotient rule projects it into
+the WCS Cartesian derivative while returning the evaluated point beside it.
+The degree-64 ceiling bounds simultaneous scratch storage to 129
+four-component points and both triangular recurrences to 4,096 combined steps.
+All nine dialects have ASCII/Binary point-and-derivative bit parity at both
+endpoints and the midpoint; a nonconstant-weight fixture independently proves
+the quotient rule. The complete M14.3ea failure/cancellation contract is reused,
+and a zero derivative remains valid evidence rather than being normalized or
+rejected. Tangent normalization/frame policy, higher derivatives, curvature,
+adaptive sampling, tessellation, rendering, HELIX evaluation, SPLINE CRUD/
+write, and SPLINE `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

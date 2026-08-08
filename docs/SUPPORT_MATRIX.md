@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ea can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3eb can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1473,6 +1473,24 @@ degenerate active knot intervals, overflow, and invalid homogeneous weights
 remain typed. This is point evaluation, not adaptive sampling, derivatives,
 tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, or SPLINE
 `Complete` support.
+
+M14.3eb adds the matching bounded rational first derivative. The shared
+preflight now owns parameter/domain/degree/input validation and source-local
+homogeneous controls for both point and derivative paths, while one common De
+Boor kernel retains the already verified point results. The derivative control
+polygon uses the degree-scaled knot-interval difference, then a degree-minus-
+one De Boor pass produces the homogeneous derivative. Cartesian output applies
+the rational quotient rule and returns the evaluated point and unnormalized
+first-derivative vector together. At degree 64 the two passes use at most 129
+four-component scratch points and 4,096 combined recurrence steps. All nine
+Core dialects in ASCII and Binary agree bit-for-bit for quadratic endpoint,
+midpoint, and derivative results; an independent rational fixture proves the
+nonconstant-weight quotient rule. Existing typed parameter, analytic,
+non-finite, degenerate-knot, overflow, cancellation, allocation, lookup, and
+degree-limit outcomes are reused. A zero derivative remains a valid vector;
+normalization, tangent-frame policy, curvature, adaptive sampling,
+tessellation, rendering, HELIX evaluation, SPLINE CRUD/write, and SPLINE
+`Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
