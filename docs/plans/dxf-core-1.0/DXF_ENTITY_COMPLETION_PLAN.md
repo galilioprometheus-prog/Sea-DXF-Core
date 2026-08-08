@@ -1674,6 +1674,20 @@ dual-source identity, cancellation, bounds, and redaction. Application-specific
 meaning, actual text transcoding, insertion, mutation, cross-container clone,
 and POINT `Complete` remain open.
 
+M14.3do composes one M14.3dn ready entity payload with a canonical destination-
+bound entity draft record without insertion or mutation.
+`DxfEntityXDataDraftRecordPlan` requires exact encoded-entry membership and the
+draft record's destination source identity, appends complete canonical XDATA
+groups after the family record, and retains source-entity/encoded-state
+evidence. Zero-XDATA is an exact no-op; unavailable payloads, cancellation,
+foreign entries, foreign destination drafts, and bounded-growth failures are
+fail-closed. Four format pairings span all nine dialects plus AC1009/AC1032
+cross-dialect boundaries, exact prefix/suffix bytes, zero-XDATA, orphan
+payloads, dual-source identity, cancellation, bounds, and redaction. Insertion,
+post-write XDATA verification, application-specific meaning, actual text
+transcoding, cross-container clone completion, and POINT `Complete` remain
+open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

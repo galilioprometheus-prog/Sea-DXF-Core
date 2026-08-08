@@ -88,6 +88,7 @@ mod entity_xdata_capacity_measure;
 mod entity_xdata_coordinate_destination;
 mod entity_xdata_coordinate_transform;
 mod entity_xdata_coordinate_transform_math;
+mod entity_xdata_draft_record;
 mod entity_xdata_encoded_application_destination;
 mod entity_xdata_encoded_destination;
 mod entity_xdata_encoded_entity_destination;
@@ -589,6 +590,9 @@ pub use entity_xdata_coordinate_transform::{
 pub use entity_xdata_coordinate_transform_math::{
     DxfEntityXDataCoordinateTransform, DxfEntityXDataCoordinateTransformInput,
     DxfEntityXDataCoordinateTransformIssue,
+};
+pub use entity_xdata_draft_record::{
+    DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
 };
 pub use entity_xdata_encoded_application_destination::{
     DxfEntityXDataEncodedApplicationDestinationDirectory,

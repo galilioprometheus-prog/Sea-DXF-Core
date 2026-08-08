@@ -3122,5 +3122,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     text transcoding, insertion, destination mutation, cross-container clone,
     and POINT `Complete` remain open.
 
+    M14.3do composes one M14.3dn ready entity payload with a canonical
+    destination-bound entity draft record without insertion. The plan requires
+    exact encoded-entry membership and immutable destination source identity,
+    appends complete destination-format XDATA groups after the family record,
+    and retains source-entity and encoded-state evidence. Zero-XDATA is an exact
+    no-op; unavailable payloads, cancellation, foreign entries/drafts, and
+    bounded-growth failures remain fail-closed. Four format pairings span all
+    nine Core dialects plus AC1009/AC1032 cross-dialect boundaries, exact
+    prefix/suffix bytes, zero-XDATA, orphan payloads, dual-source identity,
+    cancellation, bounds, and redaction. Insertion, post-write XDATA
+    verification, application-specific meaning, actual text transcoding,
+    cross-container clone completion, and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

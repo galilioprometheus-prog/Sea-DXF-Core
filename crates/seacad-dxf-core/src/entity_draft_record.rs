@@ -601,6 +601,34 @@ impl DxfEntityDraftRecordPlan {
         &self.bytes
     }
 
+    pub(crate) fn append_exact_groups(
+        mut self,
+        groups: &[u8],
+        profile: DxfResourceProfile,
+    ) -> Result<Self, DxfError> {
+        let total = self
+            .bytes
+            .len()
+            .checked_add(groups.len())
+            .ok_or_else(invalid_internal_data)?;
+        let observed = u64::try_from(total).map_err(|_| invalid_internal_data())?;
+        let limit = profile.limits().max_value_bytes();
+        if observed > limit {
+            return Err(DxfError::resource_limit(
+                DxfResource::ValueBytes,
+                limit,
+                observed,
+            ));
+        }
+        let mut bytes = self.bytes.into_vec();
+        bytes
+            .try_reserve(groups.len())
+            .map_err(|_| out_of_memory())?;
+        bytes.extend_from_slice(groups);
+        self.bytes = bytes.into_boxed_slice();
+        Ok(self)
+    }
+
     #[must_use]
     pub const fn transaction(&self) -> &DxfTransactionPlan {
         self.applicability.transaction()
