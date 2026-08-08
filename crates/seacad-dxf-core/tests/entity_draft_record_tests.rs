@@ -16,9 +16,10 @@ use seacad_dxf_core::{
     DxfEntityNameClassification, DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerOutcome,
     DxfEntityPlacementTarget, DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup,
     DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
-    DxfNamedSymbolTableKind, DxfPointCloneDestinationBindings, DxfPointCloneDraftProjectionIssue,
-    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfNamedSymbolTableKind, DxfPointCloneDestinationBindings, DxfPointCloneDialectAdaptations,
+    DxfPointCloneDraftProjectionIssue, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView,
+    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
+    NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -192,6 +193,7 @@ fn point_clone_draft_projects_all_format_pairs_and_dialects() -> Result<(), Box<
                 assert_eq!(projected.source_key(), source_key);
                 assert_eq!(projected.source_version(), version);
                 assert_eq!(projected.destination_id(), destination_view.source_id());
+                assert!(projected.dialect_adaptations().is_empty());
                 assert_eq!(
                     projected.destination().bytes(),
                     expected_point(destination_format, version, 0x40, 0x10)?
@@ -211,9 +213,9 @@ fn point_clone_draft_projects_all_format_pairs_and_dialects() -> Result<(), Box<
 
 #[test]
 fn point_clone_draft_handles_cross_dialect_boundaries_fail_closed() -> Result<(), Box<dyn Error>> {
-    for (source_version, destination_version, ready) in [
-        (DxfAcadVersion::Ac1009, DxfAcadVersion::Ac1032, true),
-        (DxfAcadVersion::Ac1032, DxfAcadVersion::Ac1009, false),
+    for (source_version, destination_version) in [
+        (DxfAcadVersion::Ac1009, DxfAcadVersion::Ac1032),
+        (DxfAcadVersion::Ac1032, DxfAcadVersion::Ac1009),
     ] {
         for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
             for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
@@ -237,27 +239,67 @@ fn point_clone_draft_handles_cross_dialect_boundaries_fail_closed() -> Result<()
                 } else {
                     DxfPointCloneDestinationBindings::new(b"Layer0")
                 };
-                let outcome = destination_view.project_point_clone_draft_from(
+                let projected = match destination_view.project_point_clone_draft_from(
                     source_view,
                     key,
                     applicability,
                     bindings,
                     DxfResourceProfile::Safe,
                     &token(),
-                )?;
-                if ready {
-                    assert!(outcome.is_ok(), "ready boundary: {outcome:?}");
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Err(io::Error::other(format!("boundary: {issue:?}")).into());
+                    }
+                };
+                assert_eq!(
+                    projected.destination().bytes(),
+                    expected_point(destination_format, destination_version, 0x40, 0x10)?
+                );
+                let adaptations = projected.dialect_adaptations();
+                if destination_version < DxfAcadVersion::Ac1015 {
+                    assert!(adaptations.legacy_placement_owns_layout());
+                    assert!(adaptations.omitted_by_layer_lineweight());
                 } else {
-                    assert!(matches!(
-                        outcome,
-                        Err(DxfPointCloneDraftProjectionIssue::Destination(
-                            DxfEntityDraftRecordIssue::LineweightNotApplicable { .. }
-                        ))
-                    ));
+                    assert!(adaptations.is_empty());
                 }
             }
         }
     }
+
+    let source_version = DxfAcadVersion::Ac1032;
+    let destination_version = DxfAcadVersion::Ac1009;
+    let source_bytes = point_source_fixture(DxfRawDocumentFormat::Ascii, source_version)?;
+    let non_default = replace_once(&source_bytes, b"370\n-1\n", b"370\n25\n")?;
+    let source_memory = DxfMemorySource::new(&non_default, DxfResourceProfile::Safe)?;
+    let source_document = open_ascii(&source_memory)?;
+    let source_view = DxfRawDocumentView::from(&source_document);
+    let evidence = source_view.entity_field_evidence_directory(&token())?;
+    let destination_bytes = fixture(DxfRawDocumentFormat::Ascii, destination_version, 0x40)?;
+    let destination_memory = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let destination_document = open_ascii(&destination_memory)?;
+    let destination_view = DxfRawDocumentView::from(&destination_document);
+    assert!(matches!(
+        destination_view.project_point_clone_draft_from(
+            source_view,
+            point_key(&evidence)?,
+            admitted_plan(
+                destination_view,
+                DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+            )?,
+            DxfPointCloneDestinationBindings::new(b"Layer0"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?,
+        Err(
+            DxfPointCloneDraftProjectionIssue::DestinationFieldNotRepresentable {
+                field: DxfEntityField::LINEWEIGHT,
+                source_version: DxfAcadVersion::Ac1032,
+                destination_version: DxfAcadVersion::Ac1009,
+            }
+        )
+    ));
+    assert_copy::<DxfPointCloneDialectAdaptations>();
     Ok(())
 }
 

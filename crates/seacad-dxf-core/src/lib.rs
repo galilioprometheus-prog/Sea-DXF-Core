@@ -992,8 +992,8 @@ pub use planar_face_wcs_geometry::{
     DxfPlanarFaceWcsGeometryIssue,
 };
 pub use point_clone_draft_projection::{
-    DxfPointCloneDestinationBindings, DxfPointCloneDraftProjectionIssue,
-    DxfPointCloneDraftProjectionPlan,
+    DxfPointCloneDestinationBindings, DxfPointCloneDialectAdaptations,
+    DxfPointCloneDraftProjectionIssue, DxfPointCloneDraftProjectionPlan,
 };
 pub use point_clone_xdata_draft::{
     DxfPointCloneXDataDraftIssue, DxfPointCloneXDataDraftPlan, DxfPointCloneXDataSource,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3du can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dv can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1377,6 +1377,18 @@ destination planning, identity, bounds inherited from the composed pipelines,
 traits, and debug redaction remain fail-closed. Application-specific XDATA
 meaning, actual text transcoding, reverse-boundary adaptation, higher entity
 families, and POINT `Complete` remain open.
+
+M14.3dv makes the AC1032-to-AC1009 POINT boundary usable only for two reviewed
+semantic equivalences. A modern explicit layout is represented by the legacy
+destination placement/owner binding, and explicit `BY_LAYER` lineweight is
+omitted where group 370 is not applicable. A compact adaptation mask records
+both decisions through family projection, XDATA composition, insertion,
+verification, and write journals. Any other explicit lineweight returns typed
+`DestinationFieldNotRepresentable`; no numeric approximation occurs. Four
+format pairings cover both AC1009/AC1032 directions through strict create-new
+write, reparse, verification, and exact inverse restoration. Application-
+specific XDATA meaning, actual text transcoding, non-default modern common
+fields, higher entity families, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

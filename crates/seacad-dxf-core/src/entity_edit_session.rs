@@ -613,6 +613,14 @@ impl PointCloneSnapshot {
         self.linetype.is_some()
     }
 
+    pub(crate) const fn has_layout(&self) -> bool {
+        self.layout.is_some()
+    }
+
+    pub(crate) const fn lineweight(&self) -> Option<DxfEntityLineweight> {
+        self.lineweight
+    }
+
     pub(crate) const fn material(&self) -> Option<DxfHandle> {
         self.material
     }
@@ -624,7 +632,7 @@ impl PointCloneSnapshot {
     pub(crate) fn borrowed_for_destination<'a>(
         &'a self,
         owner: DxfHandle,
-        destination_version: DxfAcadVersion,
+        lineweight: Option<DxfEntityLineweight>,
         bindings: crate::DxfPointCloneDestinationBindings<'a>,
     ) -> DxfEntityDraft<'a> {
         let mut point = DxfPointDraft::new(bindings.layer(), self.location);
@@ -646,9 +654,6 @@ impl PointCloneSnapshot {
         if let Some(color) = self.indexed_color {
             point = point.with_indexed_color(color);
         }
-        let lineweight = self.lineweight.or_else(|| {
-            (destination_version >= DxfAcadVersion::Ac1015).then_some(DxfEntityLineweight::BY_LAYER)
-        });
         if let Some(lineweight) = lineweight {
             point = point.with_lineweight(lineweight);
         }

@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3du**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dv**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -48,6 +48,8 @@ thể:
   entity, trong khi projection độc lập vẫn từ chối XDATA để không làm rơi payload;
 - giữ provenance POINT xuyên atomic insertion, strict verification và
   create-new write journal với cleanup cùng inverse chính xác thực thi được;
+- adapt clone POINT AC1032 sang AC1009 chỉ khi legacy placement và lineweight
+  `BY_LAYER` tương đương có evidence, đồng thời từ chối giá trị không biểu diễn được;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

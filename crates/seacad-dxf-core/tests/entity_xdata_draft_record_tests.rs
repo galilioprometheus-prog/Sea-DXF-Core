@@ -319,6 +319,16 @@ fn point_clone_projects_and_composes_owned_xdata_for_every_format_and_dialect()
         DxfRawDocumentFormat::Ascii,
         DxfAcadVersion::Ac1032,
     )?;
+    for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            assert_point_clone_format_pair(
+                source_format,
+                DxfAcadVersion::Ac1032,
+                destination_format,
+                DxfAcadVersion::Ac1009,
+            )?;
+        }
+    }
     Ok(())
 }
 
@@ -795,6 +805,13 @@ fn assert_point_clone_format_pair(
     assert_eq!(plan.encoded_state(), entry.state());
     assert!(plan.bytes().ends_with(&payload));
     assert_eq!(plan.xdata_draft_record().source_entity(), source_entity);
+    let adaptations = plan.dialect_adaptations();
+    if source_version >= DxfAcadVersion::Ac1015 && destination_version < DxfAcadVersion::Ac1015 {
+        assert!(adaptations.legacy_placement_owns_layout());
+        assert!(adaptations.omitted_by_layer_lineweight());
+    } else {
+        assert!(adaptations.is_empty());
+    }
     let debug = format!("{plan:?}");
     assert!(!debug.contains("SECRET_DRAFT_XDATA"));
     assert!(!debug.contains("Layer0"));
@@ -812,6 +829,7 @@ fn assert_point_clone_format_pair(
     );
     assert_eq!(insert.source_evidence().source_key(), source_evidence);
     assert_eq!(insert.source_evidence().source_version(), source_version);
+    assert_eq!(insert.source_evidence().dialect_adaptations(), adaptations);
     assert_eq!(insert.xdata_insert_plan().source_entity(), source_entity);
     assert_eq!(insert.expected_xdata_bytes(), payload);
     let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;

@@ -1750,6 +1750,17 @@ redaction remain fail-closed. Application-specific meaning, actual text
 transcoding, reverse-boundary adaptation, higher entity families, and POINT
 `Complete` remain open.
 
+M14.3dv admits AC1032-to-AC1009 POINT cloning only for two reviewed semantic
+equivalences: destination placement/owner carries the modern layout role, and
+explicit `BY_LAYER` lineweight may be omitted where group 370 is inapplicable.
+A compact adaptation mask survives family projection, XDATA composition,
+insertion, verification, and write journals. Any other explicit lineweight is
+typed `DestinationFieldNotRepresentable`; no approximation occurs. Four format
+pairings cover both AC1009/AC1032 directions through strict create-new writing,
+verification, and exact inverse restoration. Application-specific XDATA
+meaning, actual text transcoding, non-default modern common fields, higher
+entity families, and POINT `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

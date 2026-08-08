@@ -4,8 +4,8 @@ use crate::entity_edit_session::{PointCloneSnapshot, prepare_point_clone_snapsho
 use crate::{
     DxfAcadVersion, DxfCancellationToken, DxfEntityCloneIssue, DxfEntityDraftApplicabilityPlan,
     DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfEntityField, DxfEntityKey,
-    DxfEntityPlacementTarget, DxfError, DxfHandle, DxfRawDocumentView, DxfResourceProfile,
-    DxfSourceId,
+    DxfEntityLineweight, DxfEntityPlacementTarget, DxfError, DxfHandle, DxfRawDocumentView,
+    DxfResourceProfile, DxfSourceId,
 };
 
 /// Caller-owned destination bindings for common fields whose identities are
@@ -105,6 +105,31 @@ impl std::fmt::Debug for DxfPointCloneDestinationBindings<'_> {
     }
 }
 
+/// Exact destination-dialect adaptations applied without changing POINT
+/// semantics.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfPointCloneDialectAdaptations(u8);
+
+impl DxfPointCloneDialectAdaptations {
+    const LEGACY_PLACEMENT_LAYOUT: u8 = 1;
+    const OMITTED_BY_LAYER_LINEWEIGHT: u8 = 2;
+
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    #[must_use]
+    pub const fn legacy_placement_owns_layout(self) -> bool {
+        self.0 & Self::LEGACY_PLACEMENT_LAYOUT != 0
+    }
+
+    #[must_use]
+    pub const fn omitted_by_layer_lineweight(self) -> bool {
+        self.0 & Self::OMITTED_BY_LAYER_LINEWEIGHT != 0
+    }
+}
+
 /// Typed reason why a source POINT cannot become a destination draft record.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
@@ -120,6 +145,11 @@ pub enum DxfPointCloneDraftProjectionIssue {
     UnexpectedDestinationBinding {
         field: DxfEntityField,
     },
+    DestinationFieldNotRepresentable {
+        field: DxfEntityField,
+        source_version: DxfAcadVersion,
+        destination_version: DxfAcadVersion,
+    },
     Destination(DxfEntityDraftRecordIssue),
 }
 
@@ -131,6 +161,7 @@ pub struct DxfPointCloneDraftProjectionPlan {
     source_version: DxfAcadVersion,
     source_placement: DxfEntityPlacementTarget,
     source_owner: Option<DxfHandle>,
+    adaptations: DxfPointCloneDialectAdaptations,
     destination: DxfEntityDraftRecordPlan,
 }
 
@@ -161,6 +192,11 @@ impl DxfPointCloneDraftProjectionPlan {
     }
 
     #[must_use]
+    pub const fn dialect_adaptations(&self) -> DxfPointCloneDialectAdaptations {
+        self.adaptations
+    }
+
+    #[must_use]
     pub const fn destination_id(&self) -> DxfSourceId {
         self.destination.source_id()
     }
@@ -185,6 +221,7 @@ impl std::fmt::Debug for DxfPointCloneDraftProjectionPlan {
             .field("source_version", &self.source_version)
             .field("source_placement", &self.source_placement)
             .field("has_source_owner", &self.source_owner.is_some())
+            .field("adaptations", &self.adaptations)
             .field("destination", &self.destination)
             .finish()
     }
@@ -226,9 +263,25 @@ impl DxfRawDocumentView<'_> {
         if let Some(issue) = validate_bindings(&snapshot, bindings) {
             return Ok(Err(issue));
         }
+        let (lineweight, adaptations) =
+            match destination_common_adaptations(&snapshot, destination_applicability.version()) {
+                DestinationCommonAdaptation::Ready {
+                    lineweight,
+                    adaptations,
+                } => (lineweight, adaptations),
+                DestinationCommonAdaptation::NotRepresentable { field } => {
+                    return Ok(Err(
+                        DxfPointCloneDraftProjectionIssue::DestinationFieldNotRepresentable {
+                            field,
+                            source_version: snapshot.version(),
+                            destination_version: destination_applicability.version(),
+                        },
+                    ));
+                }
+            };
         let draft = snapshot.borrowed_for_destination(
             destination_applicability.identity().owner_handle(),
-            destination_applicability.version(),
+            lineweight,
             bindings,
         );
         let destination = match self.encode_entity_draft_record(
@@ -249,8 +302,52 @@ impl DxfRawDocumentView<'_> {
             source_version: snapshot.version(),
             source_placement: snapshot.placement(),
             source_owner: snapshot.owner(),
+            adaptations,
             destination,
         }))
+    }
+}
+
+enum DestinationCommonAdaptation {
+    Ready {
+        lineweight: Option<DxfEntityLineweight>,
+        adaptations: DxfPointCloneDialectAdaptations,
+    },
+    NotRepresentable {
+        field: DxfEntityField,
+    },
+}
+
+fn destination_common_adaptations(
+    snapshot: &PointCloneSnapshot,
+    destination_version: DxfAcadVersion,
+) -> DestinationCommonAdaptation {
+    if destination_version >= DxfAcadVersion::Ac1015 {
+        return DestinationCommonAdaptation::Ready {
+            lineweight: snapshot
+                .lineweight()
+                .or(Some(DxfEntityLineweight::BY_LAYER)),
+            adaptations: DxfPointCloneDialectAdaptations(0),
+        };
+    }
+    let mut adaptations = 0_u8;
+    if snapshot.has_layout() {
+        adaptations |= DxfPointCloneDialectAdaptations::LEGACY_PLACEMENT_LAYOUT;
+    }
+    match snapshot.lineweight() {
+        None => {}
+        Some(DxfEntityLineweight::BY_LAYER) => {
+            adaptations |= DxfPointCloneDialectAdaptations::OMITTED_BY_LAYER_LINEWEIGHT;
+        }
+        Some(_) => {
+            return DestinationCommonAdaptation::NotRepresentable {
+                field: DxfEntityField::LINEWEIGHT,
+            };
+        }
+    }
+    DestinationCommonAdaptation::Ready {
+        lineweight: None,
+        adaptations: DxfPointCloneDialectAdaptations(adaptations),
     }
 }
 

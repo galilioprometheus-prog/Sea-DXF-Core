@@ -3207,6 +3207,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     specific meaning, actual text transcoding, reverse-boundary adaptation,
     higher entity families, and POINT `Complete` remain open.
 
+    M14.3dv admits AC1032-to-AC1009 POINT cloning only for two reviewed
+    semantic equivalences: destination placement/owner carries the modern
+    layout role, and explicit `BY_LAYER` lineweight may be omitted where group
+    370 is inapplicable. A compact adaptation mask survives family projection,
+    XDATA composition, insertion, verification, and write journals. Any other
+    explicit lineweight is typed `DestinationFieldNotRepresentable`; no
+    approximation occurs. Four format pairings cover both AC1009/AC1032
+    directions through strict create-new writing, verification, and exact
+    inverse restoration. Application-specific XDATA meaning, actual text
+    transcoding, non-default modern common fields, higher entity families, and
+    POINT `Complete` remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

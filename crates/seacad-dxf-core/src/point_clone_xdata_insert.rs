@@ -7,8 +7,8 @@ use crate::{
     DxfEntityXDataDraftVerificationIssue, DxfEntityXDataDraftVerificationJournal,
     DxfEntityXDataDraftVerificationOutcome, DxfEntityXDataDraftVerificationReceipt,
     DxfEntityXDataDraftWriteJournal, DxfEntityXDataDraftWriteOutcome, DxfError, DxfHandle,
-    DxfIoOperation, DxfPointCloneXDataDraftPlan, DxfRawDocumentView, DxfReadObserver,
-    DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
+    DxfIoOperation, DxfPointCloneDialectAdaptations, DxfPointCloneXDataDraftPlan,
+    DxfRawDocumentView, DxfReadObserver, DxfResourceProfile, DxfSourceId, DxfTransactionPlan,
 };
 
 /// Compact immutable source semantic provenance retained through POINT clone
@@ -20,6 +20,7 @@ pub struct DxfPointCloneSourceEvidence {
     source_version: DxfAcadVersion,
     source_placement: crate::DxfEntityPlacementTarget,
     source_owner: Option<DxfHandle>,
+    adaptations: DxfPointCloneDialectAdaptations,
 }
 
 impl DxfPointCloneSourceEvidence {
@@ -46,6 +47,11 @@ impl DxfPointCloneSourceEvidence {
     #[must_use]
     pub const fn source_owner(self) -> Option<DxfHandle> {
         self.source_owner
+    }
+
+    #[must_use]
+    pub const fn dialect_adaptations(self) -> DxfPointCloneDialectAdaptations {
+        self.adaptations
     }
 }
 
@@ -240,6 +246,7 @@ impl DxfRawDocumentView<'_> {
             source_version: draft.source_version(),
             source_placement: draft.source_placement(),
             source_owner: draft.source_owner(),
+            adaptations: draft.dialect_adaptations(),
         };
         let insert = self.plan_entity_xdata_draft_insert(
             draft.into_xdata_draft_record(),
