@@ -1738,6 +1738,18 @@ payloads, bounds, traits, and redaction. A direct insertion/create-new wrapper,
 application-specific meaning, actual text transcoding, reverse-boundary field
 adaptation, and POINT `Complete` remain open.
 
+M14.3du consumes M14.3dt into an atomic destination insertion plan and retains
+compact source POINT identity, dialect, placement, and owner evidence through
+dedicated strict-verification and create-new write journals. It delegates to
+the existing family-plus-XDATA transaction, receipts, cleanup, and executable
+inverse. Four format pairings span all nine dialects plus AC1009-to-AC1032
+through exact file creation and strict reparse. Existing destinations remain
+unchanged; cancellation creates nothing; final-progress tampering removes the
+created file. Foreign destination planning, identity, bounds, traits, and
+redaction remain fail-closed. Application-specific meaning, actual text
+transcoding, reverse-boundary adaptation, higher entity families, and POINT
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

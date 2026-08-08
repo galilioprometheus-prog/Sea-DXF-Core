@@ -19,9 +19,12 @@ use seacad_dxf_core::{
     DxfEntityXDataEncodedEntityDestinationEntry, DxfEntityXDataEncodedEntityDestinationState,
     DxfError, DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
     DxfPointCloneDestinationBindings, DxfPointCloneDraftProjectionIssue,
-    DxfPointCloneXDataDraftIssue, DxfPointCloneXDataDraftPlan, DxfPointCloneXDataSource,
-    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadControl, DxfReadObserver,
-    DxfReadOptions, DxfReadProgress, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
+    DxfPointCloneSourceEvidence, DxfPointCloneXDataDraftIssue, DxfPointCloneXDataDraftPlan,
+    DxfPointCloneXDataInsertPlan, DxfPointCloneXDataSource, DxfPointCloneXDataVerificationJournal,
+    DxfPointCloneXDataVerificationOutcome, DxfPointCloneXDataWriteJournal,
+    DxfPointCloneXDataWriteOutcome, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView,
+    DxfReadControl, DxfReadObserver, DxfReadOptions, DxfReadProgress, DxfResourceProfile,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -292,6 +295,10 @@ fn ready_xdata_appends_to_drafts_for_every_format_and_dialect() -> Result<(), Bo
 fn point_clone_projects_and_composes_owned_xdata_for_every_format_and_dialect()
 -> Result<(), Box<dyn Error>> {
     assert_send_sync::<DxfPointCloneXDataDraftPlan>();
+    assert_send_sync::<DxfPointCloneXDataInsertPlan>();
+    assert_send_sync::<DxfPointCloneXDataVerificationJournal>();
+    assert_send_sync::<DxfPointCloneXDataWriteJournal>();
+    assert_copy::<DxfPointCloneSourceEvidence>();
     assert_copy::<DxfPointCloneXDataDraftIssue>();
     assert_copy::<DxfPointCloneXDataSource<'static>>();
     for version in DxfAcadVersion::SUPPORTED {
@@ -375,6 +382,100 @@ fn point_clone_xdata_composition_is_fail_closed_and_keeps_standalone_projection_
         ),
         Err(DxfError::SourceIdentityMismatch { .. })
     ));
+
+    let cancelled_insert = token();
+    cancelled_insert.cancel();
+    assert!(matches!(
+        destination.view().plan_point_clone_xdata_insert(
+            point_clone_xdata_draft(
+                &directory,
+                entry,
+                source.view(),
+                destination.view(),
+                version,
+            )?,
+            DxfResourceProfile::Safe,
+            &cancelled_insert,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+
+    let other_destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x50)?;
+    let other_destination_storage =
+        DxfMemorySource::new(&other_destination_bytes, DxfResourceProfile::Safe)?;
+    let other_destination = open_document(&other_destination_storage, DxfRawDocumentFormat::Ascii)?;
+    assert!(matches!(
+        other_destination.view().plan_point_clone_xdata_insert(
+            point_clone_xdata_draft(
+                &directory,
+                entry,
+                source.view(),
+                destination.view(),
+                version,
+            )?,
+            DxfResourceProfile::Safe,
+            &token(),
+        ),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+
+    let insert = destination.view().plan_point_clone_xdata_insert(
+        point_clone_xdata_draft(
+            &directory,
+            entry,
+            source.view(),
+            destination.view(),
+            version,
+        )?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    let temporary = TestDirectory::new()?;
+    let existing = temporary.path().join("existing.dxf");
+    fs::write(&existing, b"KEEP")?;
+    let mut observer = NoopDxfReadObserver;
+    assert!(
+        insert
+            .write_reparse_verify_and_journal_to_new_file(
+                destination.view(),
+                &existing,
+                DxfResourceProfile::Safe,
+                &token(),
+                &mut observer,
+            )
+            .is_err()
+    );
+    assert_eq!(fs::read(&existing)?, b"KEEP");
+    let cancelled_path = temporary.path().join("cancelled.dxf");
+    let cancelled_write = token();
+    cancelled_write.cancel();
+    assert!(matches!(
+        insert.write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &cancelled_path,
+            DxfResourceProfile::Safe,
+            &cancelled_write,
+            &mut observer,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(!cancelled_path.exists());
+    let tampered_path = temporary.path().join("point-clone-tampered.dxf");
+    let mut tamper =
+        FinalTamperObserver::new(&tampered_path, b"SECRET_DRAFT_XDATA", b"SECRET_DRAFT_XDATB");
+    assert!(
+        insert
+            .write_reparse_verify_and_journal_to_new_file(
+                destination.view(),
+                &tampered_path,
+                DxfResourceProfile::Safe,
+                &token(),
+                &mut tamper,
+            )
+            .is_err()
+    );
+    tamper.finish()?;
+    assert!(!tampered_path.exists());
 
     let orphan_bytes = replace_once(&source_bytes, b"1001\nAPP_READY\n", b"1000\nAPP_READY\n")?;
     let orphan_storage = DxfMemorySource::new(&orphan_bytes, DxfResourceProfile::Safe)?;
@@ -678,21 +779,13 @@ fn assert_point_clone_format_pair(
         .encoded_bytes_for_entry(entry)
         .ok_or(io::Error::other("POINT XDATA payload"))?
         .to_vec();
-    let mut bindings = DxfPointCloneDestinationBindings::new(b"Layer0");
-    if destination_version >= DxfAcadVersion::Ac1015 {
-        bindings = bindings.with_layout(b"Model");
-    }
-    let plan = match destination.view().project_point_clone_xdata_draft_from(
+    let plan = point_clone_xdata_draft(
+        &directory,
+        entry,
         source.view(),
-        DxfPointCloneXDataSource::new(&directory, entry)?,
-        admitted_plan(destination.view())?,
-        bindings,
-        DxfResourceProfile::Safe,
-        &token(),
-    )? {
-        Ok(plan) => plan,
-        Err(issue) => return Err(io::Error::other(format!("POINT XDATA draft: {issue:?}")).into()),
-    };
+        destination.view(),
+        destination_version,
+    )?;
     assert_eq!(plan.source_id(), source.view().source_id());
     assert_eq!(plan.source_key(), source_entity.key());
     assert_eq!(plan.source_entity(), source_entity);
@@ -707,17 +800,24 @@ fn assert_point_clone_format_pair(
     assert!(!debug.contains("Layer0"));
     assert!(!debug.contains("Model"));
 
-    let insert = destination.view().plan_entity_xdata_draft_insert(
-        plan.into_xdata_draft_record(),
+    let source_evidence = plan.source_key();
+    let insert = destination.view().plan_point_clone_xdata_insert(
+        plan,
         DxfResourceProfile::Safe,
         &token(),
     )?;
-    assert_eq!(insert.source_entity(), source_entity);
+    assert_eq!(
+        insert.source_evidence().source_id(),
+        source.view().source_id()
+    );
+    assert_eq!(insert.source_evidence().source_key(), source_evidence);
+    assert_eq!(insert.source_evidence().source_version(), source_version);
+    assert_eq!(insert.xdata_insert_plan().source_entity(), source_entity);
     assert_eq!(insert.expected_xdata_bytes(), payload);
     let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;
     let output_storage = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
     let post = open_document(&output_storage, destination_format)?;
-    let DxfEntityXDataDraftVerificationOutcome::Verified(journal) = insert.verify_post_image(
+    let DxfPointCloneXDataVerificationOutcome::Verified(journal) = insert.verify_post_image(
         destination.view(),
         post.view(),
         DxfResourceProfile::Safe,
@@ -726,11 +826,36 @@ fn assert_point_clone_format_pair(
     else {
         return Err(io::Error::other("POINT XDATA projection verification").into());
     };
+    assert_eq!(journal.source_evidence(), insert.source_evidence());
     assert_eq!(journal.receipt().source_id(), source.view().source_id());
     assert_eq!(journal.receipt().application_count(), 1);
     assert_eq!(journal.receipt().xdata_byte_count(), payload.len() as u64);
     assert_eq!(
         materialize(&output, journal.inverse_plan())?,
+        destination_bytes
+    );
+    let temporary = TestDirectory::new()?;
+    let written_path = temporary.path().join("point-clone-xdata.dxf");
+    let mut observer = NoopDxfReadObserver;
+    let DxfPointCloneXDataWriteOutcome::Written(written) = insert
+        .write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &written_path,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut observer,
+        )?
+    else {
+        return Err(io::Error::other("POINT XDATA projection write").into());
+    };
+    assert_eq!(written.source_evidence(), insert.source_evidence());
+    assert_eq!(fs::read(&written_path)?, output);
+    assert_eq!(
+        written.xdata_journal().verification_receipt().source_id(),
+        source.view().source_id()
+    );
+    assert_eq!(
+        materialize(&output, written.inverse_plan())?,
         destination_bytes
     );
     Ok(())
@@ -746,6 +871,30 @@ fn point_entity(view: DxfRawDocumentView<'_>) -> Result<seacad_dxf_core::DxfEnti
         .copied()
         .find(|entity| entity.classification().topic() == Some(DxfEntityTopic::POINT))
         .ok_or_else(|| io::Error::other("POINT entity"))
+}
+
+fn point_clone_xdata_draft(
+    directory: &DxfEntityXDataEncodedEntityDestinationDirectory,
+    entry: DxfEntityXDataEncodedEntityDestinationEntry,
+    source: DxfRawDocumentView<'_>,
+    destination: DxfRawDocumentView<'_>,
+    destination_version: DxfAcadVersion,
+) -> Result<DxfPointCloneXDataDraftPlan, Box<dyn Error>> {
+    let mut bindings = DxfPointCloneDestinationBindings::new(b"Layer0");
+    if destination_version >= DxfAcadVersion::Ac1015 {
+        bindings = bindings.with_layout(b"Model");
+    }
+    match destination.project_point_clone_xdata_draft_from(
+        source,
+        DxfPointCloneXDataSource::new(directory, entry)?,
+        admitted_plan(destination)?,
+        bindings,
+        DxfResourceProfile::Safe,
+        &token(),
+    )? {
+        Ok(plan) => Ok(plan),
+        Err(issue) => Err(io::Error::other(format!("POINT XDATA draft: {issue:?}")).into()),
+    }
 }
 
 fn build_directory(

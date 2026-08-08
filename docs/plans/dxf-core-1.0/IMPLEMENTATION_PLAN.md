@@ -3194,6 +3194,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     actual text transcoding, reverse-boundary field adaptation, and POINT
     `Complete` remain open.
 
+    M14.3du consumes M14.3dt into an atomic destination insertion plan and
+    retains compact source POINT identity, dialect, placement, and owner
+    evidence through dedicated strict-verification and create-new write
+    journals. The wrapper delegates to the already verified family-plus-XDATA
+    transaction, receipts, cleanup, and executable inverse rather than adding
+    another writer. Four format pairings span all nine Core dialects plus
+    AC1009-to-AC1032 through exact file creation and strict reparse. Existing
+    destinations remain unchanged; cancellation creates nothing; final-
+    progress tampering removes the created file. Foreign destination planning,
+    identity, bounds, traits, and redaction remain fail-closed. Application-
+    specific meaning, actual text transcoding, reverse-boundary adaptation,
+    higher entity families, and POINT `Complete` remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

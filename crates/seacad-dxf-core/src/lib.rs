@@ -196,6 +196,7 @@ mod planar_face_geometry_semantic_value;
 mod planar_face_wcs_geometry;
 mod point_clone_draft_projection;
 mod point_clone_xdata_draft;
+mod point_clone_xdata_insert;
 mod point_edit;
 mod polyline_family_semantic;
 mod polyline_polyface_face;
@@ -996,6 +997,11 @@ pub use point_clone_draft_projection::{
 };
 pub use point_clone_xdata_draft::{
     DxfPointCloneXDataDraftIssue, DxfPointCloneXDataDraftPlan, DxfPointCloneXDataSource,
+};
+pub use point_clone_xdata_insert::{
+    DxfPointCloneSourceEvidence, DxfPointCloneXDataInsertPlan,
+    DxfPointCloneXDataVerificationJournal, DxfPointCloneXDataVerificationOutcome,
+    DxfPointCloneXDataWriteJournal, DxfPointCloneXDataWriteOutcome,
 };
 pub use point_edit::{DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind};
 pub use polyline_family_semantic::{
