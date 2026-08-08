@@ -1775,6 +1775,22 @@ traits, and redaction cases. Integration into actual POINT/XDATA fields,
 application-specific meaning, higher entity families, and POINT `Complete`
 remain open; destination-bound symbol names are not implicitly transcoded.
 
+M14.3dx integrates M14.3dw into exact group-1000 XDATA string encoding.
+Different reviewed source/destination storage decisions now use replacement-
+free, round-trip-verified destination bytes; portable ASCII and matching
+available decoders preserve exact source bytes. Compact receipts bind the two
+documents, source span, resolutions, and byte counts without expanding each
+hot entry or disclosing text. APPID/LAYER occurrences remain exact destination
+symbol targets and list controls remain source-exact. A converted destination
+string above 255 bytes is typed unavailable before group encoding. All four
+ASCII/Binary pairs cover UTF-8/Windows-1252 both ways through application and
+entity grouping, while one Binary AC1018-to-ASCII AC1021 POINT clone passes
+create-new writing, strict reparse, exact XDATA verification, and inverse
+restoration. Unmappable, malformed, unsupported, indeterminate, unavailable,
+over-limit, cancellation, identity, metadata-bound, trait, and redaction cases
+fail closed. Application-specific meaning, automatic symbol creation, other
+entity text fields, higher families, and POINT `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

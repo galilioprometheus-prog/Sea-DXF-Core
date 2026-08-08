@@ -3,25 +3,24 @@
 use std::{fmt, io};
 
 use crate::{
-    DXF_XDATA_BINARY_CHUNK_MAX_BYTES, DxfAcadVersion, DxfAcadVersionState, DxfAsciiRawDocument,
-    DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditValue, DxfEntityFieldWireType,
-    DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder, DxfEntityXDataCoordinateTransform,
-    DxfEntityXDataHandleRemap, DxfEntityXDataLogicalDestinationDirectory,
-    DxfEntityXDataLogicalDestinationEntry, DxfEntityXDataLogicalDestinationIssue,
-    DxfEntityXDataLogicalDestinationState, DxfEntityXDataLogicalDestinationValue,
-    DxfEntityXDataTextKind, DxfEntityXDataTypedDirectory, DxfEntityXDataTypedEntry,
-    DxfEntityXDataValue, DxfError, DxfIoOperation, DxfRawDocumentFormat, DxfRawDocumentView,
-    DxfRawValueProvenance, DxfResource, DxfResourceProfile, DxfSourceId, DxfTextEncodingResolution,
+    DXF_XDATA_BINARY_CHUNK_MAX_BYTES, DXF_XDATA_STRING_MAX_BYTES, DxfAcadVersion,
+    DxfAcadVersionState, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
+    DxfEntityEditValue, DxfEntityFieldWireType, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
+    DxfEntityXDataCoordinateTransform, DxfEntityXDataHandleRemap,
+    DxfEntityXDataLogicalDestinationDirectory, DxfEntityXDataLogicalDestinationEntry,
+    DxfEntityXDataLogicalDestinationIssue, DxfEntityXDataLogicalDestinationState,
+    DxfEntityXDataLogicalDestinationValue, DxfEntityXDataTextKind, DxfEntityXDataTypedDirectory,
+    DxfEntityXDataTypedEntry, DxfEntityXDataValue, DxfError, DxfIoOperation, DxfRawDocumentFormat,
+    DxfRawDocumentView, DxfRawValueProvenance, DxfResource, DxfResourceProfile, DxfSourceId,
+    DxfTextTranscodeIssue, DxfTextTranscodeReceipt,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum DxfEntityXDataDestinationEncodeIssue {
     Group(DxfEntityGroupEncodeIssue),
-    TextTranscodingRequired {
-        source: DxfTextEncodingResolution,
-        destination: DxfTextEncodingResolution,
-    },
+    TextTranscode(DxfTextTranscodeIssue),
+    TranscodedTextTooLong { limit: u64, observed: u64 },
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -41,6 +40,7 @@ pub struct DxfEntityXDataEncodedDestinationEntry {
     logical_ordinal: u32,
     byte_start: u32,
     byte_end: u32,
+    text_transcode_ordinal: Option<u32>,
     state: DxfEntityXDataEncodedDestinationState,
 }
 
@@ -78,6 +78,7 @@ pub struct DxfEntityXDataEncodedDestinationDirectory {
     destination_version_state: DxfAcadVersionState,
     logical: DxfEntityXDataLogicalDestinationDirectory,
     entries: Box<[DxfEntityXDataEncodedDestinationEntry]>,
+    text_transcodes: Box<[DxfTextTranscodeReceipt]>,
     bytes: Box<[u8]>,
 }
 
@@ -102,6 +103,7 @@ impl DxfEntityXDataEncodedDestinationDirectory {
         let destination_version_state = destination.acad_version_report().state();
         let destination_format = destination.format();
         let mut entries = Vec::new();
+        let mut text_transcodes = Vec::new();
         let mut bytes = Vec::new();
         entries
             .try_reserve_exact(logical.entries().len())
@@ -109,7 +111,7 @@ impl DxfEntityXDataEncodedDestinationDirectory {
         for logical_entry in logical.entries().iter().copied() {
             ensure_not_cancelled(cancellation)?;
             let start = compact_len(bytes.len())?;
-            let state = encode_entry(
+            let encoded = encode_entry(
                 source,
                 destination,
                 &logical,
@@ -119,6 +121,16 @@ impl DxfEntityXDataEncodedDestinationDirectory {
                 cancellation,
                 &mut bytes,
             )?;
+            let text_transcode_ordinal = if let Some(receipt) = encoded.text_transcode {
+                let ordinal = compact_len(text_transcodes.len())?;
+                text_transcodes
+                    .try_reserve(1)
+                    .map_err(|_| out_of_memory())?;
+                text_transcodes.push(receipt);
+                Some(ordinal)
+            } else {
+                None
+            };
             entries.push(DxfEntityXDataEncodedDestinationEntry {
                 source_id: source.source_id(),
                 destination_id: destination.source_id(),
@@ -126,7 +138,8 @@ impl DxfEntityXDataEncodedDestinationDirectory {
                 logical_ordinal: compact_u64(logical_entry.ordinal())?,
                 byte_start: start,
                 byte_end: compact_len(bytes.len())?,
-                state,
+                text_transcode_ordinal,
+                state: encoded.state,
             });
         }
         ensure_not_cancelled(cancellation)?;
@@ -137,6 +150,7 @@ impl DxfEntityXDataEncodedDestinationDirectory {
             destination_version_state,
             logical,
             entries: entries.into_boxed_slice(),
+            text_transcodes: text_transcodes.into_boxed_slice(),
             bytes: bytes.into_boxed_slice(),
         })
     }
@@ -206,6 +220,19 @@ impl DxfEntityXDataEncodedDestinationDirectory {
             .get(usize::try_from(entry.byte_start).ok()?..usize::try_from(entry.byte_end).ok()?)
     }
 
+    #[must_use]
+    pub fn text_transcode_for_entry(
+        &self,
+        entry: DxfEntityXDataEncodedDestinationEntry,
+    ) -> Option<DxfTextTranscodeReceipt> {
+        if self.entry(entry.ordinal()) != Some(entry) {
+            return None;
+        }
+        self.text_transcodes
+            .get(usize::try_from(entry.text_transcode_ordinal?).ok()?)
+            .copied()
+    }
+
     pub(crate) fn encoded_bytes_for_ready_range(
         &self,
         entries: &[DxfEntityXDataEncodedDestinationEntry],
@@ -240,6 +267,7 @@ impl fmt::Debug for DxfEntityXDataEncodedDestinationDirectory {
             .field("destination_version_state", &self.destination_version_state)
             .field("logical", &self.logical)
             .field("entries", &self.entries)
+            .field("text_transcode_count", &self.text_transcodes.len())
             .field("encoded_byte_count", &self.bytes.len())
             .finish()
     }
@@ -301,19 +329,21 @@ fn encode_entry(
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
     destination_bytes: &mut Vec<u8>,
-) -> Result<DxfEntityXDataEncodedDestinationState, DxfError> {
+) -> Result<EncodedEntry, DxfError> {
     let DxfEntityXDataLogicalDestinationState::Available(value) = entry.state() else {
         let DxfEntityXDataLogicalDestinationState::Unavailable(issue) = entry.state() else {
             return Err(invalid_internal_data());
         };
-        return Ok(DxfEntityXDataEncodedDestinationState::LogicalUnavailable(
-            issue,
+        return Ok(EncodedEntry::unavailable(
+            DxfEntityXDataEncodedDestinationState::LogicalUnavailable(issue),
         ));
     };
     let DxfAcadVersionState::Supported(version) = version_state else {
-        return Ok(DxfEntityXDataEncodedDestinationState::DialectUnavailable {
-            state: version_state,
-        });
+        return Ok(EncodedEntry::unavailable(
+            DxfEntityXDataEncodedDestinationState::DialectUnavailable {
+                state: version_state,
+            },
+        ));
     };
     let typed = logical
         .typed_for_entry(entry)
@@ -331,19 +361,41 @@ fn encode_entry(
     let encoded = match encoded {
         Ok(encoded) => encoded,
         Err(issue) => {
-            return Ok(DxfEntityXDataEncodedDestinationState::EncodingUnavailable(
-                issue,
+            return Ok(EncodedEntry::unavailable(
+                DxfEntityXDataEncodedDestinationState::EncodingUnavailable(issue),
             ));
         }
     };
-    let count = compact_len(encoded.len())?;
+    let count = compact_len(encoded.bytes.len())?;
     destination_bytes
-        .try_reserve(encoded.len())
+        .try_reserve(encoded.bytes.len())
         .map_err(|_| out_of_memory())?;
-    destination_bytes.extend_from_slice(&encoded);
-    Ok(DxfEntityXDataEncodedDestinationState::Ready {
-        encoded_byte_count: count,
+    destination_bytes.extend_from_slice(&encoded.bytes);
+    Ok(EncodedEntry {
+        state: DxfEntityXDataEncodedDestinationState::Ready {
+            encoded_byte_count: count,
+        },
+        text_transcode: encoded.text_transcode,
     })
+}
+
+struct EncodedEntry {
+    state: DxfEntityXDataEncodedDestinationState,
+    text_transcode: Option<DxfTextTranscodeReceipt>,
+}
+
+impl EncodedEntry {
+    const fn unavailable(state: DxfEntityXDataEncodedDestinationState) -> Self {
+        Self {
+            state,
+            text_transcode: None,
+        }
+    }
+}
+
+struct EncodedValue {
+    bytes: Vec<u8>,
+    text_transcode: Option<DxfTextTranscodeReceipt>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -356,7 +408,7 @@ fn encode_value(
     version: DxfAcadVersion,
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
-) -> Result<Result<Vec<u8>, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
+) -> Result<Result<EncodedValue, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
     let encoder = DxfEntityGroupEncoder::new(destination.format(), version, profile);
     let code = typed.occurrence().group().group_code().value();
     match logical {
@@ -410,28 +462,52 @@ fn encode_source_exact(
     value: DxfEntityXDataValue,
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
-) -> Result<Result<Vec<u8>, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
+) -> Result<Result<EncodedValue, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
     match value {
         DxfEntityXDataValue::ExactText {
             kind: DxfEntityXDataTextKind::String,
             raw,
         } => {
             let bytes = read_raw(source, raw, profile, cancellation)?;
-            if !portable_text(source, destination, &bytes) {
+            if portable_text(source, destination, &bytes) {
+                return encode_raw(
+                    encoder,
+                    code,
+                    DxfEntityFieldWireType::ExactText,
+                    DxfEntityEditValue::ExactRawText(&bytes),
+                    cancellation,
+                );
+            }
+
+            let plan = match source.transcode_text_span_to(
+                raw.value_span(),
+                destination,
+                profile,
+                cancellation,
+            )? {
+                Ok(plan) => plan,
+                Err(issue) => {
+                    return Ok(Err(DxfEntityXDataDestinationEncodeIssue::TextTranscode(
+                        issue,
+                    )));
+                }
+            };
+            let receipt = plan.receipt();
+            if receipt.source_id() != source.source_id()
+                || receipt.destination_id() != destination.source_id()
+                || receipt.source_span() != raw.value_span()
+            {
+                return Err(invalid_internal_data());
+            }
+            if receipt.encoded_byte_count() > DXF_XDATA_STRING_MAX_BYTES {
                 return Ok(Err(
-                    DxfEntityXDataDestinationEncodeIssue::TextTranscodingRequired {
-                        source: source.text_encoding_report().resolution(),
-                        destination: destination.text_encoding_report().resolution(),
+                    DxfEntityXDataDestinationEncodeIssue::TranscodedTextTooLong {
+                        limit: DXF_XDATA_STRING_MAX_BYTES,
+                        observed: receipt.encoded_byte_count(),
                     },
                 ));
             }
-            encode_raw(
-                encoder,
-                code,
-                DxfEntityFieldWireType::ExactText,
-                DxfEntityEditValue::ExactRawText(&bytes),
-                cancellation,
-            )
+            encode_transcoded_text(encoder, code, plan.encoded_bytes(), receipt, cancellation)
         }
         DxfEntityXDataValue::Control { raw, .. } => {
             let bytes = read_raw(source, raw, profile, cancellation)?;
@@ -490,10 +566,34 @@ fn encode_raw(
     wire_type: DxfEntityFieldWireType,
     value: DxfEntityEditValue<'_>,
     cancellation: &DxfCancellationToken,
-) -> Result<Result<Vec<u8>, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
+) -> Result<Result<EncodedValue, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
     Ok(encoder
         .encode_raw(code, wire_type, value, cancellation)?
+        .map(|bytes| EncodedValue {
+            bytes,
+            text_transcode: None,
+        })
         .map_err(DxfEntityXDataDestinationEncodeIssue::Group))
+}
+
+fn encode_transcoded_text(
+    encoder: DxfEntityGroupEncoder,
+    code: i16,
+    bytes: &[u8],
+    receipt: DxfTextTranscodeReceipt,
+    cancellation: &DxfCancellationToken,
+) -> Result<Result<EncodedValue, DxfEntityXDataDestinationEncodeIssue>, DxfError> {
+    let encoded = encode_raw(
+        encoder,
+        code,
+        DxfEntityFieldWireType::ExactText,
+        DxfEntityEditValue::ExactRawText(bytes),
+        cancellation,
+    )?;
+    Ok(encoded.map(|mut encoded| {
+        encoded.text_transcode = Some(receipt);
+        encoded
+    }))
 }
 
 fn portable_text(

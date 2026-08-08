@@ -333,6 +333,83 @@ fn point_clone_projects_and_composes_owned_xdata_for_every_format_and_dialect()
 }
 
 #[test]
+fn point_clone_writes_transcoded_xdata_and_verifies_exact_inverse() -> Result<(), Box<dyn Error>> {
+    let source_version = DxfAcadVersion::Ac1018;
+    let destination_version = DxfAcadVersion::Ac1021;
+    let source_bytes =
+        source_fixture_with_xdata(DxfRawDocumentFormat::Binary, source_version, b"\xE9")?;
+    let destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Ascii, destination_version, 0x40)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Binary)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+    let encoded = directory
+        .encoded_application_destination_directory()
+        .encoded_destination_directory();
+    let receipt = encoded
+        .entries()
+        .iter()
+        .copied()
+        .find_map(|entry| encoded.text_transcode_for_entry(entry))
+        .ok_or_else(|| io::Error::other("POINT XDATA transcode receipt"))?;
+    assert_eq!(receipt.source_byte_count(), 1);
+    assert_eq!(receipt.utf8_byte_count(), 2);
+    assert_eq!(receipt.encoded_byte_count(), 2);
+    let payload = directory
+        .encoded_bytes_for_entry(entry)
+        .ok_or_else(|| io::Error::other("transcoded POINT XDATA"))?;
+    assert!(
+        payload
+            .windows("é".len())
+            .any(|window| window == "é".as_bytes())
+    );
+
+    let draft = point_clone_xdata_draft(
+        &directory,
+        entry,
+        source.view(),
+        destination.view(),
+        destination_version,
+    )?;
+    let insert = destination.view().plan_point_clone_xdata_insert(
+        draft,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    let temporary = TestDirectory::new()?;
+    let output_path = temporary.path().join("point-clone-transcoded-xdata.dxf");
+    let mut observer = NoopDxfReadObserver;
+    let DxfPointCloneXDataWriteOutcome::Written(journal) = insert
+        .write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &output_path,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut observer,
+        )?
+    else {
+        return Err(io::Error::other("transcoded POINT XDATA write").into());
+    };
+    let output = fs::read(&output_path)?;
+    assert!(output.windows(2).any(|window| window == "é".as_bytes()));
+    assert_eq!(
+        materialize(&output, journal.inverse_plan())?,
+        destination_bytes
+    );
+    assert_eq!(
+        journal
+            .xdata_journal()
+            .verification_receipt()
+            .xdata_byte_count(),
+        payload.len() as u64
+    );
+    Ok(())
+}
+
+#[test]
 fn point_clone_xdata_composition_is_fail_closed_and_keeps_standalone_projection_strict()
 -> Result<(), Box<dyn Error>> {
     let version = DxfAcadVersion::Ac1032;
@@ -1066,6 +1143,14 @@ fn source_fixture(
     format: DxfRawDocumentFormat,
     version: DxfAcadVersion,
 ) -> Result<Vec<u8>, io::Error> {
+    source_fixture_with_xdata(format, version, b"SECRET_DRAFT_XDATA")
+}
+
+fn source_fixture_with_xdata(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    xdata: &[u8],
+) -> Result<Vec<u8>, io::Error> {
     let mut groups = header(version, 0x30);
     groups.extend([
         group(0, b"SECTION"),
@@ -1125,7 +1210,7 @@ fn source_fixture(
         group(20, b"2"),
         group(30, b"3"),
         group(1001, b"APP_READY"),
-        group(1000, b"SECRET_DRAFT_XDATA"),
+        group(1000, xdata),
         group(0, b"LINE"),
         group(1000, b"SECRET_ORPHAN_XDATA"),
         group(0, b"ENDSEC"),

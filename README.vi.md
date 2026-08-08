@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dw**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dx**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -53,6 +53,9 @@ thể:
 - chuyển mã một text span chính xác giữa hai tài liệu DXF được parse độc lập,
   với decode/encode có giới hạn và không thay thế ký tự, rồi kiểm chứng
   round-trip Unicode đúng từng byte trước khi cung cấp byte đích;
+- áp dụng chuyển mã đã kiểm chứng cho XDATA string group-1000, giữ receipt gọn
+  theo từng occurrence xuyên application/entity và quá trình ghi POINT clone,
+  đồng thời vẫn bind APPID/LAYER theo đích thay vì tự động dịch hoặc đổi tên;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

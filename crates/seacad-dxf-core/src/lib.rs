@@ -1213,7 +1213,7 @@ pub use text_symbol_text::{
     DxfTextSymbolSemanticStyle, DxfTextSymbolSemanticText, DxfTextSymbolStyleName,
     DxfTextSymbolTextDirectory, DxfTextSymbolTextIssue, DxfToleranceFieldSemantics,
 };
-pub use text_transcode::{DxfTextTranscodeIssue, DxfTextTranscodePlan};
+pub use text_transcode::{DxfTextTranscodeIssue, DxfTextTranscodePlan, DxfTextTranscodeReceipt};
 pub use text_view::DxfTextValueDecodeReceipt;
 pub use text_wcs_anchor::{
     DxfTextExtrusionComponent, DxfTextWcsPlacementAnchor, DxfTextWcsPlacementAnchorDirectory,

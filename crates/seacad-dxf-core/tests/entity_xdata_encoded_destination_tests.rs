@@ -11,7 +11,7 @@ use seacad_dxf_core::{
     DxfEntityXDataEncodedEntityDestinationState, DxfEntityXDataHandleRemap,
     DxfEntityXDataLogicalDestinationIssue, DxfEntityXDataPayloadDestinationState, DxfError,
     DxfHandle, DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
-    DxfResourceProfile, NoopDxfReadObserver,
+    DxfResourceProfile, DxfTextEncodeStatus, DxfTextTranscodeIssue, NoopDxfReadObserver,
 };
 
 #[test]
@@ -177,7 +177,7 @@ fn encoded_applications_preserve_exact_sets_for_every_format_and_dialect()
 }
 
 #[test]
-fn encoded_application_fails_closed_for_transcoding_and_parent_envelope()
+fn encoded_application_fails_closed_for_unmappable_text_and_parent_envelope()
 -> Result<(), Box<dyn Error>> {
     let source_bytes = text_fixture(b"ANSI_1252", &[0x80])?;
     let destination_bytes = text_destination_fixture(b"ANSI_932")?;
@@ -207,7 +207,11 @@ fn encoded_application_fails_closed_for_transcoding_and_parent_envelope()
     assert!(matches!(
         directory.encoded_entries_for_entry(entry)?[1].state(),
         DxfEntityXDataEncodedDestinationState::EncodingUnavailable(
-            DxfEntityXDataDestinationEncodeIssue::TextTranscodingRequired { .. }
+            DxfEntityXDataDestinationEncodeIssue::TextTranscode(
+                DxfTextTranscodeIssue::DestinationEncode {
+                    status: DxfTextEncodeStatus::Unmappable { .. }
+                }
+            )
         )
     ));
 
@@ -383,7 +387,7 @@ fn every_supported_version_and_format_pair_has_canonical_encoded_groups()
 }
 
 #[test]
-fn non_ascii_text_requires_matching_source_and_destination_decoders() -> Result<(), Box<dyn Error>>
+fn unmappable_non_ascii_text_fails_closed_without_destination_bytes() -> Result<(), Box<dyn Error>>
 {
     let source_bytes = text_fixture(b"ANSI_1252", &[0x80])?;
     let destination_bytes = text_destination_fixture(b"ANSI_932")?;
@@ -406,7 +410,11 @@ fn non_ascii_text_requires_matching_source_and_destination_decoders() -> Result<
     assert!(matches!(
         directory.entries()[1].state(),
         DxfEntityXDataEncodedDestinationState::EncodingUnavailable(
-            DxfEntityXDataDestinationEncodeIssue::TextTranscodingRequired { .. }
+            DxfEntityXDataDestinationEncodeIssue::TextTranscode(
+                DxfTextTranscodeIssue::DestinationEncode {
+                    status: DxfTextEncodeStatus::Unmappable { .. }
+                }
+            )
         )
     ));
     assert_eq!(
@@ -436,6 +444,7 @@ fn non_ascii_text_requires_matching_source_and_destination_decoders() -> Result<
 fn encoded_directory_is_cancellable_dual_source_bound_bounded_and_non_disclosing()
 -> Result<(), Box<dyn Error>> {
     assert_send_sync::<DxfEntityXDataEncodedDestinationDirectory>();
+    assert_copy::<DxfEntityXDataDestinationEncodeIssue>();
     assert_copy::<DxfEntityXDataEncodedDestinationEntry>();
     assert_copy::<DxfEntityXDataEncodedDestinationState>();
     let entry_size = size_of::<DxfEntityXDataEncodedDestinationEntry>();

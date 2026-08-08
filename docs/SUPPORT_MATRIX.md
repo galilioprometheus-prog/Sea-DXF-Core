@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dw can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dx can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1405,6 +1405,24 @@ source text, indeterminate destination encoding, cancellation, hostile spans,
 identity/count evidence, traits, and redaction. This primitive is not yet
 wired into POINT or XDATA field projection; symbol names remain governed by
 explicit destination bindings and are never automatically transcoded.
+
+M14.3dx integrates the M14.3dw primitive into exact group-1000 XDATA string
+encoding. Non-ASCII values with different reviewed storage decisions now
+decode, encode, and round-trip verify before canonical destination group
+framing; ASCII values and non-ASCII values with the same available decoder
+retain their exact source bytes. Each successful conversion stores a compact
+dual-source receipt outside the hot entry metadata and exposes it only through
+entry-identity validation. APPID group 1001 and LAYER group 1003 continue to
+use exact destination symbol-table targets, while group-1002 controls remain
+source-exact. Destination text above the 255-byte XDATA string ceiling is
+typed unavailable. UTF-8/Windows-1252 both ways span all four ASCII/Binary
+format pairs and remain ready through application/entity grouping; a Binary
+AC1018-to-ASCII AC1021 POINT clone reaches create-new writing, strict reparse,
+exact XDATA verification, and inverse restoration. Unmappable, malformed,
+unsupported, indeterminate, Johab-unavailable, over-limit, cancellation,
+identity, metadata-bound, trait, and redaction paths remain fail-closed.
+Application-specific XDATA meaning, automatic symbol creation, other entity
+text fields, higher entity families, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

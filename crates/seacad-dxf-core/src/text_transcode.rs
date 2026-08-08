@@ -33,6 +33,61 @@ pub enum DxfTextTranscodeIssue {
     },
 }
 
+/// Compact provenance for one replacement-free, round-trip-verified result.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct DxfTextTranscodeReceipt {
+    source_id: DxfSourceId,
+    destination_id: DxfSourceId,
+    source_span: ByteSpan,
+    source_encoding: DxfTextEncodingResolution,
+    destination_encoding: DxfTextEncodingResolution,
+    source_byte_count: u64,
+    utf8_byte_count: u64,
+    encoded_byte_count: u64,
+}
+
+impl DxfTextTranscodeReceipt {
+    #[must_use]
+    pub const fn source_id(self) -> DxfSourceId {
+        self.source_id
+    }
+
+    #[must_use]
+    pub const fn destination_id(self) -> DxfSourceId {
+        self.destination_id
+    }
+
+    #[must_use]
+    pub const fn source_span(self) -> ByteSpan {
+        self.source_span
+    }
+
+    #[must_use]
+    pub const fn source_encoding(self) -> DxfTextEncodingResolution {
+        self.source_encoding
+    }
+
+    #[must_use]
+    pub const fn destination_encoding(self) -> DxfTextEncodingResolution {
+        self.destination_encoding
+    }
+
+    #[must_use]
+    pub const fn source_byte_count(self) -> u64 {
+        self.source_byte_count
+    }
+
+    #[must_use]
+    pub const fn utf8_byte_count(self) -> u64 {
+        self.utf8_byte_count
+    }
+
+    #[must_use]
+    pub const fn encoded_byte_count(self) -> u64 {
+        self.encoded_byte_count
+    }
+}
+
 /// One exact source span transcoded for an independently parsed destination.
 pub struct DxfTextTranscodePlan {
     source_id: DxfSourceId,
@@ -42,6 +97,7 @@ pub struct DxfTextTranscodePlan {
     destination_encoding: DxfTextEncodingResolution,
     source_byte_count: u64,
     utf8_byte_count: u64,
+    encoded_byte_count: u64,
     encoded: Box<[u8]>,
 }
 
@@ -82,6 +138,25 @@ impl DxfTextTranscodePlan {
     }
 
     #[must_use]
+    pub const fn encoded_byte_count(&self) -> u64 {
+        self.encoded_byte_count
+    }
+
+    #[must_use]
+    pub const fn receipt(&self) -> DxfTextTranscodeReceipt {
+        DxfTextTranscodeReceipt {
+            source_id: self.source_id,
+            destination_id: self.destination_id,
+            source_span: self.source_span,
+            source_encoding: self.source_encoding,
+            destination_encoding: self.destination_encoding,
+            source_byte_count: self.source_byte_count,
+            utf8_byte_count: self.utf8_byte_count,
+            encoded_byte_count: self.encoded_byte_count,
+        }
+    }
+
+    #[must_use]
     pub fn encoded_bytes(&self) -> &[u8] {
         &self.encoded
     }
@@ -98,7 +173,7 @@ impl std::fmt::Debug for DxfTextTranscodePlan {
             .field("destination_encoding", &self.destination_encoding)
             .field("source_byte_count", &self.source_byte_count)
             .field("utf8_byte_count", &self.utf8_byte_count)
-            .field("encoded_byte_count", &self.encoded.len())
+            .field("encoded_byte_count", &self.encoded_byte_count)
             .finish()
     }
 }
@@ -188,6 +263,7 @@ impl DxfRawDocumentView<'_> {
             destination_encoding,
             source_byte_count: source_span.len(),
             utf8_byte_count: compact_len(decoded.len())?,
+            encoded_byte_count: compact_len(encoded.len())?,
             encoded: encoded.into_boxed_slice(),
         }))
     }
