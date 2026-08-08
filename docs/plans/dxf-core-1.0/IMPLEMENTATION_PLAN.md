@@ -3219,6 +3219,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     transcoding, non-default modern common fields, higher entity families, and
     POINT `Complete` remain open.
 
+    M14.3dw introduces the missing replacement-free destination encoder and a
+    dual-document exact-text transcoding primitive. It reads one bounded source
+    span, resolves source and destination storage independently, rejects
+    malformed, unsupported, unmappable, output-full, and unavailable cases
+    with typed evidence, and publishes destination bytes only after decoding
+    them back to the same byte-exact UTF-8 sequence. The immutable plan binds
+    both document identities, the source span, resolutions, counts, and encoded
+    bytes; debug output exposes counts but not text. All four ASCII/Binary
+    format pairings cover UTF-8 and Windows-1252 in both directions, with same/
+    cross-legacy, empty, Johab-unavailable, malformed, indeterminate,
+    cancellation, resource-bound, traits, and redaction cases. Integration
+    into actual POINT/XDATA fields, application-specific meaning, higher entity
+    families, and POINT `Complete` remain open; destination-bound symbol names
+    are not implicitly transcoded.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

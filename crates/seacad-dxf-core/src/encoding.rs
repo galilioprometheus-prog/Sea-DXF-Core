@@ -5,6 +5,7 @@ use std::io;
 use crate::{
     ByteSpan, DxfAcadVersion, DxfAcadVersionState, DxfAsciiGroup, DxfDiagnostic, DxfDiagnosticCode,
     DxfError, DxfGroupCode, DxfIoOperation, DxfLegacyCodePage, DxfSourceId, DxfTextDecoder,
+    DxfTextEncoder,
 };
 
 /// Classification of the group immediately following one `$DWGCODEPAGE`.
@@ -98,6 +99,20 @@ impl DxfTextEncodingResolution {
         match self {
             Self::Utf8(_) => Some(DxfTextDecoder::Utf8),
             Self::Legacy { code_page, .. } => Some(DxfTextDecoder::Legacy(code_page)),
+            Self::UnsupportedLegacy { .. } | Self::Indeterminate => None,
+        }
+    }
+
+    /// Returns the reviewed encoder for this resolved storage decision.
+    ///
+    /// Unsupported and indeterminate declarations have no encoder. A legacy
+    /// declaration may still resolve to an encoder whose implementation is
+    /// explicitly unavailable, so callers must also inspect the encode status.
+    #[must_use]
+    pub const fn encoder(self) -> Option<DxfTextEncoder> {
+        match self {
+            Self::Utf8(_) => Some(DxfTextEncoder::Utf8),
+            Self::Legacy { code_page, .. } => Some(DxfTextEncoder::Legacy(code_page)),
             Self::UnsupportedLegacy { .. } | Self::Indeterminate => None,
         }
     }

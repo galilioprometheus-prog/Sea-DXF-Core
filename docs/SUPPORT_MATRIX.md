@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dv can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dw can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1389,6 +1389,22 @@ format pairings cover both AC1009/AC1032 directions through strict create-new
 write, reparse, verification, and exact inverse restoration. Application-
 specific XDATA meaning, actual text transcoding, non-default modern common
 fields, higher entity families, and POINT `Complete` remain open.
+
+M14.3dw adds a bounded encoder for UTF-8 and every reviewed `encoding_rs`
+legacy code page, with typed output-full, unmappable, and unavailable results
+and no replacement output. A dual-document primitive reads one exact source
+span, resolves both documents' text-storage decisions, decodes and encodes
+within the selected value-byte ceiling, then decodes the destination bytes
+again and requires byte-exact UTF-8 equality before publishing an immutable
+plan. The plan binds both source identities, the exact source span, both
+encoding resolutions, byte counts, and destination bytes while redacting text
+from debug output. Four ASCII/Binary format pairings cover UTF-8/Windows-1252
+both ways; focused cases cover same/cross-legacy values, empty text,
+unmappable Unicode, unavailable Johab encoding, malformed and unsupported
+source text, indeterminate destination encoding, cancellation, hostile spans,
+identity/count evidence, traits, and redaction. This primitive is not yet
+wired into POINT or XDATA field projection; symbol names remain governed by
+explicit destination bindings and are never automatically transcoded.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

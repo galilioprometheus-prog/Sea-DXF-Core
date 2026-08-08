@@ -245,6 +245,7 @@ mod spline_scalar_semantic;
 mod spline_topology;
 mod text_control;
 mod text_decoder;
+mod text_encoder;
 mod text_escape;
 mod text_layout;
 mod text_placement_anchor;
@@ -255,6 +256,7 @@ mod text_symbol_ocs_projection;
 mod text_symbol_role;
 mod text_symbol_scalar_value;
 mod text_symbol_text;
+mod text_transcode;
 mod text_view;
 mod text_wcs_anchor;
 mod text_wcs_orientation;
@@ -1175,6 +1177,7 @@ pub use text_control::{
 pub use text_decoder::{
     DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
 };
+pub use text_encoder::{DxfTextEncodeResult, DxfTextEncodeStatus, DxfTextEncoder};
 pub use text_escape::{
     DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
     decode_dxf_text_escapes_to_utf8_without_replacement,
@@ -1210,6 +1213,7 @@ pub use text_symbol_text::{
     DxfTextSymbolSemanticStyle, DxfTextSymbolSemanticText, DxfTextSymbolStyleName,
     DxfTextSymbolTextDirectory, DxfTextSymbolTextIssue, DxfToleranceFieldSemantics,
 };
+pub use text_transcode::{DxfTextTranscodeIssue, DxfTextTranscodePlan};
 pub use text_view::DxfTextValueDecodeReceipt;
 pub use text_wcs_anchor::{
     DxfTextExtrusionComponent, DxfTextWcsPlacementAnchor, DxfTextWcsPlacementAnchorDirectory,

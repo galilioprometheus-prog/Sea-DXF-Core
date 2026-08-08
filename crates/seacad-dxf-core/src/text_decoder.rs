@@ -97,7 +97,7 @@ impl DxfLegacyCodePage {
         }
     }
 
-    fn encoding(self) -> Option<&'static Encoding> {
+    pub(crate) fn encoding(self) -> Option<&'static Encoding> {
         match self {
             Self::Windows874 => Some(WINDOWS_874),
             Self::Windows932 => Some(SHIFT_JIS),

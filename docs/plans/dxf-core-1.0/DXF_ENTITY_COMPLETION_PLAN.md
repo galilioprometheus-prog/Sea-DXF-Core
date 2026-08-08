@@ -1761,6 +1761,20 @@ verification, and exact inverse restoration. Application-specific XDATA
 meaning, actual text transcoding, non-default modern common fields, higher
 entity families, and POINT `Complete` remain open.
 
+M14.3dw introduces the missing replacement-free destination encoder and a
+dual-document exact-text transcoding primitive. It reads one bounded source
+span, resolves source and destination storage independently, rejects malformed,
+unsupported, unmappable, output-full, and unavailable cases with typed
+evidence, and publishes destination bytes only after decoding them back to the
+same byte-exact UTF-8 sequence. The immutable plan binds both document
+identities, the source span, resolutions, counts, and encoded bytes; debug
+output exposes counts but not text. All four ASCII/Binary format pairings
+cover UTF-8 and Windows-1252 in both directions, with same/cross-legacy, empty,
+Johab-unavailable, malformed, indeterminate, cancellation, resource-bound,
+traits, and redaction cases. Integration into actual POINT/XDATA fields,
+application-specific meaning, higher entity families, and POINT `Complete`
+remain open; destination-bound symbol names are not implicitly transcoded.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
