@@ -3362,6 +3362,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     domains, relations, tuples, nested HATCH state, geometry, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4d maps all 25 M14.4c cards into source-anchored four-state semantics.
+    Unique values are explicit, duplicates remain invalid without selection,
+    and malformed ASCII or non-finite Binary doubles retain raw provenance.
+    Only absent extrusion components receive documented `(0,0,1)` defaults;
+    gradient defaults stay absent until the optional group-450 envelope is
+    proven. Reviewed individual domains cover flags, style/type, counts, and
+    gradient reserved/mode/count/shift/tint fields. All nine dialects have
+    ASCII/Binary parity with nine AC1009 high-code absences. Tuple assembly,
+    cross-field relations, nested HATCH state, geometry, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

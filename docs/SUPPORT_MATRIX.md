@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4c can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4d can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1544,6 +1544,19 @@ payloads do not alter occurrence count or cause value selection. All nine Core
 dialects have ASCII/Binary card/member parity, including nine absent high-code
 cards for AC1009. Defaults, domains, semantic relations, tuples, nested HATCH
 state, geometry, applicability, CRUD/write, and completion remain open.
+
+M14.4d publishes 25 stable four-state singleton semantics per exact HATCH
+subclass. Unique values retain exact field and raw provenance; duplicates are
+typed invalid without choosing a member; malformed ASCII and non-finite Binary
+doubles remain source-anchored invalid states. Only the documented optional
+extrusion direction receives component defaults `(0,0,1)`. Flags, style,
+pattern type, nonnegative counts, gradient reserved fields, color-mode/count,
+shift, and tint receive their documented individual domains. Gradient defaults
+are not applied while the optional group-450 envelope is absent; envelope and
+tuple relations remain separate. All nine Core dialects have ASCII/Binary
+semantic parity, with the nine high-code roles absent for AC1009. Tuple
+assembly, cross-field relations, nested HATCH state, geometry, applicability,
+CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

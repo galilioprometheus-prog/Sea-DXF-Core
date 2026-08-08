@@ -2,11 +2,11 @@
 
 Status: READY
 
-Checkpoint: `M14.3dr-M14.4c-hatch-scalar-cardinality`
+Checkpoint: `M14.3dr-M14.4d-hatch-scalar-semantics`
 Repository root: `D:\SeaCad\SeaCad`
 Baseline: `028d726b7f04709927e0d6c8c8d419dc1eb49fcb`
-Review target: annotated tag `m14.4c-hatch-scalar-cardinality`
-Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4c-hatch-scalar-cardinality-2026-08-09.yaml`
+Review target: annotated tag `m14.4d-hatch-scalar-semantics`
+Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4d-hatch-scalar-semantics-2026-08-09.yaml`
 Prepared: `2026-08-09` (`Asia/Saigon`)
 
 The preceding M14.3dl-M14.3dq cumulative batch was independently reviewed PASS
@@ -17,7 +17,7 @@ M14.3dr through M14.3ec so implementation does not pause between checkpoints.
 
 ## Authority, procedure, and writes
 
-Mechanically verify M14.3dr-M14.4c only. Codex/user retain architecture,
+Mechanically verify M14.3dr-M14.4d only. Codex/user retain architecture,
 support, license, commit/tag/merge/release decisions. Use the exact root, read
 `AGENTS.md` and this note completely, confirm exactly one READY, and run phases
 in order. The repository is read-only; ignored target/cache activity is
@@ -32,7 +32,8 @@ status, HEAD, all target annotated-tag objects/messages/peeled commits, the
 baseline tag target, and the baseline-to-target changed path set. Require:
 
 ```text
-HEAD == m14.4c-hatch-scalar-cardinality^{}
+HEAD == m14.4d-hatch-scalar-semantics^{}
+m14.4d-hatch-scalar-semantics^1 == m14.4c-hatch-scalar-cardinality^{}
 m14.4c-hatch-scalar-cardinality^1 == m14.4b-hatch-scalar-evidence^{}
 m14.4b-hatch-scalar-evidence^1 == m14.4a-fill-mesh-evidence^{}
 m14.4a-fill-mesh-evidence^1 == m14.3ec-curve-completion-ledger^{}
@@ -49,7 +50,7 @@ m14.3dt-point-clone-xdata-draft^1 == m14.3ds-point-clone-draft-projection^{}
 m14.3ds-point-clone-draft-projection^1 == m14.3dr-entity-xdata-draft-write^{}
 m14.3dr-entity-xdata-draft-write^1 == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
 m14.3dq-entity-xdata-draft-verification^{} == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
-all fifteen review tags are annotated tag objects
+all sixteen review tags are annotated tag objects
 ```
 
 The baseline-to-target changed path set must be exactly:
@@ -65,6 +66,7 @@ crates/seacad-dxf-core/src/entity_xdata_draft_write.rs
 crates/seacad-dxf-core/src/fill_mesh_evidence.rs
 crates/seacad-dxf-core/src/hatch_scalar_evidence.rs
 crates/seacad-dxf-core/src/hatch_scalar_card.rs
+crates/seacad-dxf-core/src/hatch_scalar_semantic.rs
 crates/seacad-dxf-core/src/lib.rs
 crates/seacad-dxf-core/src/point_clone_draft_projection.rs
 crates/seacad-dxf-core/src/point_clone_xdata_draft.rs
@@ -82,6 +84,7 @@ crates/seacad-dxf-core/tests/entity_xdata_text_transcode_tests.rs
 crates/seacad-dxf-core/tests/fill_mesh_evidence_tests.rs
 crates/seacad-dxf-core/tests/hatch_scalar_evidence_tests.rs
 crates/seacad-dxf-core/tests/hatch_scalar_card_tests.rs
+crates/seacad-dxf-core/tests/hatch_scalar_semantic_tests.rs
 crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs
 crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs
 crates/seacad-dxf-core/tests/text_transcode_tests.rs
@@ -103,6 +106,7 @@ docs/audits/M14_3EC_CURVE_COMPLETION_LEDGER.md
 docs/audits/M14_4A_FILL_MESH_EXACT_EVIDENCE.md
 docs/audits/M14_4B_HATCH_SCALAR_EVIDENCE.md
 docs/audits/M14_4C_HATCH_SCALAR_CARDINALITY.md
+docs/audits/M14_4D_HATCH_SCALAR_SEMANTICS.md
 docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md
 docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
 ```
@@ -113,8 +117,8 @@ Compare paths as sets.
 
 | Path | Lines | SHA-256 |
 |---|---:|---|
-| `README.md` | 196 | `67493c28df2833f78301b9b21c1432e173df4930041d1d60dabea9cfe8679b14` |
-| `README.vi.md` | 194 | `f569b45183a3aec5ee30b97624208b8898aaf408e60984e3ed53307c8b062cf9` |
+| `README.md` | 198 | `b4917b4f3bbc973a66df6fcec5a89b4c3388b5cef91cdc77c4adda45c84f6cd9` |
+| `README.vi.md` | 196 | `c7d2094dc5cc351a85cf33b86432640280823ae7d19851c902681635a85734f9` |
 | `crates/seacad-dxf-core/src/encoding.rs` | 788 | `246e8f228588680d408dd7ae71f37e16094ab687c3c0fe55d8a48e4aef75a9a7` |
 | `crates/seacad-dxf-core/src/entity_completion.rs` | 129 | `0be29a16b5cc3c1d08075678461acc017531f5ac0eb2a3c0f1436470f81f5aa6` |
 | `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2,972 | `ecbc34c75c2c6c03467ea66448f55ddddaaa5550cf087b528239bd214e890207` |
@@ -123,7 +127,8 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/src/fill_mesh_evidence.rs` | 399 | `814364cbf0b63b7b060c38a0b08d0975dc7befc18051cc00fbb63ad2545d1fa1` |
 | `crates/seacad-dxf-core/src/hatch_scalar_evidence.rs` | 395 | `4e76086db9803d9e56b497df55bddcf942554f77e9a7978227ca72bb59410aec` |
 | `crates/seacad-dxf-core/src/hatch_scalar_card.rs` | 326 | `27a0d63020afa8fee257b54ea051c467c3f7dfbc7271c952d1cca3d06d0a133a` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1,284 | `8f64f4e7516e8075429f9fdf7a3d830abdbbea54fd664fbf86a44153ac2ac823` |
+| `crates/seacad-dxf-core/src/hatch_scalar_semantic.rs` | 380 | `696c5c142f68cb286e1a3c9eb7cf07d1f417bf025987f71f5f17d1f28641151d` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,289 | `b97ee181e9d45adf60feb1668e6d24d17f6c357a6360f75fdc1eff8b11784edc` |
 | `crates/seacad-dxf-core/src/point_clone_draft_projection.rs` | 511 | `9809d74f63e8b5510689e650b95dc45baaea5073ba4d93247271fc41be74a822` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_draft.rs` | 250 | `0a34de42328039c76f8ac45226da6e6a7ae027831bec4b3088ba3d8c3295e77e` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_insert.rs` | 317 | `59c087ff6cc447604379588eba154d013e67712d9dcc881a0b6708dadf2bae6d` |
@@ -140,11 +145,12 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/tests/fill_mesh_evidence_tests.rs` | 358 | `4ba42f81dac85ca940de29bd6e97f89b0cda49d0846e831eaa3217586b400189` |
 | `crates/seacad-dxf-core/tests/hatch_scalar_evidence_tests.rs` | 457 | `95c76aabaaffe0e2c7cfd1be1ba0d659853705e621f67571cb5bc59baca62af3` |
 | `crates/seacad-dxf-core/tests/hatch_scalar_card_tests.rs` | 424 | `88947fdc8c9827ee3efdfa556912062e3f1833835d7890c6db97b3db3269a439` |
+| `crates/seacad-dxf-core/tests/hatch_scalar_semantic_tests.rs` | 497 | `fb2fc1d5b98409c0cedaadacc39ad05c45b324352e91b9a77d04e1ab2b82320b` |
 | `crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs` | 367 | `4b6306081db5d1ca6cba239f0fecc09dbcf3506e87e3d04920a9c0a09a9c3dbb` |
 | `crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs` | 348 | `bc72c88c95a4fc983ff0e64a409d539f8d8d6b460d8e9c5d37e6cb0972e2fdc3` |
 | `crates/seacad-dxf-core/tests/text_transcode_tests.rs` | 476 | `9bda1ee19362b058ab9a174705cc0d5893f73d13bdb8e008b6e4a7d2d2340a40` |
-| `docs/IMPLEMENTATION_PLAN.md` | 423 | `07273e72287440669d7dc64706bd5fd365a516a862c723dc4fee24c4e7108a87` |
-| `docs/SUPPORT_MATRIX.md` | 3,027 | `5500899e8e16a12c29bcbfd1b32680257d9753c40a3231d6135df4b9ed2f73a3` |
+| `docs/IMPLEMENTATION_PLAN.md` | 423 | `d7eba0807a45d9dd85cc196bc273324ccf242069da9953dcd962b523eff789b9` |
+| `docs/SUPPORT_MATRIX.md` | 3,040 | `ea661cbd72f4f6b047eec76c5cb987008be9283a14898706ac978cef888af296` |
 | `docs/audits/M14_3DR_ENTITY_XDATA_DRAFT_WRITE.md` | 55 | `0475c6d1c6f73507f1c63e9da586c7078e39c25c91f0fd1b2a13848af264d540` |
 | `docs/audits/M14_3DS_POINT_CLONE_DRAFT_PROJECTION.md` | 50 | `0ab9ac7a5274f38ad9cb8309a53c3b9f04f1d79512c7159f8434c7b6d4f911cc` |
 | `docs/audits/M14_3DT_POINT_CLONE_XDATA_DRAFT.md` | 46 | `c9ff7377bfe2c674a0eddcb029e32f34a4c6e4b488adf76bef638e0788e04905` |
@@ -160,8 +166,9 @@ Compare paths as sets.
 | `docs/audits/M14_4A_FILL_MESH_EXACT_EVIDENCE.md` | 87 | `db4bc08acc877e919d9a432146ce803bbba2bdd231359831247f8c3b5e3dd185` |
 | `docs/audits/M14_4B_HATCH_SCALAR_EVIDENCE.md` | 84 | `35ed6a7cdaf14439a4a4239015dabe4667b802c95874232e1a9ac9288b27567a` |
 | `docs/audits/M14_4C_HATCH_SCALAR_CARDINALITY.md` | 71 | `fc8954c82c54efbdbd58360ae5bd3a18dcfc06bf601dc38bfe66238868d987a7` |
-| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,954 | `afdac35738d176379f897f9f0b14f4fcd775d80589854989dad2f3e136f57cd9` |
-| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,379 | `8c7b2aad8d87a6f108576d8b52b57b38a54d5f957157e03ba09600fe0f115c64` |
+| `docs/audits/M14_4D_HATCH_SCALAR_SEMANTICS.md` | 72 | `4f8c59031ec6353764ee00eae34d067125da0eb0f2dc6ef35efb1a9c9185c2b3` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,967 | `21a150449367d8ba98d565bc4cc89e065f5fdabe97d78ebb51f7734d00968b13` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,390 | `94ccbf7663e93a9fdce4c14c2e86cb668165395174a2e8af16fe0d19131dc556` |
 
 Compute every line count and lowercase SHA-256 and require exact matches. The
 active batch note intentionally omits its self-referential receipt.
@@ -175,6 +182,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test entity_completion_tests
 cargo +1.97.1 test -p seacad-dxf-core --test fill_mesh_evidence_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_scalar_evidence_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_scalar_card_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_scalar_semantic_tests
 cargo +1.97.1 test -p seacad-dxf-core --test spline_point_evaluation_tests
 cargo +1.97.1 test -p seacad-dxf-core --test spline_first_derivative_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_draft_record_tests
@@ -196,11 +204,12 @@ rg -n 'DxfEntityCompletion(Level|Blocker|Assessment)|DXF_ENTITY_COMPLETION_ASSES
 rg -n 'DxfFillMesh(EvidenceDirectory|Family|Field|Range|RecordEntry|SubclassEntry)|fill_mesh_evidence_directory|AcDbHatch|AcDbSubDMesh' crates/seacad-dxf-core/src/fill_mesh_evidence.rs crates/seacad-dxf-core/tests/fill_mesh_evidence_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4A_FILL_MESH_EXACT_EVIDENCE.md
 rg -n 'DXF_HATCH_SCALAR_ROLES|DxfHatchScalar(Directory|Entry|Issue|Occurrence|Role|Value)|hatch_scalar_directory|PatternLineCount|Gradient' crates/seacad-dxf-core/src/hatch_scalar_evidence.rs crates/seacad-dxf-core/tests/hatch_scalar_evidence_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4B_HATCH_SCALAR_EVIDENCE.md
 rg -n 'DxfHatchScalarCard(State|MemberRange|Member|Directory)|hatch_scalar_card_directory|cards_for_subclass|cards_for_raw_record|card_for_role|occurrence_for_member' crates/seacad-dxf-core/src/hatch_scalar_card.rs crates/seacad-dxf-core/tests/hatch_scalar_card_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4C_HATCH_SCALAR_CARDINALITY.md
+rg -n 'DxfHatchScalarSemantic(Issue|Value|Entry|Directory)|hatch_scalar_semantic_directory|MultipleValues|NonFiniteDouble|ValueOutOfDomain|entity\.hatch|default_for|value_in_domain' crates/seacad-dxf-core/src/hatch_scalar_semantic.rs crates/seacad-dxf-core/tests/hatch_scalar_semantic_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4D_HATCH_SCALAR_SEMANTICS.md
 rg -n 'DXF_SPLINE_EVALUATION_MAX_DEGREE|evaluate_point_for_raw_record|DxfSpline(PointEvaluation|EvaluatedPoint|EvaluationInputKind)|DegreeLimitExceeded|NonFiniteParameter|ParameterOutOfDomain|DegenerateKnotInterval|ArithmeticOverflow|NonPositiveHomogeneousWeight' crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EA_SPLINE_POINT_EVALUATION.md
 rg -n 'evaluate_first_derivative_for_raw_record|DxfSpline(EvaluatedDifferential|EvaluatedVector|FirstDerivative)|prepare_evaluation|evaluate_homogeneous|homogeneous_to_point|DegenerateKnotInterval|ArithmeticOverflow' crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EB_SPLINE_FIRST_DERIVATIVE.md
 ```
 
-Expected 8/8, 4/4, 4/4, 4/4, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, and 10/10. For M14.3dr prove create-new-only behavior,
+Expected 8/8, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, and 10/10. For M14.3dr prove create-new-only behavior,
 strict reparse/verification, cleanup, exact inverse, all formats/dialects, zero
 and non-empty XDATA, identity, bounds, cancellation, tamper rejection, and
 redaction. For M14.3ds prove all four format pairs and nine Core dialects,
@@ -286,19 +295,27 @@ independence; duplicate subclass isolation plus contiguous raw-record lookup;
 all nine ASCII/Binary card/member pairs with nine AC1009 high-code absences;
 source identity, cancellation, bounds, traits, and compact metadata. Confirm no
 selection, defaults/domains, relations, tuples, nested state, applicability,
-geometry, CRUD/write, or completion claim is added. Require zero production
-matches:
+geometry, CRUD/write, or completion claim is added. For M14.4d prove 25 ordered
+four-state semantics per subclass; exact `entity.hatch` field provenance;
+extrusion-only `(0,0,1)` defaults; all other absences including gradient fields;
+duplicate no-selection behavior; invalid ASCII and non-finite Binary raw
+provenance; every reviewed flag/style/type/count/reserved/mode/count/shift/tint
+domain; duplicate subclass isolation; all nine ASCII/Binary pairs with nine
+AC1009 high-code absences; cancellation, bounds, traits, and redaction. Confirm
+no conditional gradient defaults, tuple/zero-vector/requiredness/cross-field
+relations, nested state, applicability, geometry, CRUD/write, or completion
+claim is added. Require zero production matches:
 
 ```powershell
-rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/src/entity_xdata_draft_write.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/src/fill_mesh_evidence.rs crates/seacad-dxf-core/src/hatch_scalar_card.rs crates/seacad-dxf-core/src/hatch_scalar_evidence.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/src/text_decoder.rs crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs
+rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/src/entity_xdata_draft_write.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/src/fill_mesh_evidence.rs crates/seacad-dxf-core/src/hatch_scalar_card.rs crates/seacad-dxf-core/src/hatch_scalar_evidence.rs crates/seacad-dxf-core/src/hatch_scalar_semantic.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/src/text_decoder.rs crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs
 ```
 
 Validate every local Markdown link in all changed overview/plan/audit files.
 Require empty protected diff and clean whitespace:
 
 ```powershell
-git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4c-hatch-scalar-cardinality -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4c-hatch-scalar-cardinality
+git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4d-hatch-scalar-semantics -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4d-hatch-scalar-semantics
 ```
 
 ## Required gates and postflight
@@ -313,18 +330,18 @@ cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence --
 cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 $listed = @(cargo +1.97.1 test --workspace -- --list 2>$null | Select-String ': test$')
-if ($listed.Count -ne 1101) { throw 'Workspace test count drift.' }
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4c-hatch-scalar-cardinality
+if ($listed.Count -ne 1105) { throw 'Workspace test count drift.' }
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4d-hatch-scalar-semantics
 ```
 
 Repeat preflight, receipts, protected diff, and whitespace. HEAD/tag/path sets/
 hashes must match and worktree remain clean. PASS requires exact state,
-receipts, 8/8, 4/4, 4/4, 4/4, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, 10/10, all
-contract/safety/link/protected checks, all gates, exactly 1,101 tests, no mutation, and the
+receipts, 8/8, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, 10/10, all
+contract/safety/link/protected checks, all gates, exactly 1,105 tests, no mutation, and the
 external report.
 
 Write UTF-8 YAML-shaped evidence with batch id
-`seacad-m14.3dr-m14.4c-hatch-scalar-cardinality-2026-08-09`, status/root/
+`seacad-m14.3dr-m14.4d-hatch-scalar-semantics-2026-08-09`, status/root/
 report/timestamps, HEAD/tags/Git/path sets before/after, every command and hash
 receipt, focused tests, workspace total, links, forbidden scan, protected
 surfaces, mutations, deviations, failures, blocker, and final assessment. After

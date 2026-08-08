@@ -1909,6 +1909,19 @@ the nine high-code roles as absent. This checkpoint does not select values or
 add defaults, domains, semantic relations, tuples, nested HATCH state,
 geometry, applicability, CRUD/write, or `Complete` support.
 
+M14.4d selects every M14.4c card into one source-anchored four-state semantic.
+Unique values are explicit; duplicates are invalid without member selection;
+malformed ASCII and non-finite Binary doubles retain exact raw provenance.
+Absent extrusion components receive the documented `(0,0,1)` defaults, while
+all other absent roles remain absent. Reviewed individual domains cover binary
+flags, style/type enums, nonnegative counts, gradient reserved values,
+color-mode/count, shift, and tint. Gradient defaults remain absent until a
+later group-450 envelope relation proves they apply. Every field has stable
+`entity.hatch` provenance and all nine Core dialects have ASCII/Binary semantic
+parity, including nine AC1009 high-code absences. This checkpoint does not add
+tuple assembly, cross-field/gradient relations, nested boundary or pattern
+state, geometry, applicability, CRUD/write, or `Complete` support.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

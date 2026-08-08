@@ -130,6 +130,7 @@ mod handle_role;
 mod handseed;
 mod hatch_scalar_card;
 mod hatch_scalar_evidence;
+mod hatch_scalar_semantic;
 mod header_handle;
 mod header_index;
 mod header_numeric;
@@ -759,6 +760,10 @@ pub use hatch_scalar_card::{
 pub use hatch_scalar_evidence::{
     DXF_HATCH_SCALAR_ROLES, DxfHatchScalarDirectory, DxfHatchScalarEntry, DxfHatchScalarIssue,
     DxfHatchScalarOccurrence, DxfHatchScalarRole, DxfHatchScalarValue,
+};
+pub use hatch_scalar_semantic::{
+    DxfHatchScalarSemanticDirectory, DxfHatchScalarSemanticEntry, DxfHatchScalarSemanticIssue,
+    DxfHatchScalarSemanticValue,
 };
 pub use header_handle::{
     DxfHeaderHandleDirectory, DxfHeaderHandleEntry, DxfHeaderHandleIssue, DxfHeaderHandleValue,
