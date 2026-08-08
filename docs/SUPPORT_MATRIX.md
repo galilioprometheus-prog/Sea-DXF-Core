@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dl can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dm can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1249,6 +1249,23 @@ cross-dialect boundaries, canonical family bytes, decoder mismatch, dual-source
 identity, cancellation, bounds, and redaction. Application-specific meaning,
 actual text transcoding, application/entity grouping, insertion, mutation,
 cross-container clone, and POINT `Complete` remain open.
+
+M14.3dm adds `DxfEntityXDataEncodedApplicationDestinationDirectory`, composing
+the M14.3dl occurrence results into one exact source-order set for every source
+XDATA application without insertion. A set is ready only when its owning
+M14.3dj payload envelope is ready and every application member has canonical
+destination bytes. Unavailable sets retain the complete payload state, exact
+member and unavailable-member counts, the first unavailable member ordinal,
+the source application, and every underlying encoded result; aggregate bytes
+remain unavailable unless the whole set is ready. Exact application ranges
+exclude orphans by construction and preserve empty applications and nested
+controls. Four format pairings cover all nine Core dialects plus AC1009/AC1032
+cross-dialect boundaries, ready and unavailable siblings, source-exact and
+transformed values, remapped handles, decoder mismatch, empty/nested lists,
+orphans, cancellation, dual-source identity, bounds, and redaction.
+Application-specific interpretation, actual text transcoding, per-entity
+encoded grouping, insertion, mutation, cross-container clone, and POINT
+`Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

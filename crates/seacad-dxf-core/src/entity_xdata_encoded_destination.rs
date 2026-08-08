@@ -205,6 +205,29 @@ impl DxfEntityXDataEncodedDestinationDirectory {
         self.bytes
             .get(usize::try_from(entry.byte_start).ok()?..usize::try_from(entry.byte_end).ok()?)
     }
+
+    pub(crate) fn encoded_bytes_for_ready_range(
+        &self,
+        entries: &[DxfEntityXDataEncodedDestinationEntry],
+    ) -> Option<&[u8]> {
+        let first = entries.first().copied()?;
+        let last = entries.last().copied()?;
+        let mut previous_end = first.byte_start;
+        for entry in entries.iter().copied() {
+            if self.entry(entry.ordinal()) != Some(entry)
+                || entry.byte_start != previous_end
+                || !matches!(
+                    entry.state(),
+                    DxfEntityXDataEncodedDestinationState::Ready { .. }
+                )
+            {
+                return None;
+            }
+            previous_end = entry.byte_end;
+        }
+        self.bytes
+            .get(usize::try_from(first.byte_start).ok()?..usize::try_from(last.byte_end).ok()?)
+    }
 }
 
 impl fmt::Debug for DxfEntityXDataEncodedDestinationDirectory {

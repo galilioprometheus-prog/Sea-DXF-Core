@@ -1645,6 +1645,22 @@ Application-specific meaning, actual text transcoding, application/entity
 grouping, insertion, mutation, cross-container clone, and POINT `Complete`
 remain open.
 
+M14.3dm groups M14.3dl encoded occurrences into exact per-application
+destination sets without insertion or mutation.
+`DxfEntityXDataEncodedApplicationDestinationDirectory` owns M14.3dl and emits
+one source-order entry for every exact source application. Ready requires the
+owning M14.3dj payload envelope ready and every application occurrence encoded;
+orphans are never assigned. Unavailable entries retain the full payload state,
+total and unavailable member counts, the first unavailable member ordinal,
+exact application evidence, and every underlying encoded result, while
+aggregate bytes remain fail-closed. Four format pairings span all nine dialects
+plus AC1009/AC1032 cross-dialect boundaries, ready/unavailable siblings,
+empty applications, nested controls, source-exact values, transformed tuples,
+remapped handles, transcoding blockers, orphans, dual-source identity,
+cancellation, bounds, and redaction. Application-specific meaning, actual text
+transcoding, per-entity grouping, insertion, mutation, cross-container clone,
+and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
