@@ -1580,6 +1580,17 @@ cancellation, bounds, and debug redaction. Coordinate transforms, handle
 remaps, payload semantics, encoding/insertion, destination mutation, cross-
 container clone, and POINT `Complete` remain open.
 
+M14.3dh adds per-entity coordinate composition without mutating either
+document. `DxfEntityXDataCoordinateDestinationDirectory` owns M14.3dg entity
+readiness and M14.3cs transformed tuples. Ready requires both base readiness and
+all entity tuples available; zero-tuple entities remain explicit. Unavailable
+preserves base state and tuple counts, while exact typed partial, invalid, and
+non-finite-derived evidence stays in the owned transform directory. Four format
+pairings span all nine dialects plus cross-dialect, role-specific 1010/1011,
+destination-only, dual-source, cancellation, bounds, and redaction cases.
+Handle remaps, payload semantics, encoding/insertion, mutation, cross-container
+clone, and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

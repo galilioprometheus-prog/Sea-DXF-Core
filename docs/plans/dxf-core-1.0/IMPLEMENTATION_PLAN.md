@@ -3030,5 +3030,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     semantics, encoding/insertion, cross-container clone, and POINT `Complete`
     remain open.
 
+    M14.3dh composes M14.3dg entity readiness with M14.3cs affine transformed
+    tuple evidence. Ready requires the entity ready and every entity tuple
+    available; zero-tuple entities remain ready. Unavailable retains the full
+    entity state and exact tuple/unavailable counts, with typed transform issues
+    derived from the owned directory. Four format pairings span all nine Core
+    dialects plus cross-dialect, 1010/1011 role, non-finite-derived, partial,
+    destination-only, dual-source, cancellation, bounds, and redaction cases.
+    Handle remaps, payload semantics, encoding/insertion, cross-container clone,
+    and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

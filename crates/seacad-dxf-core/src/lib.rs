@@ -85,6 +85,7 @@ mod entity_xdata_appid_resolution;
 mod entity_xdata_application_destination;
 mod entity_xdata_capacity;
 mod entity_xdata_capacity_measure;
+mod entity_xdata_coordinate_destination;
 mod entity_xdata_coordinate_transform;
 mod entity_xdata_coordinate_transform_math;
 mod entity_xdata_entity_destination;
@@ -569,6 +570,10 @@ pub use entity_xdata_capacity::{
     DXF_XDATA_ENTITY_CAPACITY_BYTES, DxfEntityXDataCapacityDirectory, DxfEntityXDataCapacityEntry,
     DxfEntityXDataCapacityIssue, DxfEntityXDataCapacityIssueKind, DxfEntityXDataCapacityIssueRange,
     DxfEntityXDataCapacityState, DxfEntityXDataCapacityTextIssue,
+};
+pub use entity_xdata_coordinate_destination::{
+    DxfEntityXDataCoordinateDestinationDirectory, DxfEntityXDataCoordinateDestinationEntry,
+    DxfEntityXDataCoordinateDestinationState,
 };
 pub use entity_xdata_coordinate_transform::{
     DxfEntityXDataCoordinateTransformDirectory, DxfEntityXDataPointComponent,
