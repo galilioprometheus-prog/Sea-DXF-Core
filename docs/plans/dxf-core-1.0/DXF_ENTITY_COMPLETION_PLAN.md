@@ -1714,6 +1714,18 @@ redaction. Application-specific meaning, actual text transcoding, generic
 source-entity-to-family draft projection, cross-container clone completion, and
 POINT `Complete` remain open.
 
+M14.3ds extracts the existing same-document POINT clone semantics into an
+immutable source snapshot and projects it into a separately parsed destination
+family draft without insertion. Explicit destination-local bindings cover
+layer, layout, linetype, material, and plot style; existing destination draft
+validation remains authoritative. Reviewed common scalar fields, exact proxy
+graphics, and POINT geometry remain intact. Four format pairings span all nine
+dialects, with AC1009/AC1032 boundary behavior, same-document rejection,
+missing/ambiguous layers, unexpected bindings, cancellation, and redaction.
+XDATA composition with this family projection, complete cross-container
+insertion/write, application-specific meaning, actual text transcoding, and
+POINT `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

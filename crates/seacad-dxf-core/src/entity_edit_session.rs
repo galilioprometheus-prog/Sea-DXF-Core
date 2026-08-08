@@ -503,7 +503,12 @@ enum PendingDeleteExpectation {
     Handleless,
 }
 
-struct OwnedPointCloneDraft {
+pub(crate) struct PointCloneSnapshot {
+    source_id: DxfSourceId,
+    key: DxfEntityKey,
+    version: DxfAcadVersion,
+    placement: DxfEntityPlacementTarget,
+    owner: Option<DxfHandle>,
     layer: Box<[u8]>,
     layout: Option<Box<[u8]>>,
     linetype: Option<Box<[u8]>>,
@@ -527,7 +532,7 @@ struct OwnedPointCloneDraft {
 
 type PointCloneTextResult = Result<Option<Box<[u8]>>, DxfEntityCloneIssue>;
 
-impl OwnedPointCloneDraft {
+impl PointCloneSnapshot {
     fn borrowed(&self, owner: DxfHandle) -> DxfEntityDraft<'_> {
         let mut point = DxfPointDraft::new(&self.layer, self.location);
         if let Some(layout) = self.layout.as_deref() {
@@ -549,6 +554,102 @@ impl OwnedPointCloneDraft {
             point = point.with_indexed_color(color);
         }
         if let Some(lineweight) = self.lineweight {
+            point = point.with_lineweight(lineweight);
+        }
+        if let Some(scale) = self.linetype_scale {
+            point = point.with_linetype_scale(scale);
+        }
+        if let Some(visibility) = self.visibility {
+            point = point.with_visibility(visibility);
+        }
+        if let Some(payload) = self.proxy_graphics.as_deref() {
+            point = point.with_proxy_graphics(payload);
+        }
+        if let Some(color) = self.true_color {
+            point = point.with_true_color(color);
+        }
+        if !self.color_name.is_empty() {
+            point = point.with_color_name(&self.color_name);
+        }
+        if let Some(transparency) = self.transparency {
+            point = point.with_transparency(transparency);
+        }
+        if let Some(shadow_mode) = self.shadow_mode {
+            point = point.with_shadow_mode(shadow_mode);
+        }
+        if let Some(thickness) = self.thickness {
+            point = point.with_thickness(thickness);
+        }
+        if let Some(extrusion) = self.extrusion {
+            point = point.with_extrusion(extrusion);
+        }
+        if let Some(angle) = self.ucs_x_axis_angle {
+            point = point.with_ucs_x_axis_angle(angle);
+        }
+        DxfEntityDraft::point(point).with_owner(owner)
+    }
+
+    pub(crate) const fn source_id(&self) -> DxfSourceId {
+        self.source_id
+    }
+
+    pub(crate) const fn key(&self) -> DxfEntityKey {
+        self.key
+    }
+
+    pub(crate) const fn version(&self) -> DxfAcadVersion {
+        self.version
+    }
+
+    pub(crate) const fn placement(&self) -> DxfEntityPlacementTarget {
+        self.placement
+    }
+
+    pub(crate) const fn owner(&self) -> Option<DxfHandle> {
+        self.owner
+    }
+
+    pub(crate) const fn has_linetype(&self) -> bool {
+        self.linetype.is_some()
+    }
+
+    pub(crate) const fn material(&self) -> Option<DxfHandle> {
+        self.material
+    }
+
+    pub(crate) const fn plot_style(&self) -> Option<DxfHandle> {
+        self.plot_style
+    }
+
+    pub(crate) fn borrowed_for_destination<'a>(
+        &'a self,
+        owner: DxfHandle,
+        destination_version: DxfAcadVersion,
+        bindings: crate::DxfPointCloneDestinationBindings<'a>,
+    ) -> DxfEntityDraft<'a> {
+        let mut point = DxfPointDraft::new(bindings.layer(), self.location);
+        if let Some(layout) = bindings.layout() {
+            point = point.with_layout(layout);
+        }
+        if let Some(space) = self.space {
+            point = point.with_space(space);
+        }
+        if let Some(linetype) = bindings.linetype() {
+            point = point.with_linetype(linetype);
+        }
+        if let Some(material) = bindings.material() {
+            point = point.with_material(material);
+        }
+        if let Some(plot_style) = bindings.plot_style() {
+            point = point.with_plot_style(plot_style);
+        }
+        if let Some(color) = self.indexed_color {
+            point = point.with_indexed_color(color);
+        }
+        let lineweight = self.lineweight.or_else(|| {
+            (destination_version >= DxfAcadVersion::Ac1015).then_some(DxfEntityLineweight::BY_LAYER)
+        });
+        if let Some(lineweight) = lineweight {
             point = point.with_lineweight(lineweight);
         }
         if let Some(scale) = self.linetype_scale {
@@ -804,12 +905,11 @@ impl<'document, 'evidence, 'cancellation>
                 DxfEntityCloneIssue::SourceUpdatePending { key },
             ));
         }
-        let draft = match prepare_point_clone_draft(
+        let draft = match prepare_point_clone_snapshot(
             self.document,
             self.evidence,
             key,
-            placement.target(),
-            owner,
+            Some((placement.target(), owner)),
             self.profile,
             self.cancellation,
         )? {
@@ -2051,15 +2151,14 @@ fn combine_insertions(pending: &[PendingEdit]) -> Result<Vec<u8>, DxfError> {
     Ok(combined)
 }
 
-fn prepare_point_clone_draft(
+pub(crate) fn prepare_point_clone_snapshot(
     document: DxfRawDocumentView<'_>,
     evidence: &DxfEntityFieldEvidenceDirectory,
     key: DxfEntityKey,
-    placement: DxfEntityPlacementTarget,
-    owner: DxfHandle,
+    requested_binding: Option<(DxfEntityPlacementTarget, DxfHandle)>,
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
-) -> Result<Result<OwnedPointCloneDraft, DxfEntityCloneIssue>, DxfError> {
+) -> Result<Result<PointCloneSnapshot, DxfEntityCloneIssue>, DxfError> {
     ensure_not_cancelled(cancellation)?;
     ensure_source(document.source_id(), evidence.source_id())?;
     let Some(entity) = evidence.entity_directory().entity_for_key(key)? else {
@@ -2080,7 +2179,9 @@ fn prepare_point_clone_draft(
         Some(expected) => expected,
         None => return Ok(Err(DxfEntityCloneIssue::SourcePlacementUnavailable { key })),
     };
-    if placement != expected_placement {
+    if let Some((placement, _)) = requested_binding
+        && placement != expected_placement
+    {
         return Ok(Err(DxfEntityCloneIssue::PlacementMismatch {
             key,
             expected: expected_placement,
@@ -2143,7 +2244,7 @@ fn prepare_point_clone_draft(
     }
 
     let common = document.entity_field_semantic_directory(cancellation)?;
-    if version >= DxfAcadVersion::Ac1012 {
+    let source_owner = if version >= DxfAcadVersion::Ac1012 {
         let owner_entry = common
             .entry_for_field(entity, DxfEntityField::OWNER)?
             .ok_or_else(invalid_internal_data)?;
@@ -2164,14 +2265,19 @@ fn prepare_point_clone_draft(
                 }));
             }
         };
-        if owner != expected {
+        if let Some((_, owner)) = requested_binding
+            && owner != expected
+        {
             return Ok(Err(DxfEntityCloneIssue::OwnerMismatch {
                 key,
                 expected,
                 requested: owner,
             }));
         }
-    }
+        Some(expected)
+    } else {
+        None
+    };
     let layer = match clone_exact_text_field(
         document,
         &common,
@@ -2464,7 +2570,12 @@ fn prepare_point_clone_draft(
             }));
         }
     };
-    Ok(Ok(OwnedPointCloneDraft {
+    Ok(Ok(PointCloneSnapshot {
+        source_id: document.source_id(),
+        key,
+        version,
+        placement: expected_placement,
+        owner: source_owner,
         layer,
         layout,
         linetype,

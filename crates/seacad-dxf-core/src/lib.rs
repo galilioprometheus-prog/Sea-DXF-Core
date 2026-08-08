@@ -194,6 +194,7 @@ mod planar_face_geometry_card;
 mod planar_face_geometry_semantic;
 mod planar_face_geometry_semantic_value;
 mod planar_face_wcs_geometry;
+mod point_clone_draft_projection;
 mod point_edit;
 mod polyline_family_semantic;
 mod polyline_polyface_face;
@@ -987,6 +988,10 @@ pub use planar_face_geometry_semantic::{
 pub use planar_face_wcs_geometry::{
     DxfPlanarFaceWcsGeometry, DxfPlanarFaceWcsGeometryDirectory, DxfPlanarFaceWcsGeometryEntry,
     DxfPlanarFaceWcsGeometryIssue,
+};
+pub use point_clone_draft_projection::{
+    DxfPointCloneDestinationBindings, DxfPointCloneDraftProjectionIssue,
+    DxfPointCloneDraftProjectionPlan,
 };
 pub use point_edit::{DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind};
 pub use polyline_family_semantic::{

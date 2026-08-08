@@ -16,9 +16,9 @@ use seacad_dxf_core::{
     DxfEntityNameClassification, DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerOutcome,
     DxfEntityPlacementTarget, DxfEntityTopic, DxfError, DxfHandle, DxfHandleIdentityLookup,
     DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
-    DxfNamedSymbolTableKind, DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView,
-    DxfReadOptions, DxfResourceProfile, DxfSemanticValueState, DxfTransactionPlan,
-    NoopDxfReadObserver,
+    DxfNamedSymbolTableKind, DxfPointCloneDestinationBindings, DxfPointCloneDraftProjectionIssue,
+    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
+    DxfSemanticValueState, DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
@@ -145,6 +145,323 @@ fn point_optional_fields_omit_to_documented_defaults_across_every_dialect()
                 insert.verify_post_image(view, post, DxfResourceProfile::Safe, &token())?,
                 DxfEntityEditVerificationOutcome::Verified(_)
             ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_clone_draft_projects_all_format_pairs_and_dialects() -> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+                let source_bytes = point_source_fixture(source_format, version)?;
+                let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+                let source_document = open_document(&source_memory, source_format)?;
+                let source_view = source_document.view();
+                let evidence = source_view.entity_field_evidence_directory(&token())?;
+                let source_key = point_key(&evidence)?;
+
+                let destination_bytes = fixture(destination_format, version, 0x40)?;
+                let destination_memory =
+                    DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+                let destination_document = open_document(&destination_memory, destination_format)?;
+                let destination_view = destination_document.view();
+                let applicability = admitted_plan(
+                    destination_view,
+                    DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+                )?;
+                let mut bindings = DxfPointCloneDestinationBindings::new(b"Layer0");
+                if version >= DxfAcadVersion::Ac1015 {
+                    bindings = bindings.with_layout(b"Model");
+                }
+                let projected = match destination_view.project_point_clone_draft_from(
+                    source_view,
+                    source_key,
+                    applicability,
+                    bindings,
+                    DxfResourceProfile::Safe,
+                    &token(),
+                )? {
+                    Ok(plan) => plan,
+                    Err(issue) => {
+                        return Err(io::Error::other(format!("POINT projection: {issue:?}")).into());
+                    }
+                };
+                assert_eq!(projected.source_id(), source_view.source_id());
+                assert_eq!(projected.source_key(), source_key);
+                assert_eq!(projected.source_version(), version);
+                assert_eq!(projected.destination_id(), destination_view.source_id());
+                assert_eq!(
+                    projected.destination().bytes(),
+                    expected_point(destination_format, version, 0x40, 0x10)?
+                );
+                assert_eq!(
+                    projected.source_owner(),
+                    (version >= DxfAcadVersion::Ac1012).then_some(handle(0x10))
+                );
+                let debug = format!("{projected:?} {bindings:?}");
+                assert!(!debug.contains("Layer0"));
+                assert!(!debug.contains("Model"));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_clone_draft_handles_cross_dialect_boundaries_fail_closed() -> Result<(), Box<dyn Error>> {
+    for (source_version, destination_version, ready) in [
+        (DxfAcadVersion::Ac1009, DxfAcadVersion::Ac1032, true),
+        (DxfAcadVersion::Ac1032, DxfAcadVersion::Ac1009, false),
+    ] {
+        for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+                let source_bytes = point_source_fixture(source_format, source_version)?;
+                let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+                let source_document = open_document(&source_memory, source_format)?;
+                let source_view = source_document.view();
+                let evidence = source_view.entity_field_evidence_directory(&token())?;
+                let key = point_key(&evidence)?;
+                let destination_bytes = fixture(destination_format, destination_version, 0x40)?;
+                let destination_memory =
+                    DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+                let destination_document = open_document(&destination_memory, destination_format)?;
+                let destination_view = destination_document.view();
+                let applicability = admitted_plan(
+                    destination_view,
+                    DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+                )?;
+                let bindings = if destination_version >= DxfAcadVersion::Ac1015 {
+                    DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model")
+                } else {
+                    DxfPointCloneDestinationBindings::new(b"Layer0")
+                };
+                let outcome = destination_view.project_point_clone_draft_from(
+                    source_view,
+                    key,
+                    applicability,
+                    bindings,
+                    DxfResourceProfile::Safe,
+                    &token(),
+                )?;
+                if ready {
+                    assert!(outcome.is_ok(), "ready boundary: {outcome:?}");
+                } else {
+                    assert!(matches!(
+                        outcome,
+                        Err(DxfPointCloneDraftProjectionIssue::Destination(
+                            DxfEntityDraftRecordIssue::LineweightNotApplicable { .. }
+                        ))
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn point_clone_draft_rejects_symbol_identity_binding_and_cancellation_failures()
+-> Result<(), Box<dyn Error>> {
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = point_source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let source_document = open_ascii(&source_memory)?;
+    let source_view = DxfRawDocumentView::from(&source_document);
+    let evidence = source_view.entity_field_evidence_directory(&token())?;
+    let key = point_key(&evidence)?;
+
+    for (layer_count, expected_count) in [(0, None), (2, Some(2))] {
+        let destination_bytes =
+            reference_fixture(DxfRawDocumentFormat::Ascii, version, 0x40, layer_count, 1)?;
+        let destination_memory =
+            DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+        let destination_document = open_ascii(&destination_memory)?;
+        let destination_view = DxfRawDocumentView::from(&destination_document);
+        let applicability = admitted_plan(
+            destination_view,
+            DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+        )?;
+        let outcome = destination_view.project_point_clone_draft_from(
+            source_view,
+            key,
+            applicability,
+            DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?;
+        assert!(match expected_count {
+            None => matches!(
+                outcome,
+                Err(DxfPointCloneDraftProjectionIssue::Destination(
+                    DxfEntityDraftRecordIssue::LayerReference(
+                        DxfEntityCommonSymbolEditIssue::Missing { .. }
+                    )
+                ))
+            ),
+            Some(target_count) => matches!(
+                outcome,
+                Err(DxfPointCloneDraftProjectionIssue::Destination(
+                    DxfEntityDraftRecordIssue::LayerReference(
+                        DxfEntityCommonSymbolEditIssue::Ambiguous {
+                            target_count: observed,
+                            ..
+                        }
+                    )
+                )) if observed == target_count
+            ),
+        });
+    }
+
+    let destination_bytes = fixture(DxfRawDocumentFormat::Ascii, version, 0x40)?;
+    let destination_memory = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let destination_document = open_ascii(&destination_memory)?;
+    let destination_view = DxfRawDocumentView::from(&destination_document);
+    let applicability = admitted_plan(
+        destination_view,
+        DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+    )?;
+    assert!(matches!(
+        destination_view.project_point_clone_draft_from(
+            source_view,
+            key,
+            applicability,
+            DxfPointCloneDestinationBindings::new(b"Layer0")
+                .with_layout(b"Model")
+                .with_linetype(b"DASHED"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?,
+        Err(
+            DxfPointCloneDraftProjectionIssue::UnexpectedDestinationBinding {
+                field: DxfEntityField::LINETYPE
+            }
+        )
+    ));
+
+    let same_applicability = admitted_plan(
+        source_view,
+        DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+    )?;
+    assert!(matches!(
+        source_view.project_point_clone_draft_from(
+            source_view,
+            key,
+            same_applicability,
+            DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+            DxfResourceProfile::Safe,
+            &token(),
+        )?,
+        Err(DxfPointCloneDraftProjectionIssue::SameDocument { .. })
+    ));
+
+    let applicability = admitted_plan(
+        destination_view,
+        DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+    )?;
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        destination_view.project_point_clone_draft_from(
+            source_view,
+            key,
+            applicability,
+            DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+            DxfResourceProfile::Safe,
+            &cancelled,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+
+    assert_copy::<DxfPointCloneDestinationBindings<'static>>();
+    assert_copy::<DxfPointCloneDraftProjectionIssue>();
+    Ok(())
+}
+
+#[test]
+fn point_clone_draft_requires_and_validates_destination_reference_bindings()
+-> Result<(), Box<dyn Error>> {
+    let version = DxfAcadVersion::Ac1032;
+    for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+        for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            let source_bytes = point_reference_source_fixture(source_format, version)?;
+            let source_memory = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+            let source_document = open_document(&source_memory, source_format)?;
+            let source_view = source_document.view();
+            let evidence = source_view.entity_field_evidence_directory(&token())?;
+            let key = point_key(&evidence)?;
+
+            let mut destination_bytes = fixture(destination_format, version, 0x40)?;
+            inject_reference_targets(
+                &mut destination_bytes,
+                destination_format,
+                version,
+                0x23,
+                0x24,
+            )?;
+            let destination_memory =
+                DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+            let destination_document = open_document(&destination_memory, destination_format)?;
+            let destination_view = destination_document.view();
+            let missing = destination_view.project_point_clone_draft_from(
+                source_view,
+                key,
+                admitted_plan(
+                    destination_view,
+                    DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+                )?,
+                DxfPointCloneDestinationBindings::new(b"Layer0").with_layout(b"Model"),
+                DxfResourceProfile::Safe,
+                &token(),
+            )?;
+            assert!(matches!(
+                missing,
+                Err(DxfPointCloneDraftProjectionIssue::DestinationBindingRequired {
+                    field: DxfEntityField::MATERIAL,
+                    source_handle: Some(source),
+                }) if source == handle(0x13)
+            ));
+
+            let projected = match destination_view.project_point_clone_draft_from(
+                source_view,
+                key,
+                admitted_plan(
+                    destination_view,
+                    DxfEntityDraftName::canonical(DxfEntityTopic::POINT),
+                )?,
+                DxfPointCloneDestinationBindings::new(b"Layer0")
+                    .with_layout(b"Model")
+                    .with_material(handle(0x23))
+                    .with_plot_style(handle(0x24)),
+                DxfResourceProfile::Safe,
+                &token(),
+            )? {
+                Ok(plan) => plan,
+                Err(issue) => {
+                    return Err(io::Error::other(format!("reference projection: {issue:?}")).into());
+                }
+            };
+            for expected in [
+                encode_expected(
+                    destination_format,
+                    version,
+                    &[ExpectedGroup::Handle(347, 0x23)],
+                )?,
+                encode_expected(
+                    destination_format,
+                    version,
+                    &[ExpectedGroup::Handle(390, 0x24)],
+                )?,
+            ] {
+                assert!(
+                    projected
+                        .destination()
+                        .bytes()
+                        .windows(expected.len())
+                        .any(|window| window == expected)
+                );
+            }
         }
     }
     Ok(())
@@ -968,6 +1285,94 @@ fn encode_expected(
         }
     }
     Ok(bytes)
+}
+
+fn point_source_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = fixture(format, version, 0x50)?;
+    let endsec = encode_expected(format, version, &[ExpectedGroup::Text(0, b"ENDSEC")])?;
+    let offset = bytes
+        .windows(endsec.len())
+        .rposition(|window| window == endsec)
+        .ok_or_else(|| io::Error::other("ENTITIES ENDSEC"))?;
+    bytes.splice(offset..offset, expected_point(format, version, 0x30, 0x10)?);
+    Ok(bytes)
+}
+
+fn point_reference_source_fixture(
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+) -> Result<Vec<u8>, io::Error> {
+    let mut bytes = point_source_fixture(format, version)?;
+    inject_reference_targets(&mut bytes, format, version, 0x13, 0x14)?;
+    let marker = encode_expected(format, version, &[ExpectedGroup::Text(100, b"AcDbPoint")])?;
+    let offset = bytes
+        .windows(marker.len())
+        .rposition(|window| window == marker)
+        .ok_or_else(|| io::Error::other("POINT subclass marker"))?;
+    let mut references = encode_expected(format, version, &[ExpectedGroup::Handle(347, 0x13)])?;
+    references.extend_from_slice(&encode_expected(
+        format,
+        version,
+        &[ExpectedGroup::Handle(390, 0x14)],
+    )?);
+    bytes.splice(offset..offset, references);
+    Ok(bytes)
+}
+
+fn inject_reference_targets(
+    bytes: &mut Vec<u8>,
+    format: DxfRawDocumentFormat,
+    version: DxfAcadVersion,
+    material: u64,
+    plot_style: u64,
+) -> Result<(), io::Error> {
+    let entities = encode_expected(
+        format,
+        version,
+        &[
+            ExpectedGroup::Text(0, b"SECTION"),
+            ExpectedGroup::Text(2, b"ENTITIES"),
+        ],
+    )?;
+    let entities_offset = bytes
+        .windows(entities.len())
+        .rposition(|window| window == entities)
+        .ok_or_else(|| io::Error::other("ENTITIES section"))?;
+    let endsec = encode_expected(format, version, &[ExpectedGroup::Text(0, b"ENDSEC")])?;
+    let object_end = bytes
+        .get(..entities_offset)
+        .ok_or_else(|| io::Error::other("OBJECTS prefix"))?
+        .windows(endsec.len())
+        .rposition(|window| window == endsec)
+        .ok_or_else(|| io::Error::other("OBJECTS ENDSEC"))?;
+    let targets = encode_expected(
+        format,
+        version,
+        &[
+            ExpectedGroup::Text(0, b"MATERIAL"),
+            ExpectedGroup::Handle(5, material),
+            ExpectedGroup::Text(0, b"ACDBPLACEHOLDER"),
+            ExpectedGroup::Handle(5, plot_style),
+        ],
+    )?;
+    bytes.splice(object_end..object_end, targets);
+    Ok(())
+}
+
+fn point_key(
+    evidence: &seacad_dxf_core::DxfEntityFieldEvidenceDirectory,
+) -> Result<seacad_dxf_core::DxfEntityKey, io::Error> {
+    evidence
+        .entity_directory()
+        .entities()
+        .iter()
+        .copied()
+        .find(|entity| entity.classification().topic() == Some(DxfEntityTopic::POINT))
+        .map(|entity| entity.key())
+        .ok_or_else(|| io::Error::other("source POINT key"))
 }
 
 fn fixture(

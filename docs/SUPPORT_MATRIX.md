@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dr can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3ds can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1336,6 +1336,19 @@ existing-file rejection, cancellation, final-progress tampering, cleanup,
 bounds, and redaction. Application-specific interpretation, actual text
 transcoding, generic source-entity-to-family draft projection, cross-container
 clone completion, and POINT `Complete` remain open.
+
+M14.3ds extracts the existing same-document POINT clone semantics into one
+immutable source snapshot and projects it into a separately parsed destination
+family draft. The caller supplies explicit destination-local layer, layout,
+linetype, material, and plot-style bindings; existing destination draft
+validation remains authoritative for missing, ambiguous, incompatible, and
+dialect-inapplicable targets. All reviewed common scalar fields, exact proxy
+graphics, and POINT geometry are retained. Four format pairings cover all nine
+Core dialects, with AC1009/AC1032 boundary behavior, same-document rejection,
+missing/ambiguous layer targets, unexpected bindings, cancellation, and debug
+redaction. XDATA composition with this family projection, insertion/write as a
+complete cross-container clone, application-specific XDATA interpretation,
+actual text transcoding, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

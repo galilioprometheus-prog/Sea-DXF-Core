@@ -3165,6 +3165,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     source-entity-to-family draft projection, cross-container clone completion,
     and POINT `Complete` remain open.
 
+    M14.3ds extracts the existing same-document POINT clone semantics into an
+    immutable source snapshot and projects it into a separately parsed
+    destination family draft without insertion. Explicit destination-local
+    bindings cover layer, layout, linetype, material, and plot style, while the
+    existing destination draft validator remains authoritative for symbol,
+    handle, placement, dialect, and resource admission. Reviewed common scalar
+    fields, exact proxy graphics, and POINT geometry remain intact. Four format
+    pairings span all nine Core dialects, with AC1009/AC1032 boundary behavior,
+    same-document rejection, missing/ambiguous layers, unexpected bindings,
+    cancellation, and redaction. Composing this family draft with the existing
+    XDATA pipeline, complete cross-container insertion/write, application-
+    specific meaning, actual text transcoding, and POINT `Complete` remain
+    open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
