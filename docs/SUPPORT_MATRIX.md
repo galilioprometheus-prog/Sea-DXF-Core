@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dq can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dr can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1321,6 +1321,20 @@ plus AC1009/AC1032 cross-dialect boundaries, non-empty and zero-XDATA payloads,
 inverse restoration, cancellation, foreign pre-images, tamper rejection,
 bounds, and redaction. Create-new write cleanup under this XDATA wrapper,
 application-specific interpretation, actual text transcoding, cross-container
+clone completion, and POINT `Complete` remain open.
+
+M14.3dr adds create-new writing for M14.3dp plans. It streams the atomic
+destination transaction to a path that must not exist, strictly reparses the
+new ASCII or Binary document, runs the complete M14.3dq family-plus-XDATA
+verification, binds write and verification identities, and returns both
+receipts with the executable inverse. Existing destinations are never modified;
+pre-cancelled work creates nothing; write/reparse/verification failures remove
+the newly created destination. Four format pairings cover all nine Core
+dialects plus AC1009/AC1032 cross-dialect boundaries, non-empty and zero-XDATA
+writes, byte-identical output, receipt identities, inverse restoration,
+existing-file rejection, cancellation, final-progress tampering, cleanup,
+bounds, and redaction. Application-specific interpretation, actual text
+transcoding, generic source-entity-to-family draft projection, cross-container
 clone completion, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch

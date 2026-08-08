@@ -1701,6 +1701,19 @@ Destination writes, post-write XDATA verification, application-specific
 meaning, actual text transcoding, cross-container clone completion, and POINT
 `Complete` remain open.
 
+M14.3dr adds create-new writing for M14.3dp. The atomic destination transaction
+is streamed only to a nonexistent path, strictly reparsed as ASCII or Binary,
+and passed through complete M14.3dq family-plus-XDATA verification. The journal
+binds write and verification receipts and retains the executable inverse.
+Existing destinations are untouched; cancellation creates nothing; any failure
+after creation removes the destination. Four format pairings span all nine
+dialects plus AC1009/AC1032 cross-dialect boundaries, non-empty and zero-XDATA
+writes, exact output bytes, receipt identities, inverse restoration, existing-
+file rejection, cancellation, final-progress tampering, cleanup, bounds, and
+redaction. Application-specific meaning, actual text transcoding, generic
+source-entity-to-family draft projection, cross-container clone completion, and
+POINT `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

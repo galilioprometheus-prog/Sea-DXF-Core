@@ -1,4 +1,9 @@
-use std::{error::Error, io};
+use std::{
+    error::Error,
+    fs, io,
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use seacad_dxf_core::{
     DXF_BINARY_SENTINEL, DxfAcadVersion, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfByteSource,
@@ -8,12 +13,15 @@ use seacad_dxf_core::{
     DxfEntityPlacementOwnerOutcome, DxfEntityTopic, DxfEntityXDataCoordinateTransform,
     DxfEntityXDataDraftInsertPlan, DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
     DxfEntityXDataDraftVerificationJournal, DxfEntityXDataDraftVerificationOutcome,
-    DxfEntityXDataDraftVerificationReceipt, DxfEntityXDataEncodedEntityDestinationDirectory,
+    DxfEntityXDataDraftVerificationReceipt, DxfEntityXDataDraftWriteJournal,
+    DxfEntityXDataDraftWriteOutcome, DxfEntityXDataEncodedEntityDestinationDirectory,
     DxfEntityXDataEncodedEntityDestinationEntry, DxfEntityXDataEncodedEntityDestinationState,
     DxfError, DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
-    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    DxfTransactionPlan, NoopDxfReadObserver,
+    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadControl, DxfReadObserver,
+    DxfReadOptions, DxfReadProgress, DxfResourceProfile, DxfTransactionPlan, NoopDxfReadObserver,
 };
+
+static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
 
 const LOCATION: [DxfDouble; 3] = [
     DxfDouble::from_bits(1.0_f64.to_bits()),
@@ -186,6 +194,72 @@ fn post_image_verification_is_strict_cancellable_bound_and_non_disclosing()
 }
 
 #[test]
+fn write_pipeline_rejects_existing_cancelled_and_tampered_destinations()
+-> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityXDataDraftWriteJournal>();
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x40)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+    let insert = build_insert(&directory, entry, destination.view(), version)?;
+    let temporary = TestDirectory::new()?;
+
+    let existing = temporary.path().join("existing.dxf");
+    fs::write(&existing, b"KEEP")?;
+    let mut observer = NoopDxfReadObserver;
+    assert!(
+        insert
+            .write_reparse_verify_and_journal_to_new_file(
+                destination.view(),
+                &existing,
+                DxfResourceProfile::Safe,
+                &token(),
+                &mut observer,
+            )
+            .is_err()
+    );
+    assert_eq!(fs::read(&existing)?, b"KEEP");
+
+    let cancelled_path = temporary.path().join("cancelled.dxf");
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        insert.write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &cancelled_path,
+            DxfResourceProfile::Safe,
+            &cancelled,
+            &mut observer,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(!cancelled_path.exists());
+
+    let tampered_path = temporary.path().join("tampered.dxf");
+    let mut tamper =
+        FinalTamperObserver::new(&tampered_path, b"SECRET_DRAFT_XDATA", b"SECRET_DRAFT_XDATB");
+    assert!(
+        insert
+            .write_reparse_verify_and_journal_to_new_file(
+                destination.view(),
+                &tampered_path,
+                DxfResourceProfile::Safe,
+                &token(),
+                &mut tamper,
+            )
+            .is_err()
+    );
+    tamper.finish()?;
+    assert!(!tampered_path.exists());
+    Ok(())
+}
+
+#[test]
 fn ready_xdata_appends_to_drafts_for_every_format_and_dialect() -> Result<(), Box<dyn Error>> {
     for version in DxfAcadVersion::SUPPORTED {
         for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
@@ -266,6 +340,22 @@ fn zero_xdata_is_an_exact_noop_and_unavailable_payloads_fail_closed() -> Result<
         materialize(&output, journal.inverse_plan())?,
         destination_bytes
     );
+    let temporary = TestDirectory::new()?;
+    let written_path = temporary.path().join("zero-xdata.dxf");
+    let mut observer = NoopDxfReadObserver;
+    let DxfEntityXDataDraftWriteOutcome::Written(written) = insert
+        .write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &written_path,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut observer,
+        )?
+    else {
+        return Err(io::Error::other("zero-XDATA write verification").into());
+    };
+    assert_eq!(written.verification_receipt().xdata_byte_count(), 0);
+    assert_eq!(fs::read(&written_path)?, output);
 
     let unavailable = find_entry(&directory, |state| {
         matches!(
@@ -427,6 +517,30 @@ fn assert_format_pair(
         materialize(&output, journal.inverse_plan())?,
         destination_bytes
     );
+    let temporary = TestDirectory::new()?;
+    let written_path = temporary.path().join("xdata-draft.dxf");
+    let mut observer = NoopDxfReadObserver;
+    let DxfEntityXDataDraftWriteOutcome::Written(written) = insert
+        .write_reparse_verify_and_journal_to_new_file(
+            destination.view(),
+            &written_path,
+            DxfResourceProfile::Safe,
+            &token(),
+            &mut observer,
+        )?
+    else {
+        return Err(io::Error::other("XDATA write verification").into());
+    };
+    assert_eq!(fs::read(&written_path)?, output);
+    assert_eq!(written.write_receipt().output_id(), receipt.post_image_id());
+    assert_eq!(
+        written.verification_receipt().xdata_byte_count(),
+        payload.len() as u64
+    );
+    assert_eq!(
+        materialize(&output, written.inverse_plan())?,
+        destination_bytes
+    );
     Ok(())
 }
 
@@ -441,6 +555,21 @@ fn build_directory(
         DxfResourceProfile::Safe,
         &token(),
     )?)
+}
+
+fn build_insert(
+    directory: &DxfEntityXDataEncodedEntityDestinationDirectory,
+    entry: DxfEntityXDataEncodedEntityDestinationEntry,
+    destination: DxfRawDocumentView<'_>,
+    version: DxfAcadVersion,
+) -> Result<DxfEntityXDataDraftInsertPlan, Box<dyn Error>> {
+    let composed = planned(directory.compose_entity_draft_record(
+        entry,
+        draft_record(destination, version)?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?)?;
+    Ok(destination.plan_entity_xdata_draft_insert(composed, DxfResourceProfile::Safe, &token())?)
 }
 
 fn ready_entry(
@@ -776,6 +905,93 @@ fn open_document<'a>(
 
 fn token() -> DxfCancellationToken {
     DxfCancellationToken::default()
+}
+
+struct FinalTamperObserver<'a> {
+    path: &'a Path,
+    from: &'a [u8],
+    to: &'a [u8],
+    attempted: bool,
+    error: Option<io::Error>,
+}
+
+impl<'a> FinalTamperObserver<'a> {
+    const fn new(path: &'a Path, from: &'a [u8], to: &'a [u8]) -> Self {
+        Self {
+            path,
+            from,
+            to,
+            attempted: false,
+            error: None,
+        }
+    }
+
+    fn finish(&mut self) -> Result<(), io::Error> {
+        if !self.attempted {
+            return Err(io::Error::other("tamper observer was not reached"));
+        }
+        match self.error.take() {
+            Some(error) => Err(error),
+            None => Ok(()),
+        }
+    }
+}
+
+impl DxfReadObserver for FinalTamperObserver<'_> {
+    fn on_progress(&mut self, progress: DxfReadProgress) -> DxfReadControl {
+        if !self.attempted && progress.is_complete() {
+            self.attempted = true;
+            if let Err(error) = tamper_file_once(self.path, self.from, self.to) {
+                self.error = Some(error);
+            }
+        }
+        DxfReadControl::Continue
+    }
+}
+
+fn tamper_file_once(path: &Path, from: &[u8], to: &[u8]) -> Result<(), io::Error> {
+    if from.len() != to.len() {
+        return Err(io::Error::other("tamper length"));
+    }
+    let mut bytes = fs::read(path)?;
+    let start = bytes
+        .windows(from.len())
+        .rposition(|value| value == from)
+        .ok_or(io::Error::other("tamper source"))?;
+    let end = start
+        .checked_add(to.len())
+        .ok_or(io::Error::other("tamper range"))?;
+    bytes
+        .get_mut(start..end)
+        .ok_or(io::Error::other("tamper slice"))?
+        .copy_from_slice(to);
+    fs::write(path, bytes)
+}
+
+struct TestDirectory {
+    path: PathBuf,
+}
+
+impl TestDirectory {
+    fn new() -> Result<Self, io::Error> {
+        let id = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "seacad-xdata-draft-write-{}-{id}",
+            std::process::id()
+        ));
+        fs::create_dir(&path)?;
+        Ok(Self { path })
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for TestDirectory {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
 }
 
 fn assert_copy<T: Copy>() {}

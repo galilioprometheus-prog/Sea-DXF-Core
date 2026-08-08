@@ -91,6 +91,7 @@ mod entity_xdata_coordinate_transform_math;
 mod entity_xdata_draft_insert;
 mod entity_xdata_draft_record;
 mod entity_xdata_draft_verification;
+mod entity_xdata_draft_write;
 mod entity_xdata_encoded_application_destination;
 mod entity_xdata_encoded_destination;
 mod entity_xdata_encoded_entity_destination;
@@ -600,6 +601,9 @@ pub use entity_xdata_draft_record::{
 pub use entity_xdata_draft_verification::{
     DxfEntityXDataDraftVerificationIssue, DxfEntityXDataDraftVerificationJournal,
     DxfEntityXDataDraftVerificationOutcome, DxfEntityXDataDraftVerificationReceipt,
+};
+pub use entity_xdata_draft_write::{
+    DxfEntityXDataDraftWriteJournal, DxfEntityXDataDraftWriteOutcome,
 };
 pub use entity_xdata_encoded_application_destination::{
     DxfEntityXDataEncodedApplicationDestinationDirectory,

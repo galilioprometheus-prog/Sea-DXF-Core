@@ -3151,6 +3151,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     transcoding, cross-container clone completion, and POINT `Complete` remain
     open.
 
+    M14.3dr adds create-new writing for M14.3dp plans. The atomic destination
+    transaction streams only to a nonexistent path, strictly reparses the new
+    ASCII or Binary document, and runs complete M14.3dq family-plus-XDATA
+    verification. The journal binds write and verification receipts and retains
+    the executable inverse. Existing files are untouched; pre-cancelled work
+    creates nothing; any write/reparse/verification failure removes the newly
+    created destination. Four format pairings span all nine Core dialects plus
+    AC1009/AC1032 cross-dialect boundaries, non-empty and zero-XDATA writes,
+    exact bytes, receipt identities, inverse restoration, existing-file
+    rejection, cancellation, final-progress tampering, cleanup, bounds, and
+    redaction. Application-specific meaning, actual text transcoding, generic
+    source-entity-to-family draft projection, cross-container clone completion,
+    and POINT `Complete` remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
