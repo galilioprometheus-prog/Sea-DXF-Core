@@ -3005,5 +3005,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     remaps, payload semantics, encoding/insertion, cross-container clone, and
     POINT `Complete` remain open.
 
+    M14.3df composes each M14.3de destination-symbol entry with the exact
+    M14.3cn source application structure entry. Ready requires unique
+    destination APPID/LAYER evidence and valid group-1002 list structure.
+    Unavailable entries retain independent symbol and structure issue counts;
+    every exact blocker remains derivable from the two owned directories.
+    Four ASCII/Binary source-destination pairings span all nine Core dialects
+    with cross-dialect boundaries, symbol-only, structure-only, and simultaneous
+    failures, complete and unclosed list controls, entity slicing, dual-source
+    rejection, cancellation, bounds, and non-disclosing debug output. Orphan
+    XDATA remains outside application results. Capacity, coordinate transforms,
+    handle remaps, payload semantics, encoding/insertion, cross-container clone,
+    and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

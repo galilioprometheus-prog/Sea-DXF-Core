@@ -1553,6 +1553,20 @@ compose structure, capacity, transformed coordinates, handle remaps, payload
 semantics, encoding/insertion, destination mutation, cross-container clone, or
 POINT `Complete`.
 
+M14.3df adds per-application structure composition without mutating either
+document. `DxfEntityXDataApplicationDestinationDirectory` owns the M14.3de
+symbol destination directory and M14.3cn source structure directory. An entry
+is ready only when every destination APPID/LAYER symbol is unique and the exact
+group-1002 list structure is valid. Unavailable entries retain independent
+symbol and structure issue counts, and callers derive the exact owned evidence
+for each class. Four ASCII/Binary source-destination pairings span all nine Core
+dialects plus cross-dialect boundaries, symbol-only, structure-only, and joint
+failure, complete and unclosed lists, entity lookup, dual-source identity,
+cancellation, bounds, and debug redaction. Orphan values remain outside
+application results. This does not compose per-entity capacity, transformed
+coordinates, handle remaps, payload semantics, encoding/insertion, destination
+mutation, cross-container clone, or POINT `Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

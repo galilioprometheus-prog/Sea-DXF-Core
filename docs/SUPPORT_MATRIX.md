@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3de can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3df can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1606,6 +1606,20 @@ identity, cancellation, bounds, and debug redaction. Orphan group-1003 values
 remain outside any application result and visible in the owned LAYER directory.
 This symbol-only result does not claim structure, capacity, coordinate, handle,
 payload, encoding, insertion, mutation, or cross-container clone readiness.
+
+M14.3df adds `DxfEntityXDataApplicationDestinationDirectory`, composing each
+M14.3de symbol result with the exact M14.3cn group-1002 list-structure result for
+the same source application. `Ready` requires both unique destination symbols
+and valid source list structure. `Unavailable` retains independent symbol and
+structure issue counts, while the owned directories derive every exact blocker
+without copying source bytes. Four ASCII/Binary source-destination pairings
+cover every Core dialect plus AC1009/AC1032 cross-dialect boundaries, symbol-
+only failure, structure-only failure, simultaneous symbol/structure failure,
+complete list controls, unclosed lists, entity slicing, dual-source identity,
+cancellation, bounds, and debug redaction. Orphan XDATA remains outside any
+application result. Capacity, transformed coordinates, handle remaps, payload
+semantics, encoding, insertion, destination mutation, cross-container clone,
+and POINT `Complete` remain open.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
