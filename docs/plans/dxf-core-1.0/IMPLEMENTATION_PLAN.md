@@ -3109,5 +3109,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     insertion, destination mutation, cross-container clone, and POINT
     `Complete` remain open.
 
+    M14.3dn composes M14.3dm application sets into one exact encoded payload per
+    indexed source entity without insertion. Ready requires the M14.3dj payload
+    envelope and every application set ready; zero-XDATA entities remain
+    explicit ready entries with empty bytes. Unavailable results retain the
+    complete payload state, application/member totals, unavailable counts, and
+    first unavailable application ordinal while aggregate bytes remain
+    unavailable. Four format pairings span all nine Core dialects plus
+    AC1009/AC1032 cross-dialect boundaries, ready, zero-XDATA, failed-handle and
+    orphan entities, empty/nested applications, dual-source identity,
+    cancellation, bounds, and redaction. Application-specific meaning, actual
+    text transcoding, insertion, destination mutation, cross-container clone,
+    and POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

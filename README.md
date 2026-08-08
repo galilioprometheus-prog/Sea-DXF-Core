@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.3dm**. The current core can:
+Development is complete through checkpoint **M14.3dn**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -43,7 +43,8 @@ Development is complete through checkpoint **M14.3dm**. The current core can:
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
   logical destination projection, canonical destination group encoding, and
-  exact per-application encoded grouping, plus create-new, strictly reparsed, same-
+  exact per-application and per-entity encoded grouping, plus create-new,
+  strictly reparsed, same-
   dialect staged group-1005 handle-replacement writes;
 - generate deterministic schemas, CycloneDX evidence, legal bundles, native
   packages, and six-platform release receipts.

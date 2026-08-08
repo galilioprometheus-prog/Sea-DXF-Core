@@ -90,6 +90,7 @@ mod entity_xdata_coordinate_transform;
 mod entity_xdata_coordinate_transform_math;
 mod entity_xdata_encoded_application_destination;
 mod entity_xdata_encoded_destination;
+mod entity_xdata_encoded_entity_destination;
 mod entity_xdata_entity_destination;
 mod entity_xdata_handle_composed_destination;
 mod entity_xdata_handle_destination;
@@ -597,6 +598,10 @@ pub use entity_xdata_encoded_application_destination::{
 pub use entity_xdata_encoded_destination::{
     DxfEntityXDataDestinationEncodeIssue, DxfEntityXDataEncodedDestinationDirectory,
     DxfEntityXDataEncodedDestinationEntry, DxfEntityXDataEncodedDestinationState,
+};
+pub use entity_xdata_encoded_entity_destination::{
+    DxfEntityXDataEncodedEntityDestinationDirectory, DxfEntityXDataEncodedEntityDestinationEntry,
+    DxfEntityXDataEncodedEntityDestinationState,
 };
 pub use entity_xdata_entity_destination::{
     DxfEntityXDataEntityDestinationDirectory, DxfEntityXDataEntityDestinationEntry,

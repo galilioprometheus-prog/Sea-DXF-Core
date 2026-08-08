@@ -1661,6 +1661,19 @@ cancellation, bounds, and redaction. Application-specific meaning, actual text
 transcoding, per-entity grouping, insertion, mutation, cross-container clone,
 and POINT `Complete` remain open.
 
+M14.3dn groups M14.3dm application sets into exact per-entity encoded payloads
+without insertion or mutation. `DxfEntityXDataEncodedEntityDestinationDirectory`
+owns M14.3dm and emits one entry per indexed source entity. Ready requires the
+M14.3dj payload envelope and every application set ready; zero-XDATA entities
+remain explicit with empty bytes. Unavailable entries retain the full payload
+state, application/member totals, unavailable counts, and first unavailable
+application ordinal, while aggregate bytes remain fail-closed. Four format
+pairings span all nine dialects plus AC1009/AC1032 cross-dialect boundaries,
+ready, zero-XDATA, failed-handle and orphan entities, empty/nested applications,
+dual-source identity, cancellation, bounds, and redaction. Application-specific
+meaning, actual text transcoding, insertion, mutation, cross-container clone,
+and POINT `Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

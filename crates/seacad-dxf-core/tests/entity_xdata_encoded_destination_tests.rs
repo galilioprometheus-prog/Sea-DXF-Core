@@ -7,11 +7,144 @@ use seacad_dxf_core::{
     DxfEntityXDataEncodedApplicationDestinationEntry,
     DxfEntityXDataEncodedApplicationDestinationState, DxfEntityXDataEncodedDestinationDirectory,
     DxfEntityXDataEncodedDestinationEntry, DxfEntityXDataEncodedDestinationState,
-    DxfEntityXDataHandleRemap, DxfEntityXDataLogicalDestinationIssue,
-    DxfEntityXDataPayloadDestinationState, DxfError, DxfHandle, DxfMemorySource,
-    DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
-    NoopDxfReadObserver,
+    DxfEntityXDataEncodedEntityDestinationDirectory, DxfEntityXDataEncodedEntityDestinationEntry,
+    DxfEntityXDataEncodedEntityDestinationState, DxfEntityXDataHandleRemap,
+    DxfEntityXDataLogicalDestinationIssue, DxfEntityXDataPayloadDestinationState, DxfError,
+    DxfHandle, DxfMemorySource, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions,
+    DxfResourceProfile, NoopDxfReadObserver,
 };
+
+#[test]
+fn encoded_entities_preserve_exact_payloads_for_every_format_and_dialect()
+-> Result<(), Box<dyn Error>> {
+    for version in DxfAcadVersion::SUPPORTED {
+        for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+            for destination_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
+                assert_entity_format_pair(source_format, version, destination_format, version)?;
+            }
+        }
+    }
+    assert_entity_format_pair(
+        DxfRawDocumentFormat::Binary,
+        DxfAcadVersion::Ac1009,
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+    )?;
+    assert_entity_format_pair(
+        DxfRawDocumentFormat::Ascii,
+        DxfAcadVersion::Ac1032,
+        DxfRawDocumentFormat::Binary,
+        DxfAcadVersion::Ac1009,
+    )?;
+    Ok(())
+}
+
+#[test]
+fn encoded_entity_directory_is_cancellable_bound_bounded_and_non_disclosing()
+-> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityXDataEncodedEntityDestinationDirectory>();
+    assert_copy::<DxfEntityXDataEncodedEntityDestinationEntry>();
+    assert_copy::<DxfEntityXDataEncodedEntityDestinationState>();
+    assert!(size_of::<DxfEntityXDataEncodedEntityDestinationEntry>() <= 192);
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1032)?;
+    let destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Binary, DxfAcadVersion::Ac1032)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_ascii(&source_storage)?;
+    let destination = open_binary(&destination_storage)?;
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        source.entity_xdata_encoded_entity_destination_directory(
+            DxfRawDocumentView::from(&destination),
+            transform()?,
+            &mappings()?,
+            DxfResourceProfile::Safe,
+            &cancelled,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    let directory = build_entity_directory(
+        DxfRawDocumentView::from(&source),
+        DxfRawDocumentView::from(&destination),
+    )?;
+    assert_eq!(directory.entry(u64::MAX), None);
+    let debug = format!("{directory:?}");
+    assert!(!debug.contains("SECRET_ENCODE_PAYLOAD"));
+    assert!(!debug.contains("SECRET_ORPHAN_PAYLOAD"));
+    assert!(!debug.contains("SECRET_DESTINATION_PAYLOAD"));
+
+    let other_destination_bytes =
+        destination_fixture(DxfRawDocumentFormat::Ascii, DxfAcadVersion::Ac1027)?;
+    let other_storage = DxfMemorySource::new(&other_destination_bytes, DxfResourceProfile::Safe)?;
+    let other_destination = open_ascii(&other_storage)?;
+    let foreign = build_entity_directory(
+        DxfRawDocumentView::from(&source),
+        DxfRawDocumentView::from(&other_destination),
+    )?;
+    assert_eq!(directory.payload_for_entry(foreign.entries()[0]), None);
+    assert_eq!(
+        directory.encoded_bytes_for_entry(foreign.entries()[0]),
+        None
+    );
+    assert!(directory.entity_for_entry(foreign.entries()[0]).is_err());
+    Ok(())
+}
+
+#[test]
+fn encoded_entity_keeps_empty_nested_and_orphan_payloads_distinct() -> Result<(), Box<dyn Error>> {
+    let source_bytes = empty_nested_fixture()?;
+    let destination_bytes = empty_nested_destination_fixture()?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_ascii(&source_storage)?;
+    let destination = open_binary(&destination_storage)?;
+    let directory = source.entity_xdata_encoded_entity_destination_directory(
+        DxfRawDocumentView::from(&destination),
+        DxfEntityXDataCoordinateTransform::identity(),
+        &[],
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert_eq!(directory.entries().len(), 3);
+    assert!(matches!(
+        directory.entries()[0].state(),
+        DxfEntityXDataEncodedEntityDestinationState::Ready {
+            application_count: 0,
+            member_count: 0,
+            encoded_byte_count: 0,
+        }
+    ));
+    assert!(matches!(
+        directory.entries()[1].state(),
+        DxfEntityXDataEncodedEntityDestinationState::Ready {
+            application_count: 2,
+            member_count: 7,
+            ..
+        }
+    ));
+    assert_eq!(
+        directory
+            .applications_for_entry(directory.entries()[1])?
+            .len(),
+        2
+    );
+    assert!(matches!(
+        directory.entries()[2].state(),
+        DxfEntityXDataEncodedEntityDestinationState::Unavailable {
+            application_count: 0,
+            unavailable_application_count: 0,
+            member_count: 0,
+            ..
+        }
+    ));
+    assert_eq!(
+        directory.encoded_bytes_for_entry(directory.entries()[2]),
+        None
+    );
+    Ok(())
+}
 
 #[test]
 fn encoded_applications_preserve_exact_sets_for_every_format_and_dialect()
@@ -480,6 +613,126 @@ fn assert_application_format_pair(
         }
         _ => return Err(io::Error::other("format pair").into()),
     }
+    Ok(())
+}
+
+fn assert_entity_format_pair(
+    source_format: DxfRawDocumentFormat,
+    source_version: DxfAcadVersion,
+    destination_format: DxfRawDocumentFormat,
+    destination_version: DxfAcadVersion,
+) -> Result<(), Box<dyn Error>> {
+    let source_bytes = source_fixture(source_format, source_version)?;
+    let destination_bytes = destination_fixture(destination_format, destination_version)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    match (source_format, destination_format) {
+        (DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Ascii) => {
+            let source = open_ascii(&source_storage)?;
+            let destination = open_ascii(&destination_storage)?;
+            assert_entity_directory(&build_entity_directory(
+                DxfRawDocumentView::from(&source),
+                DxfRawDocumentView::from(&destination),
+            )?)?;
+        }
+        (DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary) => {
+            let source = open_ascii(&source_storage)?;
+            let destination = open_binary(&destination_storage)?;
+            assert_entity_directory(&build_entity_directory(
+                DxfRawDocumentView::from(&source),
+                DxfRawDocumentView::from(&destination),
+            )?)?;
+        }
+        (DxfRawDocumentFormat::Binary, DxfRawDocumentFormat::Ascii) => {
+            let source = open_binary(&source_storage)?;
+            let destination = open_ascii(&destination_storage)?;
+            assert_entity_directory(&build_entity_directory(
+                DxfRawDocumentView::from(&source),
+                DxfRawDocumentView::from(&destination),
+            )?)?;
+        }
+        (DxfRawDocumentFormat::Binary, DxfRawDocumentFormat::Binary) => {
+            let source = open_binary(&source_storage)?;
+            let destination = open_binary(&destination_storage)?;
+            assert_entity_directory(&build_entity_directory(
+                DxfRawDocumentView::from(&source),
+                DxfRawDocumentView::from(&destination),
+            )?)?;
+        }
+        _ => return Err(io::Error::other("format pair").into()),
+    }
+    Ok(())
+}
+
+fn build_entity_directory(
+    source: DxfRawDocumentView<'_>,
+    destination: DxfRawDocumentView<'_>,
+) -> Result<DxfEntityXDataEncodedEntityDestinationDirectory, Box<dyn Error>> {
+    Ok(source.entity_xdata_encoded_entity_destination_directory(
+        destination,
+        transform()?,
+        &mappings()?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?)
+}
+
+fn assert_entity_directory(
+    directory: &DxfEntityXDataEncodedEntityDestinationDirectory,
+) -> Result<(), Box<dyn Error>> {
+    assert_eq!(directory.entries().len(), 7);
+    for entry in &directory.entries()[..4] {
+        assert!(matches!(
+            entry.state(),
+            DxfEntityXDataEncodedEntityDestinationState::Ready {
+                application_count: 0,
+                member_count: 0,
+                encoded_byte_count: 0,
+            }
+        ));
+        assert_eq!(directory.encoded_bytes_for_entry(*entry), Some(&[][..]));
+    }
+    let ready = directory.entries()[4];
+    let unavailable = directory.entries()[5];
+    let orphan = directory.entries()[6];
+    assert!(matches!(
+        ready.state(),
+        DxfEntityXDataEncodedEntityDestinationState::Ready {
+            application_count: 1,
+            member_count: 13,
+            encoded_byte_count,
+        } if encoded_byte_count == directory.encoded_bytes_for_entry(ready)
+            .ok_or(io::Error::other("entity bytes"))?.len() as u64
+    ));
+    assert!(matches!(
+        unavailable.state(),
+        DxfEntityXDataEncodedEntityDestinationState::Unavailable {
+            application_count: 1,
+            unavailable_application_count: 1,
+            first_unavailable_application_ordinal: Some(0),
+            member_count: 2,
+            unavailable_member_count: 1,
+            ..
+        }
+    ));
+    assert!(matches!(
+        orphan.state(),
+        DxfEntityXDataEncodedEntityDestinationState::Unavailable {
+            application_count: 0,
+            unavailable_application_count: 0,
+            first_unavailable_application_ordinal: None,
+            member_count: 0,
+            unavailable_member_count: 0,
+            ..
+        }
+    ));
+    for entry in directory.entries().iter().copied() {
+        let entity = directory.entity_for_entry(entry)?;
+        assert_eq!(directory.entry_for_entity(entity)?, Some(entry));
+        assert!(directory.payload_for_entry(entry).is_some());
+    }
+    assert_eq!(directory.encoded_bytes_for_entry(unavailable), None);
+    assert_eq!(directory.encoded_bytes_for_entry(orphan), None);
     Ok(())
 }
 
