@@ -6,7 +6,7 @@ use seacad_dxf_core::{
     DxfEntityDraftApplicabilityPlan, DxfEntityDraftIdentityIssue, DxfEntityDraftName,
     DxfEntityDraftRecordPlan, DxfEntityLineweight, DxfEntityPlacementOwnerBinding,
     DxfEntityPlacementOwnerOutcome, DxfEntityTopic, DxfEntityXDataCoordinateTransform,
-    DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
+    DxfEntityXDataDraftInsertPlan, DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
     DxfEntityXDataEncodedEntityDestinationDirectory, DxfEntityXDataEncodedEntityDestinationEntry,
     DxfEntityXDataEncodedEntityDestinationState, DxfError, DxfHandleReservationPlan,
     DxfHandleReservationPlanOutcome, DxfMemorySource, DxfPointDraft, DxfRawDocumentFormat,
@@ -18,6 +18,100 @@ const LOCATION: [DxfDouble; 3] = [
     DxfDouble::from_bits(2.0_f64.to_bits()),
     DxfDouble::from_bits(3.0_f64.to_bits()),
 ];
+
+#[test]
+fn insert_plan_retains_xdata_expectation_and_atomic_transaction() -> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityXDataDraftInsertPlan>();
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x40)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+    let payload = directory
+        .encoded_bytes_for_entry(entry)
+        .ok_or(io::Error::other("payload"))?;
+    let composed = planned(directory.compose_entity_draft_record(
+        entry,
+        draft_record(destination.view(), version)?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?)?;
+    let insert = destination.view().plan_entity_xdata_draft_insert(
+        composed,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert_eq!(insert.source_id(), source.view().source_id());
+    assert_eq!(insert.destination_id(), destination.view().source_id());
+    assert_eq!(insert.source_entity(), directory.entity_for_entry(entry)?);
+    assert_eq!(insert.encoded_entry(), entry);
+    assert_eq!(insert.encoded_state(), entry.state());
+    assert_eq!(insert.expected_xdata_bytes(), payload);
+    let transaction = insert.edit_plan().transaction();
+    assert_eq!(transaction.patches().len(), 2);
+    let insertion = transaction
+        .patches()
+        .last()
+        .ok_or(io::Error::other("insertion patch"))?;
+    let replacement = transaction
+        .replacement_bytes_for_patch_ordinal(insertion.ordinal())
+        .ok_or(io::Error::other("insertion bytes"))?;
+    assert!(replacement.ends_with(payload));
+    let debug = format!("{insert:?}");
+    assert!(!debug.contains("SECRET_DRAFT_XDATA"));
+    assert_eq!(insert.into_edit_plan().transaction().patches().len(), 2);
+    Ok(())
+}
+
+#[test]
+fn insert_planning_is_cancellable_and_destination_bound() -> Result<(), Box<dyn Error>> {
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x40)?;
+    let other_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x50)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let other_storage = DxfMemorySource::new(&other_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let other = open_document(&other_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        destination.view().plan_entity_xdata_draft_insert(
+            planned(directory.compose_entity_draft_record(
+                entry,
+                draft_record(destination.view(), version)?,
+                DxfResourceProfile::Safe,
+                &token(),
+            )?)?,
+            DxfResourceProfile::Safe,
+            &cancelled,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(matches!(
+        other.view().plan_entity_xdata_draft_insert(
+            planned(directory.compose_entity_draft_record(
+                entry,
+                draft_record(destination.view(), version)?,
+                DxfResourceProfile::Safe,
+                &token(),
+            )?)?,
+            DxfResourceProfile::Safe,
+            &token(),
+        ),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+    Ok(())
+}
 
 #[test]
 fn ready_xdata_appends_to_drafts_for_every_format_and_dialect() -> Result<(), Box<dyn Error>> {
@@ -76,6 +170,12 @@ fn zero_xdata_is_an_exact_noop_and_unavailable_payloads_fail_closed() -> Result<
         &token(),
     )?)?;
     assert_eq!(plan.bytes(), original);
+    let insert = destination.view().plan_entity_xdata_draft_insert(
+        plan,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert_eq!(insert.expected_xdata_bytes(), &[]);
 
     let unavailable = find_entry(&directory, |state| {
         matches!(
@@ -208,6 +308,12 @@ fn assert_format_pair(
     )?)?;
     assert_eq!(plan.bytes().get(..base.len()), Some(base.as_slice()));
     assert_eq!(plan.bytes().get(base.len()..), Some(payload.as_slice()));
+    let insert = destination.view().plan_entity_xdata_draft_insert(
+        plan,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    assert_eq!(insert.expected_xdata_bytes(), payload);
     Ok(())
 }
 

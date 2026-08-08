@@ -1688,6 +1688,19 @@ post-write XDATA verification, application-specific meaning, actual text
 transcoding, cross-container clone completion, and POINT `Complete` remain
 open.
 
+M14.3dp composes M14.3do with the existing destination draft-insertion
+transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the exact
+expected XDATA suffix, source entity, encoded entry/state, destination identity,
+and family edit plan. The atomic transaction reserves the new handle and
+inserts the complete canonical family-plus-XDATA record; zero-XDATA retains an
+explicit empty expectation. Cancellation and foreign destinations fail before
+publishing a plan. Four format pairings span all nine dialects plus
+AC1009/AC1032 cross-dialect boundaries, transaction shape, exact payload
+suffixes, zero-XDATA, dual-source identity, cancellation, bounds, and redaction.
+Destination writes, post-write XDATA verification, application-specific
+meaning, actual text transcoding, cross-container clone completion, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

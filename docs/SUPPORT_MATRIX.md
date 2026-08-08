@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3do can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dp can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1293,6 +1293,20 @@ dual-source identity, cancellation, bounded record growth, and redaction.
 Insertion, post-write XDATA verification, application-specific interpretation,
 actual text transcoding, cross-container clone completion, and POINT `Complete`
 remain open.
+
+M14.3dp adds `DxfEntityXDataDraftInsertPlan`, composing M14.3do with the
+existing destination draft-insertion transaction without writing. It retains
+the exact expected XDATA suffix, source entity, encoded entry/state, destination
+identity, and family edit plan. The underlying atomic transaction reserves the
+new handle and inserts the complete canonical family-plus-XDATA record; zero-
+XDATA retains an explicit empty expectation. Cancellation and foreign
+destination documents fail before a plan is published. Four format pairings
+cover all nine Core dialects plus AC1009/AC1032 cross-dialect boundaries,
+transaction shape, exact payload suffixes, zero-XDATA, destination identity,
+cancellation, bounds, and redaction. No destination is written yet, and post-
+write XDATA verification, application-specific interpretation, actual text
+transcoding, cross-container clone completion, and POINT `Complete` remain
+open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
