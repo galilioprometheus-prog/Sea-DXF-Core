@@ -1701,6 +1701,21 @@ Destination writes, post-write XDATA verification, application-specific
 meaning, actual text transcoding, cross-container clone completion, and POINT
 `Complete` remain open.
 
+M14.3dq adds strict post-image verification for M14.3dp. Family verification
+must first prove exact transaction bytes, typed POINT postconditions, and the
+inverse. The XDATA verifier then resolves the inserted handle uniquely in the
+strict-reparsed document, locates its indexed entity, rejects orphan values,
+reads the complete contiguous raw XDATA span under the resource profile, and
+compares it byte-for-byte with the retained expectation. The receipt binds
+source/destination/post-image identities, inserted handle, application count,
+and byte count; the journal retains the family verification and inverse. Four
+format pairings span all nine dialects plus AC1009/AC1032 cross-dialect
+boundaries, non-empty and zero-XDATA payloads, inverse restoration,
+cancellation, foreign pre-images, tamper rejection, bounds, and redaction.
+Create-new write cleanup under this XDATA wrapper, application-specific
+meaning, actual text transcoding, cross-container clone completion, and POINT
+`Complete` remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

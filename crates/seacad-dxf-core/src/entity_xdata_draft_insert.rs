@@ -5,8 +5,8 @@ use std::{fmt, io};
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfEntityEditPlan,
     DxfEntityRef, DxfEntityXDataDraftRecordPlan, DxfEntityXDataEncodedEntityDestinationEntry,
-    DxfEntityXDataEncodedEntityDestinationState, DxfError, DxfIoOperation, DxfRawDocumentView,
-    DxfResourceProfile, DxfSourceId,
+    DxfEntityXDataEncodedEntityDestinationState, DxfError, DxfHandle, DxfIoOperation,
+    DxfRawDocumentView, DxfResourceProfile, DxfSourceId,
 };
 
 pub struct DxfEntityXDataDraftInsertPlan {
@@ -14,6 +14,7 @@ pub struct DxfEntityXDataDraftInsertPlan {
     destination_id: DxfSourceId,
     source_entity: DxfEntityRef,
     encoded_entry: DxfEntityXDataEncodedEntityDestinationEntry,
+    destination_handle: DxfHandle,
     expected_xdata: Box<[u8]>,
     edit: DxfEntityEditPlan,
 }
@@ -45,6 +46,11 @@ impl DxfEntityXDataDraftInsertPlan {
     }
 
     #[must_use]
+    pub const fn destination_handle(&self) -> DxfHandle {
+        self.destination_handle
+    }
+
+    #[must_use]
     pub fn expected_xdata_bytes(&self) -> &[u8] {
         &self.expected_xdata
     }
@@ -68,6 +74,7 @@ impl fmt::Debug for DxfEntityXDataDraftInsertPlan {
             .field("destination_id", &self.destination_id)
             .field("source_entity", &self.source_entity)
             .field("encoded_entry", &self.encoded_entry)
+            .field("destination_handle", &self.destination_handle)
             .field("expected_xdata_byte_count", &self.expected_xdata.len())
             .field("edit", &self.edit)
             .finish()
@@ -105,6 +112,7 @@ impl DxfRawDocumentView<'_> {
         let destination_id = record.destination_id();
         let source_entity = record.source_entity();
         let encoded_entry = record.encoded_entry();
+        let destination_handle = record.draft_record().handle();
         let edit =
             self.plan_entity_draft_insert(record.into_draft_record(), profile, cancellation)?;
         ensure_not_cancelled(cancellation)?;
@@ -113,6 +121,7 @@ impl DxfRawDocumentView<'_> {
             destination_id,
             source_entity,
             encoded_entry,
+            destination_handle,
             expected_xdata,
             edit,
         })

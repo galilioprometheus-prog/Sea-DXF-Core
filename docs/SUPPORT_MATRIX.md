@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dp can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dq can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1307,6 +1307,21 @@ cancellation, bounds, and redaction. No destination is written yet, and post-
 write XDATA verification, application-specific interpretation, actual text
 transcoding, cross-container clone completion, and POINT `Complete` remain
 open.
+
+M14.3dq adds strict post-image verification for M14.3dp. The existing family
+verifier must first prove the exact transaction post-image, typed POINT
+postconditions, and executable inverse. The XDATA verifier then resolves the
+inserted handle uniquely in the strict-reparsed document, locates its indexed
+entity, requires zero orphan XDATA values, reads the complete contiguous raw
+XDATA span under the resource profile, and compares it byte-for-byte with the
+retained expectation. A receipt binds source, destination, post-image, inserted
+handle, application count, and XDATA byte count; the journal retains the family
+verification and inverse. Four format pairings cover all nine Core dialects
+plus AC1009/AC1032 cross-dialect boundaries, non-empty and zero-XDATA payloads,
+inverse restoration, cancellation, foreign pre-images, tamper rejection,
+bounds, and redaction. Create-new write cleanup under this XDATA wrapper,
+application-specific interpretation, actual text transcoding, cross-container
+clone completion, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

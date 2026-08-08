@@ -3135,6 +3135,22 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     verification, application-specific meaning, actual text transcoding,
     cross-container clone completion, and POINT `Complete` remain open.
 
+    M14.3dq adds strict post-image verification for M14.3dp. The existing family
+    verifier first proves exact transaction bytes, typed POINT postconditions,
+    and an executable inverse. The XDATA verifier then uniquely resolves the
+    inserted handle in the strict-reparsed document, locates its indexed entity,
+    rejects orphan values, reads the complete contiguous raw XDATA span under
+    the resource profile, and compares it byte-for-byte with the retained
+    expectation. The receipt binds source/destination/post-image identities,
+    inserted handle, application count, and XDATA byte count; the journal
+    retains family verification and inverse evidence. Four format pairings span
+    all nine Core dialects plus AC1009/AC1032 cross-dialect boundaries, non-
+    empty and zero-XDATA payloads, inverse restoration, cancellation, foreign
+    pre-images, tamper rejection, bounds, and redaction. Create-new write
+    cleanup under this wrapper, application-specific meaning, actual text
+    transcoding, cross-container clone completion, and POINT `Complete` remain
+    open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

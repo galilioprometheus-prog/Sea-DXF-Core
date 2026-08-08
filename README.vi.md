@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dp**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dq**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -46,7 +46,8 @@ thể:
   application, capacity/coordinate/handle/payload-envelope theo từng entity,
   projection giá trị logic, canonical group encoding ở đích và nhóm encoded
   chính xác theo từng application/entity, ghép vào draft record ở đích và lập
-  insertion plan nguyên tử, cùng kết quả staging thay thế handle
+  insertion plan nguyên tử và strict post-image verification cho XDATA, cùng
+  kết quả staging thay thế handle
   group-1005 cùng dialect ghi sang path mới rồi strict reparse để xác minh;
 - tạo schema xác định, CycloneDX evidence, legal bundle, native package và
   receipt phát hành sáu nền tảng.

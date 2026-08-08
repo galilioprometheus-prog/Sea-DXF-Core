@@ -7,10 +7,12 @@ use seacad_dxf_core::{
     DxfEntityDraftRecordPlan, DxfEntityLineweight, DxfEntityPlacementOwnerBinding,
     DxfEntityPlacementOwnerOutcome, DxfEntityTopic, DxfEntityXDataCoordinateTransform,
     DxfEntityXDataDraftInsertPlan, DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
-    DxfEntityXDataEncodedEntityDestinationDirectory, DxfEntityXDataEncodedEntityDestinationEntry,
-    DxfEntityXDataEncodedEntityDestinationState, DxfError, DxfHandleReservationPlan,
-    DxfHandleReservationPlanOutcome, DxfMemorySource, DxfPointDraft, DxfRawDocumentFormat,
-    DxfRawDocumentView, DxfReadOptions, DxfResourceProfile, NoopDxfReadObserver,
+    DxfEntityXDataDraftVerificationJournal, DxfEntityXDataDraftVerificationOutcome,
+    DxfEntityXDataDraftVerificationReceipt, DxfEntityXDataEncodedEntityDestinationDirectory,
+    DxfEntityXDataEncodedEntityDestinationEntry, DxfEntityXDataEncodedEntityDestinationState,
+    DxfError, DxfHandleReservationPlan, DxfHandleReservationPlanOutcome, DxfMemorySource,
+    DxfPointDraft, DxfRawDocumentFormat, DxfRawDocumentView, DxfReadOptions, DxfResourceProfile,
+    DxfTransactionPlan, NoopDxfReadObserver,
 };
 
 const LOCATION: [DxfDouble; 3] = [
@@ -114,6 +116,76 @@ fn insert_planning_is_cancellable_and_destination_bound() -> Result<(), Box<dyn 
 }
 
 #[test]
+fn post_image_verification_is_strict_cancellable_bound_and_non_disclosing()
+-> Result<(), Box<dyn Error>> {
+    assert_send_sync::<DxfEntityXDataDraftVerificationJournal>();
+    assert_copy::<DxfEntityXDataDraftVerificationReceipt>();
+    let version = DxfAcadVersion::Ac1032;
+    let source_bytes = source_fixture(DxfRawDocumentFormat::Ascii, version)?;
+    let destination_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x40)?;
+    let other_bytes = destination_fixture(DxfRawDocumentFormat::Ascii, version, 0x50)?;
+    let source_storage = DxfMemorySource::new(&source_bytes, DxfResourceProfile::Safe)?;
+    let destination_storage = DxfMemorySource::new(&destination_bytes, DxfResourceProfile::Safe)?;
+    let other_storage = DxfMemorySource::new(&other_bytes, DxfResourceProfile::Safe)?;
+    let source = open_document(&source_storage, DxfRawDocumentFormat::Ascii)?;
+    let destination = open_document(&destination_storage, DxfRawDocumentFormat::Ascii)?;
+    let other = open_document(&other_storage, DxfRawDocumentFormat::Ascii)?;
+    let directory = build_directory(source.view(), destination.view())?;
+    let entry = ready_entry(&directory)?;
+    let composed = planned(directory.compose_entity_draft_record(
+        entry,
+        draft_record(destination.view(), version)?,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?)?;
+    let insert = destination.view().plan_entity_xdata_draft_insert(
+        composed,
+        DxfResourceProfile::Safe,
+        &token(),
+    )?;
+    let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;
+    let output_storage = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let post = open_document(&output_storage, DxfRawDocumentFormat::Ascii)?;
+    let cancelled = token();
+    cancelled.cancel();
+    assert!(matches!(
+        insert.verify_post_image(
+            destination.view(),
+            post.view(),
+            DxfResourceProfile::Safe,
+            &cancelled,
+        ),
+        Err(DxfError::Cancelled)
+    ));
+    assert!(matches!(
+        insert.verify_post_image(
+            other.view(),
+            post.view(),
+            DxfResourceProfile::Safe,
+            &token(),
+        ),
+        Err(DxfError::SourceIdentityMismatch { .. })
+    ));
+
+    let tampered = replace_once(&output, b"SECRET_DRAFT_XDATA", b"SECRET_DRAFT_XDATB")?;
+    let tampered_storage = DxfMemorySource::new(&tampered, DxfResourceProfile::Safe)?;
+    let tampered_post = open_document(&tampered_storage, DxfRawDocumentFormat::Ascii)?;
+    assert!(
+        insert
+            .verify_post_image(
+                destination.view(),
+                tampered_post.view(),
+                DxfResourceProfile::Safe,
+                &token(),
+            )
+            .is_err()
+    );
+    let debug = format!("{insert:?}");
+    assert!(!debug.contains("SECRET_DRAFT_XDATA"));
+    Ok(())
+}
+
+#[test]
 fn ready_xdata_appends_to_drafts_for_every_format_and_dialect() -> Result<(), Box<dyn Error>> {
     for version in DxfAcadVersion::SUPPORTED {
         for source_format in [DxfRawDocumentFormat::Ascii, DxfRawDocumentFormat::Binary] {
@@ -176,6 +248,24 @@ fn zero_xdata_is_an_exact_noop_and_unavailable_payloads_fail_closed() -> Result<
         &token(),
     )?;
     assert_eq!(insert.expected_xdata_bytes(), &[]);
+    let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;
+    let output_storage = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let post = open_document(&output_storage, DxfRawDocumentFormat::Binary)?;
+    let DxfEntityXDataDraftVerificationOutcome::Verified(journal) = insert.verify_post_image(
+        destination.view(),
+        post.view(),
+        DxfResourceProfile::Safe,
+        &token(),
+    )?
+    else {
+        return Err(io::Error::other("zero-XDATA verification").into());
+    };
+    assert_eq!(journal.receipt().application_count(), 0);
+    assert_eq!(journal.receipt().xdata_byte_count(), 0);
+    assert_eq!(
+        materialize(&output, journal.inverse_plan())?,
+        destination_bytes
+    );
 
     let unavailable = find_entry(&directory, |state| {
         matches!(
@@ -314,6 +404,29 @@ fn assert_format_pair(
         &token(),
     )?;
     assert_eq!(insert.expected_xdata_bytes(), payload);
+    let output = materialize(&destination_bytes, insert.edit_plan().transaction())?;
+    let output_storage = DxfMemorySource::new(&output, DxfResourceProfile::Safe)?;
+    let post = open_document(&output_storage, destination_format)?;
+    let DxfEntityXDataDraftVerificationOutcome::Verified(journal) = insert.verify_post_image(
+        destination.view(),
+        post.view(),
+        DxfResourceProfile::Safe,
+        &token(),
+    )?
+    else {
+        return Err(io::Error::other("XDATA verification").into());
+    };
+    let receipt = journal.receipt();
+    assert_eq!(receipt.source_id(), source.view().source_id());
+    assert_eq!(receipt.destination_id(), destination.view().source_id());
+    assert_eq!(receipt.post_image_id(), post.view().source_id());
+    assert_eq!(receipt.destination_handle(), insert.destination_handle());
+    assert_eq!(receipt.application_count(), 1);
+    assert_eq!(receipt.xdata_byte_count(), payload.len() as u64);
+    assert_eq!(
+        materialize(&output, journal.inverse_plan())?,
+        destination_bytes
+    );
     Ok(())
 }
 
@@ -577,6 +690,52 @@ fn encode_fixture(
         }
     }
     Ok(bytes)
+}
+
+fn materialize(source: &[u8], plan: &DxfTransactionPlan) -> Result<Vec<u8>, io::Error> {
+    let mut output = Vec::new();
+    let mut cursor = 0_usize;
+    for patch in plan.patches() {
+        let start = usize::try_from(patch.source_span().start())
+            .map_err(|_| io::Error::other("patch start"))?;
+        let end = usize::try_from(patch.source_span().end())
+            .map_err(|_| io::Error::other("patch end"))?;
+        output.extend_from_slice(
+            source
+                .get(cursor..start)
+                .ok_or(io::Error::other("source prefix"))?,
+        );
+        output.extend_from_slice(
+            plan.replacement_bytes_for_patch_ordinal(patch.ordinal())
+                .ok_or(io::Error::other("replacement"))?,
+        );
+        cursor = end;
+    }
+    output.extend_from_slice(
+        source
+            .get(cursor..)
+            .ok_or(io::Error::other("source suffix"))?,
+    );
+    Ok(output)
+}
+
+fn replace_once(source: &[u8], from: &[u8], to: &[u8]) -> Result<Vec<u8>, io::Error> {
+    if from.len() != to.len() {
+        return Err(io::Error::other("replacement length"));
+    }
+    let offset = source
+        .windows(from.len())
+        .position(|window| window == from)
+        .ok_or(io::Error::other("replacement pattern"))?;
+    let end = offset
+        .checked_add(to.len())
+        .ok_or(io::Error::other("replacement range"))?;
+    let mut output = source.to_vec();
+    output
+        .get_mut(offset..end)
+        .ok_or(io::Error::other("replacement slice"))?
+        .copy_from_slice(to);
+    Ok(output)
 }
 
 enum OpenedDocument<'a> {
