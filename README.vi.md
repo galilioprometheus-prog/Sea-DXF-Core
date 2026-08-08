@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dy**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dz**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -59,6 +59,9 @@ thể:
 - chuyển mã color-book name group 430 của POINT với provenance chính xác từ
   source field, đồng thời giữ receipt xuyên family/XDATA draft, insertion,
   strict verification và create-new write journal;
+- cung cấp ledger hoàn thiện entity đã audit, đặt POINT ở mức verified mutation
+  (mức 5/6), đồng thời giữ qualification private corpus và CI sáu nền tảng tại
+  checkpoint hiện tại làm blocker release tường minh;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

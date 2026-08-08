@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dy can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dz can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1442,6 +1442,20 @@ decoder can finish an exact-length round trip without increasing accepted
 payload size. Other free-text common fields, application-specific XDATA
 meaning, automatic symbol creation, higher entity families, and POINT
 `Complete` remain open.
+
+M14.3dz publishes the first typed entity-completion ledger without broadening
+the underlying support evidence. POINT is explicitly audited at
+`VerifiedMutation`, level 5 of the six-level entity subplan: exact evidence,
+cardinality, typed semantics, WCS geometry, and verified create/update/clone/
+delete materialization are satisfied. `ReleaseQualified` remains false with
+exact blockers `PrivateCorpusQualification` and
+`CurrentCheckpointSixNativeCi`. The committed corpus policy is not a passing
+private-corpus receipt, and six-native run `30557566354` belongs to commit
+`222eec2c9d9b18fbb7ff1b8d5f0120ba30633365`, not this checkpoint. The other 44
+public topics remain unaudited in this ledger rather than receiving inferred
+levels. Rendering, POINT display behavior, application-specific XDATA meaning,
+and automatic symbol creation remain separate capabilities, not additional
+entity-completion levels.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

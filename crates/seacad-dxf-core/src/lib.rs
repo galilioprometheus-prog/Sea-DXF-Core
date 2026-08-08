@@ -61,6 +61,7 @@ mod entity_common_reference_edit;
 mod entity_common_reference_target;
 mod entity_common_symbol_edit;
 mod entity_common_text_semantic;
+mod entity_completion;
 mod entity_directory;
 mod entity_draft_applicability;
 mod entity_draft_identity;
@@ -497,6 +498,10 @@ pub use entity_common_text_semantic::{
     DxfEntityCommonLayoutValue, DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue,
     DxfEntityCommonSymbolValue, DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry,
     DxfEntityCommonTextSemantics,
+};
+pub use entity_completion::{
+    DXF_ENTITY_COMPLETION_ASSESSMENTS, DxfEntityCompletionAssessment, DxfEntityCompletionBlocker,
+    DxfEntityCompletionLevel, dxf_entity_completion_assessment,
 };
 pub use entity_directory::{
     DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,

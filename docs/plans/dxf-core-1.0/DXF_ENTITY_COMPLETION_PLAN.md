@@ -1806,6 +1806,21 @@ raising payload ceilings. Other free-text common fields, application-specific
 XDATA meaning, automatic symbol creation, higher families, and POINT
 `Complete` remain open.
 
+M14.3dz audits the six-level completion contract against the accumulated POINT
+evidence and publishes the first typed completion-ledger entry. POINT reaches
+`VerifiedMutation` (level 5): exact record/field evidence, fixed cardinality,
+typed/defaulted semantics, exact WCS geometry, and source-bound create/update/
+clone/delete with strict create-new verification and executable inverse are
+all evidenced. It does not reach `ReleaseQualified`: no passing private
+1,000-file/10-GiB corpus receipt exists, and six-native run `30557566354`
+belongs to commit `222eec2c9d9b18fbb7ff1b8d5f0120ba30633365` rather than the current
+checkpoint. Those gaps remain typed as `PrivateCorpusQualification` and
+`CurrentCheckpointSixNativeCi`. The other 44 public topics intentionally have
+no ledger entry until independently audited. Rendering, POINT display
+behavior, application-specific XDATA interpretation, and automatic symbol
+creation remain separate capabilities and do not prevent the evidenced level-5
+assessment. POINT is not called `Complete`.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

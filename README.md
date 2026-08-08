@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.3dy**. The current core can:
+Development is complete through checkpoint **M14.3dz**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -57,6 +57,9 @@ Development is complete through checkpoint **M14.3dy**. The current core can:
 - transcode a POINT color-book name in group 430 with exact source-field
   provenance and retain its receipt through family/XDATA draft, insertion,
   strict verification, and create-new write journals;
+- expose an audited entity-completion ledger that places POINT at verified
+  mutation (level 5 of 6), with private-corpus qualification and current-
+  checkpoint six-native CI retained as explicit release blockers;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

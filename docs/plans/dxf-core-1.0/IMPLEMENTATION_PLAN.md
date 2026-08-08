@@ -3267,6 +3267,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     meaning, automatic symbol creation, higher families, and POINT `Complete`
     remain open.
 
+    M14.3dz audits the six-level completion contract against the accumulated
+    POINT evidence and publishes one typed ledger entry at
+    `VerifiedMutation`, level 5. Exact evidence, cardinality, typed/defaulted
+    semantics, WCS geometry, and verified create/update/clone/delete are
+    satisfied. `ReleaseQualified` remains false because no passing private
+    1,000-file/10-GiB corpus receipt exists and six-native run `30557566354`
+    belongs to commit `222eec2c9d9b18fbb7ff1b8d5f0120ba30633365`, not this checkpoint.
+    These gaps remain typed as `PrivateCorpusQualification` and
+    `CurrentCheckpointSixNativeCi`; the other 44 public topics remain unaudited
+    instead of receiving inferred levels. Rendering, POINT display behavior,
+    application-specific XDATA interpretation, and automatic symbol creation
+    remain separate capabilities. POINT is not called `Complete`.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
