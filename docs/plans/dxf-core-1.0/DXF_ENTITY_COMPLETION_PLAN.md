@@ -1537,6 +1537,22 @@ application payloads, compose coordinate or handle transforms, encode or insert
 XDATA, mutate a destination, implement cross-container clone, or advance POINT
 to `Complete`.
 
+M14.3de adds per-application destination symbol readiness without mutating
+either document. `DxfEntityXDataSymbolDestinationDirectory` owns the M14.3dc
+APPID and M14.3dd LAYER destination directories. Each source application is
+ready only when its APPID and every application-bound group-1003 occurrence
+have unique destination records. All exact APPID and LAYER blockers accumulate
+in one deterministic issue range, preserving source/destination missing and
+ambiguity states; only ready entries derive their owned destination APPID and
+unique LAYER occurrences. Orphan layer values remain visible through the owned
+LAYER directory and are not guessed into an application. Four ASCII/Binary
+source-destination pairings span all nine Core dialects plus cross-dialect
+boundaries, accumulated failures, malformed evidence, case-near rejection,
+dual-source identity, cancellation, bounds, and debug redaction. This does not
+compose structure, capacity, transformed coordinates, handle remaps, payload
+semantics, encoding/insertion, destination mutation, cross-container clone, or
+POINT `Complete`.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.

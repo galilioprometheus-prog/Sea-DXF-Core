@@ -2,24 +2,24 @@
 
 Status: READY
 
-Checkpoint: `M14.3dd-entity-xdata-layer-destination`
+Checkpoint: `M14.3de-entity-xdata-symbol-destination`
 
 Repository root: `D:\SeaCad\SeaCad`
 
-Baseline commit: `5f77482a1c37fb6f8b2648f3e63bdad60b48c78a`
+Baseline commit: `120eab200bc04926349939db0e9690e6e3fc891c`
 
 Required report file:
-`D:\SeaCad\AntigravityReports\seacad-m14.3dd-entity-xdata-layer-destination-2026-08-08.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3de-entity-xdata-symbol-destination-2026-08-08.yaml`
 
 Prepared: `2026-08-08` (`Asia/Saigon`)
 
 ## 1. Authority and purpose
 
 You are the mechanical verification worker for SeaCad. Verify the proposed
-M14.3dd destination-document LAYER validation checkpoint and collect raw
-evidence. You do not approve architecture, normative-source interpretation,
-support claims, licensing, commit, tag, merge, publication, or release actions.
-Codex and the user retain that authority.
+M14.3de per-application XDATA destination-symbol readiness checkpoint and
+collect raw evidence. You do not approve architecture, normative-source
+interpretation, support claims, licensing, commit, tag, merge, publication, or
+release actions. Codex and the user retain that authority.
 
 ## 2. Mandatory procedure
 
@@ -37,10 +37,10 @@ The Git repository is read-only. Ignored `target` output and provisioned
 tool-cache activity are tolerated. Create or replace exactly this external
 report:
 
-`D:\SeaCad\AntigravityReports\seacad-m14.3dd-entity-xdata-layer-destination-2026-08-08.yaml`
+`D:\SeaCad\AntigravityReports\seacad-m14.3de-entity-xdata-symbol-destination-2026-08-08.yaml`
 
 Do not edit, format or regenerate in write mode, copy source, create fixtures,
-mutate Git, install or update tools, use a network, access legacy/private corpus
+mutate Git, install/update tools, use a network, access legacy/private corpus
 content, create a license/export/archive, or run vendor CAD software.
 
 ## 4. Expected preflight state
@@ -50,7 +50,6 @@ The exact tracked changed-path set is:
 ```text
 README.md
 README.vi.md
-crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs
 crates/seacad-dxf-core/src/lib.rs
 docs/ANTIGRAVITY_MECHANICAL_BATCH.md
 docs/IMPLEMENTATION_PLAN.md
@@ -62,16 +61,15 @@ docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
 The exact untracked-path set is:
 
 ```text
-crates/seacad-dxf-core/src/entity_xdata_layer_destination.rs
-crates/seacad-dxf-core/src/named_symbol_destination.rs
-crates/seacad-dxf-core/tests/entity_xdata_layer_destination_tests.rs
-docs/audits/M14_3DD_ENTITY_XDATA_LAYER_DESTINATION.md
+crates/seacad-dxf-core/src/entity_xdata_symbol_destination.rs
+crates/seacad-dxf-core/tests/entity_xdata_symbol_destination_tests.rs
+docs/audits/M14_3DE_ENTITY_XDATA_SYMBOL_DESTINATION.md
 ```
 
 Stop `BLOCKED` before quality commands if root, baseline, or either path set
 differs.
 
-## 5. Phase 1 - Preflight and receipts
+## 5. Phase 1 - Preflight and artifact receipts
 
 Run and record:
 
@@ -84,16 +82,14 @@ git ls-files --others --exclude-standard
 $paths = @(
   'README.md',
   'README.vi.md',
-  'crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs',
-  'crates/seacad-dxf-core/src/entity_xdata_layer_destination.rs',
-  'crates/seacad-dxf-core/src/named_symbol_destination.rs',
+  'crates/seacad-dxf-core/src/entity_xdata_symbol_destination.rs',
   'crates/seacad-dxf-core/src/lib.rs',
-  'crates/seacad-dxf-core/tests/entity_xdata_layer_destination_tests.rs',
+  'crates/seacad-dxf-core/tests/entity_xdata_symbol_destination_tests.rs',
   'docs/IMPLEMENTATION_PLAN.md',
   'docs/SUPPORT_MATRIX.md',
   'docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md',
   'docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md',
-  'docs/audits/M14_3DD_ENTITY_XDATA_LAYER_DESTINATION.md'
+  'docs/audits/M14_3DE_ENTITY_XDATA_SYMBOL_DESTINATION.md'
 )
 foreach ($path in $paths) {
   [PSCustomObject]@{
@@ -108,66 +104,66 @@ Compare changed paths as sets. Required receipts:
 
 | Path | Lines | SHA-256 |
 | --- | ---: | --- |
-| `README.md` | 154 | `b512ca35a20034c3349660d2f62d7480a3abf498d0473f17cb13ddc412fbcf91` |
-| `README.vi.md` | 153 | `263ce8c5484508c049d74140abd53612672ab904c902d417916d4a53b05462db` |
-| `crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs` | 313 | `e3c65574d17d4f8c0fddaadb9bfd945949ebe8ccf23835a62bf0c7be5571374b` |
-| `crates/seacad-dxf-core/src/entity_xdata_layer_destination.rs` | 360 | `12b3ce4ce1e278500de4a63f36687df1dd3539a244c69160b57ddd3ca28d8c75` |
-| `crates/seacad-dxf-core/src/named_symbol_destination.rs` | 129 | `474b3f8d48af6c00d62046c059adc476dc619630424f90059be9c41694b3807d` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1,167 | `ba28cf10c9ab49125667284a4c61e34896ea1b9d6d1c5857189e3e97d740ff53` |
-| `crates/seacad-dxf-core/tests/entity_xdata_layer_destination_tests.rs` | 565 | `6bc34d766d03666585042020e5b1158a4dfe013a757eb90a2161d76e3fd2090d` |
-| `docs/IMPLEMENTATION_PLAN.md` | 423 | `61a5bcf2d7a97a97d0eb25fe63c11a4cf80ac09d6866bb1c006b609e4e4eea17` |
-| `docs/SUPPORT_MATRIX.md` | 2,618 | `bb9c628f3845c3605d9892cd0473398d423e2548fb4e7c4036938c111f2b375a` |
-| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 2,994 | `f9b54d71f3c3a00441d2c1e378ca097483cdc70a84ed8a1738a6249e1467272c` |
-| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,567 | `438d7870a3b2688563ce65a989c4a8e90cd18dc848de4fc9611834043b83c5e4` |
-| `docs/audits/M14_3DD_ENTITY_XDATA_LAYER_DESTINATION.md` | 85 | `85bec1e34d48a8f8c6cdc70023ae1fd38c67e7cdbbd40115f07635781d330588` |
+| `README.md` | 155 | `1c7647bceedb7ea76cad68861851bc8d472f27cc6a61cc29a83c74cd9a0a9902` |
+| `README.vi.md` | 154 | `a40ca52b116044924beae189fd5ce331afc945e0633504bfb0aa3b5f011ed324` |
+| `crates/seacad-dxf-core/src/entity_xdata_symbol_destination.rs` | 463 | `187db01d6c9a20cee113c8702ec705da8603cd3bee3d2f737d8372cad184db8c` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,173 | `e96d08e449b9b900bc77634f37ab7454afc2724bce2506d5566012d43f09bf78` |
+| `crates/seacad-dxf-core/tests/entity_xdata_symbol_destination_tests.rs` | 624 | `d0d0600b266167df3fa65a7cc835eb47e52dfc88621432444c8a0aea634a7d7e` |
+| `docs/IMPLEMENTATION_PLAN.md` | 423 | `ead2b28d12541f57181abcdb0d50cf5a7cd132d771ed70868c7cd7a68fbe6ee6` |
+| `docs/SUPPORT_MATRIX.md` | 2,634 | `7b2383b5c009d5dc7138fd6e1268f50e5bd4dc43a900c5fd8220f60a50efc3d6` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,009 | `abf04d37e8fa0fa2efd3e5ed600dcbadca01caf8bf8f73ecb710fc74daa7b317` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 1,583 | `e71ebbc5545b695436c01b3e10c4e2bb30f7252c7bd22fc3d52fc948c6f347e7` |
+| `docs/audits/M14_3DE_ENTITY_XDATA_SYMBOL_DESTINATION.md` | 75 | `cad1e1bfe53af287150a812ad510cc6f170423dfee95e882f529168b80d6833f` |
 
 ## 6. Phase 2 - Focused behavior
 
 Run:
 
 ```powershell
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_layer_destination_tests
-cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_layer_resolution_tests --test entity_xdata_appid_destination_tests --test entity_xdata_layer_destination_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_symbol_destination_tests
+cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_appid_destination_tests --test entity_xdata_layer_destination_tests --test entity_xdata_symbol_destination_tests
 ```
 
-Expected: `3/3` destination-LAYER tests and `9/9` combined adjacent tests pass.
-The raw test names must demonstrate all four ASCII/Binary format pairings across
-all nine supported dialects, fail-closed malformed destination tables, and the
-dual-source/cancellation/bounds/redaction contract.
+Expected: `3/3` symbol-readiness tests and `9/9` combined adjacent tests pass.
+The test names and raw assertions must cover all four ASCII/Binary source-
+destination pairings across all nine Core dialects, accumulated malformed
+APPID/LAYER issues, dual-source identity, cancellation, bounds, and redaction.
 
-## 7. Phase 3 - Code and contract assertions
+## 7. Phase 3 - Composition contract and safety scan
 
 Run:
 
 ```powershell
-rg -n 'DxfEntityXDataLayerDestination(Directory|Entry|State)|entity_xdata_layer_destination_directory|NamedSymbolDestinationIndex|DxfNamedSymbolTableKind::Layer|SourceMissing|SourceAmbiguous|DestinationMissing|DestinationUnique|DestinationAmbiguous|exact_matches' crates/seacad-dxf-core/src/entity_xdata_layer_destination.rs crates/seacad-dxf-core/src/named_symbol_destination.rs crates/seacad-dxf-core/src/lib.rs
-rg -n 'every_supported_version_and_format_pair|malformed_destination_layer_tables|dual_source_bound|DxfAcadVersion::SUPPORTED|Ascii|Binary|Ac1009|Ac1032|ORPHAN|NearCase|WRONG_TABLE|MULTI_NAME|UNCLOSED|4_097|SourceIdentityMismatch|Cancelled' crates/seacad-dxf-core/tests/entity_xdata_layer_destination_tests.rs
-$forbidden = @(rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_xdata_appid_destination.rs crates/seacad-dxf-core/src/entity_xdata_layer_destination.rs crates/seacad-dxf-core/src/named_symbol_destination.rs)
+rg -n 'DxfEntityXDataSymbolDestination(Directory|Entry|Issue|IssueKind|IssueRange|State)|entity_xdata_symbol_destination_directory|appid_destination_directory|layer_destination_directory|Ready|Unavailable|collect_appid_issue|collect_layer_issues|destination_appid_target_for_entry|layer_entries_for_entry' crates/seacad-dxf-core/src/entity_xdata_symbol_destination.rs crates/seacad-dxf-core/src/lib.rs
+rg -n 'every_supported_version_and_format_pair|malformed_appid_and_layer_destinations|dual_source_bound|DxfAcadVersion::SUPPORTED|Ascii|Binary|Ac1009|Ac1032|DestinationMissing|DestinationAmbiguous|SourceMissing|SourceAmbiguous|CaseLayer|MULTI_ISSUE|SourceIdentityMismatch|Cancelled' crates/seacad-dxf-core/tests/entity_xdata_symbol_destination_tests.rs
+$forbidden = @(rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_xdata_symbol_destination.rs)
 if ($forbidden.Count -ne 0) { $forbidden; throw 'Forbidden production construct found.' }
 ```
 
 Required evidence:
 
-- source missing/ambiguity is preserved before destination lookup;
-- the destination index is exact-kind filtered and source-identity bound;
-- SHA-256 only narrows candidates and byte comparison remains authoritative;
-- only destination-unique state can derive an owned LAYER target;
-- both documents remain immutable and dual-source identities remain exact;
+- one source-order entry exists per source XDATA application;
+- Ready requires destination-unique APPID plus destination-unique state for
+  every application-bound group-1003 occurrence;
+- unavailable state accumulates APPID first, then LAYER blockers in source order;
+- orphan LAYER values remain visible in the owned LAYER directory and are not
+  assigned to an application;
+- source and destination identities, owned lookups, cancellation, fallible
+  allocation, compact ordinals, and redaction remain explicit;
 - the forbidden production scan reports zero matches.
 
-## 8. Phase 4 - Documentation and protected surfaces
+## 8. Phase 4 - Documentation, links, and protected surfaces
 
 Run:
 
 ```powershell
-rg -n 'M14\.3dd|destination LAYER|DxfEntityXDataLayerDestinationDirectory|Apache-2.0 only|r0-exit-apache-2.0-authorization' README.md README.vi.md docs/IMPLEMENTATION_PLAN.md docs/SUPPORT_MATRIX.md docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md docs/audits/M14_3DD_ENTITY_XDATA_LAYER_DESTINATION.md
+rg -n 'M14\.3de|symbol readiness|symbol-destination|DxfEntityXDataSymbolDestinationDirectory|M14\.3dc|M14\.3dd' README.md README.vi.md docs/IMPLEMENTATION_PLAN.md docs/SUPPORT_MATRIX.md docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md docs/audits/M14_3DE_ENTITY_XDATA_SYMBOL_DESTINATION.md
 git diff -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
 git diff --check
 ```
 
-Expected: M14.3dd scope is documented in English and Vietnamese status surfaces,
-the R0 Apache-2.0-only decision remains bound, protected-surface diff is empty,
-and diff check exits zero.
+Expected: M14.3de scope is consistent in English and Vietnamese status surfaces,
+protected-surface diff is empty, and diff check exits zero.
 
 Validate every non-HTTP, non-mail, non-anchor Markdown link in the six changed
 Markdown documentation files and the audit relative to its containing file.
@@ -186,11 +182,11 @@ cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 $listed = @(cargo +1.97.1 test --workspace -- --list 2>$null | Select-String ': test$')
 "workspace_test_total=$($listed.Count)"
-if ($listed.Count -ne 1013) { throw 'Workspace test count drift.' }
+if ($listed.Count -ne 1016) { throw 'Workspace test count drift.' }
 git diff --check
 ```
 
-Every command must exit zero. Expected workspace total: `1,013` tests.
+Every command must exit zero. Expected workspace total: `1,016` tests.
 
 ## 10. Phase 6 - Postflight
 
@@ -203,15 +199,15 @@ surfaces must match exactly. Only ignored `target` output is tolerated.
 The report is `PASS` only when:
 
 1. root, baseline, exact path sets, and every artifact receipt match;
-2. focused destination-LAYER and adjacent suites pass 3/3 and 9/9;
-3. source-state precedence, destination exactness, and owned-target contracts
+2. focused and adjacent suites pass 3/3 and 9/9;
+3. exact APPID/LAYER composition, blocker ordering, and owned lookup contracts
    are present and exercised;
 4. all four ASCII/Binary pairings cover all nine Core dialects plus stated
    malformed, identity, cancellation, bounds, and redaction cases;
 5. forbidden production scan is empty;
 6. documentation, local links, and support boundaries are consistent;
 7. protected repository surfaces are unchanged;
-8. every required gate passes and workspace total is exactly 1,013;
+8. every required gate passes and workspace total is exactly 1,016;
 9. postflight matches preflight without repository mutation;
 10. the complete external report is written.
 
@@ -222,10 +218,10 @@ An unmet criterion is `FAIL` unless preflight requires `BLOCKED`.
 Write one UTF-8 YAML-shaped report:
 
 ```yaml
-batch_id: seacad-m14.3dd-entity-xdata-layer-destination-2026-08-08
+batch_id: seacad-m14.3de-entity-xdata-symbol-destination-2026-08-08
 status: PASS | FAIL | BLOCKED
 root: D:\SeaCad\SeaCad
-report_file: D:\SeaCad\AntigravityReports\seacad-m14.3dd-entity-xdata-layer-destination-2026-08-08.yaml
+report_file: D:\SeaCad\AntigravityReports\seacad-m14.3de-entity-xdata-symbol-destination-2026-08-08.yaml
 started_at:
 finished_at:
 head_before:
@@ -251,12 +247,12 @@ hash_receipts:
     observed_sha256:
     expected_sha256:
     result: PASS | FAIL
-focused_layer_destination_tests:
+focused_symbol_destination_tests:
 focused_adjacent_tests:
 workspace_test_total:
 links: PASS | FAIL
 forbidden_production_scan: PASS | FAIL
-support_matrix_unchanged_except_m14_3dd: PASS | FAIL
+support_matrix_unchanged_except_m14_3de: PASS | FAIL
 protected_surfaces_unchanged: PASS | FAIL
 mutations: none | <exact mutation>
 deviations: none | <exact deviation>

@@ -2990,5 +2990,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     composition, XDATA encoding or insertion, cross-container clone, and POINT
     `Complete` remain open.
 
+    M14.3de composes the M14.3dc APPID and M14.3dd application-bound LAYER
+    destination directories into one exact source-ordered symbol-readiness entry
+    per XDATA application. Ready requires a unique destination APPID and unique
+    destination target for every group-1003 occurrence in that application.
+    Unavailable entries retain a compact issue range containing all APPID and
+    LAYER blockers in deterministic order; orphan layer occurrences remain
+    visible through the owned LAYER directory rather than being assigned to an
+    application. Four ASCII/Binary source-destination pairings span all nine
+    Core dialects with cross-dialect boundaries, accumulated source/destination
+    missing and ambiguity states, case-near and malformed exclusion, dual-source
+    rejection, cancellation, bounds, and non-disclosing debug output. This is
+    symbol-only readiness; structure, capacity, coordinate transforms, handle
+    remaps, payload semantics, encoding/insertion, cross-container clone, and
+    POINT `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.3dd**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.3de**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -41,9 +41,10 @@ thể:
 - ghi kết quả preserve-patch sang path mới, strict reparse và kiểm chứng typed
   postcondition;
 - thực hiện đường CRUD entity đã kiểm chứng đầu tiên cho record POINT canonical;
-- kiểm tra và validate entity XDATA, gồm evidence APPID và LAYER chính xác ở
-  nguồn và tài liệu đích được parse độc lập, cùng kết quả staging thay thế handle
-  group-1005 cùng dialect ghi sang path mới rồi strict reparse để xác minh;
+- kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
+  và tài liệu đích được parse độc lập, trạng thái symbol theo từng application,
+  cùng kết quả staging thay thế handle group-1005 cùng dialect ghi sang path mới
+  rồi strict reparse để xác minh;
 - tạo schema xác định, CycloneDX evidence, legal bundle, native package và
   receipt phát hành sáu nền tảng.
 

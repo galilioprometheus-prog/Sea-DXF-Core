@@ -97,6 +97,7 @@ mod entity_xdata_layer_destination;
 mod entity_xdata_layer_resolution;
 mod entity_xdata_point_tuple;
 mod entity_xdata_structure;
+mod entity_xdata_symbol_destination;
 mod entity_xdata_value;
 mod error;
 mod format_probe;
@@ -619,6 +620,11 @@ pub use entity_xdata_structure::{
     DxfEntityXDataStructureDirectory, DxfEntityXDataStructureEntry, DxfEntityXDataStructureIssue,
     DxfEntityXDataStructureIssueKind, DxfEntityXDataStructureIssueRange,
     DxfEntityXDataStructureState,
+};
+pub use entity_xdata_symbol_destination::{
+    DxfEntityXDataSymbolDestinationDirectory, DxfEntityXDataSymbolDestinationEntry,
+    DxfEntityXDataSymbolDestinationIssue, DxfEntityXDataSymbolDestinationIssueKind,
+    DxfEntityXDataSymbolDestinationIssueRange, DxfEntityXDataSymbolDestinationState,
 };
 pub use entity_xdata_value::{
     DXF_XDATA_BINARY_CHUNK_MAX_BYTES, DXF_XDATA_STRING_MAX_BYTES, DxfEntityXDataControl,

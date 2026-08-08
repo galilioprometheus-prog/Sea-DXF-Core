@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dd can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3de can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1590,6 +1590,22 @@ bounds, and debug redaction. Layer-name syntax and length, record creation/edit,
 application payload semantics, coordinate/handle composition, XDATA encoding
 or insertion, destination mutation, cross-container clone, and POINT
 `Complete` remain open.
+
+M14.3de adds `DxfEntityXDataSymbolDestinationDirectory` as an exact per-
+application composition of M14.3dc APPID and M14.3dd application-bound LAYER
+destination evidence. A result is `Ready` only when the application APPID and
+every group-1003 occurrence in that application resolve uniquely in the
+independently parsed destination. Otherwise a compact source-ordered issue range
+retains every exact APPID and LAYER blocker without disclosing symbol bytes.
+Ready entries derive their owned destination APPID and exact unique LAYER
+occurrences through the two owned directories. All four ASCII/Binary source-
+destination pairings cover every Core dialect plus AC1009/AC1032 cross-dialect
+boundaries, source/destination missing and ambiguity precedence, accumulated
+APPID/LAYER failures, case-near rejection, malformed tables, dual-source
+identity, cancellation, bounds, and debug redaction. Orphan group-1003 values
+remain outside any application result and visible in the owned LAYER directory.
+This symbol-only result does not claim structure, capacity, coordinate, handle,
+payload, encoding, insertion, mutation, or cross-container clone readiness.
 
 M14.2m classifies modern embedded MTEXT column type, count, width, gutter,
 automatic-height, flow-reversal, shared height, and source-order individual
