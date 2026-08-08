@@ -1,10 +1,11 @@
 # SeaCad Master Implementation Plan
 
-Status: R0.1 and R0.2 are complete at checkpoints `r0.1-master-plan-reset` and
-`r0.2-provenance-ownership-boundary`. R0.3 public `seacad-formats` workspace
-export design is ready for verification. DXF Core 1.0 remains the only active
-product implementation program, currently documented through checkpoint
-M14.3dc. Its preserved detailed plans are:
+Status: R0.1-R0.3 are complete. The R0 exit decision authorizing Apache-2.0
+only for the exact future public `seacad-formats` boundary is ready for
+verification; the current mixed repository remains proprietary and no export
+or publication has occurred. DXF Core 1.0 remains the only active product
+implementation program, currently documented through checkpoint M14.3dc. Its
+preserved detailed plans are:
 
 - [DXF Core 1.0 implementation subplan](plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
 - [DXF entity semantic completion subplan](plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)
@@ -29,7 +30,7 @@ measured by verified workflows rather than command counts.
 | Format scope | DXF AC1009-AC1032; DWG R14-current; DGN V7 and V8 |
 | Clean-room rule | Legal specifications, authored evidence, and isolated behavioral oracles only; no third-party parser source |
 | Rust boundary | Minimal format cores; audited pinned Rust dependencies in later product layers |
-| Open-core target | Format foundation, format cores, required generators, and redistributable fixtures under `MIT OR Apache-2.0`; product layers remain proprietary |
+| Open-core target | Exact R0.3 format boundary under Apache-2.0 only when separately exported; product layers remain proprietary |
 | Desktop stack | `winit`, `wgpu`, and `egui`, isolated behind SeaCad-owned adapters |
 | Themes | Declarative tokens and semantic style roles; no executable code or layout replacement |
 | Automation | `.scr`, CadLisp/AutoLISP subset, Rhai, process-isolated Python and Luau |
@@ -229,7 +230,10 @@ startup with the built-in default theme.
    split, allowlists, legal/SBOM closure, CI matrix, and non-authorization gates
    are recorded in [the R0.3 design](audits/R0_3_PUBLIC_FORMATS_WORKSPACE_EXPORT_DESIGN.md).
 4. R0 exits only after legal/provenance review authorizes an explicit license
-   checkpoint. No current support claim changes during R0.
+   checkpoint. The controller selected Apache-2.0 only for the exact R0.3
+   boundary; scope, current-repository non-effect, and implementation gates are
+   recorded in [the R0 exit decision](audits/R0_EXIT_APACHE_2_0_AUTHORIZATION.md).
+   No current support claim changes during R0.
 
 ### R1 - Complete DXF Core 1.0
 
