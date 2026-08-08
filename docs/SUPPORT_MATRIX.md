@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3dk can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dl can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1233,6 +1233,22 @@ independence, per-entity slicing, dual-source identity, cancellation, bounds,
 and redaction. Application-specific meaning, destination text transcoding,
 byte encoding/insertion, mutation, cross-container clone, and POINT `Complete`
 remain open.
+
+M14.3dl adds `DxfEntityXDataEncodedDestinationDirectory`, canonically encoding
+every M14.3dk available logical occurrence as one complete destination-format
+group without inserting it. The shared encoder supplies ASCII framing, Binary
+value widths, uppercase handles and chunks, and the AC1009 extended-data group-
+code escape. APPID/LAYER names come from their exact destination records;
+source strings/controls/chunks are read through bounded provenance; transformed
+doubles, remapped handles, and integers use their typed logical values. ASCII-
+only source text is portable; non-ASCII source text requires the same reviewed
+source/destination decoder or remains typed `TextTranscodingRequired`.
+Unavailable logical, dialect, transcoding, and group-encoding states publish no
+bytes. Four format pairings cover all nine Core dialects plus AC1009/AC1032
+cross-dialect boundaries, canonical family bytes, decoder mismatch, dual-source
+identity, cancellation, bounds, and redaction. Application-specific meaning,
+actual text transcoding, application/entity grouping, insertion, mutation,
+cross-container clone, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

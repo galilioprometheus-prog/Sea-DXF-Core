@@ -3079,5 +3079,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     destination text transcoding, byte encoding/insertion, destination mutation,
     cross-container clone, and POINT `Complete` remain open.
 
+    M14.3dl canonically encodes every M14.3dk available logical occurrence as
+    one complete destination-format group without insertion. The shared group
+    encoder supplies ASCII/Binary framing, XDATA wire widths, uppercase handle/
+    chunk spelling, and the AC1009 extended-data escape. Destination APPID/
+    LAYER names use exact destination spans; source strings, controls, and
+    chunks use bounded source provenance. ASCII text is portable, while non-
+    ASCII source text requires matching reviewed decoders or remains typed
+    transcoding-required. Logical, dialect, transcoding, and group-encoding
+    blockers expose no bytes. Four format pairings span all nine Core dialects
+    plus AC1009/AC1032 cross-dialect boundaries, every generic family, decoder
+    mismatch, dual-source identity, cancellation, bounds, and redaction.
+    Application-specific meaning, actual text transcoding, application/entity
+    grouping, insertion, destination mutation, cross-container clone, and POINT
+    `Complete` remain open.
+
 Every item is split into reviewable micro-milestones and stops after its own
 passing checkpoint.

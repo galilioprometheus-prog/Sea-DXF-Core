@@ -1630,6 +1630,21 @@ per-entity slicing, dual-source identity, cancellation, bounds, and redaction.
 Application-specific meaning, destination text transcoding, byte encoding/
 insertion, mutation, cross-container clone, and POINT `Complete` remain open.
 
+M14.3dl adds canonical destination group encoding without insertion or
+mutation. `DxfEntityXDataEncodedDestinationDirectory` owns M14.3dk and stores
+bytes only for available logical entries under a supported destination dialect.
+It reuses the shared ASCII/Binary encoder, reads APPID/LAYER names from exact
+destination spans, and reads source-exact text/control/chunk values through
+bounded provenance. ASCII-only text is portable across reviewed encodings;
+non-ASCII source text requires matching decoders or remains typed transcoding-
+required. Logical, dialect, transcoding, and encoder blockers expose no bytes.
+Four format pairings span all nine dialects plus AC1009/AC1032 cross-dialect
+boundaries, every generic wire family, AC1009 extended-data escapes, decoder
+mismatch, dual-source identity, cancellation, bounds, and redaction.
+Application-specific meaning, actual text transcoding, application/entity
+grouping, insertion, mutation, cross-container clone, and POINT `Complete`
+remain open.
+
 ## Milestone queue
 
 - M14.1: planar primitives — `3DFACE`, `SOLID`, `TRACE`.
