@@ -910,6 +910,7 @@ impl<'document, 'evidence, 'cancellation>
             self.evidence,
             key,
             Some((placement.target(), owner)),
+            false,
             self.profile,
             self.cancellation,
         )? {
@@ -2156,6 +2157,7 @@ pub(crate) fn prepare_point_clone_snapshot(
     evidence: &DxfEntityFieldEvidenceDirectory,
     key: DxfEntityKey,
     requested_binding: Option<(DxfEntityPlacementTarget, DxfHandle)>,
+    allow_xdata: bool,
     profile: DxfResourceProfile,
     cancellation: &DxfCancellationToken,
 ) -> Result<Result<PointCloneSnapshot, DxfEntityCloneIssue>, DxfError> {
@@ -2194,7 +2196,8 @@ pub(crate) fn prepare_point_clone_snapshot(
             .group(occurrence)
             .ok_or_else(invalid_internal_data)?;
         let group_code = group.group_code().value();
-        if !matches!(
+        let is_xdata = (1000..=1071).contains(&group_code);
+        if !(matches!(
             group_code,
             0 | 5
                 | 6
@@ -2223,12 +2226,16 @@ pub(crate) fn prepare_point_clone_snapshot(
                 | 420
                 | 430
                 | 440
-        ) {
+        ) || allow_xdata && is_xdata)
+        {
             return Ok(Err(DxfEntityCloneIssue::UnsupportedSourceGroup {
                 key,
                 group_occurrence: occurrence,
                 group_code,
             }));
+        }
+        if is_xdata {
+            continue;
         }
         if let Some(field) = DxfEntityField::from_group_code(group_code)
             && !evidence

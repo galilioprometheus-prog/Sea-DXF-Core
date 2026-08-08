@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.3ds can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.3dt can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1349,6 +1349,21 @@ missing/ambiguous layer targets, unexpected bindings, cancellation, and debug
 redaction. XDATA composition with this family projection, insertion/write as a
 complete cross-container clone, application-specific XDATA interpretation,
 actual text transcoding, and POINT `Complete` remain open.
+
+M14.3dt selects one exact encoded-XDATA entity entry, derives its owning source
+POINT, performs the M14.3ds family projection in XDATA-composition mode, and
+immediately appends the M14.3dn payload through the existing M14.3do validator.
+The result retains source key/dialect/placement/owner, dual-source identities,
+the exact encoded entry, and the composed draft. Standalone family projection
+continues to reject XDATA groups, preventing a public payload-dropping path.
+Four format pairings cover all nine Core dialects plus the AC1009-to-AC1032
+boundary, then consume the plan through insertion, strict post-image family-
+plus-XDATA verification, and byte-exact inverse restoration. Cancellation,
+foreign source identity, unavailable/orphan payloads, traits, bounds inherited
+from both pipelines, and redaction remain fail-closed. A direct convenience
+wrapper for insertion/create-new writing, application-specific XDATA meaning,
+actual text transcoding, the reverse boundary where explicit modern fields are
+inapplicable, and POINT `Complete` remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

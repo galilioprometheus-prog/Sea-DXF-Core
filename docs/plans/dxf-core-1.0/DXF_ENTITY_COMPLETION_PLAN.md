@@ -1726,6 +1726,18 @@ XDATA composition with this family projection, complete cross-container
 insertion/write, application-specific meaning, actual text transcoding, and
 POINT `Complete` remain open.
 
+M14.3dt selects one exact encoded-XDATA entity entry, derives its owning source
+POINT, performs M14.3ds family projection in an internal XDATA-composition
+mode, and immediately appends the M14.3dn payload through M14.3do. The result
+retains source semantic provenance, dual-source identities, the exact encoded
+entry, and the complete family-plus-XDATA draft. Standalone family projection
+still rejects XDATA. Four format pairings span all nine dialects plus AC1009-
+to-AC1032, with downstream insertion, strict post-image verification, exact
+inverse restoration, cancellation, foreign identity, unavailable/orphan
+payloads, bounds, traits, and redaction. A direct insertion/create-new wrapper,
+application-specific meaning, actual text transcoding, reverse-boundary field
+adaptation, and POINT `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

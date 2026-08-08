@@ -17,6 +17,7 @@ pub struct DxfPointCloneDestinationBindings<'a> {
     linetype: Option<&'a [u8]>,
     material: Option<DxfHandle>,
     plot_style: Option<DxfHandle>,
+    xdata_composition: bool,
 }
 
 impl<'a> DxfPointCloneDestinationBindings<'a> {
@@ -28,6 +29,7 @@ impl<'a> DxfPointCloneDestinationBindings<'a> {
             linetype: None,
             material: None,
             plot_style: None,
+            xdata_composition: false,
         }
     }
 
@@ -78,6 +80,15 @@ impl<'a> DxfPointCloneDestinationBindings<'a> {
     #[must_use]
     pub const fn plot_style(self) -> Option<DxfHandle> {
         self.plot_style
+    }
+
+    pub(crate) const fn with_xdata_composition(mut self) -> Self {
+        self.xdata_composition = true;
+        self
+    }
+
+    pub(crate) const fn includes_xdata_composition(self) -> bool {
+        self.xdata_composition
     }
 }
 
@@ -205,6 +216,7 @@ impl DxfRawDocumentView<'_> {
             &source_evidence,
             source_key,
             None,
+            bindings.includes_xdata_composition(),
             profile,
             cancellation,
         )? {

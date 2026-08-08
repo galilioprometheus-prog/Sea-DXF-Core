@@ -3179,6 +3179,21 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     specific meaning, actual text transcoding, and POINT `Complete` remain
     open.
 
+    M14.3dt selects one exact encoded-XDATA entity entry, derives its owning
+    source POINT, performs M14.3ds family projection in an internal XDATA-
+    composition mode, and immediately appends the M14.3dn payload through the
+    existing M14.3do validator. The immutable result retains source semantic
+    provenance, dual-source identities, the exact encoded entry, and the
+    complete family-plus-XDATA draft. Standalone family projection still
+    rejects XDATA, so no public payload-dropping route is introduced. Four
+    format pairings span all nine Core dialects plus AC1009-to-AC1032, and the
+    resulting plan passes insertion, strict post-image verification, and exact
+    inverse restoration. Cancellation, foreign identity, unavailable/orphan
+    payloads, bounds, traits, and redaction remain fail-closed. A direct
+    insertion/create-new convenience wrapper, application-specific meaning,
+    actual text transcoding, reverse-boundary field adaptation, and POINT
+    `Complete` remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
