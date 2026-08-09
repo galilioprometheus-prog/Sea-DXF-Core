@@ -3591,6 +3591,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     canonical evidence. The other edge payload families, HATCH applicability,
     CRUD/write, rendering, and completion remain open.
 
+    DXF-STRUCT-R1a centralizes the identical fallible read-projection mechanics
+    used by the M14.4t-M14.4z HATCH Line-edge chain. One crate-private module now
+    owns compact-index conversion, source-identity agreement, cancellation, and
+    path-redacted `Read` mappings for impossible internal data or allocation
+    failure. Seven domain modules retain all group selection, cardinality,
+    numeric, coordinate, OCS, and WCS policy. Public APIs, raw bytes,
+    provenance, typed issues, support claims, dependencies, and test count are
+    unchanged; production removes more code than it adds.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

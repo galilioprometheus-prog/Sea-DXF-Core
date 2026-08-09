@@ -252,6 +252,7 @@ mod raw_handle;
 mod raw_integer;
 mod raw_record;
 mod read_options;
+mod read_support;
 mod semantic_value;
 mod shape_wcs_insertion;
 mod shape_wcs_orientation;

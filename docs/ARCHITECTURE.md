@@ -35,6 +35,21 @@ Raw bytes are the source of truth. Semantic and geometric models are derived,
 source-anchored views. Unsupported and malformed content remains explicit and
 is never silently dropped.
 
+## Internal read-projection construction
+
+`seacad-dxf-core` keeps shared construction mechanics behind the crate-private
+`read_support` module. That module owns only checked compact-index conversion,
+source-identity agreement, cooperative cancellation, and path-redacted
+`Read`-operation mappings for impossible internal data or allocation failure.
+It does not own group selection, cardinality, defaults, domain validation,
+topology, geometry, or support policy; those decisions remain in their exact
+source-anchored semantic modules.
+
+Higher semantic layers retain their immediate lower-layer directory as evidence.
+Shared mechanics may remove duplicated implementation, but must not flatten raw
+provenance, hide typed failures, or let an upper layer reinterpret a lower
+layer's domain contract.
+
 ## Future boundaries
 
 After DXF Core 1.0, the planned open format layer consists of one minimal

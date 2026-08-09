@@ -2143,6 +2143,15 @@ WCS bits are not raw or cross-platform canonical evidence. The other edge
 payload families, HATCH applicability, CRUD/write, rendering, and `Complete`
 support remain open.
 
+DXF-STRUCT-R1a centralizes only the identical fallible read-projection
+mechanics used by the M14.4t-M14.4z HATCH Line-edge chain. A crate-private
+module now owns compact-index conversion, source-identity agreement,
+cancellation, and path-redacted `Read` mappings for impossible internal data or
+allocation failure. The seven domain modules retain all evidence selection,
+cardinality, numeric, coordinate, OCS, and WCS policy. Public APIs, raw bytes,
+provenance, typed issues, support claims, dependencies, and test count remain
+unchanged.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

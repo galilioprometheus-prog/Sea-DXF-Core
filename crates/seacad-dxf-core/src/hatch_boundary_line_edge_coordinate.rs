@@ -1,12 +1,13 @@
 //! Required OCS endpoint semantics for HATCH boundary Line edges.
 
-use std::io;
-
 use crate::{
     DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken, DxfDouble, DxfError,
     DxfHatchBoundaryLineEdgeNumericDirectory, DxfHatchBoundaryLineEdgeNumericEntry,
-    DxfHatchBoundaryLineEdgeNumericIssue, DxfHatchBoundaryLineEdgeNumericValue, DxfIoOperation,
-    DxfRawDocumentView, DxfSemanticValue, DxfSourceId,
+    DxfHatchBoundaryLineEdgeNumericIssue, DxfHatchBoundaryLineEdgeNumericValue, DxfRawDocumentView,
+    DxfSemanticValue, DxfSourceId,
+    read_support::{
+        compact_len, ensure_not_cancelled, ensure_source, invalid_internal_data, out_of_memory,
+    },
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -332,36 +333,4 @@ fn required(
         ),
         DxfSemanticValue::Defaulted { .. } => return Err(invalid_internal_data()),
     })
-}
-
-fn compact_len(len: usize) -> Result<u32, DxfError> {
-    u32::try_from(len).map_err(|_| invalid_internal_data())
-}
-
-fn ensure_source(expected: DxfSourceId, observed: DxfSourceId) -> Result<(), DxfError> {
-    if expected == observed {
-        Ok(())
-    } else {
-        Err(DxfError::SourceIdentityMismatch { expected, observed })
-    }
-}
-
-fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
-    if cancellation.is_cancelled() {
-        Err(DxfError::Cancelled)
-    } else {
-        Ok(())
-    }
-}
-
-fn invalid_internal_data() -> DxfError {
-    io_error(io::ErrorKind::InvalidData)
-}
-
-fn out_of_memory() -> DxfError {
-    io_error(io::ErrorKind::OutOfMemory)
-}
-
-fn io_error(kind: io::ErrorKind) -> DxfError {
-    DxfError::from_io(DxfIoOperation::Read, &io::Error::from(kind))
 }

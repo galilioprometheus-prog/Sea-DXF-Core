@@ -1,12 +1,15 @@
 //! Counted edge-anchor grouping for HATCH boundary paths of kind Edges.
 
-use std::io;
-
 use crate::{
     DxfAsciiNumericIssue, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
     DxfError, DxfFillMeshField, DxfFillMeshRange, DxfHatchBoundaryPathFlagDirectory,
     DxfHatchBoundaryPathFlagEntry, DxfHatchBoundaryPathFlagIssue, DxfHatchBoundaryPathKind,
-    DxfIoOperation, DxfRawDocumentView, DxfRawGroup, DxfSourceId, raw_integer::decode_raw_i32,
+    DxfRawDocumentView, DxfRawGroup, DxfSourceId,
+    raw_integer::decode_raw_i32,
+    read_support::{
+        compact_len, compact_u64, ensure_not_cancelled, ensure_source, invalid_internal_data,
+        out_of_memory,
+    },
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -459,43 +462,7 @@ fn slice_for_range<T>(values: &[T], range: DxfFillMeshRange) -> Option<&[T]> {
     values.get(start..end)
 }
 
-fn compact_len(value: usize) -> Result<u32, DxfError> {
-    u32::try_from(value).map_err(|_| invalid_internal_data())
-}
-
-fn compact_u64(value: u64) -> Result<u32, DxfError> {
-    u32::try_from(value).map_err(|_| invalid_internal_data())
-}
-
 fn compact_add(base: u32, offset: usize) -> Result<u32, DxfError> {
     base.checked_add(compact_len(offset)?)
         .ok_or_else(invalid_internal_data)
-}
-
-fn ensure_source(expected: DxfSourceId, observed: DxfSourceId) -> Result<(), DxfError> {
-    if expected == observed {
-        Ok(())
-    } else {
-        Err(DxfError::SourceIdentityMismatch { expected, observed })
-    }
-}
-
-fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
-    if cancellation.is_cancelled() {
-        Err(DxfError::Cancelled)
-    } else {
-        Ok(())
-    }
-}
-
-fn invalid_internal_data() -> DxfError {
-    io_error(io::ErrorKind::InvalidData)
-}
-
-fn out_of_memory() -> DxfError {
-    io_error(io::ErrorKind::OutOfMemory)
-}
-
-fn io_error(kind: io::ErrorKind) -> DxfError {
-    DxfError::from_io(DxfIoOperation::Read, &io::Error::from(kind))
 }

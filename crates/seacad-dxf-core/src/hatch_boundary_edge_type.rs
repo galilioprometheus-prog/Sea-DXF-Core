@@ -1,11 +1,11 @@
 //! Typed group-72 edge kinds for grouped HATCH boundary edges.
 
-use std::io;
-
 use crate::{
     DxfAsciiNumericIssue, DxfAsciiRawDocument, DxfBinaryRawDocument, DxfCancellationToken,
     DxfError, DxfFillMeshField, DxfHatchBoundaryEdgeDirectory, DxfHatchBoundaryEdgeEntry,
-    DxfIoOperation, DxfRawDocumentView, DxfRawGroup, DxfSourceId, raw_integer::decode_raw_i16,
+    DxfRawDocumentView, DxfRawGroup, DxfSourceId,
+    raw_integer::decode_raw_i16,
+    read_support::{compact_len, ensure_not_cancelled, ensure_source, out_of_memory},
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -171,36 +171,4 @@ fn decode_edge_type(
         Ok(4) => Ok(DxfHatchBoundaryEdgeType::Spline),
         Ok(value) => Err(DxfHatchBoundaryEdgeTypeIssue::ValueOutOfDomain { group, value }),
     })
-}
-
-fn compact_len(value: usize) -> Result<u32, DxfError> {
-    u32::try_from(value).map_err(|_| invalid_internal_data())
-}
-
-fn ensure_source(expected: DxfSourceId, observed: DxfSourceId) -> Result<(), DxfError> {
-    if expected == observed {
-        Ok(())
-    } else {
-        Err(DxfError::SourceIdentityMismatch { expected, observed })
-    }
-}
-
-fn ensure_not_cancelled(cancellation: &DxfCancellationToken) -> Result<(), DxfError> {
-    if cancellation.is_cancelled() {
-        Err(DxfError::Cancelled)
-    } else {
-        Ok(())
-    }
-}
-
-fn invalid_internal_data() -> DxfError {
-    io_error(io::ErrorKind::InvalidData)
-}
-
-fn out_of_memory() -> DxfError {
-    io_error(io::ErrorKind::OutOfMemory)
-}
-
-fn io_error(kind: io::ErrorKind) -> DxfError {
-    DxfError::from_io(DxfIoOperation::Read, &io::Error::from(kind))
 }
