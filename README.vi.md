@@ -153,6 +153,9 @@ thể:
 - cung cấp tám cardinality card chính xác theo role cho mỗi HATCH EllipticArc
   edge đã định kiểu: tâm OCS X/Y, endpoint trục lớn tương đối X/Y, tỷ lệ
   trục nhỏ/trục lớn, góc đầu/cuối và cờ ngược chiều kim đồng hồ;
+- chọn giá trị numeric bám source cho đủ tám role HATCH EllipticArc, giữ bảy
+  giá trị binary64 hữu hạn và cờ hướng Int16 có dấu nguyên bản trước khi áp
+  dụng requiredness và domain policy;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

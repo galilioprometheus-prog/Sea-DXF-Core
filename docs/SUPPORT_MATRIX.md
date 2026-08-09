@@ -1877,6 +1877,19 @@ selection, required values, vector/ratio/angle/direction semantics, OCS/WCS
 geometry, Spline edge payloads, HATCH applicability, CRUD/write, rendering,
 and completion remain open.
 
+M14.4ag selects the eight M14.4af cards into one source-stable numeric entry
+per EllipticArc edge. Unique finite groups 10/20/11/21/40/50/51 become
+Explicit binary64 values; unique group 73 remains an exact signed Int16 before
+Boolean-domain enforcement. Every explicit or uniquely invalid value retains
+exact `entity.hatch` field and raw provenance. Absent cards remain Absent;
+Multiple cards retain their count without selecting a winner; malformed ASCII
+and non-finite Binary values remain typed issues. Edge-count mismatch does not
+erase entries; non-EllipticArc, invalid, and Polyline states publish none. All
+nine dialects have ASCII/Binary parity. Requiredness, major-axis vector and
+ratio domains, angle normalization, direction domain, OCS/WCS geometry, Spline
+edge payloads, HATCH applicability, CRUD/write, rendering, and completion
+remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

@@ -3693,6 +3693,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     OCS/WCS geometry, Spline edge payloads, applicability, CRUD/write,
     rendering, and completion remain open.
 
+    M14.4ag selects the eight M14.4af cards into one source-stable numeric
+    entry per EllipticArc edge. Unique finite groups 10/20/11/21/40/50/51
+    become Explicit binary64 values; unique group 73 remains an exact signed
+    Int16 without Boolean-domain enforcement. Explicit and uniquely invalid
+    values retain exact `entity.hatch` field/raw provenance. Absent and Multiple
+    remain distinct; malformed ASCII and non-finite Binary doubles remain
+    typed. Count mismatch retains entries; non-EllipticArc, invalid, and
+    Polyline states publish none. All nine dialects retain ASCII/Binary parity.
+    Requiredness, major-axis vector and ratio domains, angle normalization,
+    direction domain, OCS/WCS geometry, Spline edge payloads, applicability,
+    CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

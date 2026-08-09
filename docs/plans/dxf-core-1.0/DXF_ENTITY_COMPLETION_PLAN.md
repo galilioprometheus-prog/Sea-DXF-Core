@@ -2240,6 +2240,18 @@ requiredness, vector/ratio/angle/direction semantics, OCS/WCS geometry, Spline
 edge payloads, HATCH applicability, CRUD/write, rendering, and `Complete`
 support remain open.
 
+M14.4ag selects the eight M14.4af cards into one source-stable numeric entry
+per EllipticArc edge. Unique finite groups 10/20/11/21/40/50/51 become
+Explicit binary64 values; unique group 73 remains an exact signed Int16 without
+Boolean-domain enforcement. Every explicit or uniquely invalid value retains
+exact `entity.hatch` field and raw provenance. Absent and Multiple remain
+distinct; malformed ASCII and non-finite Binary doubles remain typed. Count
+mismatch retains entries; non-EllipticArc, invalid, and Polyline states publish
+none. All nine dialects retain ASCII/Binary parity. Requiredness, major-axis
+vector and ratio domains, angle normalization, direction domain, OCS/WCS
+geometry, Spline edge payloads, HATCH applicability, CRUD/write, rendering,
+and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

@@ -149,6 +149,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - expose eight exact per-role cardinality cards for every typed HATCH
   EllipticArc edge: OCS center X/Y, relative major-axis endpoint X/Y,
   minor-to-major ratio, start/end angle, and counterclockwise flag;
+- select source-anchored numeric values for all eight HATCH EllipticArc roles,
+  preserving seven finite binary64 values and the raw signed Int16 direction
+  flag before requiredness and domain policy;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
