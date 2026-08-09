@@ -3436,6 +3436,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     no vertices; all nine dialects retain ASCII/Binary parity. Numeric semantics,
     bulge defaults, geometry, CRUD/write, and completion remain open.
 
+    M14.4l selects exact finite binary64 X/Y/bulge semantics for every M14.4k
+    vertex. Unique values retain raw provenance; absent Y/bulge stays absent,
+    duplicates remain invalid without selection, and malformed ASCII or
+    non-finite Binary payloads remain typed. Edges and invalid headers publish
+    no numeric entries; all nine dialects retain ASCII/Binary parity. Required-Y
+    and has-bulge relations, bulge defaults, OCS/WCS geometry, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

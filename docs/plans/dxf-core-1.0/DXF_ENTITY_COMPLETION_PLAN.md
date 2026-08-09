@@ -1989,6 +1989,15 @@ and invalid headers publish no vertices; all nine dialects retain ASCII/Binary
 parity. Numeric semantics, bulge defaults, geometry, CRUD/write, and `Complete`
 remain open.
 
+M14.4l maps every M14.4k X/Y/bulge component into a source-anchored four-state
+numeric semantic. Unique members decode to exact finite binary64 values;
+malformed ASCII and non-finite Binary values remain invalid with exact raw
+provenance. Absent Y/bulge stays absent, while duplicates are invalid without
+member selection. Edges and invalid headers publish no numeric entries, and all
+nine dialects retain ASCII/Binary parity. Required-Y and has-bulge relations,
+bulge defaults, OCS/WCS geometry, applicability, CRUD/write, and `Complete`
+support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
