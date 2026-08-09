@@ -136,6 +136,7 @@ mod hatch_extrusion;
 mod hatch_polyline_bulge;
 mod hatch_polyline_header;
 mod hatch_polyline_vertex;
+mod hatch_polyline_vertex_coordinate;
 mod hatch_polyline_vertex_numeric;
 mod hatch_scalar_card;
 mod hatch_scalar_evidence;
@@ -802,6 +803,12 @@ pub use hatch_polyline_vertex::{
     DxfHatchPolylineVertexDirectory, DxfHatchPolylineVertexEntry, DxfHatchPolylineVertexGrouping,
     DxfHatchPolylineVertexGroupingState, DxfHatchPolylineVertexMember,
     DxfHatchPolylineVertexPathEntry, DxfHatchPolylineVertexRole,
+};
+pub use hatch_polyline_vertex_coordinate::{
+    DxfHatchPolylineVertexCoordinateDirectory, DxfHatchPolylineVertexCoordinateEntry,
+    DxfHatchPolylineVertexCoordinateIssue, DxfHatchPolylineVertexCoordinateValue,
+    DxfHatchPolylineVertexCoordinates, DxfHatchPolylineVertexOcsPosition,
+    DxfHatchPolylineVertexPositionIssue, DxfHatchPolylineVertexUnavailableCoordinates,
 };
 pub use hatch_polyline_vertex_numeric::{
     DxfHatchPolylineVertexNumericComponents, DxfHatchPolylineVertexNumericDirectory,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4m can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4n can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1655,6 +1655,16 @@ through with their source evidence; when false, any present group 42 becomes a
 typed relation failure while the complete numeric directory remains retained.
 Edges and invalid headers publish no bulge entries, and all nine dialects have
 ASCII/Binary parity. Required-Y semantics, closed-path topology, OCS/WCS
+geometry, applicability, CRUD/write, and completion remain open.
+
+M14.4n promotes Polyline vertex X/Y to required source-anchored coordinate
+semantics and assembles an exact two-component OCS tuple only when both values
+are usable. Missing Y is invalid without raw provenance; duplicate, malformed
+ASCII, and non-finite Binary states retain the M14.4l issue and available raw
+provenance. Tuple failure exposes an exact X/Y unavailable mask, while signed
+zero remains bit-exact. The complete M14.4m bulge/header chain remains retained.
+Edges and invalid headers publish no coordinate entries, and all nine dialects
+have ASCII/Binary parity. OCS/WCS transformation, closed-path topology, segment
 geometry, applicability, CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch

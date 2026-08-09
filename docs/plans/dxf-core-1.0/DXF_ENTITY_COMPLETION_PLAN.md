@@ -2007,6 +2007,16 @@ still retained. Edges and invalid headers publish no bulge entries; all nine
 dialects retain ASCII/Binary parity. Required-Y semantics, closed-path topology,
 OCS/WCS geometry, applicability, CRUD/write, and `Complete` support remain open.
 
+M14.4n converts both Polyline vertex coordinates into required source-anchored
+semantics. Usable X/Y assemble one exact two-component OCS position with
+signed-zero fidelity. Missing Y becomes a typed required-value failure without
+raw provenance; duplicate, malformed ASCII, and non-finite Binary states retain
+their M14.4l issue and available provenance. An unusable tuple returns an exact
+X/Y component mask. The full M14.4m bulge/header directory remains retained;
+Edges and invalid headers publish no coordinate entries, and all nine dialects
+retain ASCII/Binary parity. OCS/WCS transformation, closed-path topology,
+segment geometry, applicability, CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

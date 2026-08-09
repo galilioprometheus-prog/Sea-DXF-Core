@@ -3453,6 +3453,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Required-Y semantics, closed topology, OCS/WCS geometry, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4n makes Polyline vertex X/Y required source-anchored semantics and
+    assembles an exact two-component OCS position only when both are usable.
+    Missing Y becomes a typed required-value failure; duplicate, malformed
+    ASCII, and non-finite Binary inputs retain their numeric issue and available
+    provenance. Tuple failure exposes an exact X/Y mask and signed zero remains
+    bit-exact. The M14.4m bulge/header chain remains retained; Edges and invalid
+    headers publish no coordinate entries, and all nine dialects retain parity.
+    OCS/WCS transformation, closed topology, segment geometry, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
