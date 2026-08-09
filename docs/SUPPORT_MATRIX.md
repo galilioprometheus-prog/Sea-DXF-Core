@@ -1931,6 +1931,18 @@ ASCII/Binary parity. Minor-axis, endpoint, angle wrapping, signed sweep, and
 trigonometric derivation, Spline edge payloads, applicability, CRUD/write,
 rendering, and completion remain open.
 
+M14.4ak publishes five fixed header-card roles for every edge typed as Spline:
+degree group 94, rational group 73, periodic group 74, knot-count group 95,
+and control-point-count group 96. Each role independently retains exact source-
+order members and reports Absent, Unique, or Multiple without selecting or
+decoding a value. Count mismatch retains cards; Line, CircularArc,
+EllipticArc, invalid, empty, and Polyline states publish none. All nine
+dialects retain ASCII/Binary parity. Repeated knots, control points, weights,
+fit data, and tangents are not grouped; group 97 is not yet classified as a
+Spline fit-data count because the last edge also retains the path-level source-
+boundary-object tail. Numeric values, Boolean/count domains, sequence topology,
+geometry, applicability, CRUD/write, rendering, and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

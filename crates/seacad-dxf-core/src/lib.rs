@@ -149,6 +149,7 @@ mod hatch_boundary_line_edge_wcs_geometry;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
+mod hatch_boundary_spline_edge_header_card;
 mod hatch_elevation;
 mod hatch_extrusion;
 mod hatch_polyline_bulge;
@@ -903,6 +904,12 @@ pub use hatch_boundary_path_flags::{
     DxfHatchBoundaryPathFlagDirectory, DxfHatchBoundaryPathFlagEntry,
     DxfHatchBoundaryPathFlagIssue, DxfHatchBoundaryPathFlagState, DxfHatchBoundaryPathFlagValue,
     DxfHatchBoundaryPathFlags, DxfHatchBoundaryPathKind,
+};
+pub use hatch_boundary_spline_edge_header_card::{
+    DXF_HATCH_BOUNDARY_SPLINE_EDGE_HEADER_ROLES, DxfHatchBoundarySplineEdgeHeaderCard,
+    DxfHatchBoundarySplineEdgeHeaderCardDirectory, DxfHatchBoundarySplineEdgeHeaderCardState,
+    DxfHatchBoundarySplineEdgeHeaderMember, DxfHatchBoundarySplineEdgeHeaderMemberRange,
+    DxfHatchBoundarySplineEdgeHeaderRole,
 };
 pub use hatch_elevation::{
     DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,

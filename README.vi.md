@@ -165,6 +165,9 @@ thể:
 - chiếu HATCH EllipticArc OCS segment khả dụng thành tâm WCS, vector trục lớn
   tương đối và pháp tuyến hữu hạn, đồng thời giữ nguyên tỷ lệ, góc DXF và hướng
   mà không suy ra trục nhỏ, endpoint hay sweep;
+- cung cấp năm cardinality card chính xác cho header của mỗi HATCH Spline edge
+  đã định kiểu: degree, rational, periodic, knot count và control-point count,
+  không gán nhầm các dãy payload lặp hay phần đuôi group-97 cấp path;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

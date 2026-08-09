@@ -161,6 +161,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - project usable HATCH EllipticArc OCS segments into a finite WCS center,
   relative major-axis vector, and normal while preserving the exact ratio,
   DXF angles, and direction without deriving a minor axis, endpoints, or sweep;
+- expose five exact cardinality cards for every typed HATCH Spline edge header:
+  degree, rational, periodic, knot count, and control-point count, without
+  misclassifying repeated payload sequences or the path-level group-97 tail;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

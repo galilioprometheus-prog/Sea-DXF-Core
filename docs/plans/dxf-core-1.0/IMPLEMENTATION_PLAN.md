@@ -3746,6 +3746,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and trigonometric derivation, Spline edge payloads, applicability,
     CRUD/write, rendering, and completion remain open.
 
+    M14.4ak publishes five fixed header-card roles for every edge typed as
+    Spline: degree group 94, rational group 73, periodic group 74, knot-count
+    group 95, and control-point-count group 96. Each role independently retains
+    every exact source-order member and reports Absent, Unique, or Multiple
+    without selecting or decoding a value. Count mismatch retains cards; Line,
+    CircularArc, EllipticArc, invalid, empty, and Polyline states publish none.
+    All nine dialects retain parity. Repeated knots, control points, weights,
+    fit data, and tangents are not grouped; group 97 is not classified as a
+    Spline fit-data count until the edge payload is separated from the path-
+    level source-boundary-object tail. Numeric values, Boolean/count domains,
+    sequence topology, geometry, applicability, CRUD/write, rendering, and
+    completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
