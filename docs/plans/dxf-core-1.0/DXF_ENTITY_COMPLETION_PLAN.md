@@ -1966,6 +1966,15 @@ ASCII/Binary parity. Group-92 flag semantics, polyline/edge branching, path
 payload cardinality, source handles, geometry, applicability, CRUD/write, and
 `Complete` support remain open.
 
+M14.4i decodes each M14.4h group-92 marker into the documented External,
+Polyline, Derived, Textbox, and Outermost bits. Values using only mask `0x1F`
+retain exact raw provenance and classify as Polyline when bit 2 is set or Edges
+otherwise; zero is valid. Malformed ASCII, negative values, and unsupported
+bits remain typed without classification. Duplicate subclasses and all nine
+ASCII/Binary dialect pairs remain isolated. Payload grammar/cardinality,
+vertices, edges, handles, geometry, applicability, CRUD/write, and `Complete`
+support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

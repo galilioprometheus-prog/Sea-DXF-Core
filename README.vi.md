@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4h**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4i**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -91,6 +91,8 @@ thể:
 - nhóm chính xác boundary path HATCH theo anchor group 92, giữ field orphan
   trước anchor cùng payload opaque theo từng path, rồi đối chiếu số path quan
   sát được với khai báo group 91 đã decode;
+- decode các bit boundary-path group 92 đã được tài liệu hóa và phân loại path
+  hợp lệ thành Polyline hoặc Edges, đồng thời từ chối số âm và bit ngoài chuẩn;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

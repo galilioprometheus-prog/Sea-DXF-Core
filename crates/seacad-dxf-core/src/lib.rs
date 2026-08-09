@@ -130,6 +130,7 @@ mod handle_role;
 mod handseed;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
+mod hatch_boundary_path_flags;
 mod hatch_elevation;
 mod hatch_extrusion;
 mod hatch_scalar_card;
@@ -766,6 +767,11 @@ pub use hatch_boundary_path::{
     DxfHatchBoundaryPathDirectory, DxfHatchBoundaryPathEntry, DxfHatchBoundaryPathRange,
     DxfHatchBoundaryPathTopology, DxfHatchBoundaryPathTopologyEntry,
     DxfHatchBoundaryPathTopologyIssue,
+};
+pub use hatch_boundary_path_flags::{
+    DxfHatchBoundaryPathFlagDirectory, DxfHatchBoundaryPathFlagEntry,
+    DxfHatchBoundaryPathFlagIssue, DxfHatchBoundaryPathFlagState, DxfHatchBoundaryPathFlagValue,
+    DxfHatchBoundaryPathFlags, DxfHatchBoundaryPathKind,
 };
 pub use hatch_elevation::{
     DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,

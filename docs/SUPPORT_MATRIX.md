@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4h can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4i can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1610,6 +1610,16 @@ ASCII/Binary path/payload parity. This checkpoint does not interpret group-92
 flags, choose polyline versus edge grammar, decode edge/path values or source
 handles, validate path payload completeness, derive geometry, establish
 applicability, add CRUD/write behavior, or claim completion.
+
+M14.4i decodes each M14.4h group-92 marker as signed Int32 and accepts only the
+documented bit mask: External 1, Polyline 2, Derived 4, Textbox 8, and Outermost
+16. Every valid combination retains the raw marker and exposes stable helpers;
+bit 2 classifies the payload as Polyline, otherwise as Edges. Zero is a valid
+Edges path. Malformed ASCII, negative values, and any bit outside `0x1F` remain
+typed issues and publish no classification. Duplicate subclasses stay isolated
+and all nine Core dialects have ASCII/Binary parity. Payload grammar,
+cardinality, vertices/edges, handles, geometry, applicability, CRUD/write, and
+completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
