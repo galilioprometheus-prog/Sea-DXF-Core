@@ -133,6 +133,7 @@ mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
 mod hatch_elevation;
 mod hatch_extrusion;
+mod hatch_polyline_header;
 mod hatch_scalar_card;
 mod hatch_scalar_evidence;
 mod hatch_scalar_semantic;
@@ -783,6 +784,11 @@ pub use hatch_extrusion::{
     DxfHatchExtrusion, DxfHatchExtrusionComponent, DxfHatchExtrusionDirectory,
     DxfHatchExtrusionEntry, DxfHatchExtrusionInputKind, DxfHatchExtrusionIssue,
     DxfHatchExtrusionUnavailableComponents,
+};
+pub use hatch_polyline_header::{
+    DxfHatchPolylineBoolean, DxfHatchPolylineHeader, DxfHatchPolylineHeaderDirectory,
+    DxfHatchPolylineHeaderEntry, DxfHatchPolylineHeaderIssue, DxfHatchPolylineHeaderState,
+    DxfHatchPolylineVertexCount,
 };
 pub use hatch_scalar_card::{
     DxfHatchScalarCard, DxfHatchScalarCardDirectory, DxfHatchScalarCardMember,

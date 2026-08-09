@@ -2,22 +2,22 @@
 
 Status: READY
 
-Checkpoint: `M14.3dr-M14.4i-hatch-path-flags`
+Checkpoint: `M14.3dr-M14.4j-hatch-polyline-header`
 Repository root: `D:\SeaCad\SeaCad`
 Baseline: `028d726b7f04709927e0d6c8c8d419dc1eb49fcb`
-Review target: annotated tag `m14.4i-hatch-path-flags`
-Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4i-hatch-path-flags-2026-08-09.yaml`
+Review target: annotated tag `m14.4j-hatch-polyline-header`
+Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4j-hatch-polyline-header-2026-08-09.yaml`
 Prepared: `2026-08-09` (`Asia/Saigon`)
 
 The preceding M14.3dl-M14.3dq cumulative batch was independently reviewed PASS
 at exact baseline HEAD. Its external report SHA-256 is
 `b27b982faee5ad86a47ca87346b4ac383a210097596ab80c9ed9c41ceec8e665`.
 Do not repeat that retired batch. This READY batch intentionally accumulates
-M14.3dr through M14.4i so implementation does not pause between checkpoints.
+M14.3dr through M14.4j so implementation does not pause between checkpoints.
 
 ## Authority, procedure, and writes
 
-Mechanically verify M14.3dr-M14.4i only. Codex/user retain architecture,
+Mechanically verify M14.3dr-M14.4j only. Codex/user retain architecture,
 support, license, commit/tag/merge/release decisions. Use the exact root, read
 `AGENTS.md` and this note completely, confirm exactly one READY, and run phases
 in order. The repository is read-only; ignored target/cache activity is
@@ -32,7 +32,8 @@ status, HEAD, all target annotated-tag objects/messages/peeled commits, the
 baseline tag target, and the baseline-to-target changed path set. Require:
 
 ```text
-HEAD == m14.4i-hatch-path-flags^{}
+HEAD == m14.4j-hatch-polyline-header^{}
+m14.4j-hatch-polyline-header^1 == m14.4i-hatch-path-flags^{}
 m14.4i-hatch-path-flags^1 == m14.4h-hatch-boundary-paths^{}
 m14.4h-hatch-boundary-paths^1 == m14.4g-hatch-elevation^{}
 m14.4g-hatch-elevation^1 == m14.4f-hatch-boundary-partition^{}
@@ -77,6 +78,7 @@ crates/seacad-dxf-core/src/hatch_boundary_partition.rs
 crates/seacad-dxf-core/src/hatch_elevation.rs
 crates/seacad-dxf-core/src/hatch_boundary_path.rs
 crates/seacad-dxf-core/src/hatch_boundary_path_flags.rs
+crates/seacad-dxf-core/src/hatch_polyline_header.rs
 crates/seacad-dxf-core/src/lib.rs
 crates/seacad-dxf-core/src/point_clone_draft_projection.rs
 crates/seacad-dxf-core/src/point_clone_xdata_draft.rs
@@ -100,6 +102,7 @@ crates/seacad-dxf-core/tests/hatch_boundary_partition_tests.rs
 crates/seacad-dxf-core/tests/hatch_elevation_tests.rs
 crates/seacad-dxf-core/tests/hatch_boundary_path_tests.rs
 crates/seacad-dxf-core/tests/hatch_boundary_path_flag_tests.rs
+crates/seacad-dxf-core/tests/hatch_polyline_header_tests.rs
 crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs
 crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs
 crates/seacad-dxf-core/tests/text_transcode_tests.rs
@@ -127,6 +130,7 @@ docs/audits/M14_4F_HATCH_BOUNDARY_PARTITION.md
 docs/audits/M14_4G_HATCH_ELEVATION.md
 docs/audits/M14_4H_HATCH_BOUNDARY_PATHS.md
 docs/audits/M14_4I_HATCH_PATH_FLAGS.md
+docs/audits/M14_4J_HATCH_POLYLINE_HEADER.md
 docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md
 docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
 ```
@@ -137,8 +141,8 @@ Compare paths as sets.
 
 | Path | Lines | SHA-256 |
 |---|---:|---|
-| `README.md` | 212 | `81b3d2a498123243eb75755145469ba8e31941c43b297ad4e2815480a64adcbb` |
-| `README.vi.md` | 210 | `999fe5921e853d851ebda2e8c06386c9edc54f1d9e7c53fc76d61104bd6982ab` |
+| `README.md` | 214 | `54a9104ed62e9a1c9c4b839ef3fe902dfe8a2279de69aae864baba1a04a650b1` |
+| `README.vi.md` | 212 | `fb86ca01503bf907eb110f612561bb3ab8b9ece79b0e855c45428cd28be1dd48` |
 | `crates/seacad-dxf-core/src/encoding.rs` | 788 | `246e8f228588680d408dd7ae71f37e16094ab687c3c0fe55d8a48e4aef75a9a7` |
 | `crates/seacad-dxf-core/src/entity_completion.rs` | 129 | `0be29a16b5cc3c1d08075678461acc017531f5ac0eb2a3c0f1436470f81f5aa6` |
 | `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2,972 | `ecbc34c75c2c6c03467ea66448f55ddddaaa5550cf087b528239bd214e890207` |
@@ -153,7 +157,8 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/src/hatch_elevation.rs` | 443 | `2543b5459525495f3af6a16b47fe0fcf78d64abdb09084d14de4edf46caaaf7d` |
 | `crates/seacad-dxf-core/src/hatch_boundary_path.rs` | 476 | `7d5557d42e3b208badd81ef9678c3c959c7fdc3595388b1696c2e72e47034d87` |
 | `crates/seacad-dxf-core/src/hatch_boundary_path_flags.rs` | 309 | `16d27be5eeae57b70814975594526b2b187e084bac6d0d4cadb12a8992647284` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1,320 | `483a616c541bdefd2ba76995f104d0a8ad052ae9c994669024aae286c0d57456` |
+| `crates/seacad-dxf-core/src/hatch_polyline_header.rs` | 348 | `db67ae6332c2d5f19d7e1dd36e3205c322ee96411926b65b7baf060e002102fa` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,326 | `fd0e5c80cfbc1d15c70f60bc7fc66dc47ef482c7f1c5cb29e7cb55443509ea57` |
 | `crates/seacad-dxf-core/src/point_clone_draft_projection.rs` | 511 | `9809d74f63e8b5510689e650b95dc45baaea5073ba4d93247271fc41be74a822` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_draft.rs` | 250 | `0a34de42328039c76f8ac45226da6e6a7ae027831bec4b3088ba3d8c3295e77e` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_insert.rs` | 317 | `59c087ff6cc447604379588eba154d013e67712d9dcc881a0b6708dadf2bae6d` |
@@ -176,11 +181,12 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/tests/hatch_elevation_tests.rs` | 404 | `cc9216d83d712a4028828f8492ad804b24c7d9e156b962dfac95b5f78430c052` |
 | `crates/seacad-dxf-core/tests/hatch_boundary_path_tests.rs` | 411 | `71adb9b4690fc2cd2f0ac81e74158bcfb987410d69dced21e11567b94d148118` |
 | `crates/seacad-dxf-core/tests/hatch_boundary_path_flag_tests.rs` | 256 | `408c222b00e3e270007a1286a42a6ab54d8901ac49708eba3050a7253d6566d3` |
+| `crates/seacad-dxf-core/tests/hatch_polyline_header_tests.rs` | 160 | `be0dd29445c827e7a5aa30ab2260e69e536e24c1f81d6897c18df89c749ea01a` |
 | `crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs` | 367 | `4b6306081db5d1ca6cba239f0fecc09dbcf3506e87e3d04920a9c0a09a9c3dbb` |
 | `crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs` | 348 | `bc72c88c95a4fc983ff0e64a409d539f8d8d6b460d8e9c5d37e6cb0972e2fdc3` |
 | `crates/seacad-dxf-core/tests/text_transcode_tests.rs` | 476 | `9bda1ee19362b058ab9a174705cc0d5893f73d13bdb8e008b6e4a7d2d2340a40` |
-| `docs/IMPLEMENTATION_PLAN.md` | 423 | `538808b22e58554062d3439307b0ad9ef79948484a5133e7f9b26cdb6c00daa8` |
-| `docs/SUPPORT_MATRIX.md` | 3,103 | `4bb5d9ca44922144601c2b0cbf49e0512c7668b70478d592fa9ec49733e13129` |
+| `docs/IMPLEMENTATION_PLAN.md` | 423 | `766034e42d4b704c75c9447850e0116e735a1fbea4b846b44c54cd944f4a8617` |
+| `docs/SUPPORT_MATRIX.md` | 3,112 | `6902a14d9b8d0d533b0a9786396c50f966c982f8f76c052e08551db4c30a9eb4` |
 | `docs/audits/M14_3DR_ENTITY_XDATA_DRAFT_WRITE.md` | 55 | `0475c6d1c6f73507f1c63e9da586c7078e39c25c91f0fd1b2a13848af264d540` |
 | `docs/audits/M14_3DS_POINT_CLONE_DRAFT_PROJECTION.md` | 50 | `0ab9ac7a5274f38ad9cb8309a53c3b9f04f1d79512c7159f8434c7b6d4f911cc` |
 | `docs/audits/M14_3DT_POINT_CLONE_XDATA_DRAFT.md` | 46 | `c9ff7377bfe2c674a0eddcb029e32f34a4c6e4b488adf76bef638e0788e04905` |
@@ -202,8 +208,9 @@ Compare paths as sets.
 | `docs/audits/M14_4G_HATCH_ELEVATION.md` | 64 | `a188c6962a2a79500117015556b0cad12b446f2640f421b368d95d5b1a0ba35f` |
 | `docs/audits/M14_4H_HATCH_BOUNDARY_PATHS.md` | 64 | `8f57df94fc17c5327a047a6e031c29c290c4be9cf01e2a219cf39d85a0900284` |
 | `docs/audits/M14_4I_HATCH_PATH_FLAGS.md` | 52 | `e32ca0680547a9488c4387540bb94f89b76c3e98dca59872f1043aae72283037` |
-| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 2,020 | `81ee37fee62278655620461177992007fba8d2a4c744439642a340d53892b467` |
-| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,440 | `17aa250e7f5fee8bf2d5c8008fa0e8d0d4aa1534ed4fcf65b2a4dc87a02b4d94` |
+| `docs/audits/M14_4J_HATCH_POLYLINE_HEADER.md` | 30 | `4fc65258d9e22afbdf998e01c6ba7db9499156264c93ff16af7dc74af97b5702` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 2,027 | `99befd042caad5cffe380d3e0399b5e04e439e2c121c2a8b5993de6ddfee8599` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,447 | `fdc8d1c7742e9ba0ccb0c9bd7bbc18f58e275259530f47c52ec8b9d684541b0a` |
 
 Compute every line count and lowercase SHA-256 and require exact matches. The
 active batch note intentionally omits its self-referential receipt.
@@ -223,6 +230,7 @@ cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_partition_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_elevation_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_path_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_path_flag_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_header_tests
 cargo +1.97.1 test -p seacad-dxf-core --test spline_point_evaluation_tests
 cargo +1.97.1 test -p seacad-dxf-core --test spline_first_derivative_tests
 cargo +1.97.1 test -p seacad-dxf-core --test entity_xdata_draft_record_tests
@@ -391,7 +399,7 @@ Validate every local Markdown link in all changed overview/plan/audit files.
 Require empty protected diff and clean whitespace:
 
 ```powershell
-git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4i-hatch-path-flags -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
+git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4j-hatch-polyline-header -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
 git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4i-hatch-path-flags
 ```
 
@@ -407,14 +415,14 @@ cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence --
 cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 $listed = @(cargo +1.97.1 test --workspace -- --list 2>$null | Select-String ': test$')
-if ($listed.Count -ne 1125) { throw 'Workspace test count drift.' }
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4i-hatch-path-flags
+if ($listed.Count -ne 1129) { throw 'Workspace test count drift.' }
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4j-hatch-polyline-header
 ```
 
 Repeat preflight, receipts, protected diff, and whitespace. HEAD/tag/path sets/
 hashes must match and worktree remain clean. PASS requires exact state,
 receipts, 8/8, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 4/4, 11/11, 13/13, 18/18, 4/4, 3/3, 5/5, 10/10, all
-contract/safety/link/protected checks, all gates, exactly 1,125 tests, no mutation, and the
+contract/safety/link/protected checks, all gates, exactly 1,129 tests, no mutation, and the
 external report.
 
 Write UTF-8 YAML-shaped evidence with batch id

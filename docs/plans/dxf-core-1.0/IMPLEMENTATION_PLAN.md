@@ -3423,6 +3423,13 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     isolated. Payload grammar/cardinality, vertices/edges, handles, geometry,
     applicability, CRUD/write, and completion remain open.
 
+    M14.4j selects unique group 72/73/93 headers only for M14.4i Polyline
+    paths. The two flags accept 0/1 and declared vertex count is nonnegative;
+    Edges remain NotPolyline. Flag failure, absence, duplicates, malformed
+    ASCII, and domain errors remain typed. All nine dialects retain ASCII/Binary
+    parity. Vertex grouping/count relation, geometry, applicability, CRUD/write,
+    and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

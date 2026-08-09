@@ -1975,6 +1975,13 @@ ASCII/Binary dialect pairs remain isolated. Payload grammar/cardinality,
 vertices, edges, handles, geometry, applicability, CRUD/write, and `Complete`
 support remain open.
 
+M14.4j selects unique group 72/73/93 headers only for M14.4i Polyline paths.
+Bulge-presence and closed flags accept 0/1; declared vertex count must be
+nonnegative. Edges are NotPolyline, while flag failure, absence, duplicates,
+malformed ASCII, and domain failures remain typed. All nine dialects retain
+ASCII/Binary parity. Vertex grouping/count relation, geometry, applicability,
+CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

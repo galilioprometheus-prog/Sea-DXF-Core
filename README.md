@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4i**. The current core can:
+Development is complete through checkpoint **M14.4j**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -91,6 +91,8 @@ Development is complete through checkpoint **M14.4i**. The current core can:
   decoded group-91 declaration;
 - decode documented group-92 boundary-path bits and classify valid paths as
   Polyline or Edges while rejecting negative values and unsupported bits;
+- select required group-72/73/93 headers for Polyline boundary paths with
+  exact provenance and reviewed boolean/count domains;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
