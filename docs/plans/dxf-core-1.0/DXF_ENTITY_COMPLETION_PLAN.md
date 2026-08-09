@@ -2087,6 +2087,16 @@ slice, while Polyline or unavailable paths expose no typed entries. All nine
 dialects retain ASCII/Binary parity. Edge payload-field selection and geometry,
 HATCH applicability, CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4v publishes four stable cardinality cards for every M14.4u Line edge:
+StartX group 10, StartY group 20, EndX group 11, and EndY group 21. Each card
+retains every exact source field and independently reports Absent, Unique, or
+Multiple; count mismatch does not erase cards. Non-Line and invalid typed edges
+publish no Line cards while the complete M14.4u directory remains available.
+All nine dialects retain ASCII/Binary parity. Numeric selection,
+required-coordinate semantics, OCS/WCS line geometry, the other edge payload
+families, HATCH applicability, CRUD/write, rendering, and `Complete` support
+remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

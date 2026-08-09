@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4u can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4v can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1742,6 +1742,16 @@ or otherwise unavailable paths publish no typed entries. All nine dialects
 have ASCII/Binary parity. Line/circular/elliptic/spline payload-field selection
 and geometry, HATCH applicability, CRUD/write, rendering, and completion remain
 open.
+
+M14.4v publishes four stable cardinality cards for every M14.4u edge typed as
+Line: StartX group 10, StartY group 20, EndX group 11, and EndY group 21. Each
+card retains every exact source field and independently reports Absent, Unique,
+or Multiple; count mismatches do not erase cards. Valid non-Line edges and
+invalid edge-type markers publish no Line cards but remain available through
+the complete typed edge directory. All nine dialects have ASCII/Binary parity.
+Numeric selection, required-coordinate semantics, OCS/WCS line geometry, the
+other three edge payload families, HATCH applicability, CRUD/write, rendering,
+and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

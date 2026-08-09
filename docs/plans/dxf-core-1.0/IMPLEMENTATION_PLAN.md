@@ -3534,6 +3534,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     geometry, HATCH applicability, CRUD/write, rendering, and completion remain
     open.
 
+    M14.4v publishes four stable cardinality cards for every M14.4u Line edge:
+    StartX group 10, StartY group 20, EndX group 11, and EndY group 21. Cards
+    retain every exact source field and report Absent, Unique, or Multiple
+    independently; count mismatch does not erase them. Non-Line and invalid
+    typed edges publish no Line cards while the full M14.4u directory remains
+    available. All nine dialects retain ASCII/Binary parity. Numeric selection,
+    required-coordinate semantics, OCS/WCS geometry, the other edge payload
+    families, HATCH applicability, CRUD/write, rendering, and completion remain
+    open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

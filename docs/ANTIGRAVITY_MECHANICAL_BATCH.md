@@ -2,22 +2,22 @@
 
 Status: READY
 
-Checkpoint: `M14.3dr-M14.4p-hatch-polyline-segment-shapes`
+Checkpoint: `M14.3dr-M14.4v-hatch-boundary-line-edge-cards`
 Repository root: `D:\SeaCad\SeaCad`
 Baseline: `028d726b7f04709927e0d6c8c8d419dc1eb49fcb`
-Review target: annotated tag `m14.4p-hatch-polyline-segment-shapes`
-Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4p-hatch-polyline-segment-shapes-2026-08-09.yaml`
+Review target: annotated tag `m14.4v-hatch-boundary-line-edge-cards`
+Report: `D:\SeaCad\AntigravityReports\seacad-m14.3dr-m14.4v-hatch-boundary-line-edge-cards-2026-08-09.yaml`
 Prepared: `2026-08-09` (`Asia/Saigon`)
 
 The preceding M14.3dl-M14.3dq cumulative batch was independently reviewed PASS
 at exact baseline HEAD. Its external report SHA-256 is
 `b27b982faee5ad86a47ca87346b4ac383a210097596ab80c9ed9c41ceec8e665`.
 Do not repeat that retired batch. This READY batch intentionally accumulates
-M14.3dr through M14.4p so implementation does not pause between checkpoints.
+M14.3dr through M14.4v so implementation does not pause between checkpoints.
 
 ## Authority, procedure, and writes
 
-Mechanically verify M14.3dr-M14.4p only. Codex/user retain architecture,
+Mechanically verify M14.3dr-M14.4v only. Codex/user retain architecture,
 support, license, commit/tag/merge/release decisions. Use the exact root, read
 `AGENTS.md` and this note completely, confirm exactly one READY, and run phases
 in order. The repository is read-only; ignored target/cache activity is
@@ -32,7 +32,13 @@ status, HEAD, all target annotated-tag objects/messages/peeled commits, the
 baseline tag target, and the baseline-to-target changed path set. Require:
 
 ```text
-HEAD == m14.4p-hatch-polyline-segment-shapes^{}
+HEAD == m14.4v-hatch-boundary-line-edge-cards^{}
+m14.4v-hatch-boundary-line-edge-cards^1 == m14.4u-hatch-boundary-edge-types^{}
+m14.4u-hatch-boundary-edge-types^1 == m14.4t-hatch-boundary-edge-grouping^{}
+m14.4t-hatch-boundary-edge-grouping^1 == m14.4s-hatch-polyline-wcs-geometry^{}
+m14.4s-hatch-polyline-wcs-geometry^1 == m14.4r-hatch-polyline-segment-geometry^{}
+m14.4r-hatch-polyline-segment-geometry^1 == m14.4q-hatch-polyline-line-geometry^{}
+m14.4q-hatch-polyline-line-geometry^1 == m14.4p-hatch-polyline-segment-shapes^{}
 m14.4p-hatch-polyline-segment-shapes^1 == m14.4o-hatch-polyline-segments^{}
 m14.4o-hatch-polyline-segments^1 == m14.4n-hatch-polyline-coordinates^{}
 m14.4n-hatch-polyline-coordinates^1 == m14.4m-hatch-polyline-bulges^{}
@@ -62,7 +68,7 @@ m14.3dt-point-clone-xdata-draft^1 == m14.3ds-point-clone-draft-projection^{}
 m14.3ds-point-clone-draft-projection^1 == m14.3dr-entity-xdata-draft-write^{}
 m14.3dr-entity-xdata-draft-write^1 == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
 m14.3dq-entity-xdata-draft-verification^{} == 028d726b7f04709927e0d6c8c8d419dc1eb49fcb
-all twenty-eight review tags are annotated tag objects
+all thirty-four review tags are annotated tag objects
 ```
 
 The baseline-to-target changed path set must be exactly:
@@ -82,15 +88,21 @@ crates/seacad-dxf-core/src/hatch_scalar_semantic.rs
 crates/seacad-dxf-core/src/hatch_extrusion.rs
 crates/seacad-dxf-core/src/hatch_polyline_bulge.rs
 crates/seacad-dxf-core/src/hatch_boundary_partition.rs
+crates/seacad-dxf-core/src/hatch_boundary_edge.rs
+crates/seacad-dxf-core/src/hatch_boundary_edge_type.rs
+crates/seacad-dxf-core/src/hatch_boundary_line_edge_card.rs
 crates/seacad-dxf-core/src/hatch_elevation.rs
 crates/seacad-dxf-core/src/hatch_boundary_path.rs
 crates/seacad-dxf-core/src/hatch_boundary_path_flags.rs
 crates/seacad-dxf-core/src/hatch_polyline_header.rs
+crates/seacad-dxf-core/src/hatch_polyline_line_geometry.rs
 crates/seacad-dxf-core/src/hatch_polyline_segment.rs
+crates/seacad-dxf-core/src/hatch_polyline_segment_geometry.rs
 crates/seacad-dxf-core/src/hatch_polyline_segment_shape.rs
 crates/seacad-dxf-core/src/hatch_polyline_vertex.rs
 crates/seacad-dxf-core/src/hatch_polyline_vertex_coordinate.rs
 crates/seacad-dxf-core/src/hatch_polyline_vertex_numeric.rs
+crates/seacad-dxf-core/src/hatch_polyline_wcs_geometry.rs
 crates/seacad-dxf-core/src/lib.rs
 crates/seacad-dxf-core/src/point_clone_draft_projection.rs
 crates/seacad-dxf-core/src/point_clone_xdata_draft.rs
@@ -112,15 +124,21 @@ crates/seacad-dxf-core/tests/hatch_scalar_semantic_tests.rs
 crates/seacad-dxf-core/tests/hatch_extrusion_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_bulge_tests.rs
 crates/seacad-dxf-core/tests/hatch_boundary_partition_tests.rs
+crates/seacad-dxf-core/tests/hatch_boundary_edge_tests.rs
+crates/seacad-dxf-core/tests/hatch_boundary_edge_type_tests.rs
+crates/seacad-dxf-core/tests/hatch_boundary_line_edge_card_tests.rs
 crates/seacad-dxf-core/tests/hatch_elevation_tests.rs
 crates/seacad-dxf-core/tests/hatch_boundary_path_tests.rs
 crates/seacad-dxf-core/tests/hatch_boundary_path_flag_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_header_tests.rs
+crates/seacad-dxf-core/tests/hatch_polyline_line_geometry_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_segment_tests.rs
+crates/seacad-dxf-core/tests/hatch_polyline_segment_geometry_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_segment_shape_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_vertex_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_vertex_coordinate_tests.rs
 crates/seacad-dxf-core/tests/hatch_polyline_vertex_numeric_tests.rs
+crates/seacad-dxf-core/tests/hatch_polyline_wcs_geometry_tests.rs
 crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs
 crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs
 crates/seacad-dxf-core/tests/text_transcode_tests.rs
@@ -155,6 +173,12 @@ docs/audits/M14_4M_HATCH_POLYLINE_BULGES.md
 docs/audits/M14_4N_HATCH_POLYLINE_COORDINATES.md
 docs/audits/M14_4O_HATCH_POLYLINE_SEGMENTS.md
 docs/audits/M14_4P_HATCH_POLYLINE_SEGMENT_SHAPES.md
+docs/audits/M14_4Q_HATCH_POLYLINE_LINE_GEOMETRY.md
+docs/audits/M14_4R_HATCH_POLYLINE_SEGMENT_GEOMETRY.md
+docs/audits/M14_4S_HATCH_POLYLINE_WCS_GEOMETRY.md
+docs/audits/M14_4T_HATCH_BOUNDARY_EDGE_GROUPING.md
+docs/audits/M14_4U_HATCH_BOUNDARY_EDGE_TYPES.md
+docs/audits/M14_4V_HATCH_BOUNDARY_LINE_EDGE_CARDS.md
 docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md
 docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md
 ```
@@ -165,8 +189,8 @@ Compare paths as sets.
 
 | Path | Lines | SHA-256 |
 |---|---:|---|
-| `README.md` | 227 | `e2c8b0ed3716231a518f1f1c17310c5cb653a318da333dd42e8de938e4ba6c4f` |
-| `README.vi.md` | 225 | `86e5c828532d75bdf3f0d543f2af70eeb87f1f5aa4cd3ab7802e79a4b0c8b336` |
+| `README.md` | 241 | `dd59d8e7bd26f97bea66767a2a0f36de363d394df98ff7525c42a294f256cde6` |
+| `README.vi.md` | 240 | `772dfa775f4e6b4afa9e444c4242857cbbe9752e8bb1b5916e73840dd27c1d63` |
 | `crates/seacad-dxf-core/src/encoding.rs` | 788 | `246e8f228588680d408dd7ae71f37e16094ab687c3c0fe55d8a48e4aef75a9a7` |
 | `crates/seacad-dxf-core/src/entity_completion.rs` | 129 | `0be29a16b5cc3c1d08075678461acc017531f5ac0eb2a3c0f1436470f81f5aa6` |
 | `crates/seacad-dxf-core/src/entity_edit_session.rs` | 2,972 | `ecbc34c75c2c6c03467ea66448f55ddddaaa5550cf087b528239bd214e890207` |
@@ -188,7 +212,7 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/src/hatch_polyline_vertex.rs` | 405 | `1b2f32f1508b3429dd8fb6fc7c44d3f1b296268a61c9e661a8a8220767ac39a2` |
 | `crates/seacad-dxf-core/src/hatch_polyline_vertex_coordinate.rs` | 293 | `964a9c9d2c063ad544185fb0a0eb0e21859940e5eef4f2d376aa38e360610b03` |
 | `crates/seacad-dxf-core/src/hatch_polyline_vertex_numeric.rs` | 305 | `f53e39bfc880bb5151dab3fce6ab6955eae257ee4db426ac95ceb1ebc9abed4a` |
-| `crates/seacad-dxf-core/src/lib.rs` | 1,363 | `cec27cfc227bbb8c44feeeaf603c54100e60cbf49158070f2c071c5c090bdadf` |
+| `crates/seacad-dxf-core/src/lib.rs` | 1,398 | `80dde3d12688c5da17178a8363270d55ffe192bc96b46979dcec6b20c4c7d995` |
 | `crates/seacad-dxf-core/src/point_clone_draft_projection.rs` | 511 | `9809d74f63e8b5510689e650b95dc45baaea5073ba4d93247271fc41be74a822` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_draft.rs` | 250 | `0a34de42328039c76f8ac45226da6e6a7ae027831bec4b3088ba3d8c3295e77e` |
 | `crates/seacad-dxf-core/src/point_clone_xdata_insert.rs` | 317 | `59c087ff6cc447604379588eba154d013e67712d9dcc881a0b6708dadf2bae6d` |
@@ -221,8 +245,6 @@ Compare paths as sets.
 | `crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs` | 367 | `4b6306081db5d1ca6cba239f0fecc09dbcf3506e87e3d04920a9c0a09a9c3dbb` |
 | `crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs` | 348 | `bc72c88c95a4fc983ff0e64a409d539f8d8d6b460d8e9c5d37e6cb0972e2fdc3` |
 | `crates/seacad-dxf-core/tests/text_transcode_tests.rs` | 476 | `9bda1ee19362b058ab9a174705cc0d5893f73d13bdb8e008b6e4a7d2d2340a40` |
-| `docs/IMPLEMENTATION_PLAN.md` | 423 | `032841ed67695a786a086c1f70b72964c15ec03d53e41c30c25e531a20302979` |
-| `docs/SUPPORT_MATRIX.md` | 3,169 | `918f5a4c84c79ed495612faea68c29ad4efd6bae4360b66f93f30a4ae0485798` |
 | `docs/audits/M14_3DR_ENTITY_XDATA_DRAFT_WRITE.md` | 55 | `0475c6d1c6f73507f1c63e9da586c7078e39c25c91f0fd1b2a13848af264d540` |
 | `docs/audits/M14_3DS_POINT_CLONE_DRAFT_PROJECTION.md` | 50 | `0ab9ac7a5274f38ad9cb8309a53c3b9f04f1d79512c7159f8434c7b6d4f911cc` |
 | `docs/audits/M14_3DT_POINT_CLONE_XDATA_DRAFT.md` | 46 | `c9ff7377bfe2c674a0eddcb029e32f34a4c6e4b488adf76bef638e0788e04905` |
@@ -251,8 +273,28 @@ Compare paths as sets.
 | `docs/audits/M14_4N_HATCH_POLYLINE_COORDINATES.md` | 29 | `2d911f6cebb2e41b7e5370773dacadb8a089e9c074cf379e2be3bf66b1c31056` |
 | `docs/audits/M14_4O_HATCH_POLYLINE_SEGMENTS.md` | 28 | `e31ab1ca17a486fe43fac5b3d61f90fb19a1d4a4005e0d81ff6ec0d825fdbc32` |
 | `docs/audits/M14_4P_HATCH_POLYLINE_SEGMENT_SHAPES.md` | 28 | `2ba2ca33d3eaab5008aeef78026b73de40b7b76ada8451b97ddc5d2506e51b3f` |
-| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 2,081 | `5de796bc3d64db867b7005e9c6cf1d9414a76302ef75b4617b08836cd5715f1c` |
-| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,499 | `0fc1212164addfa855540eb24d0d990a4f68b39c93c67fbc0acb964cafcaccc9` |
+| `crates/seacad-dxf-core/src/hatch_polyline_line_geometry.rs` | 231 | `ce3448a1a1c766de669862eaf85282fd5340540523354ebf1e7f6d0b45d61e24` |
+| `crates/seacad-dxf-core/tests/hatch_polyline_line_geometry_tests.rs` | 394 | `50a1a78ace72330aaacf82d1bad1cfb4f2cea1f20cb63117e938b7a23a2b2359` |
+| `docs/audits/M14_4Q_HATCH_POLYLINE_LINE_GEOMETRY.md` | 36 | `39e2578b4183ddbc0be3b9fce9a5040e00bfc02c1fcb51bfa6ee68c9ea0bd7c7` |
+| `crates/seacad-dxf-core/src/hatch_polyline_segment_geometry.rs` | 332 | `2b515c20348694898c1d28d8932d4b4875434be32508dabc8c3d7a4c5927fd43` |
+| `crates/seacad-dxf-core/tests/hatch_polyline_segment_geometry_tests.rs` | 474 | `7a5f17ca1fec95174171bf8a5d2125227aac40cbb051a836d51bec2360822985` |
+| `docs/audits/M14_4R_HATCH_POLYLINE_SEGMENT_GEOMETRY.md` | 37 | `c955110561944b10e5520d5a6cc07078a4712b9dcf4288e1c094fdbb09ca8129` |
+| `crates/seacad-dxf-core/src/hatch_polyline_wcs_geometry.rs` | 445 | `29eaf96f4cfb2ce59ecb8a4f4d2891706862997538476ec52602a40c7d6bb957` |
+| `crates/seacad-dxf-core/tests/hatch_polyline_wcs_geometry_tests.rs` | 514 | `5aba8bc64afb133db67e7c57aebc0ab58ad25a645b30a2fa3860ccf58dc50701` |
+| `docs/audits/M14_4S_HATCH_POLYLINE_WCS_GEOMETRY.md` | 38 | `209289cb1cb408dfb2b15de4100905fd5575078e6b72a42098481beca7c5ae79` |
+| `crates/seacad-dxf-core/src/hatch_boundary_edge.rs` | 501 | `4ed1194477ca74b9e9e7db0a225eb88ce6618a41ecc978c2593471ee30f8155e` |
+| `crates/seacad-dxf-core/tests/hatch_boundary_edge_tests.rs` | 382 | `37bb0dcdc6d22822abf8bc6f6f1daa02546781f8dc824b002ddaa98e034920d6` |
+| `docs/audits/M14_4T_HATCH_BOUNDARY_EDGE_GROUPING.md` | 38 | `b81f9ebb7a4d88e55c34858501e0a16ee92525c5e72a5b50a857b5a3b3ef1794` |
+| `crates/seacad-dxf-core/src/hatch_boundary_edge_type.rs` | 206 | `f250d662af2782e907745fc62afcc14ff3fa88058a146942a938f5f111798dfa` |
+| `crates/seacad-dxf-core/tests/hatch_boundary_edge_type_tests.rs` | 281 | `840a3bda352e35af6977aaaa1a12e48178a255070ce2095102b1b7ce68358dd9` |
+| `docs/audits/M14_4U_HATCH_BOUNDARY_EDGE_TYPES.md` | 40 | `3d64de7ac6638718ef397c4e6a76246e841f43cce43e8ccf52b8471d07b56a7e` |
+| `crates/seacad-dxf-core/src/hatch_boundary_line_edge_card.rs` | 326 | `7ff7500c93a8e6b9753b191e4204176f63b2001864491eec72410f7092a92836` |
+| `crates/seacad-dxf-core/tests/hatch_boundary_line_edge_card_tests.rs` | 301 | `bbcb46b022fc568b0adf4d63c5d5dd18c3f627e9ac51ad718da70ca5b3edf59c` |
+| `docs/audits/M14_4V_HATCH_BOUNDARY_LINE_EDGE_CARDS.md` | 39 | `2aefb8d93fb7867f02a873dddeceb93cf690c2de2a260d1354d4767243815d56` |
+| `docs/IMPLEMENTATION_PLAN.md` | 423 | `015a15d22fe37b2b52dcc554e3739b008622a7f500b6c17fa952c4cd15e6acc3` |
+| `docs/SUPPORT_MATRIX.md` | 3,235 | `f8e65c1021e6a78540c25a0101101729d1f02de94861b39f8c426ba1f573f202` |
+| `docs/plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md` | 2,142 | `9463fecd3870c1aaad217acd3418bea274b4248b3784ff4c871faa274f1815df` |
+| `docs/plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md` | 3,561 | `3a9a56d6d0e6a74278d9cbe1c04a29b321ec7e9285030f62b933be3837880d3c` |
 
 Compute every line count and lowercase SHA-256 and require exact matches. The
 active batch note intentionally omits its self-referential receipt.
@@ -276,6 +318,12 @@ cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_path_flag_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_header_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_segment_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_segment_shape_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_line_geometry_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_segment_geometry_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_wcs_geometry_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_edge_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_edge_type_tests
+cargo +1.97.1 test -p seacad-dxf-core --test hatch_boundary_line_edge_card_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_vertex_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_vertex_coordinate_tests
 cargo +1.97.1 test -p seacad-dxf-core --test hatch_polyline_vertex_numeric_tests
@@ -313,12 +361,18 @@ rg -n 'DxfHatchPolylineBulge(Directory|Entry|Issue|Value)|hatch_polyline_bulge_d
 rg -n 'DxfHatchPolylineVertex(CoordinateDirectory|CoordinateEntry|CoordinateIssue|CoordinateValue|Coordinates|OcsPosition|PositionIssue|UnavailableCoordinates)|hatch_polyline_vertex_coordinate_directory|MissingRequiredValue|CoordinatesUnavailable|ocs_position' crates/seacad-dxf-core/src/hatch_polyline_vertex_coordinate.rs crates/seacad-dxf-core/tests/hatch_polyline_vertex_coordinate_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4N_HATCH_POLYLINE_COORDINATES.md
 rg -n 'DxfHatchPolylineSegment(Directory|Endpoints|Entry|PathEntry|PathState|Range|Topology)|hatch_polyline_segment_directory|VertexCountMismatched|Consecutive|Closing|endpoints_for_segment' crates/seacad-dxf-core/src/hatch_polyline_segment.rs crates/seacad-dxf-core/tests/hatch_polyline_segment_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4O_HATCH_POLYLINE_SEGMENTS.md
 rg -n 'DxfHatchPolylineSegmentShape(Directory|Entry)?|hatch_polyline_segment_shape_directory|Straight|Arc|Indeterminate|start_bulge' crates/seacad-dxf-core/src/hatch_polyline_segment_shape.rs crates/seacad-dxf-core/tests/hatch_polyline_segment_shape_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4P_HATCH_POLYLINE_SEGMENT_SHAPES.md
+rg -n 'DxfHatchPolyline(OcsLineSegment|LineGeometryDirectory|LineGeometryEntry|LineGeometryIssue)|hatch_polyline_line_geometry_directory' crates/seacad-dxf-core/src/hatch_polyline_line_geometry.rs crates/seacad-dxf-core/tests/hatch_polyline_line_geometry_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4Q_HATCH_POLYLINE_LINE_GEOMETRY.md
+rg -n 'DxfHatchPolyline(OcsArcSegment|OcsSegmentGeometry|SegmentGeometryDirectory|SegmentGeometryIssue)|hatch_polyline_segment_geometry_directory' crates/seacad-dxf-core/src/hatch_polyline_segment_geometry.rs crates/seacad-dxf-core/tests/hatch_polyline_segment_geometry_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4R_HATCH_POLYLINE_SEGMENT_GEOMETRY.md
+rg -n 'DxfHatchPolyline(WcsLineSegment|WcsArcSegment|WcsSegmentGeometry|WcsGeometryDirectory|WcsGeometryIssue)|hatch_polyline_wcs_geometry_directory' crates/seacad-dxf-core/src/hatch_polyline_wcs_geometry.rs crates/seacad-dxf-core/tests/hatch_polyline_wcs_geometry_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4S_HATCH_POLYLINE_WCS_GEOMETRY.md
+rg -n 'DxfHatchBoundaryEdge(Count|CountRelation|Directory|Entry|Path|PathIssue|PathState|Range)|hatch_boundary_edge_directory' crates/seacad-dxf-core/src/hatch_boundary_edge.rs crates/seacad-dxf-core/tests/hatch_boundary_edge_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4T_HATCH_BOUNDARY_EDGE_GROUPING.md
+rg -n 'DxfHatchBoundaryEdgeType(Directory|Entry|Issue)?|hatch_boundary_edge_type_directory|CircularArc|EllipticArc' crates/seacad-dxf-core/src/hatch_boundary_edge_type.rs crates/seacad-dxf-core/tests/hatch_boundary_edge_type_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4U_HATCH_BOUNDARY_EDGE_TYPES.md
+rg -n 'DXF_HATCH_BOUNDARY_LINE_EDGE_ROLES|DxfHatchBoundaryLineEdge(Card|CardDirectory|CardState|Member|MemberRange|Role)|hatch_boundary_line_edge_card_directory' crates/seacad-dxf-core/src/hatch_boundary_line_edge_card.rs crates/seacad-dxf-core/tests/hatch_boundary_line_edge_card_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_4V_HATCH_BOUNDARY_LINE_EDGE_CARDS.md
 rg -n 'DXF_SPLINE_EVALUATION_MAX_DEGREE|evaluate_point_for_raw_record|DxfSpline(PointEvaluation|EvaluatedPoint|EvaluationInputKind)|DegreeLimitExceeded|NonFiniteParameter|ParameterOutOfDomain|DegenerateKnotInterval|ArithmeticOverflow|NonPositiveHomogeneousWeight' crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_point_evaluation_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EA_SPLINE_POINT_EVALUATION.md
 rg -n 'evaluate_first_derivative_for_raw_record|DxfSpline(EvaluatedDifferential|EvaluatedVector|FirstDerivative)|prepare_evaluation|evaluate_homogeneous|homogeneous_to_point|DegenerateKnotInterval|ArithmeticOverflow' crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/tests/spline_first_derivative_tests.rs crates/seacad-dxf-core/src/lib.rs docs/audits/M14_3EB_SPLINE_FIRST_DERIVATIVE.md
 ```
 
 Expected respectively: 8/8; 4/4 for every focused HATCH/FILL test through
-`hatch_polyline_segment_shape_tests`; 4/4 and 4/4 for the two SPLINE tests; 11/11,
+`hatch_boundary_line_edge_card_tests`; 4/4 and 4/4 for the two SPLINE tests; 11/11,
 13/13, 18/18, 4/4, 3/3, 5/5, and 10/10 for the remaining tests. For M14.3dr prove create-new-only behavior,
 strict reparse/verification, cleanup, exact inverse, all formats/dialects, zero
 and non-empty XDATA, identity, bounds, cancellation, tamper rejection, and
@@ -507,18 +561,52 @@ publishing no entries; all nine ASCII/Binary dialect pairs; cancellation,
 source identity, lookup bounds, traits, redaction, and compact metadata. Confirm
 arc center/radius/angle construction, line geometry, OCS/WCS transformation,
 applicability, CRUD/write, and completion remain open.
+For M14.4q prove exact OCS endpoints only for Straight segments; Arc and
+Indeterminate shapes plus unavailable endpoint coordinates remain distinct
+typed outcomes; every M14.4o segment retains one aligned entry; all nine
+ASCII/Binary dialect pairs, cancellation, source identity, bounds, traits, and
+redaction hold. Confirm no arc construction, WCS transformation,
+applicability, CRUD/write, or completion claim. For M14.4r prove finite OCS
+center/radius/signed sweep for every usable nonzero bulge arc; exact line
+pass-through; degenerate chord and non-finite derived arithmetic remain typed;
+all nine dialect pairs and safety properties hold. Confirm no WCS transform,
+tessellation, applicability, CRUD/write, or completion claim. For M14.4s prove
+finite WCS line/arc projection from exact elevation plus normalized explicit or
+defaulted extrusion using the documented arbitrary-axis basis and `1/64`
+branch; preserve radius, signed sweep, bulge, and normalized normal; enforce
+source/elevation/extrusion/derived failure precedence; all nine dialect pairs
+include non-axis and negative normals. Confirm derived WCS bits are not raw or
+cross-platform canonical and applicability/CRUD/write/completion remain open.
+For M14.4t prove only Edges paths select one nonnegative group-93 count and
+group every later group-72 marker into exact conservative payload slices;
+Matched/Mismatched counts and zero edges remain explicit; invalid flags/counts
+and marker-before-count publish no edges; all nine dialect pairs and safety
+properties hold. Confirm edge types and payload semantics remain open. For
+M14.4u prove exactly one signed Int16 type result per grouped edge with 1 Line,
+2 CircularArc, 3 EllipticArc, and 4 Spline; malformed ASCII and every other
+signed value remain exact typed issues; count mismatch retains types, empty
+grouped paths expose empty slices, and Polyline/unavailable paths expose no
+entries; all nine dialect pairs and safety properties hold. Confirm payload
+fields and geometry remain open. For M14.4v prove four ordered cards for every
+Line edge only: StartX 10, StartY 20, EndX 11, EndY 21; exact source fields and
+independent Absent/Unique/Multiple states; mismatch does not erase cards;
+non-Line and invalid type markers expose empty card slices while the complete
+M14.4u directory remains retained; all nine dialect pairs, cancellation,
+identity, bounds, traits, compact metadata, and redaction hold. Confirm numeric
+selection, required-coordinate semantics, OCS/WCS geometry, other edge payload
+families, applicability, CRUD/write, and completion remain open.
 Require zero production matches:
 
 ```powershell
-rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/src/entity_xdata_draft_write.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/src/fill_mesh_evidence.rs crates/seacad-dxf-core/src/hatch_boundary_partition.rs crates/seacad-dxf-core/src/hatch_boundary_path.rs crates/seacad-dxf-core/src/hatch_boundary_path_flags.rs crates/seacad-dxf-core/src/hatch_elevation.rs crates/seacad-dxf-core/src/hatch_extrusion.rs crates/seacad-dxf-core/src/hatch_polyline_bulge.rs crates/seacad-dxf-core/src/hatch_polyline_header.rs crates/seacad-dxf-core/src/hatch_polyline_segment.rs crates/seacad-dxf-core/src/hatch_polyline_segment_shape.rs crates/seacad-dxf-core/src/hatch_polyline_vertex.rs crates/seacad-dxf-core/src/hatch_polyline_vertex_coordinate.rs crates/seacad-dxf-core/src/hatch_polyline_vertex_numeric.rs crates/seacad-dxf-core/src/hatch_scalar_card.rs crates/seacad-dxf-core/src/hatch_scalar_evidence.rs crates/seacad-dxf-core/src/hatch_scalar_semantic.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/src/text_decoder.rs crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs
+rg -n 'panic!|unwrap\(|expect\(|todo!|unimplemented!|unsafe' crates/seacad-dxf-core/src/entity_completion.rs crates/seacad-dxf-core/src/entity_xdata_draft_write.rs crates/seacad-dxf-core/src/entity_xdata_encoded_destination.rs crates/seacad-dxf-core/src/fill_mesh_evidence.rs crates/seacad-dxf-core/src/hatch_boundary_partition.rs crates/seacad-dxf-core/src/hatch_boundary_path.rs crates/seacad-dxf-core/src/hatch_boundary_path_flags.rs crates/seacad-dxf-core/src/hatch_boundary_edge.rs crates/seacad-dxf-core/src/hatch_boundary_edge_type.rs crates/seacad-dxf-core/src/hatch_boundary_line_edge_card.rs crates/seacad-dxf-core/src/hatch_elevation.rs crates/seacad-dxf-core/src/hatch_extrusion.rs crates/seacad-dxf-core/src/hatch_polyline_bulge.rs crates/seacad-dxf-core/src/hatch_polyline_header.rs crates/seacad-dxf-core/src/hatch_polyline_line_geometry.rs crates/seacad-dxf-core/src/hatch_polyline_segment.rs crates/seacad-dxf-core/src/hatch_polyline_segment_geometry.rs crates/seacad-dxf-core/src/hatch_polyline_segment_shape.rs crates/seacad-dxf-core/src/hatch_polyline_vertex.rs crates/seacad-dxf-core/src/hatch_polyline_vertex_coordinate.rs crates/seacad-dxf-core/src/hatch_polyline_vertex_numeric.rs crates/seacad-dxf-core/src/hatch_polyline_wcs_geometry.rs crates/seacad-dxf-core/src/hatch_scalar_card.rs crates/seacad-dxf-core/src/hatch_scalar_evidence.rs crates/seacad-dxf-core/src/hatch_scalar_semantic.rs crates/seacad-dxf-core/src/point_clone_draft_projection.rs crates/seacad-dxf-core/src/point_clone_xdata_draft.rs crates/seacad-dxf-core/src/point_clone_xdata_insert.rs crates/seacad-dxf-core/src/entity_edit_session.rs crates/seacad-dxf-core/src/encoding.rs crates/seacad-dxf-core/src/spline_first_derivative.rs crates/seacad-dxf-core/src/spline_point_evaluation.rs crates/seacad-dxf-core/src/text_decoder.rs crates/seacad-dxf-core/src/text_encoder.rs crates/seacad-dxf-core/src/text_transcode.rs
 ```
 
 Validate every local Markdown link in all changed overview/plan/audit files.
 Require empty protected diff and clean whitespace:
 
 ```powershell
-git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4p-hatch-polyline-segment-shapes -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4p-hatch-polyline-segment-shapes
+git diff 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4v-hatch-boundary-line-edge-cards -- Cargo.toml Cargo.lock LICENSE NOTICE THIRD_PARTY_NOTICES.md schema corpus release .github .agents
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4v-hatch-boundary-line-edge-cards
 ```
 
 ## Required gates and postflight
@@ -533,18 +621,18 @@ cargo +1.97.1 run --locked -p seacad-schema-gen --bin seacad-release-evidence --
 cargo +1.97.1 clippy --workspace --all-targets -- -D warnings
 cargo +1.97.1 test --workspace
 $listed = @(cargo +1.97.1 test --workspace -- --list 2>$null | Select-String ': test$')
-if ($listed.Count -ne 1153) { throw 'Workspace test count drift.' }
-git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4p-hatch-polyline-segment-shapes
+if ($listed.Count -ne 1177) { throw 'Workspace test count drift.' }
+git diff --check 028d726b7f04709927e0d6c8c8d419dc1eb49fcb..m14.4v-hatch-boundary-line-edge-cards
 ```
 
 Repeat preflight, receipts, protected diff, and whitespace. HEAD/tag/path sets/
 hashes must match and worktree remain clean. PASS requires exact state,
 receipts, all focused expected counts, all contract/safety/link/protected checks,
-all gates, exactly 1,153 tests, no mutation, and the
+all gates, exactly 1,177 tests, no mutation, and the
 external report.
 
 Write UTF-8 YAML-shaped evidence with batch id
-`seacad-m14.3dr-m14.4p-hatch-polyline-segment-shapes-2026-08-09`, status/root/
+`seacad-m14.3dr-m14.4v-hatch-boundary-line-edge-cards-2026-08-09`, status/root/
 report/timestamps, HEAD/tags/Git/path sets before/after, every command and hash
 receipt, focused tests, workspace total, links, forbidden scan, protected
 surfaces, mutations, deviations, failures, blocker, and final assessment. After
