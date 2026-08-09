@@ -2165,6 +2165,20 @@ retain ASCII/Binary parity. Requiredness, positive-radius, angle normalization,
 direction domain, OCS/WCS geometry, other edge payloads, HATCH applicability,
 CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4ac promotes all six CircularArc components to required, domain-checked
+semantics. Missing groups 10/20/40/50/51/73 become source-anchored
+MissingRequiredValue failures; duplicate, malformed ASCII, and non-finite
+Binary values retain their exact M14.4ab issue and available raw provenance.
+Radius remains finite and must be strictly greater than zero, preserving exact
+positive-zero, negative-zero, and negative bits in typed failures. Direction
+group 73 maps only 0 to Clockwise and 1 to Counterclockwise; every other signed
+Int16 remains typed with raw provenance. Start/end angles remain exact DXF
+degrees without normalization, wrapping, sweep construction, or geometry.
+Count mismatch retains usable entries; non-CircularArc, invalid, and Polyline
+states publish none. All nine dialects retain ASCII/Binary parity. OCS/WCS
+CircularArc geometry, other edge payloads, HATCH applicability, CRUD/write,
+rendering, and `Complete` support remain open.
+
 DXF-STRUCT-R1a centralizes only the identical fallible read-projection
 mechanics used by the M14.4t-M14.4z HATCH Line-edge chain. A crate-private
 module now owns compact-index conversion, source-identity agreement,

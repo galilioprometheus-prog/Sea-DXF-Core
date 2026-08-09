@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ab can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ac can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1824,6 +1824,21 @@ does not erase entries; non-CircularArc, invalid, and Polyline states publish
 none. All nine dialects have ASCII/Binary parity. Requiredness, positive-radius,
 angle normalization, direction domain, OCS/WCS geometry, other edge payloads,
 HATCH applicability, CRUD/write, rendering, and completion remain open.
+
+M14.4ac promotes all six CircularArc components to required, domain-checked
+semantics. Missing groups 10/20/40/50/51/73 become source-anchored
+MissingRequiredValue failures; duplicate, malformed ASCII, and non-finite
+Binary values retain their exact M14.4ab issue and available raw provenance.
+Radius must be finite and strictly greater than zero, preserving the exact
+positive-zero, negative-zero, or negative bits in NonPositiveRadius failures.
+Direction group 73 maps only 0 to Clockwise and 1 to Counterclockwise; every
+other signed Int16 remains a DirectionFlagOutOfDomain failure with raw
+provenance. Start/end angles remain exact DXF degrees without normalization,
+wrapping, sweep construction, or geometry. Count mismatch retains usable
+entries; non-CircularArc, invalid, and Polyline states publish none. All nine
+dialects have ASCII/Binary parity. OCS/WCS CircularArc geometry, other edge
+payloads, HATCH applicability, CRUD/write, rendering, and completion remain
+open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

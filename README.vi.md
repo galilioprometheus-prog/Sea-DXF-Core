@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ab**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ac**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -139,8 +139,11 @@ thể:
   edge đã định kiểu: tâm OCS X/Y, bán kính, góc đầu/cuối và cờ ngược chiều kim
   đồng hồ;
 - chọn giá trị numeric bám source cho đủ sáu role HATCH CircularArc, giữ năm
-  giá trị binary64 hữu hạn và cờ hướng Int16 có dấu nguyên bản mà chưa áp dụng
-  requiredness hoặc domain policy;
+  giá trị binary64 hữu hạn và cờ hướng Int16 có dấu nguyên bản trước khi áp
+  dụng requiredness và domain policy;
+- bắt buộc đủ sáu field HATCH CircularArc, chỉ chấp nhận bán kính dương nghiêm
+  ngặt cùng cờ hướng 0/1, đồng thời giữ góc đầu/cuối dưới dạng độ DXF chính xác,
+  không normalize và giữ typed source provenance cho mọi failure;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

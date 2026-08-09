@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4ab**. The current core can:
+Development is complete through checkpoint **M14.4ac**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -136,7 +136,10 @@ Development is complete through checkpoint **M14.4ab**. The current core can:
   edge: OCS center X/Y, radius, start/end angle, and counterclockwise flag;
 - select source-anchored numeric values for all six HATCH CircularArc roles,
   preserving five finite binary64 values and the raw signed Int16 direction
-  flag without applying requiredness or domain policy;
+  flag before requiredness and domain policy;
+- require all six HATCH CircularArc fields, accept only a strictly positive
+  radius and direction flags 0/1, and preserve start/end angles as exact,
+  unnormalized DXF degrees with typed source provenance for every failure;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
