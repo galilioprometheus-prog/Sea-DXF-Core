@@ -3405,6 +3405,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     OCS/WCS transformation, path relations/topology, later nested state,
     geometry, applicability, CRUD/write, and completion remain open.
 
+    M14.4h groups each available M14.4f boundary span by exact group-92 path
+    anchors. Raw markers and opaque payload ranges remain source ordered;
+    pre-anchor fields stay explicit orphans. The unique group-91 fence decodes
+    as signed Int32 and compares with the observed anchor count, retaining
+    matched, mismatched, malformed ASCII, or negative states. Partition failure
+    publishes no paths; duplicate subclasses remain isolated and all nine
+    dialects have ASCII/Binary parity. Flag semantics, polyline/edge branching,
+    payload cardinality, handles, geometry, applicability, CRUD/write, and
+    completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

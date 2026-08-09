@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4g**. The current core can:
+Development is complete through checkpoint **M14.4h**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -86,6 +86,9 @@ Development is complete through checkpoint **M14.4g**. The current core can:
 - select an exact required HATCH elevation tuple from the isolated header,
   preserving signed zero and raw provenance while rejecting nested decoys,
   unavailable components, non-finite values, and nonzero planar components;
+- group exact HATCH boundary paths by group-92 anchors, retain pre-anchor orphan
+  fields and opaque per-path payloads, and compare observed paths with the
+  decoded group-91 declaration;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

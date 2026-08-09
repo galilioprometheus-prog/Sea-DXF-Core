@@ -1955,6 +1955,17 @@ subclasses remain independent and all nine Core dialects retain ASCII/Binary
 parity. No defaults, OCS/WCS transform, path relation/topology, later nested
 partition, geometry, applicability, CRUD/write, or `Complete` support is added.
 
+M14.4h groups each available boundary span by exact group-92 path anchors.
+Every path retains its raw marker and opaque payload range through the next
+anchor or group-75 fence. Pre-anchor fields remain a separate orphan range.
+The unique group-91 declaration decodes as signed Int32 and compares with the
+observed anchor count; matches, mismatches, malformed ASCII, and negative
+declarations remain distinct. Invalid M14.4f partitions expose no grouping.
+Duplicate subclasses remain independent and all nine Core dialects retain
+ASCII/Binary parity. Group-92 flag semantics, polyline/edge branching, path
+payload cardinality, source handles, geometry, applicability, CRUD/write, and
+`Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4g can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4h can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1597,6 +1597,19 @@ remain independent and all nine Core dialects have ASCII/Binary parity. This
 checkpoint does not transform OCS to WCS, reconcile path counts, decode nested
 HATCH state, derive geometry, establish applicability, add CRUD/write behavior,
 or claim completion.
+
+M14.4h groups the M14.4f opaque boundary span into conservative path envelopes.
+Every exact group 92 starts one path; its raw marker remains separate and its
+payload extends to the next group 92 or the boundary fence. Fields before the
+first anchor are retained as an explicit orphan slice rather than attached to a
+guessed path. The unique group 91 fence decodes as signed Int32 and reports a
+matched or mismatched declared-versus-observed count, malformed ASCII, or a
+negative declared count. Partition failures remain typed and publish no path
+slice. Duplicate subclasses stay independent and all nine Core dialects have
+ASCII/Binary path/payload parity. This checkpoint does not interpret group-92
+flags, choose polyline versus edge grammar, decode edge/path values or source
+handles, validate path payload completeness, derive geometry, establish
+applicability, add CRUD/write behavior, or claim completion.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
