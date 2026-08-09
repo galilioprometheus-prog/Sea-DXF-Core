@@ -2078,6 +2078,15 @@ states publish no edge entries. All nine dialects retain ASCII/Binary parity.
 Edge-type semantics, line/circular/elliptic/spline fields and geometry, HATCH
 applicability, CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4u decodes every grouped M14.4t group-72 marker as a signed 16-bit edge
+type: values 1, 2, 3, and 4 publish Line, CircularArc, EllipticArc, and Spline.
+Malformed ASCII and every other signed 16-bit value remain exact
+source-anchored InvalidAsciiNumber or ValueOutOfDomain issues. Count mismatches
+retain independently known types; an empty grouped path exposes an empty typed
+slice, while Polyline or unavailable paths expose no typed entries. All nine
+dialects retain ASCII/Binary parity. Edge payload-field selection and geometry,
+HATCH applicability, CRUD/write, rendering, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

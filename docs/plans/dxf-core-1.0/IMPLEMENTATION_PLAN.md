@@ -3524,6 +3524,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     Edge-type semantics, line/circular/elliptic/spline fields and geometry,
     HATCH applicability, CRUD/write, rendering, and completion remain open.
 
+    M14.4u decodes every grouped M14.4t group-72 marker as a signed 16-bit
+    edge-type value: 1 Line, 2 CircularArc, 3 EllipticArc, and 4 Spline.
+    Malformed ASCII and every other signed 16-bit value remain source-anchored
+    InvalidAsciiNumber or ValueOutOfDomain issues. Count mismatches retain each
+    independently known type; empty grouped paths expose an empty typed slice,
+    while Polyline or unavailable paths expose no typed entries. All nine
+    dialects retain ASCII/Binary parity. Edge payload-field selection and
+    geometry, HATCH applicability, CRUD/write, rendering, and completion remain
+    open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

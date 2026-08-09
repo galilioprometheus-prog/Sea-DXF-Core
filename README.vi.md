@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4t**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4u**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -117,6 +117,9 @@ thể:
   chính xác cùng extrusion explicit/defaulted đã normalize;
 - chọn edge count bắt buộc cho HATCH boundary path loại Edges và nhóm chính xác
   các anchor group 72 với đối chiếu declared/observed;
+- decode mỗi marker HATCH edge đã nhóm thành Line, CircularArc, EllipticArc hoặc
+  Spline, đồng thời giữ giá trị lỗi và ngoài domain dưới dạng issue có kiểu,
+  bám source mà chưa chọn các field payload của edge;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

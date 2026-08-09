@@ -129,6 +129,7 @@ mod handle_resolution;
 mod handle_role;
 mod handseed;
 mod hatch_boundary_edge;
+mod hatch_boundary_edge_type;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
@@ -773,6 +774,10 @@ pub use hatch_boundary_edge::{
     DxfHatchBoundaryEdgeCount, DxfHatchBoundaryEdgeCountRelation, DxfHatchBoundaryEdgeDirectory,
     DxfHatchBoundaryEdgeEntry, DxfHatchBoundaryEdgePath, DxfHatchBoundaryEdgePathEntry,
     DxfHatchBoundaryEdgePathIssue, DxfHatchBoundaryEdgePathState, DxfHatchBoundaryEdgeRange,
+};
+pub use hatch_boundary_edge_type::{
+    DxfHatchBoundaryEdgeType, DxfHatchBoundaryEdgeTypeDirectory, DxfHatchBoundaryEdgeTypeEntry,
+    DxfHatchBoundaryEdgeTypeIssue,
 };
 pub use hatch_boundary_partition::{
     DxfHatchBoundaryPartition, DxfHatchBoundaryPartitionDirectory, DxfHatchBoundaryPartitionEntry,
