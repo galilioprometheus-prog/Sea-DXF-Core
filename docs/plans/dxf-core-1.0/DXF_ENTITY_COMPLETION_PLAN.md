@@ -2027,6 +2027,15 @@ All nine dialects retain ASCII/Binary parity. Segment shape, bulge arc
 construction, OCS/WCS transformation, applicability, CRUD/write, and `Complete`
 support remain open.
 
+M14.4p classifies each M14.4o segment solely from its start vertex's effective
+bulge. Defaulted or explicit signed zero yields Straight; finite nonzero bulge
+yields Arc with bit-exact value; numeric and group-72 relation failures yield
+Indeterminate with the retained typed issue. Coordinate failure does not change
+known shape, and the exact start-bulge provenance plus complete topology remain
+resolvable. All nine dialects retain ASCII/Binary parity. Arc center/radius/
+angle construction, line geometry, OCS/WCS transformation, applicability,
+CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

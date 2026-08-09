@@ -3473,6 +3473,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     construction, OCS/WCS transformation, applicability, CRUD/write, and
     completion remain open.
 
+    M14.4p classifies every M14.4o segment from its start vertex's effective
+    bulge. Defaulted or explicit signed zero is Straight; finite nonzero bulge
+    is Arc with exact bits; numeric and group-72 relation failures remain
+    Indeterminate with their typed issue. Coordinate failure is independent,
+    and exact start-bulge provenance plus the full topology remain resolvable.
+    All nine dialects retain ASCII/Binary parity. Arc center/radius/angle
+    construction, line geometry, OCS/WCS transformation, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -136,6 +136,7 @@ mod hatch_extrusion;
 mod hatch_polyline_bulge;
 mod hatch_polyline_header;
 mod hatch_polyline_segment;
+mod hatch_polyline_segment_shape;
 mod hatch_polyline_vertex;
 mod hatch_polyline_vertex_coordinate;
 mod hatch_polyline_vertex_numeric;
@@ -804,6 +805,10 @@ pub use hatch_polyline_segment::{
     DxfHatchPolylineSegmentEntry, DxfHatchPolylineSegmentPathEntry,
     DxfHatchPolylineSegmentPathState, DxfHatchPolylineSegmentRange,
     DxfHatchPolylineSegmentTopology,
+};
+pub use hatch_polyline_segment_shape::{
+    DxfHatchPolylineSegmentShape, DxfHatchPolylineSegmentShapeDirectory,
+    DxfHatchPolylineSegmentShapeEntry,
 };
 pub use hatch_polyline_vertex::{
     DxfHatchPolylineVertexCardState, DxfHatchPolylineVertexCountRelation,
