@@ -3569,6 +3569,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     parity. OCS/WCS Line geometry, the other edge payload families, HATCH
     applicability, CRUD/write, rendering, and completion remain open.
 
+    M14.4y publishes one exact OCS Line segment per M14.4x coordinate entry only
+    when both endpoints are usable. Coordinates pass through without derived
+    arithmetic, preserving signed-zero bits, and identical endpoints remain
+    valid zero-length Lines. Unavailable endpoints remain typed with the exact
+    four-component mask while the complete lower-layer coordinate issues stay
+    resolvable. Count mismatch does not erase usable geometry; non-Line,
+    invalid, and Polyline paths publish no Line geometry entries. All nine
+    dialects retain ASCII/Binary parity. OCS-to-WCS projection, the other edge
+    payload families, HATCH applicability, CRUD/write, rendering, and
+    completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

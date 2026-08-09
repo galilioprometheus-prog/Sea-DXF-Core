@@ -2122,6 +2122,16 @@ retain ASCII/Binary parity. OCS/WCS Line geometry, the other edge payload
 families, HATCH applicability, CRUD/write, rendering, and `Complete` support
 remain open.
 
+M14.4y publishes one exact OCS Line segment per M14.4x coordinate entry only
+when both endpoints are usable. Coordinates pass through without derived
+arithmetic, preserving signed-zero bits, and identical endpoints remain valid
+zero-length Lines. Unavailable endpoints remain typed with the exact four-
+component mask while the complete lower-layer coordinate issues stay
+resolvable. Count mismatch does not erase usable geometry; non-Line, invalid,
+and Polyline paths publish no Line geometry entries. All nine dialects retain
+ASCII/Binary parity. OCS-to-WCS projection, the other edge payload families,
+HATCH applicability, CRUD/write, rendering, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

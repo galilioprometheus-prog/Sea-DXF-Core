@@ -132,6 +132,7 @@ mod hatch_boundary_edge;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_line_edge_card;
 mod hatch_boundary_line_edge_coordinate;
+mod hatch_boundary_line_edge_geometry;
 mod hatch_boundary_line_edge_numeric;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
@@ -794,6 +795,10 @@ pub use hatch_boundary_line_edge_coordinate::{
     DxfHatchBoundaryLineEdgeCoordinates, DxfHatchBoundaryLineEdgeEndpointIssue,
     DxfHatchBoundaryLineEdgeOcsEndpoints, DxfHatchBoundaryLineEdgeOcsPoint,
     DxfHatchBoundaryLineEdgeUnavailableCoordinates,
+};
+pub use hatch_boundary_line_edge_geometry::{
+    DxfHatchBoundaryLineEdgeGeometryDirectory, DxfHatchBoundaryLineEdgeGeometryEntry,
+    DxfHatchBoundaryLineEdgeGeometryIssue, DxfHatchBoundaryLineEdgeOcsSegment,
 };
 pub use hatch_boundary_line_edge_numeric::{
     DxfHatchBoundaryLineEdgeNumericComponents, DxfHatchBoundaryLineEdgeNumericDirectory,
