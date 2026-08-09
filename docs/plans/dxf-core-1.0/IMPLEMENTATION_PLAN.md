@@ -3629,6 +3629,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     geometry, other edge payloads, applicability, CRUD/write, rendering, and
     completion remain open.
 
+    M14.4ad publishes one exact-value OCS CircularArc segment for every
+    M14.4ac entry only when all six semantics are usable. Center, strictly
+    positive radius, start/end DXF degrees, and Clockwise/Counterclockwise
+    direction pass through without arithmetic. Unavailable geometry carries
+    an exact six-component mask while the complete semantic/numeric issue and
+    provenance chain remains resolvable. Negative, large, and equal angles
+    remain bit-exact; equal angles do not imply either zero sweep or a full
+    turn. Count mismatch retains usable geometry; non-CircularArc, invalid,
+    and Polyline states publish none. All nine dialects retain ASCII/Binary
+    parity. Angle wrapping, signed sweep, endpoint derivation, OCS-to-WCS
+    projection, other edge payloads, applicability, CRUD/write, rendering, and
+    completion remain open.
+
     DXF-STRUCT-R1a centralizes the identical fallible read-projection mechanics
     used by the M14.4t-M14.4z HATCH Line-edge chain. One crate-private module now
     owns compact-index conversion, source-identity agreement, cancellation, and

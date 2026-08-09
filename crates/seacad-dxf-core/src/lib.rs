@@ -129,6 +129,7 @@ mod handle_resolution;
 mod handle_role;
 mod handseed;
 mod hatch_boundary_circular_arc_edge_card;
+mod hatch_boundary_circular_arc_edge_geometry;
 mod hatch_boundary_circular_arc_edge_numeric;
 mod hatch_boundary_circular_arc_edge_semantic;
 mod hatch_boundary_edge;
@@ -784,6 +785,11 @@ pub use hatch_boundary_circular_arc_edge_card::{
     DxfHatchBoundaryCircularArcEdgeCardDirectory, DxfHatchBoundaryCircularArcEdgeCardState,
     DxfHatchBoundaryCircularArcEdgeMember, DxfHatchBoundaryCircularArcEdgeMemberRange,
     DxfHatchBoundaryCircularArcEdgeRole,
+};
+pub use hatch_boundary_circular_arc_edge_geometry::{
+    DxfHatchBoundaryCircularArcEdgeGeometryDirectory, DxfHatchBoundaryCircularArcEdgeGeometryEntry,
+    DxfHatchBoundaryCircularArcEdgeGeometryIssue, DxfHatchBoundaryCircularArcEdgeOcsSegment,
+    DxfHatchBoundaryCircularArcEdgeUnavailableValues,
 };
 pub use hatch_boundary_circular_arc_edge_numeric::{
     DxfHatchBoundaryCircularArcEdgeNumericComponents,

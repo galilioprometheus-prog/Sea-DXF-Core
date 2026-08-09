@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ac can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ad can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1839,6 +1839,18 @@ entries; non-CircularArc, invalid, and Polyline states publish none. All nine
 dialects have ASCII/Binary parity. OCS/WCS CircularArc geometry, other edge
 payloads, HATCH applicability, CRUD/write, rendering, and completion remain
 open.
+
+M14.4ad publishes one exact-value OCS CircularArc segment for each M14.4ac
+entry only when all six semantics are usable. Center, strictly positive radius,
+start/end DXF degrees, and Clockwise/Counterclockwise direction pass through
+without arithmetic. Unavailable geometry carries an exact six-component mask
+while the complete semantic and numeric issue/provenance chain remains
+resolvable. Negative, large, and equal angles remain bit-exact; equal angles do
+not imply either zero sweep or a full turn. Count mismatch retains usable
+geometry; non-CircularArc, invalid, and Polyline states publish none. All nine
+dialects have ASCII/Binary parity. Angle wrapping, signed sweep, endpoint
+derivation, OCS-to-WCS projection, other edge payloads, HATCH applicability,
+CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
