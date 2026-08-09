@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ad**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ae**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -147,6 +147,9 @@ thể:
 - xuất bản segment OCS HATCH CircularArc giữ nguyên tâm, bán kính, độ đầu/cuối
   và hướng từ source chỉ khi đủ sáu semantics khả dụng, không suy ra endpoint,
   sweep hoặc normalize góc;
+- chiếu segment OCS HATCH CircularArc khả dụng thành tâm WCS hữu hạn cùng frame
+  arbitrary-axis đầy đủ, đồng thời giữ nguyên bán kính, độ và hướng mà không
+  suy ra endpoint hoặc sweep;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

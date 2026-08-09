@@ -355,6 +355,14 @@ impl OcsBasis {
         self.z.map(DxfDouble::from_f64)
     }
 
+    pub(crate) fn x_axis(self) -> [DxfDouble; 3] {
+        self.x.map(DxfDouble::from_f64)
+    }
+
+    pub(crate) fn y_axis(self) -> [DxfDouble; 3] {
+        self.y.map(DxfDouble::from_f64)
+    }
+
     pub(crate) fn transform(
         self,
         point: [DxfDouble; 2],

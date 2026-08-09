@@ -2191,6 +2191,18 @@ dialects retain ASCII/Binary parity. Angle wrapping, signed sweep, endpoint
 derivation, OCS-to-WCS projection, other edge payloads, HATCH applicability,
 CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4ae joins each M14.4ad OCS CircularArc with its exact HATCH subclass
+elevation and explicit/defaulted extrusion. The shared arbitrary-axis basis,
+including Autodesk's exact `1/64` polar-cap branch, projects a finite WCS center
+and publishes finite WCS X/Y axes plus the normalized normal. Radius, start/end
+DXF degrees, and Clockwise/Counterclockwise direction pass through unchanged.
+Failure precedence is source geometry, elevation, extrusion, then derived
+transform; each entry retains direct evidence receipts. All nine dialects
+retain ASCII/Binary parity, including non-axis-aligned and negative normals.
+Derived WCS bits are not raw or cross-platform canonical evidence. Angle
+wrapping, signed sweep, endpoint derivation, other edge payloads, HATCH
+applicability, CRUD/write, rendering, and `Complete` support remain open.
+
 DXF-STRUCT-R1a centralizes only the identical fallible read-projection
 mechanics used by the M14.4t-M14.4z HATCH Line-edge chain. A crate-private
 module now owns compact-index conversion, source-identity agreement,

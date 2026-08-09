@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ad can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ae can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1851,6 +1851,18 @@ geometry; non-CircularArc, invalid, and Polyline states publish none. All nine
 dialects have ASCII/Binary parity. Angle wrapping, signed sweep, endpoint
 derivation, OCS-to-WCS projection, other edge payloads, HATCH applicability,
 CRUD/write, rendering, and completion remain open.
+
+M14.4ae joins each M14.4ad OCS CircularArc with its exact HATCH subclass
+elevation and explicit/defaulted extrusion. The shared arbitrary-axis basis,
+including Autodesk's exact `1/64` polar-cap branch, projects a finite WCS
+center and publishes finite WCS X/Y axes plus the normalized normal. Radius,
+start/end DXF degrees, and Clockwise/Counterclockwise direction pass through
+unchanged. Failure precedence is source geometry, elevation, extrusion, then
+derived transform; each entry retains direct evidence receipts. All nine
+dialects have ASCII/Binary parity, including non-axis-aligned and negative
+normals. Derived WCS bits are not raw or cross-platform canonical evidence.
+Angle wrapping, signed sweep, endpoint derivation, other edge payloads, HATCH
+applicability, CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

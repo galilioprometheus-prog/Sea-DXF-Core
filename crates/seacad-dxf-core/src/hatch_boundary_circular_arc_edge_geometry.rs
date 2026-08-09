@@ -188,6 +188,19 @@ impl DxfHatchBoundaryCircularArcEdgeGeometryDirectory {
         self.entries.get(usize::try_from(ordinal).ok()?).copied()
     }
 
+    /// Resolve the HATCH subclass owning one locally indexed geometry entry.
+    pub(crate) fn subclass_ordinal_for_entry(&self, entry_ordinal: u64) -> Option<u64> {
+        let entry = self.entry(entry_ordinal)?;
+        let path_ordinal = entry.semantics().numeric().path_ordinal();
+        self.semantics
+            .numeric_directory()
+            .card_directory()
+            .edge_type_directory()
+            .edge_directory()
+            .path(path_ordinal)
+            .map(|path| path.subclass_ordinal())
+    }
+
     #[must_use]
     pub fn entry_for_edge(
         &self,
