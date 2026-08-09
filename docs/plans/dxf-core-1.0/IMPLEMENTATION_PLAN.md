@@ -3502,6 +3502,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     transformation, HATCH elevation/extrusion application, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4s joins every M14.4r segment to its exact HATCH subclass elevation and
+    explicit/defaulted extrusion, normalizes the nonzero extrusion, and applies
+    the documented arbitrary-axis basis with its exact `1/64` branch. Straight
+    and Arc endpoints plus Arc centers become finite WCS triples with normalized
+    WCS normals; radius, signed sweep, and exact bulge are preserved. Failure
+    precedence is source geometry, elevation, extrusion, then derived transform.
+    All nine dialects retain ASCII/Binary parity, including non-axis-aligned and
+    negative normals. Derived WCS binary64 values are not raw evidence or
+    guaranteed cross-platform canonical bits. Applicability, boundary Edges
+    geometry, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4r can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4s can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1708,6 +1708,18 @@ evidence or guaranteed cross-platform canonical bits. OCS/WCS transformation,
 HATCH elevation/extrusion application, applicability, CRUD/write, and
 completion remain open.
 
+M14.4s joins every M14.4r segment to its exact HATCH subclass elevation and
+explicit/defaulted extrusion, normalizes the nonzero extrusion, and applies the
+documented arbitrary-axis basis with the exact `1/64` polar branch. Straight
+and Arc endpoints plus Arc centers become finite WCS triples with the normalized
+WCS normal; orthonormal projection preserves radius, signed sweep, and exact
+bulge. Source geometry failure has precedence over elevation, which precedes
+extrusion and derived-transform failures. All nine dialects have ASCII/Binary
+parity, including non-axis-aligned and negative normals. Derived binary64 WCS
+values are not raw evidence or guaranteed cross-platform canonical bits.
+Applicability, boundary Edges geometry, CRUD/write, rendering, and completion
+remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the
@@ -2320,8 +2332,8 @@ edit, and write remain unclaimed.
 
 | Format | Version | Read | Preserve | Semantic | Edit/Write |
 |---|---|---:|---:|---:|---:|
-| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + DIMSTYLE name/field semantics + SPLINE numeric evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT/SHAPE orientation and TEXT/SHAPE/TOLERANCE WCS placement + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
-| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + DIMSTYLE name/field semantics + SPLINE numeric evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT/SHAPE orientation and TEXT/SHAPE/TOLERANCE WCS placement + LWPOLYLINE OCS geometry + classic POLYLINE OCS/WCS segment geometry | Not implemented |
+| DXF ASCII | AC1009-AC1032 | Raw framing + dialect/structure/text resolution + exact 15-token ANSI registry | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + DIMSTYLE name/field semantics + SPLINE numeric evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT/SHAPE orientation and TEXT/SHAPE/TOLERANCE WCS placement + LWPOLYLINE OCS geometry + classic POLYLINE and HATCH Polyline OCS/WCS segment geometry | Not implemented |
+| DXF Binary | AC1009-AC1032 | Encoding-verified immutable raw snapshot + EOF envelope + section/group-zero index | Verified Verbatim only | Shared HEADER views + raw records + bidirectional owner evidence + BLOCK topology/semantics + DIMSTYLE name/field semantics + SPLINE numeric evidence + POINT/LINE, CIRCLE/ARC, ELLIPSE, RAY/XLINE, TEXT/MTEXT/SHAPE/TOLERANCE numeric/text-field/layout semantics + TEXT/SHAPE orientation and TEXT/SHAPE/TOLERANCE WCS placement + LWPOLYLINE OCS geometry + classic POLYLINE and HATCH Polyline OCS/WCS segment geometry | Not implemented |
 | DWG | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 | DGN V7/V8 | Any | Out of scope | Out of scope | Out of scope | Out of scope |
 

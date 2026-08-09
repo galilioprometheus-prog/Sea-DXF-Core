@@ -2056,6 +2056,17 @@ raw evidence or guaranteed cross-platform canonical bits. OCS/WCS
 transformation, HATCH elevation/extrusion application, applicability,
 CRUD/write, and `Complete` support remain open.
 
+M14.4s joins every M14.4r segment to its exact HATCH subclass elevation and
+explicit/defaulted extrusion, normalizes the nonzero extrusion, and applies the
+documented arbitrary-axis basis with the exact `1/64` branch. Straight and Arc
+endpoints plus Arc centers become finite WCS triples with normalized WCS
+normals; radius, signed sweep, and exact bulge are preserved. Failure precedence
+is source geometry, elevation, extrusion, then derived transform. All nine
+dialects retain ASCII/Binary parity, including non-axis-aligned and negative
+normals. Derived WCS binary64 values are not raw evidence or guaranteed
+cross-platform canonical bits. Applicability, boundary Edges geometry,
+CRUD/write, rendering, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
