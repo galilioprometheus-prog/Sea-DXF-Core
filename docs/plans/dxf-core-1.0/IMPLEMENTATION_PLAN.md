@@ -3591,6 +3591,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     canonical evidence. The other edge payload families, HATCH applicability,
     CRUD/write, rendering, and completion remain open.
 
+    M14.4aa publishes six ordered cardinality cards for every M14.4u edge typed
+    as CircularArc: OCS CenterX 10, CenterY 20, Radius 40, StartAngle 50,
+    EndAngle 51, and Counterclockwise 73. Each card retains every exact source
+    field and independently reports Absent, Unique, or Multiple without value
+    selection. Edge-count mismatch does not erase cards; non-CircularArc,
+    invalid, and Polyline states publish none while retaining the full M14.4u
+    directory. All nine dialects retain ASCII/Binary parity. Numeric selection,
+    required values, radius/angle/direction semantics, OCS/WCS geometry, other
+    edge payloads, applicability, CRUD/write, rendering, and completion remain
+    open.
+
     DXF-STRUCT-R1a centralizes the identical fallible read-projection mechanics
     used by the M14.4t-M14.4z HATCH Line-edge chain. One crate-private module now
     owns compact-index conversion, source-identity agreement, cancellation, and

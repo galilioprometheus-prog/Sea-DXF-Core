@@ -128,6 +128,7 @@ mod handle_reservation_plan;
 mod handle_resolution;
 mod handle_role;
 mod handseed;
+mod hatch_boundary_circular_arc_edge_card;
 mod hatch_boundary_edge;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_line_edge_card;
@@ -776,6 +777,12 @@ pub use handle_resolution::{
 };
 pub use handle_role::{DxfHandleRoleDirectory, DxfHandleRoleEntry, DxfHandleRoleEvidence};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
+pub use hatch_boundary_circular_arc_edge_card::{
+    DXF_HATCH_BOUNDARY_CIRCULAR_ARC_EDGE_ROLES, DxfHatchBoundaryCircularArcEdgeCard,
+    DxfHatchBoundaryCircularArcEdgeCardDirectory, DxfHatchBoundaryCircularArcEdgeCardState,
+    DxfHatchBoundaryCircularArcEdgeMember, DxfHatchBoundaryCircularArcEdgeMemberRange,
+    DxfHatchBoundaryCircularArcEdgeRole,
+};
 pub use hatch_boundary_edge::{
     DxfHatchBoundaryEdgeCount, DxfHatchBoundaryEdgeCountRelation, DxfHatchBoundaryEdgeDirectory,
     DxfHatchBoundaryEdgeEntry, DxfHatchBoundaryEdgePath, DxfHatchBoundaryEdgePathEntry,

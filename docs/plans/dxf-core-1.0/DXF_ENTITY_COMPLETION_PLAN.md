@@ -2143,6 +2143,17 @@ WCS bits are not raw or cross-platform canonical evidence. The other edge
 payload families, HATCH applicability, CRUD/write, rendering, and `Complete`
 support remain open.
 
+M14.4aa publishes six ordered cardinality cards for every M14.4u edge typed as
+CircularArc: OCS CenterX 10, CenterY 20, Radius 40, StartAngle 50, EndAngle 51,
+and Counterclockwise 73. Each card retains every exact source field and
+independently reports Absent, Unique, or Multiple without value selection.
+Edge-count mismatch does not erase cards; non-CircularArc, invalid, and
+Polyline states publish none while retaining the complete M14.4u directory.
+All nine dialects retain ASCII/Binary parity. Numeric selection, required
+values, radius/angle/direction semantics, OCS/WCS geometry, the other edge
+payload families, HATCH applicability, CRUD/write, rendering, and `Complete`
+support remain open.
+
 DXF-STRUCT-R1a centralizes only the identical fallible read-projection
 mechanics used by the M14.4t-M14.4z HATCH Line-edge chain. A crate-private
 module now owns compact-index conversion, source-identity agreement,

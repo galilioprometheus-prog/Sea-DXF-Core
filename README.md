@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4z**. The current core can:
+Development is complete through checkpoint **M14.4aa**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -132,6 +132,8 @@ Development is complete through checkpoint **M14.4z**. The current core can:
 - project usable HATCH Line-edge OCS segments into finite WCS endpoints and a
   normalized normal using the reviewed elevation, extrusion, and shared
   arbitrary-axis basis;
+- expose six exact per-role cardinality cards for every typed HATCH CircularArc
+  edge: OCS center X/Y, radius, start/end angle, and counterclockwise flag;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
