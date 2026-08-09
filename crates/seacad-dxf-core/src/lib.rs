@@ -137,6 +137,7 @@ mod hatch_polyline_bulge;
 mod hatch_polyline_header;
 mod hatch_polyline_line_geometry;
 mod hatch_polyline_segment;
+mod hatch_polyline_segment_geometry;
 mod hatch_polyline_segment_shape;
 mod hatch_polyline_vertex;
 mod hatch_polyline_vertex_coordinate;
@@ -810,6 +811,11 @@ pub use hatch_polyline_segment::{
     DxfHatchPolylineSegmentEntry, DxfHatchPolylineSegmentPathEntry,
     DxfHatchPolylineSegmentPathState, DxfHatchPolylineSegmentRange,
     DxfHatchPolylineSegmentTopology,
+};
+pub use hatch_polyline_segment_geometry::{
+    DxfHatchPolylineOcsArcSegment, DxfHatchPolylineOcsSegmentGeometry,
+    DxfHatchPolylineSegmentGeometryDirectory, DxfHatchPolylineSegmentGeometryEntry,
+    DxfHatchPolylineSegmentGeometryIssue,
 };
 pub use hatch_polyline_segment_shape::{
     DxfHatchPolylineSegmentShape, DxfHatchPolylineSegmentShapeDirectory,

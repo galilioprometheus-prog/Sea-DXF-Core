@@ -5,7 +5,7 @@ Status: R0 is complete through checkpoint
 future public `seacad-formats` boundary; the current mixed repository remains
 proprietary and no export or publication has occurred. DXF Core 1.0 remains the
 only active product implementation program, currently documented through
-checkpoint M14.4q. Its preserved detailed plans are:
+checkpoint M14.4r. Its preserved detailed plans are:
 
 - [DXF Core 1.0 implementation subplan](plans/dxf-core-1.0/IMPLEMENTATION_PLAN.md)
 - [DXF entity semantic completion subplan](plans/dxf-core-1.0/DXF_ENTITY_COMPLETION_PLAN.md)

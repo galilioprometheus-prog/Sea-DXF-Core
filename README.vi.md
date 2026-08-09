@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4q**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4r**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -111,6 +111,8 @@ thể:
 - cung cấp line geometry OCS với endpoint chính xác cho segment Polyline
   straight, đồng thời giữ outcome typed cho arc, shape bất định và endpoint
   không khả dụng;
+- suy ra center, radius và signed sweep OCS hữu hạn cho Polyline bulge arc,
+  đồng thời trả failure typed cho chord suy biến và số học dẫn xuất non-finite;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

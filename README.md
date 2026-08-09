@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4q**. The current core can:
+Development is complete through checkpoint **M14.4r**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -108,6 +108,8 @@ Development is complete through checkpoint **M14.4q**. The current core can:
   its start vertex while retaining exact bulge evidence;
 - expose exact-endpoint OCS line geometry for straight Polyline segments while
   retaining typed arc, indeterminate-shape, and unavailable-endpoint outcomes;
+- derive finite OCS center, radius, and signed sweep for Polyline bulge arcs,
+  with typed degenerate-chord and non-finite-arithmetic failures;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
