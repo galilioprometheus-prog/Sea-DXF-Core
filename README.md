@@ -155,6 +155,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - require all eight HATCH EllipticArc values, validate the OCS major-axis
   vector and inclusive `1e-6..=1.0` minor/major ratio, and classify direction
   0/1 while preserving exact DXF angles and failure provenance;
+- publish exact-value HATCH EllipticArc OCS segments with center, relative
+  major axis, ratio, unnormalized DXF angles, and direction while retaining
+  scalar and vector-domain failures separately;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

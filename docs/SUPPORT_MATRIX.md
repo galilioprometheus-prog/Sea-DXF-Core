@@ -1904,6 +1904,19 @@ non-EllipticArc, invalid, and Polyline states publish none. All nine dialects
 retain ASCII/Binary parity. OCS/WCS geometry, Spline edge payloads,
 applicability, CRUD/write, rendering, and completion remain open.
 
+M14.4ai publishes one exact-value OCS EllipticArc segment per M14.4ah entry
+only when all eight scalar semantics and the reviewed major-axis relation are
+usable. Center, relative major-axis endpoint vector, minor/major ratio,
+start/end DXF degrees, and Clockwise/Counterclockwise direction pass through
+without arithmetic. Scalar failure carries an exact eight-component mask;
+degenerate or non-finite-derived major-axis magnitude remains a separate typed
+geometry issue with the complete semantic/numeric provenance chain retained.
+Count mismatch does not erase usable geometry; non-EllipticArc, invalid, and
+Polyline states publish none. All nine dialects retain ASCII/Binary parity.
+Angle wrapping, signed sweep, endpoint or minor-axis derivation, trigonometry,
+OCS-to-WCS projection, Spline edge payloads, applicability, CRUD/write,
+rendering, and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

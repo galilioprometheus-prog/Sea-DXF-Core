@@ -159,6 +159,9 @@ thể:
 - bắt buộc đủ tám giá trị HATCH EllipticArc, kiểm tra vector trục lớn OCS và
   tỷ lệ trục nhỏ/trục lớn trong miền đóng `1e-6..=1.0`, đồng thời phân loại
   hướng 0/1 mà vẫn giữ nguyên góc DXF và provenance lỗi;
+- công bố HATCH EllipticArc OCS segment giữ nguyên tâm, trục lớn tương đối,
+  tỷ lệ, góc DXF chưa normalize và hướng, đồng thời tách riêng lỗi scalar với
+  lỗi miền vector;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

@@ -3719,6 +3719,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     All nine dialects retain parity. OCS/WCS geometry, Spline edge payloads,
     applicability, CRUD/write, rendering, and completion remain open.
 
+    M14.4ai publishes one exact-value OCS EllipticArc segment per M14.4ah
+    entry only when all eight scalar semantics and the reviewed major-axis
+    relation are usable. Center, relative major-axis endpoint vector,
+    minor/major ratio, start/end DXF degrees, and Clockwise/Counterclockwise
+    direction pass through without arithmetic. Scalar failure carries an exact
+    eight-component mask; degenerate or non-finite-derived major-axis magnitude
+    remains a separate typed geometry issue with the complete semantic/numeric
+    provenance chain retained. Count mismatch retains usable geometry;
+    non-EllipticArc, invalid, and Polyline states publish none. All nine
+    dialects retain parity. Angle wrapping, signed sweep, endpoint or minor-axis
+    derivation, trigonometry, OCS-to-WCS projection, Spline edge payloads,
+    applicability, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
