@@ -2219,6 +2219,15 @@ directory layers. Both crate-private resolvers still derive the subclass from
 retained exact path evidence. No copied owner state, public API, data layout,
 raw bytes, provenance, typed issues, support claims, or dependencies change.
 
+DXF-STRUCT-R1c shares the HATCH boundary Line and CircularArc edge-card storage
+and collector through one role-parameterized core. Family modules retain their
+fixed role arrays, exact group-code mappings, edge-type filters, document entry
+points, and public family-specific aliases. The role marker keeps generic
+members, cards, and directories family-distinct; shared cardinality state and
+member ranges remain domain-neutral. No evidence is selected or decoded, and
+raw bytes, provenance, typed issues, support claims, dependencies, fixtures,
+schemas, and release artifacts remain unchanged.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

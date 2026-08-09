@@ -134,6 +134,7 @@ mod hatch_boundary_circular_arc_edge_numeric;
 mod hatch_boundary_circular_arc_edge_semantic;
 mod hatch_boundary_circular_arc_edge_wcs_geometry;
 mod hatch_boundary_edge;
+mod hatch_boundary_edge_card;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_line_edge_card;
 mod hatch_boundary_line_edge_coordinate;
@@ -816,6 +817,10 @@ pub use hatch_boundary_edge::{
     DxfHatchBoundaryEdgeCount, DxfHatchBoundaryEdgeCountRelation, DxfHatchBoundaryEdgeDirectory,
     DxfHatchBoundaryEdgeEntry, DxfHatchBoundaryEdgePath, DxfHatchBoundaryEdgePathEntry,
     DxfHatchBoundaryEdgePathIssue, DxfHatchBoundaryEdgePathState, DxfHatchBoundaryEdgeRange,
+};
+pub use hatch_boundary_edge_card::{
+    DxfHatchBoundaryEdgeCard, DxfHatchBoundaryEdgeCardDirectory, DxfHatchBoundaryEdgeCardState,
+    DxfHatchBoundaryEdgeMember, DxfHatchBoundaryEdgeMemberRange,
 };
 pub use hatch_boundary_edge_type::{
     DxfHatchBoundaryEdgeType, DxfHatchBoundaryEdgeTypeDirectory, DxfHatchBoundaryEdgeTypeEntry,

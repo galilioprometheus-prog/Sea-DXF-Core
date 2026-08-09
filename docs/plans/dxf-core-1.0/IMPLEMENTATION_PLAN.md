@@ -3672,6 +3672,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     data-layout, raw-byte, provenance, typed-issue, support, or dependency
     change occurs.
 
+    DXF-STRUCT-R1c replaces the duplicated HATCH boundary Line and CircularArc
+    edge-card storage and collector with one role-parameterized core. The two
+    family modules retain their public names as typed aliases, fixed role order,
+    exact group-code mapping, edge-type filter, and document entry points.
+    Generic members, cards, and directories remain separated by the family role
+    marker; the shared state and member range are domain-neutral. No member is
+    selected and no requiredness, default, numeric, semantic, geometry, raw-byte,
+    provenance, support, dependency, fixture, schema, or release policy changes.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -45,6 +45,14 @@ It does not own group selection, cardinality, defaults, domain validation,
 topology, geometry, or support policy; those decisions remain in their exact
 source-anchored semantic modules.
 
+HATCH boundary-edge card families share one cardinality storage and collection
+core parameterized by the family role type. Each family still owns its fixed
+role order, exact group-code mapping, edge-type filter, and document entry
+point. Public family aliases keep Line and CircularArc card/member/directory
+types distinct through their role marker, while the shared core selects no
+member and applies no requiredness, default, numeric, semantic, or geometry
+policy.
+
 Higher semantic layers retain their immediate lower-layer directory as evidence.
 Shared mechanics may remove duplicated implementation, but must not flatten raw
 provenance, hide typed failures, or let an upper layer reinterpret a lower
