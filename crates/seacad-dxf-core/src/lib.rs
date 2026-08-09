@@ -128,6 +128,7 @@ mod handle_reservation_plan;
 mod handle_resolution;
 mod handle_role;
 mod handseed;
+mod hatch_extrusion;
 mod hatch_scalar_card;
 mod hatch_scalar_evidence;
 mod hatch_scalar_semantic;
@@ -753,6 +754,11 @@ pub use handle_resolution::{
 };
 pub use handle_role::{DxfHandleRoleDirectory, DxfHandleRoleEntry, DxfHandleRoleEvidence};
 pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
+pub use hatch_extrusion::{
+    DxfHatchExtrusion, DxfHatchExtrusionComponent, DxfHatchExtrusionDirectory,
+    DxfHatchExtrusionEntry, DxfHatchExtrusionInputKind, DxfHatchExtrusionIssue,
+    DxfHatchExtrusionUnavailableComponents,
+};
 pub use hatch_scalar_card::{
     DxfHatchScalarCard, DxfHatchScalarCardDirectory, DxfHatchScalarCardMember,
     DxfHatchScalarCardMemberRange, DxfHatchScalarCardState,

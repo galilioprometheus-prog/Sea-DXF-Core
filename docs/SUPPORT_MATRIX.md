@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4d can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4e can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1557,6 +1557,19 @@ tuple relations remain separate. All nine Core dialects have ASCII/Binary
 semantic parity, with the nine high-code roles absent for AC1009. Tuple
 assembly, cross-field relations, nested HATCH state, geometry, applicability,
 CRUD/write, and completion remain open.
+
+M14.4e assembles one exact extrusion tuple for every exact `AcDbHatch`
+subclass from the M14.4d singleton semantics. Each component retains whether
+it was explicit or defaulted, partial explicit tuples use only the reviewed
+component defaults, and the vector is returned bit-exact without
+normalization. Duplicate, malformed, or non-finite component evidence produces
+an exact unavailable-component mask; an all-zero vector, including signed
+zero, produces a separate typed issue. Duplicate subclasses remain isolated,
+and lookup remains source anchored and cancellation aware. Elevation cannot yet
+be assembled safely because its top-level group 10/20 components collide with
+boundary and seed-point fields; that requires stateful HATCH partitioning.
+This checkpoint adds no elevation tuple, coordinate transform, geometry,
+applicability, CRUD/write, or completion claim.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

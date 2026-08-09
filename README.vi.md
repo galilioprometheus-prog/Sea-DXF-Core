@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4d**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4e**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -79,6 +79,9 @@ thể:
   member reference gọn và trạng thái absent/unique/multiple độc lập;
 - chọn singleton scalar HATCH theo kiểu fail-closed, với default extrusion đã
   review, kiểm tra finite/domain và invalid evidence bám source;
+- lắp ráp một tuple extrusion HATCH chính xác, không normalize cho mỗi subclass,
+  đồng thời giữ provenance explicit/defaulted của từng component và outcome
+  typed cho component không khả dụng hoặc vector 0;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

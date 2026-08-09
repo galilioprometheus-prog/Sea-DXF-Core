@@ -3373,6 +3373,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     cross-field relations, nested HATCH state, geometry, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4e assembles one exact extrusion tuple per `AcDbHatch` subclass from
+    the M14.4d singleton semantics. Component values retain explicit/defaulted
+    provenance, partial explicit tuples use only the reviewed `0/0/1`
+    defaults, and no normalization occurs. Duplicate, malformed, or non-finite
+    components produce a compact unavailable mask; exact all-zero vectors,
+    including signed zero, produce a distinct typed issue. Duplicate subclasses
+    remain isolated and all nine dialects retain ASCII/Binary parity. Elevation
+    tuple assembly remains deferred because top-level groups 10/20 collide with
+    boundary and seed-point fields until stateful HATCH partitioning exists.
+    Geometry, applicability, CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -1922,6 +1922,18 @@ parity, including nine AC1009 high-code absences. This checkpoint does not add
 tuple assembly, cross-field/gradient relations, nested boundary or pattern
 state, geometry, applicability, CRUD/write, or `Complete` support.
 
+M14.4e assembles the extrusion X/Y/Z semantics into one exact tuple per
+`AcDbHatch` subclass. Each component preserves explicit or defaulted input
+kind; partially explicit tuples use the reviewed independent `0/0/1` defaults.
+Invalid, duplicate, malformed, or non-finite evidence returns a compact mask of
+unavailable components, while an exact all-zero vector (including signed zero)
+returns a distinct issue. Values remain bit-exact and are not normalized.
+Duplicate subclasses remain independent and all nine Core dialects retain
+ASCII/Binary parity. Elevation assembly is deliberately deferred because
+top-level groups 10/20 collide with boundary and seed-point groups until
+stateful HATCH partitioning exists. No transform, boundary topology, geometry,
+applicability, CRUD/write, or `Complete` support is added.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
