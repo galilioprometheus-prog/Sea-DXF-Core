@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4aa can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ab can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1812,6 +1812,18 @@ available. All nine dialects have ASCII/Binary parity. Numeric selection,
 required values, radius/angle/direction semantics, OCS/WCS geometry, the other
 edge payload families, HATCH applicability, CRUD/write, rendering, and
 completion remain open.
+
+M14.4ab selects the six M14.4aa cards into one source-stable numeric entry per
+CircularArc edge. Unique finite groups 10/20/40/50/51 become Explicit
+binary64 values; unique group 73 becomes an exact signed Int16 without yet
+enforcing its Boolean domain. Every explicit or uniquely invalid value retains
+exact `entity.hatch` field and raw provenance. Absent cards remain Absent;
+Multiple cards retain their count without selecting a winner; malformed ASCII
+values and non-finite Binary doubles remain typed issues. Edge-count mismatch
+does not erase entries; non-CircularArc, invalid, and Polyline states publish
+none. All nine dialects have ASCII/Binary parity. Requiredness, positive-radius,
+angle normalization, direction domain, OCS/WCS geometry, other edge payloads,
+HATCH applicability, CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

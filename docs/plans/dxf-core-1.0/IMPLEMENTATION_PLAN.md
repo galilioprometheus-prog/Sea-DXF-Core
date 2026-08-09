@@ -3602,6 +3602,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     edge payloads, applicability, CRUD/write, rendering, and completion remain
     open.
 
+    M14.4ab selects the six M14.4aa cards into one source-stable numeric entry
+    per CircularArc edge. Unique finite groups 10/20/40/50/51 become Explicit
+    binary64 values; unique group 73 becomes an exact signed Int16 without
+    Boolean-domain enforcement. Explicit and uniquely invalid values retain
+    exact `entity.hatch` field/raw provenance. Absent and Multiple remain
+    distinct; malformed ASCII and non-finite Binary doubles remain typed.
+    Count mismatch retains entries; non-CircularArc, invalid, and Polyline
+    states publish none. All nine dialects retain ASCII/Binary parity.
+    Requiredness, positive-radius, angle normalization, direction domain,
+    OCS/WCS geometry, other edge payloads, applicability, CRUD/write,
+    rendering, and completion remain open.
+
     DXF-STRUCT-R1a centralizes the identical fallible read-projection mechanics
     used by the M14.4t-M14.4z HATCH Line-edge chain. One crate-private module now
     owns compact-index conversion, source-identity agreement, cancellation, and
