@@ -2036,6 +2036,15 @@ resolvable. All nine dialects retain ASCII/Binary parity. Arc center/radius/
 angle construction, line geometry, OCS/WCS transformation, applicability,
 CRUD/write, and `Complete` support remain open.
 
+M14.4q exposes exact-endpoint OCS line geometry for each M14.4p Straight
+segment only when both endpoint tuples are usable. Start and end coordinate
+failures remain distinct typed issues. Arc segments retain their exact bulge,
+Indeterminate segments retain the original shape issue, and shape has
+precedence over coordinate availability. Signed-zero endpoint bits remain
+exact and zero-length straight lines remain valid. All nine dialects retain
+ASCII/Binary parity. Arc center/radius/sweep construction, OCS/WCS
+transformation, applicability, CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

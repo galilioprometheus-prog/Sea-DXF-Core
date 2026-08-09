@@ -3482,6 +3482,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     construction, line geometry, OCS/WCS transformation, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4q projects exact-endpoint OCS line geometry for every M14.4p Straight
+    segment only when both vertex tuples are usable. Start and end failures
+    remain distinct typed outcomes; Arc retains its exact bulge and
+    Indeterminate retains its original issue, with shape taking precedence over
+    coordinate availability. Signed-zero endpoints remain bit-exact and
+    zero-length straight lines are valid. All nine dialects retain ASCII/Binary
+    parity. Arc center/radius/sweep construction, OCS/WCS transformation,
+    applicability, CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

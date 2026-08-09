@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4p can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4q can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1686,6 +1686,15 @@ back to its exact start-bulge provenance and complete topology directory. All
 nine dialects have ASCII/Binary parity. Arc center/radius/angle construction,
 line geometry, OCS/WCS transformation, applicability, CRUD/write, and
 completion remain open.
+
+M14.4q projects one exact-endpoint OCS line result for every M14.4p Straight
+segment. Both endpoint tuples must be usable; start and end failures remain
+distinct typed outcomes. Arc segments retain their exact bulge instead of
+being approximated, and Indeterminate shapes retain the original bulge issue.
+Shape classification has precedence over coordinate availability, signed-zero
+endpoint bits remain exact, and zero-length straight lines are valid. All nine
+dialects have ASCII/Binary parity. Arc center/radius/sweep construction,
+OCS/WCS transformation, applicability, CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
