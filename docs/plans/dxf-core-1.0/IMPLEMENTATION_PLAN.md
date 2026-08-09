@@ -3395,6 +3395,16 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     state, derive geometry, establish applicability, add CRUD/write, or claim
     completion.
 
+    M14.4g selects one required elevation tuple per exact `AcDbHatch` subclass
+    from the M14.4f header range only. Unique groups 10/20/30 retain exact
+    binary64 bits and raw provenance; X/Y must be zero but preserve signed-zero
+    spelling, while Z may be any finite value. Partition failure, absent or
+    duplicate components, malformed ASCII, non-finite Binary, and nonzero X/Y
+    remain typed without defaults. Boundary/seed decoys stay excluded, duplicate
+    subclasses remain isolated, and all nine dialects have ASCII/Binary parity.
+    OCS/WCS transformation, path relations/topology, later nested state,
+    geometry, applicability, CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

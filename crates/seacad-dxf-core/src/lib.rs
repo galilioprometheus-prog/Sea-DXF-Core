@@ -129,6 +129,7 @@ mod handle_resolution;
 mod handle_role;
 mod handseed;
 mod hatch_boundary_partition;
+mod hatch_elevation;
 mod hatch_extrusion;
 mod hatch_scalar_card;
 mod hatch_scalar_evidence;
@@ -758,6 +759,12 @@ pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, D
 pub use hatch_boundary_partition::{
     DxfHatchBoundaryPartition, DxfHatchBoundaryPartitionDirectory, DxfHatchBoundaryPartitionEntry,
     DxfHatchBoundaryPartitionIssue,
+};
+pub use hatch_elevation::{
+    DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,
+    DxfHatchElevationComponentRole, DxfHatchElevationComponentValue, DxfHatchElevationComponents,
+    DxfHatchElevationDirectory, DxfHatchElevationEntry, DxfHatchElevationEntryState,
+    DxfHatchElevationIssue, DxfHatchElevationUnavailableComponents,
 };
 pub use hatch_extrusion::{
     DxfHatchExtrusion, DxfHatchExtrusionComponent, DxfHatchExtrusionDirectory,

@@ -1945,6 +1945,16 @@ boundary payload without yet selecting an elevation tuple. Declared path-count
 relations, path/edge decoding, pattern/seed/gradient partitioning, geometry,
 applicability, CRUD/write, and `Complete` support remain open.
 
+M14.4g consumes the M14.4f header partition to assemble the required HATCH
+elevation point from unique groups 10/20/30. Every component retains exact
+binary64 bits and its raw group. X/Y accept positive or negative zero but reject
+other finite values; Z accepts any finite value. Missing, duplicate, malformed,
+or non-finite components remain typed, and an invalid boundary partition blocks
+the tuple. Boundary and seed decoys cannot enter header cardinality. Duplicate
+subclasses remain independent and all nine Core dialects retain ASCII/Binary
+parity. No defaults, OCS/WCS transform, path relation/topology, later nested
+partition, geometry, applicability, CRUD/write, or `Complete` support is added.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
