@@ -2067,6 +2067,17 @@ normals. Derived WCS binary64 values are not raw evidence or guaranteed
 cross-platform canonical bits. Applicability, boundary Edges geometry,
 CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4t selects one required non-negative group-93 edge count for each HATCH
+boundary path classified as Edges and groups every subsequent group-72 field
+as an exact source-anchored edge marker. Each marker retains a conservative raw
+slice through the next marker or path end; the final slice may retain the path
+source-boundary trailer for later typed partitioning. Declared and observed
+counts remain Matched or Mismatched, and zero edges are valid. Polyline paths,
+unavailable flags, invalid count cardinality/value, and marker-before-count
+states publish no edge entries. All nine dialects retain ASCII/Binary parity.
+Edge-type semantics, line/circular/elliptic/spline fields and geometry, HATCH
+applicability, CRUD/write, rendering, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

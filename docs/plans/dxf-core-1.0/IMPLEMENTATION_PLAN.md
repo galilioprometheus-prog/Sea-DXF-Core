@@ -3513,6 +3513,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     guaranteed cross-platform canonical bits. Applicability, boundary Edges
     geometry, CRUD/write, rendering, and completion remain open.
 
+    M14.4t selects one required non-negative group-93 edge count for each HATCH
+    boundary path classified as Edges and groups every subsequent group-72
+    field as an exact edge marker. Each marker retains a conservative raw slice
+    through the next marker or path end; the final slice may retain the path
+    source-boundary trailer for later typed partitioning. Declared/observed
+    counts remain Matched or Mismatched, and zero edges are valid. Polyline,
+    unavailable flags, invalid count cardinality/value, and marker-before-count
+    states publish no edges. All nine dialects retain ASCII/Binary parity.
+    Edge-type semantics, line/circular/elliptic/spline fields and geometry,
+    HATCH applicability, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

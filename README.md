@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4s**. The current core can:
+Development is complete through checkpoint **M14.4t**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -112,6 +112,8 @@ Development is complete through checkpoint **M14.4s**. The current core can:
   with typed degenerate-chord and non-finite-arithmetic failures;
 - project HATCH Polyline line and arc geometry into finite WCS coordinates from
   exact elevation and normalized explicit/defaulted extrusion evidence;
+- select the required edge count for HATCH boundary paths of kind Edges and
+  group exact group-72 edge anchors with declared/observed reconciliation;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
