@@ -2017,6 +2017,16 @@ Edges and invalid headers publish no coordinate entries, and all nine dialects
 retain ASCII/Binary parity. OCS/WCS transformation, closed-path topology,
 segment geometry, applicability, CRUD/write, and `Complete` support remain open.
 
+M14.4o publishes Polyline segment topology only when M14.4k's group-93 relation
+is matched. Open paths produce consecutive adjacent-vertex segments; closed
+paths add last-to-first closure, including one self-loop for a single vertex,
+while empty paths remain empty. Count mismatch, Edges, and invalid headers yield
+typed path states with no segments. Coordinate failures do not erase known
+topology; compact endpoint ordinals resolve back to the exact M14.4n entries.
+All nine dialects retain ASCII/Binary parity. Segment shape, bulge arc
+construction, OCS/WCS transformation, applicability, CRUD/write, and `Complete`
+support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

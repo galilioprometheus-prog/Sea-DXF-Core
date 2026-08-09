@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4n**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4o**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -104,6 +104,8 @@ thể:
   envelope has-bulge group 72 mà không làm mất numeric evidence nền;
 - lắp ráp tuple OCS X/Y bắt buộc, bám source cho Polyline vertex với signed-zero
   chính xác và mask component không khả dụng có kiểu;
+- dựng topology segment Polyline open/closed theo kiểu fail-closed với endpoint
+  chính xác và đối chiếu declared count, nhưng chưa suy diễn geometry;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

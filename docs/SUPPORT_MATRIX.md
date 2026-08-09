@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4n can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4o can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1666,6 +1666,16 @@ zero remains bit-exact. The complete M14.4m bulge/header chain remains retained.
 Edges and invalid headers publish no coordinate entries, and all nine dialects
 have ASCII/Binary parity. OCS/WCS transformation, closed-path topology, segment
 geometry, applicability, CRUD/write, and completion remain open.
+
+M14.4o builds fail-closed segment topology for every HATCH Polyline path. A
+matched group-93 count publishes consecutive segments for each adjacent vertex;
+closed paths add a final last-to-first segment, including a self-closing segment
+for one vertex, while empty paths remain segment-free. Count mismatches, Edges,
+and invalid headers publish typed path states and no segments. Coordinate
+failure does not erase known topology: every segment retains compact ordinals
+for its exact M14.4n endpoint entries. All nine dialects have ASCII/Binary
+parity. Segment shape, bulge arc construction, OCS/WCS transformation,
+applicability, CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
