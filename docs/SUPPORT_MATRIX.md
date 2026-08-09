@@ -1943,6 +1943,20 @@ Spline fit-data count because the last edge also retains the path-level source-
 boundary-object tail. Numeric values, Boolean/count domains, sequence topology,
 geometry, applicability, CRUD/write, rendering, and completion remain open.
 
+M14.4al selects the five M14.4ak cards into one source-stable numeric entry per
+Spline edge. Unique degree, knot-count, and control-point-count groups
+94/95/96 become exact signed Int32 values; unique rational and periodic groups
+73/74 become exact signed Int16 values. Explicit and uniquely invalid values
+retain exact `entity.hatch` field and raw provenance. Absent cards remain
+Absent; Multiple cards retain their count without selecting a winner, and
+malformed ASCII integers remain typed issues. Signed values, including
+negative counts and non-Boolean flag values, are preserved without domain
+enforcement. Edge-count mismatch does not erase entries; non-Spline, invalid,
+empty, and Polyline states publish none. All nine dialects retain ASCII/Binary
+parity. Group 97 and repeated knot/control-point/weight/fit/tangent payloads
+remain raw. Requiredness, degree/count/flag domains, sequence topology,
+geometry, applicability, CRUD/write, rendering, and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

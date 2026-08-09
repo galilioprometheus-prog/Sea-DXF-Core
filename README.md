@@ -164,6 +164,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - expose five exact cardinality cards for every typed HATCH Spline edge header:
   degree, rational, periodic, knot count, and control-point count, without
   misclassifying repeated payload sequences or the path-level group-97 tail;
+- select those five Spline header cards into exact source-anchored signed
+  Int32 degree/count values and signed Int16 rational/periodic values without
+  enforcing requiredness, Boolean domains, or non-negative count domains;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

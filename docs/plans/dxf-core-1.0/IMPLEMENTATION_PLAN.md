@@ -3759,6 +3759,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     sequence topology, geometry, applicability, CRUD/write, rendering, and
     completion remain open.
 
+    M14.4al selects the five M14.4ak cards into one source-stable numeric entry
+    per Spline edge. Unique degree, knot-count, and control-point-count groups
+    94/95/96 become exact signed Int32 values; unique rational and periodic
+    groups 73/74 become exact signed Int16 values. Explicit and uniquely
+    invalid values retain exact `entity.hatch` field and raw provenance. Absent
+    and Multiple remain distinct, malformed ASCII integers remain typed, and
+    signed values are preserved without Boolean or non-negative count-domain
+    enforcement. Count mismatch retains entries; non-Spline, invalid, empty,
+    and Polyline states publish none. All nine dialects retain parity. Group 97
+    and repeated knot/control-point/weight/fit/tangent payloads remain raw.
+    Requiredness, degree/count/flag domains, sequence topology, geometry,
+    applicability, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

@@ -150,6 +150,7 @@ mod hatch_boundary_partition;
 mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
 mod hatch_boundary_spline_edge_header_card;
+mod hatch_boundary_spline_edge_header_numeric;
 mod hatch_elevation;
 mod hatch_extrusion;
 mod hatch_polyline_bulge;
@@ -910,6 +911,12 @@ pub use hatch_boundary_spline_edge_header_card::{
     DxfHatchBoundarySplineEdgeHeaderCardDirectory, DxfHatchBoundarySplineEdgeHeaderCardState,
     DxfHatchBoundarySplineEdgeHeaderMember, DxfHatchBoundarySplineEdgeHeaderMemberRange,
     DxfHatchBoundarySplineEdgeHeaderRole,
+};
+pub use hatch_boundary_spline_edge_header_numeric::{
+    DxfHatchBoundarySplineEdgeHeaderNumericComponents,
+    DxfHatchBoundarySplineEdgeHeaderNumericDirectory, DxfHatchBoundarySplineEdgeHeaderNumericEntry,
+    DxfHatchBoundarySplineEdgeHeaderNumericI16Value,
+    DxfHatchBoundarySplineEdgeHeaderNumericI32Value, DxfHatchBoundarySplineEdgeHeaderNumericIssue,
 };
 pub use hatch_elevation::{
     DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,

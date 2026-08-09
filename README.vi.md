@@ -168,6 +168,9 @@ thể:
 - cung cấp năm cardinality card chính xác cho header của mỗi HATCH Spline edge
   đã định kiểu: degree, rational, periodic, knot count và control-point count,
   không gán nhầm các dãy payload lặp hay phần đuôi group-97 cấp path;
+- chọn năm Spline header card đó thành giá trị signed Int32 chính xác, bám
+  source cho degree/count và signed Int16 cho rational/periodic mà chưa ép
+  requiredness, miền Boolean hay miền count không âm;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,
