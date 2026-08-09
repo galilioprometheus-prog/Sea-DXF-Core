@@ -133,6 +133,7 @@ mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
 mod hatch_elevation;
 mod hatch_extrusion;
+mod hatch_polyline_bulge;
 mod hatch_polyline_header;
 mod hatch_polyline_vertex;
 mod hatch_polyline_vertex_numeric;
@@ -786,6 +787,10 @@ pub use hatch_extrusion::{
     DxfHatchExtrusion, DxfHatchExtrusionComponent, DxfHatchExtrusionDirectory,
     DxfHatchExtrusionEntry, DxfHatchExtrusionInputKind, DxfHatchExtrusionIssue,
     DxfHatchExtrusionUnavailableComponents,
+};
+pub use hatch_polyline_bulge::{
+    DxfHatchPolylineBulgeDirectory, DxfHatchPolylineBulgeEntry, DxfHatchPolylineBulgeIssue,
+    DxfHatchPolylineBulgeValue,
 };
 pub use hatch_polyline_header::{
     DxfHatchPolylineBoolean, DxfHatchPolylineHeader, DxfHatchPolylineHeaderDirectory,

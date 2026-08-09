@@ -3444,6 +3444,15 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     and has-bulge relations, bulge defaults, OCS/WCS geometry, applicability,
     CRUD/write, and completion remain open.
 
+    M14.4m resolves effective bulges against the unique group-72 has-bulge flag.
+    Absent group 42 receives the documented exact `+0.0` default without raw
+    provenance. Enabled headers preserve explicit or invalid M14.4l semantics;
+    disabled headers reject any present group 42 with a typed relation issue
+    while retaining the underlying numeric directory. Edges and invalid headers
+    publish no bulge entries; all nine dialects retain ASCII/Binary parity.
+    Required-Y semantics, closed topology, OCS/WCS geometry, applicability,
+    CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

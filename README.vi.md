@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4l**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4m**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -100,6 +100,8 @@ thể:
 - chọn numeric semantics X/Y/bulge hữu hạn, bám source cho các vertex Polyline
   đã nhóm, đồng thời giữ tường minh trạng thái absent, duplicate, ASCII lỗi và
   Binary non-finite mà chưa suy diễn default bulge;
+- áp dụng default 0 đã được tài liệu hóa cho bulge Polyline vắng mặt và enforce
+  envelope has-bulge group 72 mà không làm mất numeric evidence nền;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

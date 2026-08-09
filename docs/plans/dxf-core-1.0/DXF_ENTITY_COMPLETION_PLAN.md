@@ -1998,6 +1998,15 @@ nine dialects retain ASCII/Binary parity. Required-Y and has-bulge relations,
 bulge defaults, OCS/WCS geometry, applicability, CRUD/write, and `Complete`
 support remain open.
 
+M14.4m resolves every M14.4l bulge against its unique group-72 has-bulge flag.
+Absent group 42 receives the documented exact `+0.0` default without invented
+raw provenance. If has-bulge is true, explicit values and typed numeric failures
+retain their M14.4l source evidence. If false, any unique or duplicate group 42
+becomes a typed relation failure while the complete underlying numeric state is
+still retained. Edges and invalid headers publish no bulge entries; all nine
+dialects retain ASCII/Binary parity. Required-Y semantics, closed-path topology,
+OCS/WCS geometry, applicability, CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

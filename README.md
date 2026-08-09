@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4l**. The current core can:
+Development is complete through checkpoint **M14.4m**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -98,6 +98,8 @@ Development is complete through checkpoint **M14.4l**. The current core can:
 - select finite source-anchored X/Y/bulge numeric semantics for grouped
   Polyline vertices while keeping absence, duplicates, malformed ASCII, and
   non-finite Binary values explicit and leaving bulge defaults unclaimed;
+- apply the documented zero default to absent Polyline bulges and enforce the
+  group-72 has-bulge envelope without discarding underlying numeric evidence;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value
