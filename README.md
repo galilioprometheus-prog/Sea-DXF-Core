@@ -152,6 +152,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - select source-anchored numeric values for all eight HATCH EllipticArc roles,
   preserving seven finite binary64 values and the raw signed Int16 direction
   flag before requiredness and domain policy;
+- require all eight HATCH EllipticArc values, validate the OCS major-axis
+  vector and inclusive `1e-6..=1.0` minor/major ratio, and classify direction
+  0/1 while preserving exact DXF angles and failure provenance;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

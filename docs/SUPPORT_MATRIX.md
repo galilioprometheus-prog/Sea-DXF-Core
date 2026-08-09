@@ -1890,6 +1890,20 @@ ratio domains, angle normalization, direction domain, OCS/WCS geometry, Spline
 edge payloads, HATCH applicability, CRUD/write, rendering, and completion
 remain open.
 
+M14.4ah promotes all eight EllipticArc components to required, domain-checked
+semantics. Missing fields become source-anchored MissingRequiredValue failures;
+duplicate, malformed ASCII, and non-finite Binary values retain their exact
+M14.4ag issue and available raw provenance. The two-component OCS major-axis
+vector is usable only when its squared magnitude is finite and strictly greater
+than `1e-12`; unavailable components, degenerate vectors, and overflowed
+derived magnitude remain distinct states. The minor/major ratio accepts the
+inclusive `1e-6..=1.0` AcDbEllipse domain, and direction group 73 maps only 0
+to Clockwise and 1 to Counterclockwise. Start/end angles remain exact DXF
+degrees without normalization. Count mismatch retains entries;
+non-EllipticArc, invalid, and Polyline states publish none. All nine dialects
+retain ASCII/Binary parity. OCS/WCS geometry, Spline edge payloads,
+applicability, CRUD/write, rendering, and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

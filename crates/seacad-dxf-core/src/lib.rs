@@ -138,6 +138,7 @@ mod hatch_boundary_edge_card;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_elliptic_arc_edge_card;
 mod hatch_boundary_elliptic_arc_edge_numeric;
+mod hatch_boundary_elliptic_arc_edge_semantic;
 mod hatch_boundary_line_edge_card;
 mod hatch_boundary_line_edge_coordinate;
 mod hatch_boundary_line_edge_geometry;
@@ -840,6 +841,15 @@ pub use hatch_boundary_elliptic_arc_edge_numeric::{
     DxfHatchBoundaryEllipticArcEdgeNumericDoubleValue, DxfHatchBoundaryEllipticArcEdgeNumericEntry,
     DxfHatchBoundaryEllipticArcEdgeNumericIntegerValue,
     DxfHatchBoundaryEllipticArcEdgeNumericIssue,
+};
+pub use hatch_boundary_elliptic_arc_edge_semantic::{
+    DxfHatchBoundaryEllipticArcEdgeDirection, DxfHatchBoundaryEllipticArcEdgeMajorAxisState,
+    DxfHatchBoundaryEllipticArcEdgeMajorAxisUnavailableComponents,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDirectionValue,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDirectory,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDoubleValue,
+    DxfHatchBoundaryEllipticArcEdgeSemanticEntry, DxfHatchBoundaryEllipticArcEdgeSemanticIssue,
+    DxfHatchBoundaryEllipticArcEdgeSemantics,
 };
 pub use hatch_boundary_line_edge_card::{
     DXF_HATCH_BOUNDARY_LINE_EDGE_ROLES, DxfHatchBoundaryLineEdgeCard,
