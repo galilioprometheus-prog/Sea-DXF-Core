@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4e can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4f can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1570,6 +1570,20 @@ be assembled safely because its top-level group 10/20 components collide with
 boundary and seed-point fields; that requires stateful HATCH partitioning.
 This checkpoint adds no elevation tuple, coordinate transform, geometry,
 applicability, CRUD/write, or completion claim.
+
+M14.4f adds the first stateful HATCH grammar partition without decoding a
+boundary path. For every exact `AcDbHatch` subclass, unique group 91 and group
+75 fences in canonical order divide the exact field inventory into a top-level
+header through group 91, opaque boundary-path payload, and a trailing span
+beginning with group 75. All fields and raw payloads remain in source order;
+the partition only publishes ranges and the exact fence fields. Missing or
+duplicate fences and reversed order remain typed issues with no guessed span.
+Duplicate subclasses stay independent and all nine Core dialects have paired
+ASCII/Binary partitions. The isolated header now prevents boundary group 10/20
+collisions from contaminating later elevation work, but this checkpoint does
+not select elevation, compare declared path counts, decode path/edge types,
+partition pattern or seed data, derive geometry, establish applicability, add
+CRUD/write behavior, or claim completion.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

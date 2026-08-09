@@ -3384,6 +3384,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     boundary and seed-point fields until stateful HATCH partitioning exists.
     Geometry, applicability, CRUD/write, and completion remain open.
 
+    M14.4f introduces a fail-closed boundary-envelope partition for every exact
+    `AcDbHatch` subclass. Unique ordered group 91 and group 75 fences split the
+    retained M14.4a fields into a top-level header, opaque boundary payload, and
+    trailing span. Missing, duplicate, or reversed anchors publish typed issues
+    without guessing ranges; duplicate subclasses remain independent. All nine
+    dialects have ASCII/Binary parity. This isolates header elevation 10/20
+    from boundary collisions but does not yet select elevation, validate path
+    counts, decode path/edge topology, partition later pattern/seed/gradient
+    state, derive geometry, establish applicability, add CRUD/write, or claim
+    completion.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

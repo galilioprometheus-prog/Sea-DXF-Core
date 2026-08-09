@@ -1934,6 +1934,17 @@ top-level groups 10/20 collide with boundary and seed-point groups until
 stateful HATCH partitioning exists. No transform, boundary topology, geometry,
 applicability, CRUD/write, or `Complete` support is added.
 
+M14.4f partitions each exact HATCH subclass at the two unambiguous grammar
+fences surrounding boundary-path data. A unique group 91 before a unique group
+75 yields exact header, opaque boundary payload, and trailing ranges over the
+retained M14.4a fields. The two fence fields remain source anchored; missing,
+duplicate, or reversed anchors yield typed issues and no ranges. Duplicate
+subclasses remain independent and all nine Core dialects retain ASCII/Binary
+parity. This isolates pre-boundary elevation groups 10/20 from colliding
+boundary payload without yet selecting an elevation tuple. Declared path-count
+relations, path/edge decoding, pattern/seed/gradient partitioning, geometry,
+applicability, CRUD/write, and `Complete` support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
