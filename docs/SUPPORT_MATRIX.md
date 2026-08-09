@@ -1917,6 +1917,20 @@ Angle wrapping, signed sweep, endpoint or minor-axis derivation, trigonometry,
 OCS-to-WCS projection, Spline edge payloads, applicability, CRUD/write,
 rendering, and completion remain open.
 
+M14.4aj joins every usable M14.4ai OCS EllipticArc segment to its exact HATCH
+subclass elevation and explicit or defaulted extrusion. The shared arbitrary-
+axis basis projects the OCS center as a point and the relative major-axis
+endpoint as a translation-free vector, then publishes the finite WCS center,
+major-axis vector, and normalized normal. The exact source minor/major ratio,
+unnormalized start/end DXF degrees, and direction remain unchanged, while the
+complete OCS geometry and elevation/extrusion receipts stay available. Failure
+precedence is source geometry, elevation, extrusion, then non-finite derived
+geometry. Count mismatch does not erase usable results; non-EllipticArc,
+invalid, empty, and Polyline states publish none. All nine dialects retain
+ASCII/Binary parity. Minor-axis, endpoint, angle wrapping, signed sweep, and
+trigonometric derivation, Spline edge payloads, applicability, CRUD/write,
+rendering, and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the

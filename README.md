@@ -158,6 +158,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - publish exact-value HATCH EllipticArc OCS segments with center, relative
   major axis, ratio, unnormalized DXF angles, and direction while retaining
   scalar and vector-domain failures separately;
+- project usable HATCH EllipticArc OCS segments into a finite WCS center,
+  relative major-axis vector, and normal while preserving the exact ratio,
+  DXF angles, and direction without deriving a minor axis, endpoints, or sweep;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

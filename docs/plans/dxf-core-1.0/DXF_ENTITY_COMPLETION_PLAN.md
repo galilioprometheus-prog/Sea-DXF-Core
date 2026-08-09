@@ -2279,6 +2279,19 @@ sweep, endpoint or minor-axis derivation, trigonometry, OCS-to-WCS projection,
 Spline edge payloads, applicability, CRUD/write, rendering, and `Complete`
 support remain open.
 
+M14.4aj joins every usable M14.4ai OCS EllipticArc segment to its exact HATCH
+subclass elevation and explicit or defaulted extrusion. The shared arbitrary-
+axis basis projects the center as an OCS point with elevation and the relative
+major-axis endpoint as a translation-free vector. Each result publishes the
+finite WCS center, WCS major-axis vector, and normalized normal while retaining
+the exact source ratio, unnormalized start/end DXF degrees, direction, complete
+OCS geometry, and elevation/extrusion receipts. Failure precedence is source
+geometry, elevation, extrusion, then non-finite derived geometry. Count
+mismatch retains usable results; non-EllipticArc, invalid, empty, and Polyline
+states publish none. All nine dialects retain parity. Minor-axis, endpoint,
+angle wrapping, signed sweep, and trigonometric derivation, Spline edge
+payloads, applicability, CRUD/write, rendering, and `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

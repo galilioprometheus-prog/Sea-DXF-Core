@@ -3732,6 +3732,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     derivation, trigonometry, OCS-to-WCS projection, Spline edge payloads,
     applicability, CRUD/write, rendering, and completion remain open.
 
+    M14.4aj joins every usable M14.4ai OCS EllipticArc segment to its exact
+    HATCH subclass elevation and explicit or defaulted extrusion. The shared
+    arbitrary-axis basis projects the center as an OCS point with elevation and
+    the relative major-axis endpoint as a translation-free vector. Each result
+    publishes the finite WCS center, WCS major-axis vector, and normalized
+    normal while retaining the exact source ratio, unnormalized start/end DXF
+    degrees, direction, complete OCS geometry, and elevation/extrusion
+    receipts. Failure precedence is source geometry, elevation, extrusion,
+    then non-finite derived geometry. Count mismatch retains usable results;
+    non-EllipticArc, invalid, empty, and Polyline states publish none. All nine
+    dialects retain parity. Minor-axis, endpoint, angle wrapping, signed sweep,
+    and trigonometric derivation, Spline edge payloads, applicability,
+    CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

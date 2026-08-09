@@ -162,6 +162,9 @@ thể:
 - công bố HATCH EllipticArc OCS segment giữ nguyên tâm, trục lớn tương đối,
   tỷ lệ, góc DXF chưa normalize và hướng, đồng thời tách riêng lỗi scalar với
   lỗi miền vector;
+- chiếu HATCH EllipticArc OCS segment khả dụng thành tâm WCS, vector trục lớn
+  tương đối và pháp tuyến hữu hạn, đồng thời giữ nguyên tỷ lệ, góc DXF và hướng
+  mà không suy ra trục nhỏ, endpoint hay sweep;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

@@ -382,6 +382,24 @@ impl OcsBasis {
             Err(DxfHatchPolylineWcsGeometryIssue::NonFiniteDerivedGeometry)
         }
     }
+
+    pub(crate) fn transform_vector(
+        self,
+        vector: [DxfDouble; 2],
+    ) -> Result<[DxfDouble; 3], DxfHatchPolylineWcsGeometryIssue> {
+        let x = vector[0].to_f64();
+        let y = vector[1].to_f64();
+        let value = [
+            x * self.x[0] + y * self.y[0],
+            x * self.x[1] + y * self.y[1],
+            x * self.x[2] + y * self.y[2],
+        ];
+        if value.iter().all(|component| component.is_finite()) {
+            Ok(value.map(DxfDouble::from_f64))
+        } else {
+            Err(DxfHatchPolylineWcsGeometryIssue::NonFiniteDerivedGeometry)
+        }
+    }
 }
 
 fn normalize(vector: [f64; 3]) -> Result<[f64; 3], DxfHatchPolylineWcsGeometryIssue> {
