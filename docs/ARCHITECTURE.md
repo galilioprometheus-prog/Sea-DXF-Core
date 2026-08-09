@@ -50,6 +50,13 @@ Shared mechanics may remove duplicated implementation, but must not flatten raw
 provenance, hide typed failures, or let an upper layer reinterpret a lower
 layer's domain contract.
 
+When an upper projection needs ownership metadata, it asks its immediate
+lower-layer directory through a crate-private resolver keyed by that
+directory's local entry ordinal. The upper projection must not navigate the
+lower directory's complete ownership graph. This keeps lower-layer topology
+refactorable while the resolver still derives every answer from retained exact
+evidence rather than copied or guessed state.
+
 ## Future boundaries
 
 After DXF Core 1.0, the planned open format layer consists of one minimal

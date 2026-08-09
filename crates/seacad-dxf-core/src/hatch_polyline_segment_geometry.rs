@@ -151,6 +151,17 @@ impl DxfHatchPolylineSegmentGeometryDirectory {
         self.entries.get(usize::try_from(ordinal).ok()?).copied()
     }
 
+    /// Resolve the HATCH subclass owning one locally indexed geometry entry.
+    pub(crate) fn subclass_ordinal_for_entry(&self, entry_ordinal: u64) -> Option<u64> {
+        let entry = self.entry(entry_ordinal)?;
+        let segment = entry.line_geometry().shape().segment();
+        self.line_geometries
+            .shape_directory()
+            .segment_directory()
+            .path(segment.path_ordinal())
+            .map(|path| path.path().subclass_ordinal())
+    }
+
     #[must_use]
     pub fn entries_for_path(
         &self,

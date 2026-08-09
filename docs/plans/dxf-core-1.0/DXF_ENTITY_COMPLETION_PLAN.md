@@ -2152,6 +2152,13 @@ cardinality, numeric, coordinate, OCS, and WCS policy. Public APIs, raw bytes,
 provenance, typed issues, support claims, dependencies, and test count remain
 unchanged.
 
+DXF-STRUCT-R1b moves HATCH subclass ownership lookup behind each immediate
+geometry directory. The Polyline and boundary Line-edge WCS constructors now
+resolve a local geometry-entry ordinal without navigating three or five lower
+directory layers. Both crate-private resolvers still derive the subclass from
+retained exact path evidence. No copied owner state, public API, data layout,
+raw bytes, provenance, typed issues, support claims, or dependencies change.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

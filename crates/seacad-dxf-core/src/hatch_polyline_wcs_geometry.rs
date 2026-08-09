@@ -158,14 +158,9 @@ impl DxfHatchPolylineWcsGeometryDirectory {
             .map_err(|_| out_of_memory())?;
         for source in source_geometries.entries().iter().copied() {
             ensure_not_cancelled(cancellation)?;
-            let segment = source.line_geometry().shape().segment();
-            let path = source_geometries
-                .line_geometry_directory()
-                .shape_directory()
-                .segment_directory()
-                .path(segment.path_ordinal())
+            let subclass_ordinal = source_geometries
+                .subclass_ordinal_for_entry(source.ordinal())
                 .ok_or_else(invalid_internal_data)?;
-            let subclass_ordinal = path.path().subclass_ordinal();
             let elevation = elevations
                 .entry_for_subclass(subclass_ordinal)
                 .ok_or_else(invalid_internal_data)?;

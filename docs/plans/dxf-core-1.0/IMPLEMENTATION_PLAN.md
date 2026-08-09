@@ -3600,6 +3600,14 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     provenance, typed issues, support claims, dependencies, and test count are
     unchanged; production removes more code than it adds.
 
+    DXF-STRUCT-R1b moves HATCH subclass ownership lookup behind each immediate
+    geometry directory. The Polyline and boundary Line-edge WCS constructors
+    now resolve a local geometry-entry ordinal without navigating three or five
+    lower directory layers. Both crate-private resolvers still derive the
+    subclass from the retained path evidence; no copied owner state, public API,
+    data-layout, raw-byte, provenance, typed-issue, support, or dependency
+    change occurs.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

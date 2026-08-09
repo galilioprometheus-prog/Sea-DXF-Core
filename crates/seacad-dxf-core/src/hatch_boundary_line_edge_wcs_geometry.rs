@@ -100,23 +100,15 @@ impl DxfHatchBoundaryLineEdgeWcsGeometryDirectory {
         ensure_source(document.source_id(), source_geometries.source_id())?;
         ensure_source(document.source_id(), elevations.source_id())?;
         ensure_source(document.source_id(), extrusions.source_id())?;
-        let edge_directory = source_geometries
-            .coordinate_directory()
-            .numeric_directory()
-            .card_directory()
-            .edge_type_directory()
-            .edge_directory();
         let mut entries = Vec::new();
         entries
             .try_reserve(source_geometries.entries().len())
             .map_err(|_| out_of_memory())?;
         for source in source_geometries.entries().iter().copied() {
             ensure_not_cancelled(cancellation)?;
-            let path_ordinal = source.coordinates().numeric().path_ordinal();
-            let path = edge_directory
-                .path(path_ordinal)
+            let subclass_ordinal = source_geometries
+                .subclass_ordinal_for_entry(source.ordinal())
                 .ok_or_else(invalid_internal_data)?;
-            let subclass_ordinal = path.subclass_ordinal();
             let elevation = elevations
                 .entry_for_subclass(subclass_ordinal)
                 .ok_or_else(invalid_internal_data)?;
