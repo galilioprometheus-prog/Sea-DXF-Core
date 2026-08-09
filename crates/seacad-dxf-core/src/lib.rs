@@ -131,6 +131,7 @@ mod handseed;
 mod hatch_boundary_edge;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_line_edge_card;
+mod hatch_boundary_line_edge_coordinate;
 mod hatch_boundary_line_edge_numeric;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
@@ -786,6 +787,13 @@ pub use hatch_boundary_line_edge_card::{
     DxfHatchBoundaryLineEdgeCardDirectory, DxfHatchBoundaryLineEdgeCardState,
     DxfHatchBoundaryLineEdgeMember, DxfHatchBoundaryLineEdgeMemberRange,
     DxfHatchBoundaryLineEdgeRole,
+};
+pub use hatch_boundary_line_edge_coordinate::{
+    DxfHatchBoundaryLineEdgeCoordinateDirectory, DxfHatchBoundaryLineEdgeCoordinateEntry,
+    DxfHatchBoundaryLineEdgeCoordinateIssue, DxfHatchBoundaryLineEdgeCoordinateValue,
+    DxfHatchBoundaryLineEdgeCoordinates, DxfHatchBoundaryLineEdgeEndpointIssue,
+    DxfHatchBoundaryLineEdgeOcsEndpoints, DxfHatchBoundaryLineEdgeOcsPoint,
+    DxfHatchBoundaryLineEdgeUnavailableCoordinates,
 };
 pub use hatch_boundary_line_edge_numeric::{
     DxfHatchBoundaryLineEdgeNumericComponents, DxfHatchBoundaryLineEdgeNumericDirectory,

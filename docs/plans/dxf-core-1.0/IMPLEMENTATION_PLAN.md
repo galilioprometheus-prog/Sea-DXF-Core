@@ -3557,6 +3557,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     the other edge payload families, HATCH applicability, CRUD/write,
     rendering, and completion remain open.
 
+    M14.4x promotes all four M14.4w Line-edge components to required coordinate
+    semantics. Four usable finite values assemble exact OCS start/end points
+    with bit-exact signed zero. Absence becomes a source-anchored
+    MissingRequiredValue; duplicate, malformed ASCII, and non-finite Binary
+    values retain their original typed numeric issue and available raw
+    provenance. Failure exposes an exact StartX/StartY/EndX/EndY unavailable
+    mask while retaining the complete numeric/card/type/grouping chain. Count
+    mismatch does not erase usable endpoints; non-Line, invalid, and Polyline
+    paths publish no coordinate entries. All nine dialects retain ASCII/Binary
+    parity. OCS/WCS Line geometry, the other edge payload families, HATCH
+    applicability, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

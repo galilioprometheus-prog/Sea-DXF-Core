@@ -2110,6 +2110,18 @@ ASCII/Binary parity. Required OCS endpoint tuples, OCS/WCS Line geometry, the
 other edge payload families, HATCH applicability, CRUD/write, rendering, and
 `Complete` support remain open.
 
+M14.4x promotes all four M14.4w Line-edge components to required coordinate
+semantics. Four usable finite values assemble exact OCS start/end points with
+bit-exact signed zero. Absence becomes a source-anchored MissingRequiredValue;
+duplicate, malformed ASCII, and non-finite Binary values retain their original
+typed numeric issue and available raw provenance. Failure exposes an exact
+StartX/StartY/EndX/EndY unavailable mask while retaining the full numeric/card/
+type/grouping chain. Count mismatch does not erase usable endpoints; non-Line,
+invalid, and Polyline paths publish no coordinate entries. All nine dialects
+retain ASCII/Binary parity. OCS/WCS Line geometry, the other edge payload
+families, HATCH applicability, CRUD/write, rendering, and `Complete` support
+remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
