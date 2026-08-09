@@ -3681,6 +3681,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     selected and no requiredness, default, numeric, semantic, geometry, raw-byte,
     provenance, support, dependency, fixture, schema, or release policy changes.
 
+    M14.4af publishes eight ordered cardinality cards for every M14.4u edge
+    typed as EllipticArc: OCS CenterX 10, CenterY 20, relative major-axis
+    EndpointX 11 and EndpointY 21, MinorToMajorRatio 40, StartAngle 50,
+    EndAngle 51, and Counterclockwise 73. Each card retains every exact source
+    field and independently reports Absent, Unique, or Multiple without value
+    selection. Edge-count mismatch does not erase cards; non-EllipticArc,
+    invalid, and Polyline states publish none while retaining the complete
+    edge-card/type/grouping chain. All nine dialects retain ASCII/Binary parity.
+    Numeric selection, required values, vector/ratio/angle/direction semantics,
+    OCS/WCS geometry, Spline edge payloads, applicability, CRUD/write,
+    rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

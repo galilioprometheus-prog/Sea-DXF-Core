@@ -2228,6 +2228,18 @@ member ranges remain domain-neutral. No evidence is selected or decoded, and
 raw bytes, provenance, typed issues, support claims, dependencies, fixtures,
 schemas, and release artifacts remain unchanged.
 
+M14.4af publishes eight ordered cardinality cards for every M14.4u edge typed
+as EllipticArc: OCS CenterX 10, CenterY 20, relative major-axis EndpointX 11
+and EndpointY 21, MinorToMajorRatio 40, StartAngle 50, EndAngle 51, and
+Counterclockwise 73. Cards retain every exact source field and independently
+report Absent, Unique, or Multiple without selecting a value. Edge-count
+mismatch does not erase cards; non-EllipticArc, invalid, empty, and Polyline
+states publish none while retaining the complete shared card/type/grouping
+chain. All nine dialects retain ASCII/Binary parity. Numeric selection,
+requiredness, vector/ratio/angle/direction semantics, OCS/WCS geometry, Spline
+edge payloads, HATCH applicability, CRUD/write, rendering, and `Complete`
+support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

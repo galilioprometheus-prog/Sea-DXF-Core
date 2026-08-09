@@ -150,6 +150,9 @@ thể:
 - chiếu segment OCS HATCH CircularArc khả dụng thành tâm WCS hữu hạn cùng frame
   arbitrary-axis đầy đủ, đồng thời giữ nguyên bán kính, độ và hướng mà không
   suy ra endpoint hoặc sweep;
+- cung cấp tám cardinality card chính xác theo role cho mỗi HATCH EllipticArc
+  edge đã định kiểu: tâm OCS X/Y, endpoint trục lớn tương đối X/Y, tỷ lệ
+  trục nhỏ/trục lớn, góc đầu/cuối và cờ ngược chiều kim đồng hồ;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

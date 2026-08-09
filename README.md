@@ -146,6 +146,9 @@ Development is complete through checkpoint **M14.4ae**. The current core can:
 - project usable HATCH CircularArc OCS segments into a finite WCS center and
   complete arbitrary-axis frame while preserving exact radius, degrees, and
   direction without endpoint or sweep derivation;
+- expose eight exact per-role cardinality cards for every typed HATCH
+  EllipticArc edge: OCS center X/Y, relative major-axis endpoint X/Y,
+  minor-to-major ratio, start/end angle, and counterclockwise flag;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

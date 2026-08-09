@@ -1864,6 +1864,19 @@ normals. Derived WCS bits are not raw or cross-platform canonical evidence.
 Angle wrapping, signed sweep, endpoint derivation, other edge payloads, HATCH
 applicability, CRUD/write, rendering, and completion remain open.
 
+M14.4af publishes eight ordered cardinality cards for every M14.4u edge typed
+as EllipticArc: OCS CenterX group 10, CenterY group 20, relative major-axis
+EndpointX group 11 and EndpointY group 21, MinorToMajorRatio group 40,
+StartAngle group 50, EndAngle group 51, and Counterclockwise group 73. Each
+card retains every exact source field and independently reports Absent, Unique,
+or Multiple without selecting a value. Declared/observed edge-count mismatch
+does not erase cards; Line, CircularArc, Spline, invalid, empty, and Polyline
+states publish no EllipticArc cards while the complete shared card/type/grouping
+chain remains available. All nine dialects have ASCII/Binary parity. Numeric
+selection, required values, vector/ratio/angle/direction semantics, OCS/WCS
+geometry, Spline edge payloads, HATCH applicability, CRUD/write, rendering,
+and completion remain open.
+
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
 must reparse as the documented zero value in the `Defaulted` state before the
