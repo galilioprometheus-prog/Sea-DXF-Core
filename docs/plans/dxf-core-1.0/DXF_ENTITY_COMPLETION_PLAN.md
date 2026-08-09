@@ -1982,6 +1982,13 @@ malformed ASCII, and domain failures remain typed. All nine dialects retain
 ASCII/Binary parity. Vertex grouping/count relation, geometry, applicability,
 CRUD/write, and `Complete` support remain open.
 
+M14.4k groups Polyline vertex fields by exact group-10 anchors. Group 20 and
+42 occurrences remain per-vertex Y/bulge members; pre-anchor 20/42 remain
+orphans. Fixed cardinality and group-93 count comparison are explicit. Edges
+and invalid headers publish no vertices; all nine dialects retain ASCII/Binary
+parity. Numeric semantics, bulge defaults, geometry, CRUD/write, and `Complete`
+remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

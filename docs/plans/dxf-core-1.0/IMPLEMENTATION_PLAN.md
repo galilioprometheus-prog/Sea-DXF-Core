@@ -3430,6 +3430,12 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     parity. Vertex grouping/count relation, geometry, applicability, CRUD/write,
     and completion remain open.
 
+    M14.4k groups Polyline vertices by group 10, attaches following group 20/42
+    members, retains pre-anchor orphans, publishes X/Y/bulge cardinality, and
+    compares observed vertices with group 93. Edges and invalid headers publish
+    no vertices; all nine dialects retain ASCII/Binary parity. Numeric semantics,
+    bulge defaults, geometry, CRUD/write, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

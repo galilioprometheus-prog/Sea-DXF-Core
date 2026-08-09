@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4j can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4k can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1629,6 +1629,15 @@ fields, malformed ASCII, and out-of-domain values remain typed. All nine Core
 dialects have ASCII/Binary parity. Vertex grouping, count reconciliation,
 payload geometry, handles, applicability, CRUD/write, and completion remain
 open.
+
+M14.4k groups recognized Polyline vertex fields conservatively: every group 10
+starts a vertex, while following group 20 and optional group 42 occurrences
+belong to that vertex until the next group 10. Recognized 20/42 fields before
+the first anchor remain explicit orphans. Fixed X/Y/bulge cardinality and the
+group-93 declared-versus-observed vertex relation remain source stable. Edges
+and invalid headers publish no vertices. All nine dialects have ASCII/Binary
+parity. Numeric vertex semantics, bulge defaults, geometry, applicability,
+CRUD/write, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and
