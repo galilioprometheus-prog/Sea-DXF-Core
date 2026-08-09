@@ -3544,6 +3544,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     families, HATCH applicability, CRUD/write, rendering, and completion remain
     open.
 
+    M14.4w selects the four M14.4v cards into one source-stable numeric entry
+    per Line edge. Unique finite doubles become Explicit values with exact
+    field/raw provenance and bit-exact signed zero. Absent cards remain Absent
+    pending required-coordinate semantics; Multiple cards retain their count
+    without selecting a winner; malformed ASCII and non-finite Binary values
+    remain typed InvalidAsciiNumber and NonFiniteDouble issues with source
+    provenance where one raw value exists. Count mismatch does not erase usable
+    entries. Non-Line and invalid typed edges publish no Line numeric entry
+    while the complete M14.4v chain remains available. All nine dialects retain
+    ASCII/Binary parity. Required OCS endpoint tuples, OCS/WCS Line geometry,
+    the other edge payload families, HATCH applicability, CRUD/write,
+    rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
