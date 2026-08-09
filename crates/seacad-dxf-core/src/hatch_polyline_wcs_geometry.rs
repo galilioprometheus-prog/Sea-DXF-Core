@@ -336,14 +336,16 @@ fn project_arc(
 }
 
 #[derive(Clone, Copy)]
-struct OcsBasis {
+pub(crate) struct OcsBasis {
     x: [f64; 3],
     y: [f64; 3],
     z: [f64; 3],
 }
 
 impl OcsBasis {
-    fn new(extrusion: DxfHatchExtrusion) -> Result<Self, DxfHatchPolylineWcsGeometryIssue> {
+    pub(crate) fn new(
+        extrusion: DxfHatchExtrusion,
+    ) -> Result<Self, DxfHatchPolylineWcsGeometryIssue> {
         let z = normalize(extrusion.values().map(DxfDouble::to_f64))?;
         let x = if z[0].abs() < 1.0 / 64.0 && z[1].abs() < 1.0 / 64.0 {
             normalize([z[2], 0.0, -z[0]])?
@@ -354,11 +356,11 @@ impl OcsBasis {
         Ok(Self { x, y, z })
     }
 
-    fn normal(self) -> [DxfDouble; 3] {
+    pub(crate) fn normal(self) -> [DxfDouble; 3] {
         self.z.map(DxfDouble::from_f64)
     }
 
-    fn transform(
+    pub(crate) fn transform(
         self,
         point: [DxfDouble; 2],
         elevation: DxfHatchElevation,

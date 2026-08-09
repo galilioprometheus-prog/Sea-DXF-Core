@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4y**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4z**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -132,6 +132,9 @@ thể:
 - cung cấp segment OCS chính xác cho HATCH Line edge bằng cách truyền nguyên
   endpoint khả dụng mà không suy diễn số học, đồng thời giữ typed lỗi endpoint
   và đường thẳng độ dài 0;
+- chiếu segment OCS khả dụng của HATCH Line edge sang endpoint WCS hữu hạn cùng
+  normal đã normalize bằng elevation, extrusion và arbitrary-axis basis dùng
+  chung đã review;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

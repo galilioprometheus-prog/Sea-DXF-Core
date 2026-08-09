@@ -2132,6 +2132,17 @@ and Polyline paths publish no Line geometry entries. All nine dialects retain
 ASCII/Binary parity. OCS-to-WCS projection, the other edge payload families,
 HATCH applicability, CRUD/write, rendering, and `Complete` support remain open.
 
+M14.4z joins each M14.4y OCS Line with its exact HATCH subclass elevation and
+explicit/defaulted extrusion, then reuses the reviewed M14.4s arbitrary-axis
+basis with the exact `1/64` branch. Usable Lines become finite WCS start/end
+triples with a normalized normal. Failure precedence remains source geometry,
+elevation, extrusion, then derived transform, and the complete lower-layer
+directories plus per-entry receipts remain available. All nine dialects retain
+ASCII/Binary parity, including non-axis-aligned and negative normals. Derived
+WCS bits are not raw or cross-platform canonical evidence. The other edge
+payload families, HATCH applicability, CRUD/write, rendering, and `Complete`
+support remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

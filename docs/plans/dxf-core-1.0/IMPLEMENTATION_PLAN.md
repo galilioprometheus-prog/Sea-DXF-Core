@@ -3580,6 +3580,17 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     payload families, HATCH applicability, CRUD/write, rendering, and
     completion remain open.
 
+    M14.4z joins each M14.4y OCS Line with its exact HATCH subclass elevation
+    and explicit/defaulted extrusion, then reuses the reviewed M14.4s arbitrary-
+    axis basis with the exact `1/64` branch. Usable Lines become finite WCS
+    start/end triples with a normalized normal. Failure precedence remains
+    source geometry, elevation, extrusion, then derived transform, and the
+    complete lower-layer directories plus per-entry receipts remain available.
+    All nine dialects retain ASCII/Binary parity, including non-axis-aligned
+    and negative normals. Derived WCS bits are not raw or cross-platform
+    canonical evidence. The other edge payload families, HATCH applicability,
+    CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

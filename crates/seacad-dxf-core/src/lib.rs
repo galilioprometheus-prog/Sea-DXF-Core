@@ -134,6 +134,7 @@ mod hatch_boundary_line_edge_card;
 mod hatch_boundary_line_edge_coordinate;
 mod hatch_boundary_line_edge_geometry;
 mod hatch_boundary_line_edge_numeric;
+mod hatch_boundary_line_edge_wcs_geometry;
 mod hatch_boundary_partition;
 mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
@@ -804,6 +805,10 @@ pub use hatch_boundary_line_edge_numeric::{
     DxfHatchBoundaryLineEdgeNumericComponents, DxfHatchBoundaryLineEdgeNumericDirectory,
     DxfHatchBoundaryLineEdgeNumericEntry, DxfHatchBoundaryLineEdgeNumericIssue,
     DxfHatchBoundaryLineEdgeNumericValue,
+};
+pub use hatch_boundary_line_edge_wcs_geometry::{
+    DxfHatchBoundaryLineEdgeWcsGeometryDirectory, DxfHatchBoundaryLineEdgeWcsGeometryEntry,
+    DxfHatchBoundaryLineEdgeWcsGeometryIssue, DxfHatchBoundaryLineEdgeWcsSegment,
 };
 pub use hatch_boundary_partition::{
     DxfHatchBoundaryPartition, DxfHatchBoundaryPartitionDirectory, DxfHatchBoundaryPartitionEntry,
