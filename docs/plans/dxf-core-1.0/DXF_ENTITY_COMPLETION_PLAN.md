@@ -2355,6 +2355,18 @@ Binary parity. Point tuple/cardinality construction, count decoding and
 relations, weight defaults, numeric values, topology beyond phase order,
 geometry, applicability, CRUD/write, rendering, and `Complete` remain open.
 
+M14.4ap groups exact control-point group-10 and fit-point group-11 anchors
+inside every available M14.4ao Spline sequence. Each anchor owns following Y
+and optional control-point weight fields until the next same-kind X anchor.
+Duplicate components and pre-anchor Y/weight orphans remain in exact source
+order, empty phases retain explicit zero counts, and an unavailable sequence
+remains a typed lower-layer issue. Non-Spline edges publish no point entry;
+edge-count mismatch retains otherwise available tuples; all nine dialects
+retain ASCII/Binary parity. Numeric decoding, required-component selection,
+weight default 1, header-to-observed count relations, knot/tangent
+cardinality, topology, geometry, applicability, CRUD/write, rendering, and
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

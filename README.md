@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4ao**. The current core can:
+Development is complete through checkpoint **M14.4ap**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -177,6 +177,10 @@ Development is complete through checkpoint **M14.4ao**. The current core can:
 - partition Spline edge data into exact header, knot, control-point, fit-point,
   and tangent phases while preserving empty phases and typing missing or
   duplicate fit counts, out-of-order fields, and unexpected group codes;
+- group exact HATCH Spline control-point and fit-point tuples by their
+  documented X anchors, retaining repeated Y/weight members, pre-anchor
+  orphans, empty sequences, and unavailable lower sequence issues without
+  selecting numeric values or applying defaults;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

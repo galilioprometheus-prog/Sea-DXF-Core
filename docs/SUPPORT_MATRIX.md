@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ao can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ap can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1994,6 +1994,18 @@ edge/type evidence. Declared/observed edge-count mismatch retains otherwise
 available sequences, and all nine dialects retain ASCII/Binary parity. Point
 tuple/cardinality construction, count decoding and count relations, weight
 defaults, numeric values, topology beyond phase order, geometry,
+applicability, CRUD/write, rendering, and completion remain open.
+
+M14.4ap groups the exact group-10 control-point and group-11 fit-point anchors
+inside every available M14.4ao Spline sequence. Each anchor owns its following
+Y and optional control-point weight fields until the next same-kind X anchor;
+duplicate Y/weight members and pre-anchor Y/weight orphans remain in exact
+source order. Empty control and fit phases publish explicit zero counts, while
+an unavailable M14.4ao sequence remains a typed lower-layer issue and
+non-Spline edges publish no point entry. All nine dialects retain ASCII/Binary
+parity, and edge-count mismatch does not erase otherwise available tuples.
+Numeric decoding, required-component selection, weight default 1, header-to-
+observed count relations, knot/tangent cardinality, topology, geometry,
 applicability, CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch

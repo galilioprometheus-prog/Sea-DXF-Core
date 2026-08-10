@@ -3813,6 +3813,18 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     numeric values, topology beyond phase order, geometry, applicability,
     CRUD/write, rendering, and completion remain open.
 
+    M14.4ap groups exact control-point group-10 and fit-point group-11 anchors
+    inside every available M14.4ao Spline sequence. Each anchor owns following
+    Y and optional control-point weight fields until the next same-kind X
+    anchor. Duplicate components and pre-anchor Y/weight orphans remain in
+    exact source order, empty phases retain explicit zero counts, and an
+    unavailable sequence remains a typed lower-layer issue. Non-Spline edges
+    publish no point entry; edge-count mismatch retains otherwise available
+    tuples; all nine dialects retain ASCII/Binary parity. Numeric decoding,
+    required-component selection, weight default 1, header-to-observed count
+    relations, knot/tangent cardinality, topology, geometry, applicability,
+    CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
