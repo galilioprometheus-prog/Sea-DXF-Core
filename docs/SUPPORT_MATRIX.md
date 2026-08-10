@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ap can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4aq can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -2007,6 +2007,18 @@ parity, and edge-count mismatch does not erase otherwise available tuples.
 Numeric decoding, required-component selection, weight default 1, header-to-
 observed count relations, knot/tangent cardinality, topology, geometry,
 applicability, CRUD/write, rendering, and completion remain open.
+
+M14.4aq publishes one Y card and one Weight card for every M14.4ap control-
+point tuple, and one Y card for every fit-point tuple. Each role independently
+retains every exact lower tuple member and reports Absent, Unique, or Multiple
+without selecting a winner. Fit points publish no Weight card, X anchors
+remain in the retained tuple directory, available empty sequences publish an
+empty card slice, and unavailable sequences retain their typed lower-layer
+issue. Edge-count mismatch retains otherwise available cards, and all nine
+dialects retain ASCII/Binary parity. Numeric decoding, required-component
+selection, weight default 1, header-to-observed count relations, knot/tangent
+cardinality, topology, geometry, applicability, CRUD/write, rendering, and
+completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

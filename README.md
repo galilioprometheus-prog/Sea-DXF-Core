@@ -27,7 +27,7 @@ sources of copied implementation code.
 
 ## Current status
 
-Development is complete through checkpoint **M14.4ap**. The current core can:
+Development is complete through checkpoint **M14.4aq**. The current core can:
 
 - frame and open bounded ASCII and Binary DXF AC1009-AC1032;
 - retain immutable raw source identity and exact record provenance;
@@ -181,6 +181,9 @@ Development is complete through checkpoint **M14.4ap**. The current core can:
   documented X anchors, retaining repeated Y/weight members, pre-anchor
   orphans, empty sequences, and unavailable lower sequence issues without
   selecting numeric values or applying defaults;
+- publish independent Y/weight cardinality cards for those HATCH Spline point
+  tuples, retaining every exact member and distinct absent, unique, and
+  multiple states without selecting or decoding a value;
 - inspect and validate entity XDATA, including exact source and independently
   parsed destination APPID/LAYER evidence, per-application symbol/structure and
   per-entity capacity/coordinate/handle/payload-envelope readiness, per-value

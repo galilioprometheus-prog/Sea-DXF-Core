@@ -3825,6 +3825,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     relations, knot/tangent cardinality, topology, geometry, applicability,
     CRUD/write, rendering, and completion remain open.
 
+    M14.4aq publishes ordered per-tuple component cards over M14.4ap evidence.
+    Every control-point tuple receives independent Y and Weight cards; every
+    fit-point tuple receives only a Y card. Each card retains every exact lower
+    member and reports Absent, Unique, or Multiple without selecting a winner.
+    X anchors remain available through the retained tuple directory, available
+    empty sequences publish an empty card slice, and unavailable sequences
+    preserve the typed lower-layer issue. Non-Spline edges publish no point-
+    card entry; edge-count mismatch retains otherwise available cards; all nine
+    dialects retain ASCII/Binary parity. Numeric decoding, required-component
+    selection, weight default 1, header-to-observed count relations, knot/
+    tangent cardinality, topology, geometry, applicability, CRUD/write,
+    rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

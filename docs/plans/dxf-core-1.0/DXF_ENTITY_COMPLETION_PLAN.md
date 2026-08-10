@@ -2367,6 +2367,19 @@ weight default 1, header-to-observed count relations, knot/tangent
 cardinality, topology, geometry, applicability, CRUD/write, rendering, and
 `Complete` remain open.
 
+M14.4aq publishes ordered per-tuple component cards over M14.4ap evidence.
+Every control-point tuple receives independent Y and Weight cards; every fit-
+point tuple receives only a Y card. Each card retains every exact lower member
+and reports Absent, Unique, or Multiple without selecting a winner. X anchors
+remain available through the retained tuple directory, available empty
+sequences publish an empty card slice, and unavailable sequences preserve the
+typed lower-layer issue. Non-Spline edges publish no point-card entry; edge-
+count mismatch retains otherwise available cards; all nine dialects retain
+ASCII/Binary parity. Numeric decoding, required-component selection, weight
+default 1, header-to-observed count relations, knot/tangent cardinality,
+topology, geometry, applicability, CRUD/write, rendering, and `Complete`
+remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

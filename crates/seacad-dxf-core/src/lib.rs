@@ -153,6 +153,7 @@ mod hatch_boundary_path_flags;
 mod hatch_boundary_spline_edge_header_card;
 mod hatch_boundary_spline_edge_header_numeric;
 mod hatch_boundary_spline_edge_header_semantic;
+mod hatch_boundary_spline_edge_point_card;
 mod hatch_boundary_spline_edge_point_tuple;
 mod hatch_boundary_spline_edge_sequence;
 mod hatch_elevation;
@@ -935,6 +936,10 @@ pub use hatch_boundary_spline_edge_header_semantic::{
     DxfHatchBoundarySplineEdgeHeaderSemanticPeriodicityValue,
     DxfHatchBoundarySplineEdgeHeaderSemanticRationalityValue,
     DxfHatchBoundarySplineEdgeHeaderSemantics,
+};
+pub use hatch_boundary_spline_edge_point_card::{
+    DxfHatchBoundarySplineEdgePointCard, DxfHatchBoundarySplineEdgePointCardDirectory,
+    DxfHatchBoundarySplineEdgePointCardMember, DxfHatchBoundarySplineEdgePointCardState,
 };
 pub use hatch_boundary_spline_edge_point_tuple::{
     DxfHatchBoundarySplineEdgePointGrouping, DxfHatchBoundarySplineEdgePointKind,
