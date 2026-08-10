@@ -3800,6 +3800,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     geometry, applicability, CRUD/write, rendering, and completion remain
     open.
 
+    M14.4ao partitions every available Spline edge-data slice into the
+    documented header, repeated knot-value, control-point/weight, optional
+    fit-data-count, fit-point, start-tangent, and end-tangent phases. Exact
+    source ranges remain available when a phase is empty; non-Spline edges
+    publish no sequence entry. Fit/tangent fields before a fit-data count,
+    duplicate fit-data counts, fields that move backward through the grammar,
+    and unrecognized fields remain typed failures without discarding M14.4an
+    or lower evidence. Edge-count mismatch retains otherwise available
+    sequences, and all nine dialects retain ASCII/Binary parity. Point tuple/
+    cardinality construction, count decoding and relations, weight defaults,
+    numeric values, topology beyond phase order, geometry, applicability,
+    CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

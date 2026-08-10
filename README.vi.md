@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4an**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ao**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -177,6 +177,9 @@ thể:
 - phân vùng payload của mọi HATCH edge đã nhóm để edge nội bộ giữ nguyên chính
   xác, còn edge cuối tách phần đuôi group-97/source-object bên ngoài, nhờ đó giữ
   đúng group 97 fit-data của Spline và fail-closed khi thứ tự group 330 sai;
+- phân phase dữ liệu Spline edge thành header, knot, control-point, fit-point và
+  tangent chính xác, giữ rõ phase rỗng và typed failure cho fit count thiếu/lặp,
+  field sai thứ tự hoặc group code ngoài grammar;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

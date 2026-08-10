@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4an can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4ao can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1982,6 +1982,19 @@ fail-closed results without discarding lower edge/type evidence. All nine
 dialects retain ASCII/Binary parity. Source-count numeric/cardinality semantics,
 source-handle resolution, repeated Spline sequence grouping, topology,
 geometry, applicability, CRUD/write, rendering, and completion remain open.
+
+M14.4ao partitions every available Spline edge-data slice into the documented
+header, repeated knot-value, control-point/weight, optional fit-data-count,
+fit-point, start-tangent, and end-tangent phases. Exact source ranges remain
+available even when a phase is empty; non-Spline edges publish no sequence
+entry. Fit/tangent fields before a fit-data count, duplicate fit-data counts,
+fields that move backward through the grammar, and unrecognized Spline edge
+fields remain typed failures without discarding the M14.4an partition or lower
+edge/type evidence. Declared/observed edge-count mismatch retains otherwise
+available sequences, and all nine dialects retain ASCII/Binary parity. Point
+tuple/cardinality construction, count decoding and count relations, weight
+defaults, numeric values, topology beyond phase order, geometry,
+applicability, CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch
 identity. One unique explicit group `39` is deleted by exact source span and

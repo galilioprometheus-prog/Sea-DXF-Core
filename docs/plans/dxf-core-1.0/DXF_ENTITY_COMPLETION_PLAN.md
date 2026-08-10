@@ -2343,6 +2343,18 @@ Count decoding/cardinality, source-handle resolution, repeated Spline sequence
 grouping, topology, geometry, applicability, CRUD/write, rendering, and
 `Complete` remain open.
 
+M14.4ao partitions every available Spline edge-data slice into the documented
+header, repeated knot-value, control-point/weight, optional fit-data-count,
+fit-point, start-tangent, and end-tangent phases. Exact source ranges remain
+available when a phase is empty; non-Spline edges publish no sequence entry.
+Fit/tangent fields before a fit-data count, duplicate fit-data counts, fields
+that move backward through the grammar, and unrecognized fields remain typed
+failures without discarding M14.4an or lower evidence. Edge-count mismatch
+retains otherwise available sequences, and all nine dialects retain ASCII/
+Binary parity. Point tuple/cardinality construction, count decoding and
+relations, weight defaults, numeric values, topology beyond phase order,
+geometry, applicability, CRUD/write, rendering, and `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

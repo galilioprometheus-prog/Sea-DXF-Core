@@ -286,7 +286,7 @@ fn partition_final_edge(
     }))
 }
 
-fn slice_subrange<T>(
+pub(crate) fn slice_subrange<T>(
     values: &[T],
     outer: DxfFillMeshRange,
     inner: DxfFillMeshRange,
