@@ -3786,6 +3786,20 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     partitioning, topology, geometry, applicability, CRUD/write, rendering,
     and completion remain open.
 
+    M14.4an partitions every grouped non-Polyline HATCH edge payload from the
+    path-level source-boundary-object trailer. Interior edges retain their
+    complete exact payload. On the final edge, the last group 97 becomes the
+    outer source-object count only when no group 330 precedes it and every
+    following field is group 330; the exact group-97/330 suffix is retained
+    separately from edge data. An earlier Spline group 97 remains the fit-data
+    count together with its fit points and tangents. Missing outer counts,
+    source references before the count, and non-330 trailer fields remain
+    typed failures without discarding the lower edge/type directories. All
+    nine dialects retain ASCII/Binary parity. Count decoding/cardinality,
+    source-handle resolution, repeated Spline sequence grouping, topology,
+    geometry, applicability, CRUD/write, rendering, and completion remain
+    open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,

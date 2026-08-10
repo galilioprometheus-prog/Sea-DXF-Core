@@ -135,6 +135,7 @@ mod hatch_boundary_circular_arc_edge_semantic;
 mod hatch_boundary_circular_arc_edge_wcs_geometry;
 mod hatch_boundary_edge;
 mod hatch_boundary_edge_card;
+mod hatch_boundary_edge_payload_partition;
 mod hatch_boundary_edge_type;
 mod hatch_boundary_elliptic_arc_edge_card;
 mod hatch_boundary_elliptic_arc_edge_geometry;
@@ -829,6 +830,10 @@ pub use hatch_boundary_edge::{
 pub use hatch_boundary_edge_card::{
     DxfHatchBoundaryEdgeCard, DxfHatchBoundaryEdgeCardDirectory, DxfHatchBoundaryEdgeCardState,
     DxfHatchBoundaryEdgeMember, DxfHatchBoundaryEdgeMemberRange,
+};
+pub use hatch_boundary_edge_payload_partition::{
+    DxfHatchBoundaryEdgePayloadPartition, DxfHatchBoundaryEdgePayloadPartitionDirectory,
+    DxfHatchBoundaryEdgePayloadPartitionEntry, DxfHatchBoundaryEdgePayloadPartitionIssue,
 };
 pub use hatch_boundary_edge_type::{
     DxfHatchBoundaryEdgeType, DxfHatchBoundaryEdgeTypeDirectory, DxfHatchBoundaryEdgeTypeEntry,

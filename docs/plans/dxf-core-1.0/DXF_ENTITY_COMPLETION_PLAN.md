@@ -2330,6 +2330,19 @@ dialects retain parity. Group 97 and repeated knot/control-point/weight/fit/
 tangent payloads remain raw. Sequence partitioning, topology, geometry,
 applicability, CRUD/write, rendering, and `Complete` remain open.
 
+M14.4an partitions every grouped non-Polyline HATCH edge payload from the
+path-level source-boundary-object trailer. Interior edges retain their complete
+exact payload. On the final edge, the last group 97 becomes the outer
+source-object count only when no group 330 precedes it and every following
+field is group 330; the exact group-97/330 suffix is retained separately from
+edge data. An earlier Spline group 97 remains the fit-data count together with
+its fit points and tangents. Missing outer counts, source references before the
+count, and non-330 trailer fields remain typed failures without discarding the
+lower edge/type directories. All nine dialects retain ASCII/Binary parity.
+Count decoding/cardinality, source-handle resolution, repeated Spline sequence
+grouping, topology, geometry, applicability, CRUD/write, rendering, and
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the
