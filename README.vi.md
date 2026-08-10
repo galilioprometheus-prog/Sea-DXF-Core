@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4aq**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ar**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -187,6 +187,9 @@ thể:
 - công bố card cardinality Y/weight độc lập cho các tuple point HATCH Spline
   đó, giữ mọi member chính xác cùng trạng thái absent, unique và multiple riêng
   biệt mà chưa chọn hay giải mã giá trị;
+- giải mã giá trị X/Y/weight hữu hạn, bám source cho các tuple point đó, đồng
+  thời giữ riêng trạng thái malformed, non-finite, absent và multiple mà chưa
+  bắt buộc Y hay áp default weight đã được tài liệu hóa;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

@@ -2380,6 +2380,19 @@ default 1, header-to-observed count relations, knot/tangent cardinality,
 topology, geometry, applicability, CRUD/write, rendering, and `Complete`
 remain open.
 
+M14.4ar publishes one source-stable numeric entry per M14.4ap point tuple. The
+exact X anchor and each unique Y/Weight card decode to finite binary64 values
+with exact raw provenance and bit-preserved signed zero. Absent and Multiple
+cards remain distinct, duplicates select no raw winner, malformed ASCII and
+non-finite Binary values retain typed issues and available provenance, and fit
+points publish no inapplicable Weight value. Available empty sequences publish
+empty numeric slices, unavailable sequences preserve the lower issue, non-
+Spline edges publish no numeric entry, edge-count mismatch retains otherwise
+usable entries, and all nine dialects retain ASCII/Binary parity. Required Y
+semantics, default weight 1, header-to-observed count relations, knot/tangent
+cardinality, topology, geometry, applicability, CRUD/write, rendering, and
+`Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

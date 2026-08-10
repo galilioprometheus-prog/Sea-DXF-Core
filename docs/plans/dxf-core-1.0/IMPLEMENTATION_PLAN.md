@@ -3838,6 +3838,19 @@ M13.2g records the first successful six-package and aggregate receipt workflow
     tangent cardinality, topology, geometry, applicability, CRUD/write,
     rendering, and completion remain open.
 
+    M14.4ar publishes one source-stable numeric entry per M14.4ap point tuple.
+    The exact X anchor and each unique Y/Weight card decode to finite binary64
+    values with exact raw provenance and bit-preserved signed zero. Absent and
+    Multiple cards remain distinct, duplicates select no raw winner, malformed
+    ASCII and non-finite Binary values retain typed issues and available
+    provenance, and fit points publish no inapplicable Weight value. Available
+    empty sequences publish empty numeric slices, unavailable sequences
+    preserve the lower issue, non-Spline edges publish no numeric entry, edge-
+    count mismatch retains otherwise usable entries, and all nine dialects
+    retain ASCII/Binary parity. Required Y semantics, default weight 1, header-
+    to-observed count relations, knot/tangent cardinality, topology, geometry,
+    applicability, CRUD/write, rendering, and completion remain open.
+
     M14.3dp composes M14.3do with the existing destination draft-insertion
     transaction without writing. `DxfEntityXDataDraftInsertPlan` retains the
     exact expected XDATA suffix, source entity, encoded entry/state,
