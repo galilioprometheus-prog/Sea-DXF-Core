@@ -27,7 +27,7 @@ parser hoặc nguồn mã để sao chép implementation.
 
 ## Trạng thái hiện tại
 
-Quá trình phát triển đã hoàn tất đến checkpoint **M14.4ae**. Core hiện tại có
+Quá trình phát triển đã hoàn tất đến checkpoint **M14.4am**. Core hiện tại có
 thể:
 
 - frame và mở DXF ASCII/Binary AC1009-AC1032 trong giới hạn tài nguyên;
@@ -171,6 +171,9 @@ thể:
 - chọn năm Spline header card đó thành giá trị signed Int32 chính xác, bám
   source cho degree/count và signed Int16 cho rational/periodic mà chưa ép
   requiredness, miền Boolean hay miền count không âm;
+- bắt buộc đủ năm giá trị header Spline, phân loại chặt cờ rational và periodic
+  theo miền 0/1, đồng thời giữ nguyên degree/count signed chính xác mà không tự
+  đặt ràng buộc miền chưa được tài liệu hóa;
 - kiểm tra và validate entity XDATA, gồm evidence APPID/LAYER chính xác ở nguồn
   và tài liệu đích được parse độc lập, trạng thái symbol/cấu trúc theo từng
   application, capacity/coordinate/handle/payload-envelope theo từng entity,

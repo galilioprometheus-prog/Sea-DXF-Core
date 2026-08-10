@@ -2317,6 +2317,19 @@ control-point, weight, fit, and tangent payloads remain raw. Requiredness,
 degree/count/flag domains, sequence topology, geometry, applicability,
 CRUD/write, rendering, and `Complete` remain open.
 
+M14.4am promotes all five M14.4al Spline-edge header values to required
+semantics. Absent values become `MissingRequiredValue` without invented raw
+provenance; duplicate and malformed values retain their exact numeric issue
+and available provenance. Rational group 73 maps only 0 to NonRational and 1
+to Rational, while periodic group 74 maps only 0 to NonPeriodic and 1 to
+Periodic; every other signed Int16 remains a typed out-of-domain failure.
+Degree plus knot/control-point counts retain their exact signed Int32 values
+without an undocumented range constraint. Edge-count mismatch retains
+entries; non-Spline, invalid, empty, and Polyline states publish none. All nine
+dialects retain parity. Group 97 and repeated knot/control-point/weight/fit/
+tangent payloads remain raw. Sequence partitioning, topology, geometry,
+applicability, CRUD/write, rendering, and `Complete` remain open.
+
 M14.3dq adds strict post-image verification for M14.3dp. Family verification
 must first prove exact transaction bytes, typed POINT postconditions, and the
 inverse. The XDATA verifier then resolves the inserted handle uniquely in the

@@ -1,6 +1,6 @@
 # Format Support Matrix
 
-SeaCad through M14.4ae can open an immutable raw ASCII framing document, enforce
+SeaCad through M14.4am can open an immutable raw ASCII framing document, enforce
 or recover its EOF envelope, attach a one-pass SHA-256 source identity,
 discover an exact HEADER `$ACADVER`, account every parsed group inside or
 outside non-overlapping sections, index every numeric group code 0, discover
@@ -1955,6 +1955,19 @@ enforcement. Edge-count mismatch does not erase entries; non-Spline, invalid,
 empty, and Polyline states publish none. All nine dialects retain ASCII/Binary
 parity. Group 97 and repeated knot/control-point/weight/fit/tangent payloads
 remain raw. Requiredness, degree/count/flag domains, sequence topology,
+geometry, applicability, CRUD/write, rendering, and completion remain open.
+
+M14.4am promotes all five M14.4al Spline-edge header values to required
+semantics. Absent values become `MissingRequiredValue` without invented raw
+provenance; duplicate and malformed values retain their exact numeric issue
+and available provenance. Rational group 73 maps only 0 to NonRational and 1
+to Rational, while periodic group 74 maps only 0 to NonPeriodic and 1 to
+Periodic; every other signed Int16 remains a typed out-of-domain failure.
+Degree plus knot/control-point counts retain their exact signed Int32 values
+without an undocumented range constraint. Edge-count mismatch retains
+entries; non-Spline, invalid, empty, and Polyline states publish none. All nine
+dialects retain ASCII/Binary parity. Group 97 and repeated knot/control-point/
+weight/fit/tangent payloads remain raw. Sequence partitioning, topology,
 geometry, applicability, CRUD/write, rendering, and completion remain open.
 
 M14.3bs adds reset-to-default semantics under the same POINT thickness patch

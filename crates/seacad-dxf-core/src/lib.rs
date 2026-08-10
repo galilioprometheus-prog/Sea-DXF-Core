@@ -151,6 +151,7 @@ mod hatch_boundary_path;
 mod hatch_boundary_path_flags;
 mod hatch_boundary_spline_edge_header_card;
 mod hatch_boundary_spline_edge_header_numeric;
+mod hatch_boundary_spline_edge_header_semantic;
 mod hatch_elevation;
 mod hatch_extrusion;
 mod hatch_polyline_bulge;
@@ -917,6 +918,16 @@ pub use hatch_boundary_spline_edge_header_numeric::{
     DxfHatchBoundarySplineEdgeHeaderNumericDirectory, DxfHatchBoundarySplineEdgeHeaderNumericEntry,
     DxfHatchBoundarySplineEdgeHeaderNumericI16Value,
     DxfHatchBoundarySplineEdgeHeaderNumericI32Value, DxfHatchBoundarySplineEdgeHeaderNumericIssue,
+};
+pub use hatch_boundary_spline_edge_header_semantic::{
+    DxfHatchBoundarySplineEdgeHeaderPeriodicity, DxfHatchBoundarySplineEdgeHeaderRationality,
+    DxfHatchBoundarySplineEdgeHeaderSemanticDirectory,
+    DxfHatchBoundarySplineEdgeHeaderSemanticEntry,
+    DxfHatchBoundarySplineEdgeHeaderSemanticI32Value,
+    DxfHatchBoundarySplineEdgeHeaderSemanticIssue,
+    DxfHatchBoundarySplineEdgeHeaderSemanticPeriodicityValue,
+    DxfHatchBoundarySplineEdgeHeaderSemanticRationalityValue,
+    DxfHatchBoundarySplineEdgeHeaderSemantics,
 };
 pub use hatch_elevation::{
     DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,
