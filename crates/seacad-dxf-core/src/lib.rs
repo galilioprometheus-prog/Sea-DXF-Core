@@ -272,7 +272,6 @@ mod raw_integer;
 mod raw_record;
 mod read_options;
 mod read_support;
-mod rwa;
 mod semantic_value;
 mod shape_wcs_insertion;
 mod shape_wcs_orientation;
@@ -316,7 +315,7 @@ mod transaction_inverse;
 mod transaction_plan;
 mod transaction_plan_composition;
 mod transaction_write;
-mod verbatim::DxfVerbatimWriteReceipt;
+mod verbatim;
 
 pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
 pub use ascii_group::{DxfAsciiGroup, DxfAsciiGroupCursor, DxfGroupCode};
@@ -1403,11 +1402,6 @@ pub use raw_record::{
     DxfRawRecordSectionKind, DxfRawRecordSectionState,
 };
 pub use read_options::{DxfReadMode, DxfReadOptions};
-pub use read_support::{DxfReadSupport, DxfReadSupportLevel};
-pub use rwa::{
-    compute_rwa_from_evidence, RwaCapitalState, RwaComputation, RwaComputationError, RwaEvidence,
-    RwaModellability, RwaPolicy, RwaProvenance,
-};
 pub use semantic_value::{
     DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
 };
