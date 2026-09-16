@@ -1,0 +1,1556 @@
+//! Lossless DXF core for SeaCad.
+//!
+//! Raw source bytes remain authoritative. Public contracts are designed for
+//! bounded, synchronous operation on untrusted input.
+
+#![forbid(unsafe_code)]
+
+mod application_group;
+mod ascii_document;
+mod ascii_group;
+mod ascii_index;
+mod ascii_line;
+mod ascii_numeric;
+mod basic_geometry;
+mod basic_geometry_card;
+mod basic_geometry_semantic;
+mod binary_document;
+mod binary_group;
+mod binary_wire;
+mod block_attribute_definition;
+mod block_attribute_definition_anchor;
+mod block_attribute_definition_card;
+mod block_attribute_definition_double_semantic;
+mod block_attribute_definition_integer_semantic;
+mod block_attribute_definition_justification;
+mod block_attribute_definition_tag_index;
+mod block_attribute_definition_text_semantic;
+mod block_attribute_definition_value;
+mod block_attribute_definition_wcs_anchor;
+mod block_definition;
+mod block_name_consistency;
+mod block_name_index;
+mod block_record_card;
+mod block_record_semantic;
+mod block_record_value;
+mod canonical_ascii_write;
+mod canonical_binary_write;
+mod circular_geometry;
+mod circular_geometry_card;
+mod circular_geometry_semantic;
+mod common_owner_candidate;
+mod diagnostic;
+mod dialect;
+mod dimstyle_field;
+mod dimstyle_field_card;
+mod dimstyle_field_evidence;
+mod dimstyle_field_semantic;
+mod dimstyle_handle_resolution;
+mod dimstyle_handle_target_validation;
+mod dimstyle_table;
+mod ellipse_geometry;
+mod ellipse_geometry_card;
+mod ellipse_geometry_semantic;
+mod encoding;
+mod entity_common_color_book_edit;
+mod entity_common_field_domain;
+mod entity_common_field_domain_semantic;
+mod entity_common_handle_semantic;
+mod entity_common_layout_edit;
+mod entity_common_reference_edit;
+mod entity_common_reference_target;
+mod entity_common_symbol_edit;
+mod entity_common_text_semantic;
+mod entity_completion;
+mod entity_directory;
+mod entity_draft_applicability;
+mod entity_draft_identity;
+mod entity_draft_insert;
+mod entity_draft_record;
+mod entity_edit_session;
+mod entity_edit_verification;
+mod entity_field_evidence;
+mod entity_field_insertion;
+mod entity_field_insertion_anchor;
+mod entity_field_replacement;
+mod entity_field_reset;
+mod entity_field_semantic;
+mod entity_placement;
+mod entity_placement_owner;
+mod entity_proxy_graphics_relation;
+mod entity_transparency;
+mod entity_value_encoder;
+mod entity_xdata;
+mod entity_xdata_appid_destination;
+mod entity_xdata_appid_resolution;
+mod entity_xdata_application_destination;
+mod entity_xdata_capacity;
+mod entity_xdata_capacity_measure;
+mod entity_xdata_coordinate_destination;
+mod entity_xdata_coordinate_transform;
+mod entity_xdata_coordinate_transform_math;
+mod entity_xdata_draft_insert;
+mod entity_xdata_draft_record;
+mod entity_xdata_draft_verification;
+mod entity_xdata_draft_write;
+mod entity_xdata_encoded_application_destination;
+mod entity_xdata_encoded_destination;
+mod entity_xdata_encoded_entity_destination;
+mod entity_xdata_entity_destination;
+mod entity_xdata_handle_composed_destination;
+mod entity_xdata_handle_destination;
+mod entity_xdata_handle_remap;
+mod entity_xdata_handle_replacement;
+mod entity_xdata_handle_replacement_set;
+mod entity_xdata_handle_replacement_transaction;
+mod entity_xdata_handle_replacement_verification;
+mod entity_xdata_handle_resolution;
+mod entity_xdata_layer_destination;
+mod entity_xdata_layer_resolution;
+mod entity_xdata_logical_destination;
+mod entity_xdata_payload_destination;
+mod entity_xdata_point_tuple;
+mod entity_xdata_structure;
+mod entity_xdata_symbol_destination;
+mod entity_xdata_value;
+mod error;
+mod fill_mesh_evidence;
+mod format_probe;
+#[allow(dead_code)]
+mod generated;
+mod handle;
+mod handle_allocation_policy;
+mod handle_assignment_plan;
+mod handle_context;
+mod handle_identity;
+mod handle_reference;
+mod handle_reservation_plan;
+mod handle_resolution;
+mod handle_role;
+mod handseed;
+mod hatch_boundary_circular_arc_edge_card;
+mod hatch_boundary_circular_arc_edge_geometry;
+mod hatch_boundary_circular_arc_edge_numeric;
+mod hatch_boundary_circular_arc_edge_semantic;
+mod hatch_boundary_circular_arc_edge_wcs_geometry;
+mod hatch_boundary_edge;
+mod hatch_boundary_edge_card;
+mod hatch_boundary_edge_payload_partition;
+mod hatch_boundary_edge_type;
+mod hatch_boundary_elliptic_arc_edge_card;
+mod hatch_boundary_elliptic_arc_edge_geometry;
+mod hatch_boundary_elliptic_arc_edge_numeric;
+mod hatch_boundary_elliptic_arc_edge_semantic;
+mod hatch_boundary_elliptic_arc_edge_wcs_geometry;
+mod hatch_boundary_line_edge_card;
+mod hatch_boundary_line_edge_coordinate;
+mod hatch_boundary_line_edge_geometry;
+mod hatch_boundary_line_edge_numeric;
+mod hatch_boundary_line_edge_wcs_geometry;
+mod hatch_boundary_partition;
+mod hatch_boundary_path;
+mod hatch_boundary_path_flags;
+mod hatch_boundary_spline_edge_header_card;
+mod hatch_boundary_spline_edge_header_numeric;
+mod hatch_boundary_spline_edge_header_semantic;
+mod hatch_boundary_spline_edge_point_card;
+mod hatch_boundary_spline_edge_point_numeric;
+mod hatch_boundary_spline_edge_point_tuple;
+mod hatch_boundary_spline_edge_sequence;
+mod hatch_elevation;
+mod hatch_extrusion;
+mod hatch_polyline_bulge;
+mod hatch_polyline_header;
+mod hatch_polyline_line_geometry;
+mod hatch_polyline_segment;
+mod hatch_polyline_segment_geometry;
+mod hatch_polyline_segment_shape;
+mod hatch_polyline_vertex;
+mod hatch_polyline_vertex_coordinate;
+mod hatch_polyline_vertex_numeric;
+mod hatch_polyline_wcs_geometry;
+mod hatch_scalar_card;
+mod hatch_scalar_evidence;
+mod hatch_scalar_semantic;
+mod header_handle;
+mod header_index;
+mod header_numeric;
+mod header_numeric_value;
+mod header_scalar;
+mod header_schema_directory;
+mod header_text;
+mod header_view;
+mod helix_analytic;
+mod helix_card;
+mod helix_evidence;
+mod helix_relation;
+mod helix_scalar_semantic;
+mod helix_vector_semantic;
+mod infinite_line_geometry;
+mod infinite_line_geometry_card;
+mod infinite_line_geometry_semantic;
+mod insert_array;
+mod insert_attribute_anchor;
+mod insert_attribute_card;
+mod insert_attribute_definition_resolution;
+mod insert_attribute_double_semantic;
+mod insert_attribute_integer_semantic;
+mod insert_attribute_justification;
+mod insert_attribute_sequence;
+mod insert_attribute_text_semantic;
+mod insert_attribute_value;
+mod insert_attribute_wcs_anchor;
+mod insert_block_resolution;
+mod insert_record_card;
+mod insert_record_semantic;
+mod insert_record_value;
+mod insert_target_eligibility;
+mod insert_transform;
+mod johab;
+mod layout_object;
+mod lightweight_polyline;
+mod lightweight_polyline_integer;
+mod lightweight_polyline_record_card;
+mod lightweight_polyline_record_semantic;
+mod lightweight_polyline_segment;
+mod lightweight_polyline_segment_geometry;
+mod lightweight_polyline_vertex;
+mod lightweight_polyline_vertex_semantic;
+mod limits;
+mod mtext_column_relation;
+mod mtext_column_semantic;
+mod mtext_column_semantic_project;
+mod mtext_embedded_column_evidence;
+mod mtext_flat_column_evidence;
+mod mtext_layout;
+mod mtext_numeric_domain;
+mod mtext_orientation;
+mod mtext_tolerance_scalar;
+mod mtext_x_axis_direction;
+mod mtext_xdata_column_evidence;
+mod mtext_xdata_defined_height;
+mod mtext_xdata_linked_column;
+mod mtext_xdata_linked_column_resolution;
+mod named_symbol_destination;
+mod named_symbol_table;
+mod owner_evidence_comparison;
+mod ownership_evidence;
+mod planar_face_geometry;
+mod planar_face_geometry_card;
+mod planar_face_geometry_semantic;
+mod planar_face_geometry_semantic_value;
+mod planar_face_wcs_geometry;
+mod point_clone_draft_projection;
+mod point_clone_xdata_draft;
+mod point_clone_xdata_insert;
+mod point_edit;
+mod polyline_family_semantic;
+mod polyline_polyface_face;
+mod polyline_polyface_geometry;
+mod polyline_polyface_topology;
+mod polyline_polygon_mesh;
+mod polyline_polygon_mesh_geometry;
+mod polyline_polygon_mesh_smoothing;
+mod polyline_record_card;
+mod polyline_record_semantic;
+mod polyline_record_value;
+mod polyline_segment;
+mod polyline_segment_geometry;
+mod polyline_segment_semantic;
+mod polyline_segment_wcs_geometry;
+mod polyline_segment_width;
+mod polyline_sequence;
+mod polyline_vertex_card;
+mod polyline_vertex_integer_semantic;
+mod polyline_vertex_semantic;
+mod polyline_vertex_value;
+mod progress;
+mod raw_document;
+mod raw_double;
+mod raw_handle;
+mod raw_integer;
+mod raw_record;
+mod read_options;
+mod read_support;
+mod semantic_value;
+mod shape_wcs_insertion;
+mod shape_wcs_orientation;
+mod source;
+mod source_id;
+mod source_scan;
+mod source_span;
+mod spline_analytic;
+mod spline_analytic_value;
+mod spline_auxiliary;
+mod spline_auxiliary_semantic;
+mod spline_card;
+mod spline_count_relation;
+mod spline_evidence;
+mod spline_first_derivative;
+mod spline_point_evaluation;
+mod spline_point_tuple;
+mod spline_relation;
+mod spline_scalar_semantic;
+mod spline_topology;
+mod text_control;
+mod text_decoder;
+mod text_encoder;
+mod text_escape;
+mod text_layout;
+mod text_placement_anchor;
+mod text_shape_scalar;
+mod text_symbol_card;
+mod text_symbol_evidence;
+mod text_symbol_ocs_projection;
+mod text_symbol_role;
+mod text_symbol_scalar_value;
+mod text_symbol_text;
+mod text_transcode;
+mod text_view;
+mod text_wcs_anchor;
+mod text_wcs_orientation;
+mod tolerance_dimstyle_resolution;
+mod tolerance_wcs_placement;
+mod transaction_inverse;
+mod transaction_plan;
+mod transaction_plan_composition;
+mod transaction_write;
+mod verbatim;
+
+pub use ascii_document::{DxfAsciiDocumentConformance, DxfAsciiRawDocument, DxfAsciiRawGroup};
+pub use ascii_group::{DxfAsciiGroup, DxfAsciiGroupCursor, DxfGroupCode};
+pub use ascii_index::{
+    DxfAsciiGroupRange, DxfAsciiSection, DxfAsciiSectionClosure, DxfAsciiSectionKind,
+    DxfAsciiSectionName, DxfAsciiStructureIndex,
+};
+/// Binary view of the shared raw group-occurrence range.
+pub type DxfBinaryGroupRange = DxfAsciiGroupRange;
+/// Binary view of the shared section metadata.
+pub type DxfBinarySection = DxfAsciiSection;
+/// Binary view of the shared section-closure classification.
+pub type DxfBinarySectionClosure = DxfAsciiSectionClosure;
+/// Binary view of the shared documented section-kind registry.
+pub type DxfBinarySectionKind = DxfAsciiSectionKind;
+/// Binary view of the shared exact section-name classification.
+pub type DxfBinarySectionName = DxfAsciiSectionName;
+/// Binary view of the shared section and group-zero index.
+pub type DxfBinaryStructureIndex = DxfAsciiStructureIndex;
+pub use application_group::{
+    DxfApplicationControlEntry, DxfApplicationControlKind, DxfApplicationGroupDirectory,
+    DxfApplicationGroupEntry, DxfApplicationGroupKind, DxfApplicationGroupState,
+};
+pub use ascii_line::{
+    DxfAsciiLineCursor, DxfAsciiLineEnding, DxfAsciiLineMetadata, DxfAsciiPhysicalLine,
+};
+pub use ascii_numeric::DxfAsciiNumericIssue;
+pub use basic_geometry::{
+    DxfBasicGeometryComponent, DxfBasicGeometryComponentRange, DxfBasicGeometryComponentRole,
+    DxfBasicGeometryDirectory, DxfBasicGeometryKind, DxfBasicGeometryNumericIssue,
+    DxfBasicGeometryRecordEntry,
+};
+pub use basic_geometry_card::{
+    DxfBasicGeometryCardDirectory, DxfBasicGeometryCardMember, DxfBasicGeometryCardMemberRange,
+    DxfBasicGeometryComponentCard, DxfBasicGeometryComponentCardState,
+};
+pub use basic_geometry_semantic::{
+    DxfBasicGeometrySemanticDirectory, DxfBasicGeometrySemanticEntry,
+    DxfBasicGeometrySemanticIssue, DxfBasicGeometrySemanticKind, DxfBasicGeometrySemanticValue,
+    DxfLineGeometrySemantics, DxfPointGeometrySemantics,
+};
+pub use binary_document::{DxfBinaryDocumentConformance, DxfBinaryRawDocument, DxfBinaryRawGroup};
+pub use binary_group::{DxfBinaryGroup, DxfBinaryGroupCursor};
+pub use binary_wire::{
+    DxfBinaryGroupCodeEncoding, DxfBinaryGroupCodeHeader, DxfBinaryValueFamily,
+    decode_binary_group_code,
+};
+pub use block_attribute_definition::{
+    DxfBlockAttributeDefinitionDirectory, DxfBlockAttributeDefinitionEntry,
+};
+pub use block_attribute_definition_anchor::{
+    DxfBlockAttributeDefinitionPlacementAnchor,
+    DxfBlockAttributeDefinitionPlacementAnchorDirectory,
+    DxfBlockAttributeDefinitionPlacementAnchorState,
+};
+pub use block_attribute_definition_card::{
+    DxfBlockAttributeDefinitionCardDirectory, DxfBlockAttributeDefinitionCardMember,
+    DxfBlockAttributeDefinitionCardMemberRange, DxfBlockAttributeDefinitionValueCard,
+    DxfBlockAttributeDefinitionValueCardState,
+};
+pub use block_attribute_definition_double_semantic::{
+    DxfBlockAttributeDefinitionDoubleSemanticDirectory,
+    DxfBlockAttributeDefinitionDoubleSemanticIssue, DxfBlockAttributeDefinitionDoubleSemantics,
+    DxfBlockAttributeDefinitionSemanticDouble,
+};
+pub use block_attribute_definition_integer_semantic::{
+    DxfBlockAttributeDefinitionIntegerSemanticDirectory,
+    DxfBlockAttributeDefinitionIntegerSemanticIssue, DxfBlockAttributeDefinitionIntegerSemantics,
+    DxfBlockAttributeDefinitionSemanticInteger,
+};
+pub use block_attribute_definition_justification::{
+    DxfBlockAttributeDefinitionHorizontalJustification,
+    DxfBlockAttributeDefinitionHorizontalJustificationSemantic,
+    DxfBlockAttributeDefinitionJustificationDirectory,
+    DxfBlockAttributeDefinitionJustificationIssue,
+    DxfBlockAttributeDefinitionJustificationSemantics,
+    DxfBlockAttributeDefinitionVerticalJustification,
+    DxfBlockAttributeDefinitionVerticalJustificationSemantic,
+};
+pub use block_attribute_definition_tag_index::{
+    DxfBlockAttributeDefinitionTagIndexBlock, DxfBlockAttributeDefinitionTagIndexDirectory,
+    DxfBlockAttributeDefinitionTagIndexLookup, DxfBlockAttributeDefinitionTagIndexMatch,
+};
+pub use block_attribute_definition_text_semantic::{
+    DxfBlockAttributeDefinitionSemanticText, DxfBlockAttributeDefinitionSemanticTextStyle,
+    DxfBlockAttributeDefinitionTextSemanticDirectory, DxfBlockAttributeDefinitionTextSemanticIssue,
+    DxfBlockAttributeDefinitionTextSemantics, DxfBlockAttributeDefinitionTextStyleName,
+};
+pub use block_attribute_definition_value::{
+    DxfBlockAttributeDefinitionTextValue, DxfBlockAttributeDefinitionValue,
+    DxfBlockAttributeDefinitionValueData, DxfBlockAttributeDefinitionValueDirectory,
+    DxfBlockAttributeDefinitionValueEntry, DxfBlockAttributeDefinitionValueIssue,
+    DxfBlockAttributeDefinitionValueRange, DxfBlockAttributeDefinitionValueRole,
+};
+pub use block_attribute_definition_wcs_anchor::{
+    DxfBlockAttributeDefinitionWcsAnchor, DxfBlockAttributeDefinitionWcsAnchorDirectory,
+    DxfBlockAttributeDefinitionWcsAnchorEntry, DxfBlockAttributeDefinitionWcsAnchorIssue,
+};
+pub use block_definition::{
+    DxfBlockDefinitionDirectory, DxfBlockDefinitionEntry, DxfBlockDefinitionState,
+    DxfBlockMemberRecordRange,
+};
+pub use block_name_consistency::{
+    DxfBlockNameConsistencyDirectory, DxfBlockNameConsistencyEntry, DxfBlockNameConsistencyState,
+};
+pub use block_name_index::{
+    DxfBlockNameIndexDirectory, DxfBlockNameIndexLookup, DxfBlockNameIndexMatch,
+};
+pub use block_record_card::{
+    DxfBlockRecordCardDirectory, DxfBlockRecordCardMember, DxfBlockRecordCardMemberRange,
+    DxfBlockRecordValueCard, DxfBlockRecordValueCardState,
+};
+pub use block_record_semantic::{
+    DxfBlockRecordSemanticDirectory, DxfBlockRecordSemanticDouble, DxfBlockRecordSemanticInteger,
+    DxfBlockRecordSemanticIssue, DxfBlockRecordSemanticText, DxfBlockRecordSemantics,
+};
+pub use block_record_value::{
+    DxfBlockRecordTextValue, DxfBlockRecordValue, DxfBlockRecordValueData,
+    DxfBlockRecordValueDirectory, DxfBlockRecordValueEntry, DxfBlockRecordValueIssue,
+    DxfBlockRecordValueRange, DxfBlockRecordValueRole,
+};
+pub use canonical_ascii_write::{DxfCanonicalAsciiEnvelopeAction, DxfCanonicalAsciiWriteReceipt};
+pub use canonical_binary_write::{
+    DxfCanonicalBinaryEnvelopeAction, DxfCanonicalBinaryWriteReceipt,
+};
+pub use circular_geometry::{
+    DxfCircularGeometryDirectory, DxfCircularGeometryKind, DxfCircularGeometryNumericIssue,
+    DxfCircularGeometryRecordEntry, DxfCircularGeometryValue, DxfCircularGeometryValueRange,
+    DxfCircularGeometryValueRole,
+};
+pub use circular_geometry_card::{
+    DxfCircularGeometryCardDirectory, DxfCircularGeometryCardMember,
+    DxfCircularGeometryCardMemberRange, DxfCircularGeometryValueCard,
+    DxfCircularGeometryValueCardState,
+};
+pub use circular_geometry_semantic::{
+    DxfCircularGeometrySemanticDirectory, DxfCircularGeometrySemanticIssue,
+    DxfCircularGeometrySemanticValue, DxfCircularGeometrySemantics,
+};
+pub use common_owner_candidate::{
+    DxfCommonOwnerCandidateDirectory, DxfCommonOwnerCandidateEntry, DxfCommonOwnerCandidateRange,
+    DxfCommonOwnerCandidateState, DxfCommonOwnerRecordEntry,
+};
+pub use diagnostic::{ByteSpan, DxfDiagnostic, DxfDiagnosticCode, DxfDiagnosticSeverity};
+pub use dialect::{
+    DxfAcadVersion, DxfAcadVersionOccurrence, DxfAcadVersionReport, DxfAcadVersionState,
+    DxfAcadVersionValue,
+};
+pub use dimstyle_field::{DxfDimStyleField, DxfDimStyleWireKind, dxf_dimstyle_fields};
+pub use dimstyle_field_card::{
+    DxfDimStyleCardMember, DxfDimStyleCardMemberRange, DxfDimStyleFieldCard,
+    DxfDimStyleFieldCardDirectory, DxfDimStyleFieldCardState,
+};
+pub use dimstyle_field_evidence::{
+    DxfDimStyleValue, DxfDimStyleValueData, DxfDimStyleValueDirectory, DxfDimStyleValueEntry,
+    DxfDimStyleValueIssue, DxfDimStyleValueRange,
+};
+pub use dimstyle_field_semantic::{
+    DxfDimStyleSemanticDirectory, DxfDimStyleSemanticIssue, DxfDimStyleSemanticValue,
+    DxfDimStyleStandardFlags, DxfDimStyleStandardFlagsSemantic,
+};
+pub use dimstyle_handle_resolution::{
+    DxfDimStyleHandleResolutionDirectory, DxfDimStyleHandleResolutionEntry, DxfDimStyleHandleRole,
+    DxfDimStyleHandleTargetState,
+};
+pub use dimstyle_handle_target_validation::{
+    DxfDimStyleHandleTargetValidationDirectory, DxfDimStyleHandleTargetValidationEntry,
+    DxfDimStyleHandleTargetValidationState,
+};
+pub use dimstyle_table::{DxfDimStyleTableDirectory, DxfDimStyleTableEntry};
+pub use ellipse_geometry::{
+    DxfEllipseGeometryDirectory, DxfEllipseGeometryNumericIssue, DxfEllipseGeometryRecordEntry,
+    DxfEllipseGeometryValue, DxfEllipseGeometryValueRange, DxfEllipseGeometryValueRole,
+};
+pub use ellipse_geometry_card::{
+    DxfEllipseGeometryCardDirectory, DxfEllipseGeometryCardMember,
+    DxfEllipseGeometryCardMemberRange, DxfEllipseGeometryValueCard,
+    DxfEllipseGeometryValueCardState,
+};
+pub use ellipse_geometry_semantic::{
+    DxfEllipseGeometrySemanticDirectory, DxfEllipseGeometrySemanticIssue,
+    DxfEllipseGeometrySemanticValue, DxfEllipseGeometrySemantics,
+};
+pub use encoding::{
+    DxfCodePageOccurrence, DxfCodePageState, DxfCodePageValue, DxfTextEncodingPolicy,
+    DxfTextEncodingReport, DxfTextEncodingResolution,
+};
+pub use entity_common_color_book_edit::{
+    DxfEntityCommonColorBookEditIssue, DxfEntityCommonColorBookEditOutcome,
+    DxfEntityCommonColorBookEditValue,
+};
+pub use entity_common_field_domain::{
+    DxfEntityCommonFieldDomainIssue, DxfEntityCommonFieldDomainOutcome,
+    DxfEntityCommonFieldDomainValue, DxfEntityIndexedColor, DxfEntityLineweight,
+    DxfEntityShadowMode, DxfEntitySpace, DxfEntityTrueColor, DxfEntityVisibility,
+    classify_entity_common_field_edit_domain,
+};
+pub use entity_common_field_domain_semantic::{
+    DxfEntityCommonFieldDomainDirectory, DxfEntityCommonFieldDomainEntry,
+    DxfEntityCommonFieldDomainSemanticIssue, DxfEntityCommonFieldDomainSemanticValue,
+    DxfEntityCommonFieldDomainSemantics,
+};
+pub use entity_common_handle_semantic::{
+    DxfEntityCommonHandleDirectory, DxfEntityCommonHandleEntry, DxfEntityCommonHandleSemantics,
+    DxfEntityCommonReferenceIssue, DxfEntityCommonReferenceSemanticValue,
+    DxfEntityCommonReferenceValue,
+};
+pub use entity_common_layout_edit::{
+    DxfEntityCommonLayoutEditIssue, DxfEntityCommonLayoutEditOutcome,
+    DxfEntityCommonLayoutEditValue,
+};
+pub use entity_common_reference_edit::{
+    DxfEntityCommonReferenceEditIssue, DxfEntityCommonReferenceEditOutcome,
+    DxfEntityCommonReferenceEditValue,
+};
+pub use entity_common_reference_target::{
+    DxfEntityCommonReferenceTargetDirectory, DxfEntityCommonReferenceTargetEntry,
+    DxfEntityCommonReferenceTargetIssue, DxfEntityCommonReferenceTargetKind,
+    DxfEntityCommonReferenceTargetSemanticValue, DxfEntityCommonReferenceTargetSemantics,
+};
+pub use entity_common_symbol_edit::{
+    DxfEntityCommonSymbolEditIssue, DxfEntityCommonSymbolEditOutcome,
+    DxfEntityCommonSymbolEditValue,
+};
+pub use entity_common_text_semantic::{
+    DxfEntityCommonColorBookIssue, DxfEntityCommonColorBookSemanticValue,
+    DxfEntityCommonColorBookValue, DxfEntityCommonLayoutIssue, DxfEntityCommonLayoutSemanticValue,
+    DxfEntityCommonLayoutValue, DxfEntityCommonSymbolIssue, DxfEntityCommonSymbolSemanticValue,
+    DxfEntityCommonSymbolValue, DxfEntityCommonTextDirectory, DxfEntityCommonTextEntry,
+    DxfEntityCommonTextSemantics,
+};
+pub use entity_completion::{
+    DXF_ENTITY_COMPLETION_ASSESSMENTS, DxfEntityCompletionAssessment, DxfEntityCompletionBlocker,
+    DxfEntityCompletionLevel, dxf_entity_completion_assessment,
+};
+pub use entity_directory::{
+    DxfEntityClassification, DxfEntityDirectory, DxfEntityKey, DxfEntityKnownClassification,
+    DxfEntityRef, DxfEntitySubclassMarker, DxfEntitySubclassRange,
+};
+pub use entity_draft_applicability::{
+    DxfEntityDraftApplicabilityIssue, DxfEntityDraftApplicabilityPlan,
+};
+pub use entity_draft_identity::{
+    DxfEntityDraftIdentityIssue, DxfEntityDraftIdentityPlan, DxfEntityDraftName,
+};
+pub use entity_draft_record::{
+    DxfEntityDraft, DxfEntityDraftRecordIssue, DxfEntityDraftRecordPlan, DxfPointDraft,
+};
+pub use entity_edit_session::{
+    DxfEntityCloneIssue, DxfEntityCloneOutcome, DxfEntityCommonColorBookPatch,
+    DxfEntityCommonFieldPatch, DxfEntityDeleteIssue, DxfEntityDeleteOutcome,
+    DxfEntityDeleteReceipt, DxfEntityEditDisposition, DxfEntityEditIssue, DxfEntityEditOutcome,
+    DxfEntityEditReceipt, DxfEntityEditSession, DxfEntityHandlelessDeleteReceipt,
+    DxfEntityInsertIssue, DxfEntityInsertOutcome, DxfEntityInsertOwnerIssue,
+    DxfEntityInsertReceipt, DxfEntityPatch, DxfPointEditReceipt,
+};
+pub use entity_edit_verification::{
+    DxfEntityEditExpectedState, DxfEntityEditPlan, DxfEntityEditVerificationIssue,
+    DxfEntityEditVerificationJournal, DxfEntityEditVerificationOutcome,
+    DxfEntityEditVerificationReceipt, DxfEntityEditWriteJournal, DxfEntityEditWriteOutcome,
+};
+pub use entity_field_evidence::{
+    DxfEntityFieldCard, DxfEntityFieldCardMember, DxfEntityFieldCardMemberRange,
+    DxfEntityFieldCardState, DxfEntityFieldEvidenceDirectory, DxfEntityFieldOccurrence,
+};
+pub use entity_field_insertion::{
+    DxfEntityFieldInsertionIssue, DxfEntityFieldInsertionOutcome, DxfEntityFieldInsertionPlan,
+};
+pub use entity_field_insertion_anchor::{
+    DxfEntityFieldInsertionAnchor, DxfEntityFieldInsertionAnchorIssue,
+    DxfEntityFieldInsertionAnchorOutcome,
+};
+pub use entity_field_replacement::{
+    DxfEntityFieldReplacementIssue, DxfEntityFieldReplacementOutcome, DxfEntityFieldReplacementPlan,
+};
+pub use entity_field_reset::{
+    DxfEntityFieldResetIssue, DxfEntityFieldResetOutcome, DxfEntityFieldResetPlan,
+};
+pub use entity_field_semantic::{
+    DxfEntityFieldSemanticDirectory, DxfEntityFieldSemanticEntry, DxfEntityFieldSemanticIssue,
+    DxfEntityFieldSemanticValue, DxfEntityFieldSemantics, DxfEntityFieldTextValue,
+    DxfEntityFieldValue,
+};
+pub use entity_placement::{
+    DxfEntityPlacement, DxfEntityPlacementAssessment, DxfEntityPlacementDirectory,
+    DxfEntityPlacementState, DxfEntityPlacementTarget,
+};
+pub use entity_placement_owner::{
+    DxfEntityPlacementOwnerBinding, DxfEntityPlacementOwnerDirectory, DxfEntityPlacementOwnerIssue,
+    DxfEntityPlacementOwnerOutcome,
+};
+pub use entity_proxy_graphics_relation::{
+    DxfEntityProxyGraphicsChunkIssue, DxfEntityProxyGraphicsDirectory, DxfEntityProxyGraphicsEntry,
+    DxfEntityProxyGraphicsState,
+};
+pub use entity_transparency::{
+    DxfEntityTransparency, DxfEntityTransparencyIssue, DxfEntityTransparencyMethod,
+};
+pub use entity_value_encoder::{
+    DXF_ENTITY_BINARY_CHUNK_MAX_BYTES, DxfEncodedEntityGroup, DxfEntityEditValue,
+    DxfEntityEditValueKind, DxfEntityGroupEncodeIssue, DxfEntityGroupEncoder,
+};
+pub use entity_xdata::{
+    DxfEntityXDataApplication, DxfEntityXDataApplicationState, DxfEntityXDataDirectory,
+    DxfEntityXDataOccurrence, DxfEntityXDataOccurrenceKind, DxfEntityXDataOccurrenceRange,
+};
+pub use entity_xdata_appid_destination::{
+    DxfEntityXDataAppIdDestinationDirectory, DxfEntityXDataAppIdDestinationEntry,
+    DxfEntityXDataAppIdDestinationState,
+};
+pub use entity_xdata_appid_resolution::{
+    DxfEntityXDataAppIdResolutionDirectory, DxfEntityXDataAppIdResolutionEntry,
+    DxfEntityXDataAppIdResolutionState,
+};
+pub use entity_xdata_application_destination::{
+    DxfEntityXDataApplicationDestinationDirectory, DxfEntityXDataApplicationDestinationEntry,
+    DxfEntityXDataApplicationDestinationState,
+};
+pub use entity_xdata_capacity::{
+    DXF_XDATA_ENTITY_CAPACITY_BYTES, DxfEntityXDataCapacityDirectory, DxfEntityXDataCapacityEntry,
+    DxfEntityXDataCapacityIssue, DxfEntityXDataCapacityIssueKind, DxfEntityXDataCapacityIssueRange,
+    DxfEntityXDataCapacityState, DxfEntityXDataCapacityTextIssue,
+};
+pub use entity_xdata_coordinate_destination::{
+    DxfEntityXDataCoordinateDestinationDirectory, DxfEntityXDataCoordinateDestinationEntry,
+    DxfEntityXDataCoordinateDestinationState,
+};
+pub use entity_xdata_coordinate_transform::{
+    DxfEntityXDataCoordinateTransformDirectory, DxfEntityXDataPointComponent,
+    DxfEntityXDataTransformedPointEntry, DxfEntityXDataTransformedPointIssue,
+    DxfEntityXDataTransformedPointState,
+};
+pub use entity_xdata_coordinate_transform_math::{
+    DxfEntityXDataCoordinateTransform, DxfEntityXDataCoordinateTransformInput,
+    DxfEntityXDataCoordinateTransformIssue,
+};
+pub use entity_xdata_draft_insert::DxfEntityXDataDraftInsertPlan;
+pub use entity_xdata_draft_record::{
+    DxfEntityXDataDraftRecordIssue, DxfEntityXDataDraftRecordPlan,
+};
+pub use entity_xdata_draft_verification::{
+    DxfEntityXDataDraftVerificationIssue, DxfEntityXDataDraftVerificationJournal,
+    DxfEntityXDataDraftVerificationOutcome, DxfEntityXDataDraftVerificationReceipt,
+};
+pub use entity_xdata_draft_write::{
+    DxfEntityXDataDraftWriteJournal, DxfEntityXDataDraftWriteOutcome,
+};
+pub use entity_xdata_encoded_application_destination::{
+    DxfEntityXDataEncodedApplicationDestinationDirectory,
+    DxfEntityXDataEncodedApplicationDestinationEntry,
+    DxfEntityXDataEncodedApplicationDestinationState,
+};
+pub use entity_xdata_encoded_destination::{
+    DxfEntityXDataDestinationEncodeIssue, DxfEntityXDataEncodedDestinationDirectory,
+    DxfEntityXDataEncodedDestinationEntry, DxfEntityXDataEncodedDestinationState,
+};
+pub use entity_xdata_encoded_entity_destination::{
+    DxfEntityXDataEncodedEntityDestinationDirectory, DxfEntityXDataEncodedEntityDestinationEntry,
+    DxfEntityXDataEncodedEntityDestinationState,
+};
+pub use entity_xdata_entity_destination::{
+    DxfEntityXDataEntityDestinationDirectory, DxfEntityXDataEntityDestinationEntry,
+    DxfEntityXDataEntityDestinationState,
+};
+pub use entity_xdata_handle_composed_destination::{
+    DxfEntityXDataHandleComposedDestinationDirectory, DxfEntityXDataHandleComposedDestinationEntry,
+    DxfEntityXDataHandleComposedDestinationState,
+};
+pub use entity_xdata_handle_destination::{
+    DxfEntityXDataHandleDestinationDirectory, DxfEntityXDataHandleDestinationEntry,
+    DxfEntityXDataHandleDestinationState,
+};
+pub use entity_xdata_handle_remap::{
+    DxfEntityXDataHandleRemap, DxfEntityXDataHandleRemapDirectory, DxfEntityXDataHandleRemapEntry,
+    DxfEntityXDataHandleRemapInputIssue, DxfEntityXDataHandleRemapState,
+};
+pub use entity_xdata_handle_replacement::{
+    DxfEntityXDataHandleReplacementDirectory, DxfEntityXDataHandleReplacementEntry,
+    DxfEntityXDataHandleReplacementPatch, DxfEntityXDataHandleReplacementState,
+};
+pub use entity_xdata_handle_replacement_set::{
+    DxfEntityXDataHandleReplacementSetDirectory, DxfEntityXDataHandleReplacementSetEntry,
+    DxfEntityXDataHandleReplacementSetState,
+};
+pub use entity_xdata_handle_replacement_transaction::{
+    DxfEntityXDataHandleReplacementTransactionIssue,
+    DxfEntityXDataHandleReplacementTransactionOutcome,
+    DxfEntityXDataHandleReplacementTransactionPlan,
+};
+pub use entity_xdata_handle_replacement_verification::{
+    DxfEntityXDataHandleReplacementVerificationIssue,
+    DxfEntityXDataHandleReplacementVerificationJournal,
+    DxfEntityXDataHandleReplacementVerificationOutcome,
+    DxfEntityXDataHandleReplacementVerificationReceipt,
+    DxfEntityXDataHandleReplacementWriteJournal, DxfEntityXDataHandleReplacementWriteOutcome,
+};
+pub use entity_xdata_handle_resolution::{
+    DxfEntityXDataHandleResolutionDirectory, DxfEntityXDataHandleResolutionEntry,
+};
+pub use entity_xdata_layer_destination::{
+    DxfEntityXDataLayerDestinationDirectory, DxfEntityXDataLayerDestinationEntry,
+    DxfEntityXDataLayerDestinationState,
+};
+pub use entity_xdata_layer_resolution::{
+    DxfEntityXDataLayerResolutionDirectory, DxfEntityXDataLayerResolutionEntry,
+    DxfEntityXDataLayerResolutionState,
+};
+pub use entity_xdata_logical_destination::{
+    DxfEntityXDataLogicalDestinationDirectory, DxfEntityXDataLogicalDestinationEntry,
+    DxfEntityXDataLogicalDestinationIssue, DxfEntityXDataLogicalDestinationState,
+    DxfEntityXDataLogicalDestinationValue,
+};
+pub use entity_xdata_payload_destination::{
+    DxfEntityXDataPayloadDestinationDirectory, DxfEntityXDataPayloadDestinationEntry,
+    DxfEntityXDataPayloadDestinationState,
+};
+pub use entity_xdata_point_tuple::{
+    DxfEntityXDataPointComponents, DxfEntityXDataPointKind, DxfEntityXDataPointMember,
+    DxfEntityXDataPointTuple, DxfEntityXDataPointTupleDirectory, DxfEntityXDataPointTupleState,
+};
+pub use entity_xdata_structure::{
+    DxfEntityXDataStructureDirectory, DxfEntityXDataStructureEntry, DxfEntityXDataStructureIssue,
+    DxfEntityXDataStructureIssueKind, DxfEntityXDataStructureIssueRange,
+    DxfEntityXDataStructureState,
+};
+pub use entity_xdata_symbol_destination::{
+    DxfEntityXDataSymbolDestinationDirectory, DxfEntityXDataSymbolDestinationEntry,
+    DxfEntityXDataSymbolDestinationIssue, DxfEntityXDataSymbolDestinationIssueKind,
+    DxfEntityXDataSymbolDestinationIssueRange, DxfEntityXDataSymbolDestinationState,
+};
+pub use entity_xdata_value::{
+    DXF_XDATA_BINARY_CHUNK_MAX_BYTES, DXF_XDATA_STRING_MAX_BYTES, DxfEntityXDataControl,
+    DxfEntityXDataDoubleRole, DxfEntityXDataTextKind, DxfEntityXDataTypedDirectory,
+    DxfEntityXDataTypedEntry, DxfEntityXDataValue, DxfEntityXDataValueIssue,
+};
+pub use error::{DxfError, DxfErrorCode, DxfIoOperation, DxfResource};
+pub use fill_mesh_evidence::{
+    DxfFillMeshEvidenceDirectory, DxfFillMeshFamily, DxfFillMeshField, DxfFillMeshRange,
+    DxfFillMeshRecordEntry, DxfFillMeshSubclassEntry,
+};
+pub use format_probe::{DXF_BINARY_SENTINEL, DxfPhysicalFormat, probe_dxf_physical_format};
+pub use generated::entity_schema::{
+    DXF_ENTITY_ALIAS_SCHEMA_SHA256, DXF_ENTITY_ALIASES, DXF_ENTITY_APPLICABILITY,
+    DXF_ENTITY_APPLICABILITY_SCHEMA_SHA256, DXF_ENTITY_COMMON_FIELD_SCHEMA_SHA256,
+    DXF_ENTITY_COMMON_FIELDS, DXF_ENTITY_TOPIC_SCHEMA_SHA256, DXF_ENTITY_TOPICS, DxfEntityAlias,
+    DxfEntityAliasDescriptor, DxfEntityAliasEvidence, DxfEntityApplicability,
+    DxfEntityApplicabilityDescriptor, DxfEntityApplicabilityEvidence, DxfEntityCoordinateSpace,
+    DxfEntityField, DxfEntityFieldApplicability, DxfEntityFieldCardinality, DxfEntityFieldDefault,
+    DxfEntityFieldDescriptor, DxfEntityFieldScope, DxfEntityFieldWireType,
+    DxfEntityFieldWriteOrder, DxfEntityNameClassification, DxfEntityTopic,
+    DxfEntityTopicDescriptor, classify_exact_dxf_entity_name, dxf_entity_aliases,
+    dxf_entity_applicability, dxf_entity_common_fields, dxf_entity_topics,
+};
+pub use handle::{
+    DxfHandle, DxfHandleGroupClass, DxfHandleParseIssue, classify_dxf_handle_group_code,
+    parse_dxf_handle_hex,
+};
+pub use handle_allocation_policy::{
+    DxfHandleAllocationOutcome, DxfHandleAllocationPolicyDirectory, DxfHandleAllocationPolicyState,
+    DxfHandleAllocationProposal,
+};
+pub use handle_assignment_plan::{
+    DxfHandleAssignmentPlan, DxfHandleAssignmentPlanOutcome, DxfHandleAssignmentTargetState,
+};
+pub use handle_context::{
+    DxfContextualHandleReferenceDirectory, DxfContextualHandleReferenceEntry,
+    DxfHandleReferenceContext,
+};
+pub use handle_identity::{
+    DxfHandleIdentityCandidateRange, DxfHandleIdentityDirectory, DxfHandleIdentityEntry,
+    DxfHandleIdentityLookup, DxfHandleIdentityMatch, DxfHandleIdentityState,
+};
+pub use handle_reference::{DxfHandleReferenceDirectory, DxfHandleReferenceEntry};
+pub use handle_reservation_plan::{DxfHandleReservationPlan, DxfHandleReservationPlanOutcome};
+pub use handle_resolution::{
+    DxfHandleResolutionDirectory, DxfHandleResolutionEntry, DxfHandleResolutionState,
+};
+pub use handle_role::{DxfHandleRoleDirectory, DxfHandleRoleEntry, DxfHandleRoleEvidence};
+pub use handseed::{DxfHandseedOccurrence, DxfHandseedReport, DxfHandseedState, DxfHandseedValue};
+pub use hatch_boundary_circular_arc_edge_card::{
+    DXF_HATCH_BOUNDARY_CIRCULAR_ARC_EDGE_ROLES, DxfHatchBoundaryCircularArcEdgeCard,
+    DxfHatchBoundaryCircularArcEdgeCardDirectory, DxfHatchBoundaryCircularArcEdgeCardState,
+    DxfHatchBoundaryCircularArcEdgeMember, DxfHatchBoundaryCircularArcEdgeMemberRange,
+    DxfHatchBoundaryCircularArcEdgeRole,
+};
+pub use hatch_boundary_circular_arc_edge_geometry::{
+    DxfHatchBoundaryCircularArcEdgeGeometryDirectory, DxfHatchBoundaryCircularArcEdgeGeometryEntry,
+    DxfHatchBoundaryCircularArcEdgeGeometryIssue, DxfHatchBoundaryCircularArcEdgeOcsSegment,
+    DxfHatchBoundaryCircularArcEdgeUnavailableValues,
+};
+pub use hatch_boundary_circular_arc_edge_numeric::{
+    DxfHatchBoundaryCircularArcEdgeNumericComponents,
+    DxfHatchBoundaryCircularArcEdgeNumericDirectory,
+    DxfHatchBoundaryCircularArcEdgeNumericDoubleValue, DxfHatchBoundaryCircularArcEdgeNumericEntry,
+    DxfHatchBoundaryCircularArcEdgeNumericIntegerValue,
+    DxfHatchBoundaryCircularArcEdgeNumericIssue,
+};
+pub use hatch_boundary_circular_arc_edge_semantic::{
+    DxfHatchBoundaryCircularArcEdgeDirection,
+    DxfHatchBoundaryCircularArcEdgeSemanticDirectionValue,
+    DxfHatchBoundaryCircularArcEdgeSemanticDirectory,
+    DxfHatchBoundaryCircularArcEdgeSemanticDoubleValue,
+    DxfHatchBoundaryCircularArcEdgeSemanticEntry, DxfHatchBoundaryCircularArcEdgeSemanticIssue,
+    DxfHatchBoundaryCircularArcEdgeSemantics,
+};
+pub use hatch_boundary_circular_arc_edge_wcs_geometry::{
+    DxfHatchBoundaryCircularArcEdgeWcsGeometryDirectory,
+    DxfHatchBoundaryCircularArcEdgeWcsGeometryEntry,
+    DxfHatchBoundaryCircularArcEdgeWcsGeometryIssue, DxfHatchBoundaryCircularArcEdgeWcsSegment,
+};
+pub use hatch_boundary_edge::{
+    DxfHatchBoundaryEdgeCount, DxfHatchBoundaryEdgeCountRelation, DxfHatchBoundaryEdgeDirectory,
+    DxfHatchBoundaryEdgeEntry, DxfHatchBoundaryEdgePath, DxfHatchBoundaryEdgePathEntry,
+    DxfHatchBoundaryEdgePathIssue, DxfHatchBoundaryEdgePathState, DxfHatchBoundaryEdgeRange,
+};
+pub use hatch_boundary_edge_card::{
+    DxfHatchBoundaryEdgeCard, DxfHatchBoundaryEdgeCardDirectory, DxfHatchBoundaryEdgeCardState,
+    DxfHatchBoundaryEdgeMember, DxfHatchBoundaryEdgeMemberRange,
+};
+pub use hatch_boundary_edge_payload_partition::{
+    DxfHatchBoundaryEdgePayloadPartition, DxfHatchBoundaryEdgePayloadPartitionDirectory,
+    DxfHatchBoundaryEdgePayloadPartitionEntry, DxfHatchBoundaryEdgePayloadPartitionIssue,
+};
+pub use hatch_boundary_edge_type::{
+    DxfHatchBoundaryEdgeType, DxfHatchBoundaryEdgeTypeDirectory, DxfHatchBoundaryEdgeTypeEntry,
+    DxfHatchBoundaryEdgeTypeIssue,
+};
+pub use hatch_boundary_elliptic_arc_edge_card::{
+    DXF_HATCH_BOUNDARY_ELLIPTIC_ARC_EDGE_ROLES, DxfHatchBoundaryEllipticArcEdgeCard,
+    DxfHatchBoundaryEllipticArcEdgeCardDirectory, DxfHatchBoundaryEllipticArcEdgeCardState,
+    DxfHatchBoundaryEllipticArcEdgeMember, DxfHatchBoundaryEllipticArcEdgeMemberRange,
+    DxfHatchBoundaryEllipticArcEdgeRole,
+};
+pub use hatch_boundary_elliptic_arc_edge_geometry::{
+    DxfHatchBoundaryEllipticArcEdgeGeometryDirectory, DxfHatchBoundaryEllipticArcEdgeGeometryEntry,
+    DxfHatchBoundaryEllipticArcEdgeGeometryIssue, DxfHatchBoundaryEllipticArcEdgeOcsSegment,
+    DxfHatchBoundaryEllipticArcEdgeUnavailableValues,
+};
+pub use hatch_boundary_elliptic_arc_edge_numeric::{
+    DxfHatchBoundaryEllipticArcEdgeNumericComponents,
+    DxfHatchBoundaryEllipticArcEdgeNumericDirectory,
+    DxfHatchBoundaryEllipticArcEdgeNumericDoubleValue, DxfHatchBoundaryEllipticArcEdgeNumericEntry,
+    DxfHatchBoundaryEllipticArcEdgeNumericIntegerValue,
+    DxfHatchBoundaryEllipticArcEdgeNumericIssue,
+};
+pub use hatch_boundary_elliptic_arc_edge_semantic::{
+    DxfHatchBoundaryEllipticArcEdgeDirection, DxfHatchBoundaryEllipticArcEdgeMajorAxisState,
+    DxfHatchBoundaryEllipticArcEdgeMajorAxisUnavailableComponents,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDirectionValue,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDirectory,
+    DxfHatchBoundaryEllipticArcEdgeSemanticDoubleValue,
+    DxfHatchBoundaryEllipticArcEdgeSemanticEntry, DxfHatchBoundaryEllipticArcEdgeSemanticIssue,
+    DxfHatchBoundaryEllipticArcEdgeSemantics,
+};
+pub use hatch_boundary_elliptic_arc_edge_wcs_geometry::{
+    DxfHatchBoundaryEllipticArcEdgeWcsGeometryDirectory,
+    DxfHatchBoundaryEllipticArcEdgeWcsGeometryEntry,
+    DxfHatchBoundaryEllipticArcEdgeWcsGeometryIssue, DxfHatchBoundaryEllipticArcEdgeWcsSegment,
+};
+pub use hatch_boundary_line_edge_card::{
+    DXF_HATCH_BOUNDARY_LINE_EDGE_ROLES, DxfHatchBoundaryLineEdgeCard,
+    DxfHatchBoundaryLineEdgeCardDirectory, DxfHatchBoundaryLineEdgeCardState,
+    DxfHatchBoundaryLineEdgeMember, DxfHatchBoundaryLineEdgeMemberRange,
+    DxfHatchBoundaryLineEdgeRole,
+};
+pub use hatch_boundary_line_edge_coordinate::{
+    DxfHatchBoundaryLineEdgeCoordinateDirectory, DxfHatchBoundaryLineEdgeCoordinateEntry,
+    DxfHatchBoundaryLineEdgeCoordinateIssue, DxfHatchBoundaryLineEdgeCoordinateValue,
+    DxfHatchBoundaryLineEdgeCoordinates, DxfHatchBoundaryLineEdgeEndpointIssue,
+    DxfHatchBoundaryLineEdgeOcsEndpoints, DxfHatchBoundaryLineEdgeOcsPoint,
+    DxfHatchBoundaryLineEdgeUnavailableCoordinates,
+};
+pub use hatch_boundary_line_edge_geometry::{
+    DxfHatchBoundaryLineEdgeGeometryDirectory, DxfHatchBoundaryLineEdgeGeometryEntry,
+    DxfHatchBoundaryLineEdgeGeometryIssue, DxfHatchBoundaryLineEdgeOcsSegment,
+};
+pub use hatch_boundary_line_edge_numeric::{
+    DxfHatchBoundaryLineEdgeNumericComponents, DxfHatchBoundaryLineEdgeNumericDirectory,
+    DxfHatchBoundaryLineEdgeNumericEntry, DxfHatchBoundaryLineEdgeNumericIssue,
+    DxfHatchBoundaryLineEdgeNumericValue,
+};
+pub use hatch_boundary_line_edge_wcs_geometry::{
+    DxfHatchBoundaryLineEdgeWcsGeometryDirectory, DxfHatchBoundaryLineEdgeWcsGeometryEntry,
+    DxfHatchBoundaryLineEdgeWcsGeometryIssue, DxfHatchBoundaryLineEdgeWcsSegment,
+};
+pub use hatch_boundary_partition::{
+    DxfHatchBoundaryPartition, DxfHatchBoundaryPartitionDirectory, DxfHatchBoundaryPartitionEntry,
+    DxfHatchBoundaryPartitionIssue,
+};
+pub use hatch_boundary_path::{
+    DxfHatchBoundaryPathCountIssue, DxfHatchBoundaryPathCountRelation,
+    DxfHatchBoundaryPathDirectory, DxfHatchBoundaryPathEntry, DxfHatchBoundaryPathRange,
+    DxfHatchBoundaryPathTopology, DxfHatchBoundaryPathTopologyEntry,
+    DxfHatchBoundaryPathTopologyIssue,
+};
+pub use hatch_boundary_path_flags::{
+    DxfHatchBoundaryPathFlagDirectory, DxfHatchBoundaryPathFlagEntry,
+    DxfHatchBoundaryPathFlagIssue, DxfHatchBoundaryPathFlagState, DxfHatchBoundaryPathFlagValue,
+    DxfHatchBoundaryPathFlags, DxfHatchBoundaryPathKind,
+};
+pub use hatch_boundary_spline_edge_header_card::{
+    DXF_HATCH_BOUNDARY_SPLINE_EDGE_HEADER_ROLES, DxfHatchBoundarySplineEdgeHeaderCard,
+    DxfHatchBoundarySplineEdgeHeaderCardDirectory, DxfHatchBoundarySplineEdgeHeaderCardState,
+    DxfHatchBoundarySplineEdgeHeaderMember, DxfHatchBoundarySplineEdgeHeaderMemberRange,
+    DxfHatchBoundarySplineEdgeHeaderRole,
+};
+pub use hatch_boundary_spline_edge_header_numeric::{
+    DxfHatchBoundarySplineEdgeHeaderNumericComponents,
+    DxfHatchBoundarySplineEdgeHeaderNumericDirectory, DxfHatchBoundarySplineEdgeHeaderNumericEntry,
+    DxfHatchBoundarySplineEdgeHeaderNumericI16Value,
+    DxfHatchBoundarySplineEdgeHeaderNumericI32Value, DxfHatchBoundarySplineEdgeHeaderNumericIssue,
+};
+pub use hatch_boundary_spline_edge_header_semantic::{
+    DxfHatchBoundarySplineEdgeHeaderPeriodicity, DxfHatchBoundarySplineEdgeHeaderRationality,
+    DxfHatchBoundarySplineEdgeHeaderSemanticDirectory,
+    DxfHatchBoundarySplineEdgeHeaderSemanticEntry,
+    DxfHatchBoundarySplineEdgeHeaderSemanticI32Value,
+    DxfHatchBoundarySplineEdgeHeaderSemanticIssue,
+    DxfHatchBoundarySplineEdgeHeaderSemanticPeriodicityValue,
+    DxfHatchBoundarySplineEdgeHeaderSemanticRationalityValue,
+    DxfHatchBoundarySplineEdgeHeaderSemantics,
+};
+pub use hatch_boundary_spline_edge_point_card::{
+    DxfHatchBoundarySplineEdgePointCard, DxfHatchBoundarySplineEdgePointCardDirectory,
+    DxfHatchBoundarySplineEdgePointCardMember, DxfHatchBoundarySplineEdgePointCardState,
+};
+pub use hatch_boundary_spline_edge_point_numeric::{
+    DxfHatchBoundarySplineEdgePointNumericComponents,
+    DxfHatchBoundarySplineEdgePointNumericDirectory, DxfHatchBoundarySplineEdgePointNumericEntry,
+    DxfHatchBoundarySplineEdgePointNumericIssue, DxfHatchBoundarySplineEdgePointNumericValue,
+};
+pub use hatch_boundary_spline_edge_point_tuple::{
+    DxfHatchBoundarySplineEdgePointGrouping, DxfHatchBoundarySplineEdgePointKind,
+    DxfHatchBoundarySplineEdgePointMemberRole, DxfHatchBoundarySplineEdgePointOrphan,
+    DxfHatchBoundarySplineEdgePointTuple, DxfHatchBoundarySplineEdgePointTupleDirectory,
+    DxfHatchBoundarySplineEdgePointTupleEntry, DxfHatchBoundarySplineEdgePointTupleIssue,
+    DxfHatchBoundarySplineEdgePointTupleMember,
+};
+pub use hatch_boundary_spline_edge_sequence::{
+    DxfHatchBoundarySplineEdgeSequenceDirectory, DxfHatchBoundarySplineEdgeSequenceEntry,
+    DxfHatchBoundarySplineEdgeSequenceIssue, DxfHatchBoundarySplineEdgeSequencePartition,
+    DxfHatchBoundarySplineEdgeSequencePhase,
+};
+pub use hatch_elevation::{
+    DxfHatchElevation, DxfHatchElevationComponent, DxfHatchElevationComponentIssue,
+    DxfHatchElevationComponentRole, DxfHatchElevationComponentValue, DxfHatchElevationComponents,
+    DxfHatchElevationDirectory, DxfHatchElevationEntry, DxfHatchElevationEntryState,
+    DxfHatchElevationIssue, DxfHatchElevationUnavailableComponents,
+};
+pub use hatch_extrusion::{
+    DxfHatchExtrusion, DxfHatchExtrusionComponent, DxfHatchExtrusionDirectory,
+    DxfHatchExtrusionEntry, DxfHatchExtrusionInputKind, DxfHatchExtrusionIssue,
+    DxfHatchExtrusionUnavailableComponents,
+};
+pub use hatch_polyline_bulge::{
+    DxfHatchPolylineBulgeDirectory, DxfHatchPolylineBulgeEntry, DxfHatchPolylineBulgeIssue,
+    DxfHatchPolylineBulgeValue,
+};
+pub use hatch_polyline_header::{
+    DxfHatchPolylineBoolean, DxfHatchPolylineHeader, DxfHatchPolylineHeaderDirectory,
+    DxfHatchPolylineHeaderEntry, DxfHatchPolylineHeaderIssue, DxfHatchPolylineHeaderState,
+    DxfHatchPolylineVertexCount,
+};
+pub use hatch_polyline_line_geometry::{
+    DxfHatchPolylineLineGeometryDirectory, DxfHatchPolylineLineGeometryEntry,
+    DxfHatchPolylineLineGeometryIssue, DxfHatchPolylineOcsLineSegment,
+};
+pub use hatch_polyline_segment::{
+    DxfHatchPolylineSegmentDirectory, DxfHatchPolylineSegmentEndpoints,
+    DxfHatchPolylineSegmentEntry, DxfHatchPolylineSegmentPathEntry,
+    DxfHatchPolylineSegmentPathState, DxfHatchPolylineSegmentRange,
+    DxfHatchPolylineSegmentTopology,
+};
+pub use hatch_polyline_segment_geometry::{
+    DxfHatchPolylineOcsArcSegment, DxfHatchPolylineOcsSegmentGeometry,
+    DxfHatchPolylineSegmentGeometryDirectory, DxfHatchPolylineSegmentGeometryEntry,
+    DxfHatchPolylineSegmentGeometryIssue,
+};
+pub use hatch_polyline_segment_shape::{
+    DxfHatchPolylineSegmentShape, DxfHatchPolylineSegmentShapeDirectory,
+    DxfHatchPolylineSegmentShapeEntry,
+};
+pub use hatch_polyline_vertex::{
+    DxfHatchPolylineVertexCardState, DxfHatchPolylineVertexCountRelation,
+    DxfHatchPolylineVertexDirectory, DxfHatchPolylineVertexEntry, DxfHatchPolylineVertexGrouping,
+    DxfHatchPolylineVertexGroupingState, DxfHatchPolylineVertexMember,
+    DxfHatchPolylineVertexPathEntry, DxfHatchPolylineVertexRole,
+};
+pub use hatch_polyline_vertex_coordinate::{
+    DxfHatchPolylineVertexCoordinateDirectory, DxfHatchPolylineVertexCoordinateEntry,
+    DxfHatchPolylineVertexCoordinateIssue, DxfHatchPolylineVertexCoordinateValue,
+    DxfHatchPolylineVertexCoordinates, DxfHatchPolylineVertexOcsPosition,
+    DxfHatchPolylineVertexPositionIssue, DxfHatchPolylineVertexUnavailableCoordinates,
+};
+pub use hatch_polyline_vertex_numeric::{
+    DxfHatchPolylineVertexNumericComponents, DxfHatchPolylineVertexNumericDirectory,
+    DxfHatchPolylineVertexNumericEntry, DxfHatchPolylineVertexNumericIssue,
+    DxfHatchPolylineVertexNumericValue,
+};
+pub use hatch_polyline_wcs_geometry::{
+    DxfHatchPolylineWcsArcSegment, DxfHatchPolylineWcsGeometryDirectory,
+    DxfHatchPolylineWcsGeometryEntry, DxfHatchPolylineWcsGeometryIssue,
+    DxfHatchPolylineWcsLineSegment, DxfHatchPolylineWcsSegmentGeometry,
+};
+pub use hatch_scalar_card::{
+    DxfHatchScalarCard, DxfHatchScalarCardDirectory, DxfHatchScalarCardMember,
+    DxfHatchScalarCardMemberRange, DxfHatchScalarCardState,
+};
+pub use hatch_scalar_evidence::{
+    DXF_HATCH_SCALAR_ROLES, DxfHatchScalarDirectory, DxfHatchScalarEntry, DxfHatchScalarIssue,
+    DxfHatchScalarOccurrence, DxfHatchScalarRole, DxfHatchScalarValue,
+};
+pub use hatch_scalar_semantic::{
+    DxfHatchScalarSemanticDirectory, DxfHatchScalarSemanticEntry, DxfHatchScalarSemanticIssue,
+    DxfHatchScalarSemanticValue,
+};
+pub use header_handle::{
+    DxfHeaderHandleDirectory, DxfHeaderHandleEntry, DxfHeaderHandleIssue, DxfHeaderHandleValue,
+};
+pub use header_index::{DxfHeaderGroupRange, DxfHeaderVariable, DxfHeaderVariableIndex};
+pub use header_numeric::{DxfHeaderNumericDirectory, DxfHeaderNumericEntry, DxfHeaderNumericView};
+pub use header_numeric_value::{DxfHeaderNumericIssue, DxfHeaderNumericValue};
+pub use header_scalar::{DxfDayParts, DxfDouble, DxfElapsedDays, DxfJulianDate};
+pub use header_schema_directory::{DxfHeaderSchemaDirectory, DxfHeaderSchemaMatch};
+pub use header_text::{
+    DxfHeaderTextDirectory, DxfHeaderTextEntry, DxfHeaderTextIssue, DxfHeaderTextValue,
+};
+pub use header_view::{
+    DxfAcadVersionIssue, DxfCodePageDeclaration, DxfCodePageIssue, DxfHandseedIssue, DxfHeaderView,
+};
+pub use helix_analytic::{
+    DxfHelixAnalyticData, DxfHelixAnalyticDirectory, DxfHelixAnalyticEntry,
+    DxfHelixAnalyticIssueKind, DxfHelixAnalyticIssues, DxfHelixAnalyticState,
+    DxfHelixSubclassPathState,
+};
+pub use helix_card::{
+    DxfHelixCardDirectory, DxfHelixCardMember, DxfHelixCardMemberRange, DxfHelixCardState,
+    DxfHelixValueCard,
+};
+pub use helix_evidence::{
+    DXF_HELIX_ROLES, DxfHelixDirectory, DxfHelixNumber, DxfHelixNumericIssue, DxfHelixRecordEntry,
+    DxfHelixValue, DxfHelixValueRange, DxfHelixValueRole,
+};
+pub use helix_relation::{
+    DXF_HELIX_MAX_COMMAND_TURNS, DxfHelixAxisDerivationStage, DxfHelixAxisRelation,
+    DxfHelixHeightRelation, DxfHelixRadiusDomain, DxfHelixRelationDirectory, DxfHelixRelationEntry,
+    DxfHelixTurnsDomain,
+};
+pub use helix_scalar_semantic::{
+    DXF_HELIX_SCALAR_ROLES, DxfHelixConstraintType, DxfHelixHandedness, DxfHelixScalarDirectory,
+    DxfHelixScalarEntry, DxfHelixScalarIssue, DxfHelixScalarSemanticValue, DxfHelixScalarValue,
+};
+pub use helix_vector_semantic::{
+    DXF_HELIX_VECTOR_KINDS, DxfHelixCoordinateIssue, DxfHelixCoordinateSemanticValue,
+    DxfHelixVectorDirectory, DxfHelixVectorKind, DxfHelixVectorSemantics,
+};
+pub use infinite_line_geometry::{
+    DxfInfiniteLineGeometryDirectory, DxfInfiniteLineGeometryKind,
+    DxfInfiniteLineGeometryNumericIssue, DxfInfiniteLineGeometryRecordEntry,
+    DxfInfiniteLineGeometryValue, DxfInfiniteLineGeometryValueRange,
+    DxfInfiniteLineGeometryValueRole,
+};
+pub use infinite_line_geometry_card::{
+    DxfInfiniteLineGeometryCardDirectory, DxfInfiniteLineGeometryCardMember,
+    DxfInfiniteLineGeometryCardMemberRange, DxfInfiniteLineGeometryValueCard,
+    DxfInfiniteLineGeometryValueCardState,
+};
+pub use infinite_line_geometry_semantic::{
+    DxfInfiniteLineGeometrySemanticDirectory, DxfInfiniteLineGeometrySemanticIssue,
+    DxfInfiniteLineGeometrySemanticValue, DxfInfiniteLineGeometrySemantics,
+};
+pub use insert_array::{
+    DxfInsertArrayApplicationIssue, DxfInsertArrayDirectory, DxfInsertArrayEntry,
+    DxfInsertArrayInstance, DxfInsertArrayIssue, DxfInsertArrayLayout,
+};
+pub use insert_attribute_anchor::{
+    DxfInsertAttributePlacementAnchor, DxfInsertAttributePlacementAnchorDirectory,
+    DxfInsertAttributePlacementAnchorState,
+};
+pub use insert_attribute_card::{
+    DxfInsertAttributeCardDirectory, DxfInsertAttributeCardMember,
+    DxfInsertAttributeCardMemberRange, DxfInsertAttributeValueCard,
+    DxfInsertAttributeValueCardState,
+};
+pub use insert_attribute_definition_resolution::{
+    DxfInsertAttributeDefinitionRange, DxfInsertAttributeDefinitionResolutionDirectory,
+    DxfInsertAttributeDefinitionResolutionEntry, DxfInsertAttributeDefinitionResolutionState,
+};
+pub use insert_attribute_double_semantic::{
+    DxfInsertAttributeDoubleSemanticDirectory, DxfInsertAttributeDoubleSemanticIssue,
+    DxfInsertAttributeDoubleSemantics, DxfInsertAttributeSemanticDouble,
+};
+pub use insert_attribute_integer_semantic::{
+    DxfInsertAttributeIntegerSemanticDirectory, DxfInsertAttributeIntegerSemanticIssue,
+    DxfInsertAttributeIntegerSemantics, DxfInsertAttributeSemanticInteger,
+};
+pub use insert_attribute_justification::{
+    DxfInsertAttributeHorizontalJustification, DxfInsertAttributeHorizontalJustificationSemantic,
+    DxfInsertAttributeJustificationDirectory, DxfInsertAttributeJustificationIssue,
+    DxfInsertAttributeJustificationSemantics, DxfInsertAttributeVerticalJustification,
+    DxfInsertAttributeVerticalJustificationSemantic,
+};
+pub use insert_attribute_sequence::{
+    DxfInsertAttributeRecordRange, DxfInsertAttributeSequenceDirectory,
+    DxfInsertAttributeSequenceEntry, DxfInsertAttributeSequenceState,
+};
+pub use insert_attribute_text_semantic::{
+    DxfInsertAttributeSemanticText, DxfInsertAttributeSemanticTextStyle,
+    DxfInsertAttributeTextSemanticDirectory, DxfInsertAttributeTextSemanticIssue,
+    DxfInsertAttributeTextSemantics, DxfInsertAttributeTextStyleName,
+};
+pub use insert_attribute_value::{
+    DxfInsertAttributeTextValue, DxfInsertAttributeValue, DxfInsertAttributeValueData,
+    DxfInsertAttributeValueDirectory, DxfInsertAttributeValueEntry, DxfInsertAttributeValueIssue,
+    DxfInsertAttributeValueRange, DxfInsertAttributeValueRole,
+};
+pub use insert_attribute_wcs_anchor::{
+    DxfInsertAttributeWcsAnchor, DxfInsertAttributeWcsAnchorDirectory,
+    DxfInsertAttributeWcsAnchorEntry, DxfInsertAttributeWcsAnchorIssue,
+};
+pub use insert_block_resolution::{
+    DxfInsertBlockResolutionDirectory, DxfInsertBlockResolutionEntry,
+    DxfInsertBlockResolutionState, DxfInsertBlockTargetRange,
+};
+pub use insert_record_card::{
+    DxfInsertRecordCardDirectory, DxfInsertRecordCardMember, DxfInsertRecordCardMemberRange,
+    DxfInsertRecordValueCard, DxfInsertRecordValueCardState,
+};
+pub use insert_record_semantic::{
+    DxfInsertRecordSemanticDirectory, DxfInsertRecordSemanticDouble,
+    DxfInsertRecordSemanticInteger, DxfInsertRecordSemanticIssue, DxfInsertRecordSemanticText,
+    DxfInsertRecordSemantics,
+};
+pub use insert_record_value::{
+    DxfInsertRecordTextValue, DxfInsertRecordValue, DxfInsertRecordValueData,
+    DxfInsertRecordValueDirectory, DxfInsertRecordValueEntry, DxfInsertRecordValueIssue,
+    DxfInsertRecordValueRange, DxfInsertRecordValueRole,
+};
+pub use insert_target_eligibility::{
+    DxfBlockExpansionEdge, DxfInsertTargetEligibilityDirectory, DxfInsertTargetEligibilityEntry,
+    DxfInsertTargetEligibilityState,
+};
+pub use insert_transform::{
+    DxfInsertAffineTransform, DxfInsertTransformApplicationIssue, DxfInsertTransformDirectory,
+    DxfInsertTransformEntry, DxfInsertTransformInput, DxfInsertTransformIssue,
+};
+pub use layout_object::{DxfLayoutObjectDirectory, DxfLayoutObjectEntry, DxfLayoutObjectNameState};
+pub use lightweight_polyline::{
+    DxfLightweightPolylineDirectory, DxfLightweightPolylineNumericIssue,
+    DxfLightweightPolylineRecordEntry, DxfLightweightPolylineValue,
+    DxfLightweightPolylineValueRange, DxfLightweightPolylineValueRole,
+};
+pub use lightweight_polyline_integer::{
+    DxfLightweightPolylineInteger, DxfLightweightPolylineIntegerDirectory,
+    DxfLightweightPolylineIntegerIssue, DxfLightweightPolylineIntegerRange,
+    DxfLightweightPolylineIntegerRecordEntry, DxfLightweightPolylineIntegerRole,
+    DxfLightweightPolylineIntegerValue,
+};
+pub use lightweight_polyline_record_card::{
+    DxfLightweightPolylineRecordCard, DxfLightweightPolylineRecordCardDirectory,
+    DxfLightweightPolylineRecordCardEntry, DxfLightweightPolylineRecordCardMember,
+    DxfLightweightPolylineRecordCardMemberRange, DxfLightweightPolylineRecordCardState,
+    DxfLightweightPolylineRecordRole,
+};
+pub use lightweight_polyline_record_semantic::{
+    DxfLightweightPolylineRecordSemanticDirectory, DxfLightweightPolylineRecordSemanticDouble,
+    DxfLightweightPolylineRecordSemanticInteger, DxfLightweightPolylineRecordSemanticIssue,
+    DxfLightweightPolylineRecordSemantics, DxfLightweightPolylineVertexCountComparison,
+    DxfLightweightPolylineWidthEvidenceState,
+};
+pub use lightweight_polyline_segment::{
+    DxfLightweightPolylineClosureState, DxfLightweightPolylineSegmentDirectory,
+    DxfLightweightPolylineSegmentEntry, DxfLightweightPolylineSegmentRange,
+    DxfLightweightPolylineSegmentRecordEntry, DxfLightweightPolylineSegmentSemantics,
+    DxfLightweightPolylineSegmentShape, DxfLightweightPolylineSegmentTopology,
+};
+pub use lightweight_polyline_segment_geometry::{
+    DxfLightweightPolylineOcsArcSegment, DxfLightweightPolylineOcsLineSegment,
+    DxfLightweightPolylineOcsSegmentGeometry, DxfLightweightPolylineSegmentGeometryDirectory,
+    DxfLightweightPolylineSegmentGeometryIssue, DxfLightweightPolylineSegmentGeometrySemantics,
+};
+pub use lightweight_polyline_vertex::{
+    DxfLightweightPolylineGroupedRecordEntry, DxfLightweightPolylineVertexCard,
+    DxfLightweightPolylineVertexCardState, DxfLightweightPolylineVertexDirectory,
+    DxfLightweightPolylineVertexEntry, DxfLightweightPolylineVertexMember,
+    DxfLightweightPolylineVertexRole,
+};
+pub use lightweight_polyline_vertex_semantic::{
+    DxfLightweightPolylineVertexSemanticDirectory, DxfLightweightPolylineVertexSemanticDouble,
+    DxfLightweightPolylineVertexSemanticIdentifier, DxfLightweightPolylineVertexSemanticIssue,
+    DxfLightweightPolylineVertexSemantics,
+};
+pub use limits::{DxfResourceLimits, DxfResourceProfile};
+pub use mtext_column_relation::{
+    DxfMTextColumnMode, DxfMTextColumnModeSemantic, DxfMTextColumnRelationDirectory,
+    DxfMTextColumnRelationIssue, DxfMTextColumnRelationSemantics,
+};
+pub use mtext_column_semantic::{
+    DxfMTextColumnBooleanSemantic, DxfMTextColumnCountSemantic, DxfMTextColumnDoubleSemantic,
+    DxfMTextColumnHeightDisposition, DxfMTextColumnIssue, DxfMTextColumnSemanticDirectory,
+    DxfMTextColumnSemantics, DxfMTextColumnSourceEntry, DxfMTextColumnType,
+    DxfMTextColumnTypeSemantic,
+};
+pub use mtext_embedded_column_evidence::{
+    DxfMTextEmbeddedColumnDirectory, DxfMTextEmbeddedColumnEntry, DxfMTextEmbeddedColumnRole,
+    DxfMTextEmbeddedColumnValue,
+};
+pub use mtext_flat_column_evidence::{
+    DxfMTextFlatColumnDirectory, DxfMTextFlatColumnEntry, DxfMTextFlatColumnRole,
+    DxfMTextFlatColumnValue,
+};
+pub use mtext_layout::{
+    DxfMTextAttachment, DxfMTextAttachmentSemantic, DxfMTextDrawingDirection,
+    DxfMTextDrawingDirectionSemantic, DxfMTextLayoutDirectory, DxfMTextLayoutIssue,
+    DxfMTextLayoutSemantics, DxfMTextLineSpacingStyle, DxfMTextLineSpacingStyleSemantic,
+};
+pub use mtext_numeric_domain::{
+    DxfMTextActualWidthRelation, DxfMTextActualWidthRelationSemantic,
+    DxfMTextBackgroundFillSetting, DxfMTextBackgroundFillSettingSemantic,
+    DxfMTextLineSpacingFactor, DxfMTextLineSpacingFactorSemantic, DxfMTextNumericDomainDirectory,
+    DxfMTextNumericDomainIssue, DxfMTextNumericDomainSemantics,
+};
+pub use mtext_orientation::{
+    DxfMTextOrientationDirectory, DxfMTextOrientationInput, DxfMTextOrientationInputSemantic,
+    DxfMTextOrientationIssue, DxfMTextOrientationSemantics, DxfMTextRotationSemantic,
+};
+pub use mtext_tolerance_scalar::{
+    DxfMTextNumericSemantics, DxfMTextToleranceScalarDirectory, DxfToleranceNumericSemantics,
+};
+pub use mtext_x_axis_direction::{
+    DxfMTextXAxisComponent, DxfMTextXAxisDirection, DxfMTextXAxisDirectionDirectory,
+    DxfMTextXAxisDirectionIssue, DxfMTextXAxisDirectionSemantic, DxfMTextXAxisDirectionSemantics,
+};
+pub use mtext_xdata_column_evidence::{
+    DxfMTextXDataColumnDirectory, DxfMTextXDataColumnEntry, DxfMTextXDataColumnRole,
+    DxfMTextXDataColumnValue,
+};
+pub use mtext_xdata_linked_column::{
+    DxfMTextXDataLinkedColumnDirectory, DxfMTextXDataLinkedColumnEntry,
+};
+pub use mtext_xdata_linked_column_resolution::{
+    DxfMTextXDataLinkedColumnResolutionDirectory, DxfMTextXDataLinkedColumnResolutionEntry,
+    DxfMTextXDataLinkedColumnTarget, DxfMTextXDataLinkedColumnTargetState,
+};
+pub use named_symbol_table::{
+    DxfNamedSymbolTableDirectory, DxfNamedSymbolTableEntry, DxfNamedSymbolTableKind,
+};
+pub use owner_evidence_comparison::{
+    DxfOwnerEvidenceComparisonDirectory, DxfOwnerEvidenceComparisonEntry,
+    DxfOwnerEvidenceComparisonState,
+};
+pub use ownership_evidence::{
+    DxfIncomingOwnershipState, DxfOwnershipEvidenceDirectory, DxfOwnershipEvidenceEntry,
+    DxfOwnershipLinkRange, DxfOwnershipTargetEntry, DxfResolvedOwnershipLink,
+};
+pub use planar_face_geometry::{
+    DxfPlanarFaceDirectory, DxfPlanarFaceKind, DxfPlanarFaceNumber, DxfPlanarFaceNumericIssue,
+    DxfPlanarFaceRecordEntry, DxfPlanarFaceValue, DxfPlanarFaceValueRange, DxfPlanarFaceValueRole,
+};
+pub use planar_face_geometry_card::{
+    DxfPlanarFaceCardDirectory, DxfPlanarFaceCardMember, DxfPlanarFaceCardMemberRange,
+    DxfPlanarFaceValueCard, DxfPlanarFaceValueCardState,
+};
+pub use planar_face_geometry_semantic::{
+    DxfPlanarFaceDoubleSemanticValue, DxfPlanarFaceInt16SemanticValue,
+    DxfPlanarFaceSemanticDirectory, DxfPlanarFaceSemanticIssue, DxfPlanarFaceSemantics,
+};
+pub use planar_face_wcs_geometry::{
+    DxfPlanarFaceWcsGeometry, DxfPlanarFaceWcsGeometryDirectory, DxfPlanarFaceWcsGeometryEntry,
+    DxfPlanarFaceWcsGeometryIssue,
+};
+pub use point_clone_draft_projection::{
+    DxfPointCloneDestinationBindings, DxfPointCloneDialectAdaptations,
+    DxfPointCloneDraftProjectionIssue, DxfPointCloneDraftProjectionPlan,
+};
+pub use point_clone_xdata_draft::{
+    DxfPointCloneXDataDraftIssue, DxfPointCloneXDataDraftPlan, DxfPointCloneXDataSource,
+};
+pub use point_clone_xdata_insert::{
+    DxfPointCloneSourceEvidence, DxfPointCloneXDataInsertPlan,
+    DxfPointCloneXDataVerificationJournal, DxfPointCloneXDataVerificationOutcome,
+    DxfPointCloneXDataWriteJournal, DxfPointCloneXDataWriteOutcome,
+};
+pub use point_edit::{DxfPointEditIssue, DxfPointPatch, DxfPointPatchKind};
+pub use polyline_family_semantic::{
+    DxfPolylineFamily, DxfPolylineFamilySemanticDirectory, DxfPolylineFamilySemantics,
+    DxfPolylineFamilyState, DxfPolylineVertexFamily, DxfPolylineVertexFamilyComparison,
+    DxfPolylineVertexFamilySemantics,
+};
+pub use polyline_polyface_face::{
+    DxfPolylinePolyfaceCornerRange, DxfPolylinePolyfaceFaceResolutionDirectory,
+    DxfPolylinePolyfaceFaceResolutionState, DxfPolylinePolyfaceResolvedCornerEntry,
+    DxfPolylinePolyfaceResolvedFaceEntry,
+};
+pub use polyline_polyface_geometry::{
+    DxfPolylinePolyfaceFaceGeometryDirectory, DxfPolylinePolyfaceFaceGeometryEntry,
+    DxfPolylinePolyfaceFaceGeometryState, DxfPolylinePolyfacePointEntry,
+    DxfPolylinePolyfacePointRange,
+};
+pub use polyline_polyface_topology::{
+    DxfPolylinePolyfaceCoordinateEntry, DxfPolylinePolyfaceFaceEntry,
+    DxfPolylinePolyfaceMemberRange, DxfPolylinePolyfaceOrdering, DxfPolylinePolyfaceRecordEntry,
+    DxfPolylinePolyfaceRecordState, DxfPolylinePolyfaceTopologyDirectory,
+};
+pub use polyline_polygon_mesh::{
+    DxfPolylinePolygonMeshCellEntry, DxfPolylinePolygonMeshCellRange,
+    DxfPolylinePolygonMeshDirectory, DxfPolylinePolygonMeshRecordEntry,
+    DxfPolylinePolygonMeshRecordState,
+};
+pub use polyline_polygon_mesh_geometry::{
+    DxfPolylinePolygonMeshCellCorner, DxfPolylinePolygonMeshCellGeometryDirectory,
+    DxfPolylinePolygonMeshCellGeometryEntry, DxfPolylinePolygonMeshCellGeometryState,
+};
+pub use polyline_polygon_mesh_smoothing::{
+    DxfPolylinePolygonMeshSmoothSurfaceType, DxfPolylinePolygonMeshSmoothingDirectory,
+    DxfPolylinePolygonMeshSmoothingEntry, DxfPolylinePolygonMeshSmoothingState,
+};
+pub use polyline_record_card::{
+    DxfPolylineRecordCardDirectory, DxfPolylineRecordCardMember, DxfPolylineRecordCardMemberRange,
+    DxfPolylineRecordValueCard, DxfPolylineRecordValueCardState,
+};
+pub use polyline_record_semantic::{
+    DxfPolylineRecordSemanticDirectory, DxfPolylineRecordSemanticDouble,
+    DxfPolylineRecordSemanticInteger, DxfPolylineRecordSemanticIssue, DxfPolylineRecordSemantics,
+};
+pub use polyline_record_value::{
+    DxfPolylineRecordNumber, DxfPolylineRecordNumericIssue, DxfPolylineRecordValue,
+    DxfPolylineRecordValueDirectory, DxfPolylineRecordValueEntry, DxfPolylineRecordValueRange,
+    DxfPolylineRecordValueRole,
+};
+pub use polyline_segment::{
+    DxfPolylineSegmentDirectory, DxfPolylineSegmentEntry, DxfPolylineSegmentRange,
+    DxfPolylineSegmentRecordEntry, DxfPolylineSegmentRecordState, DxfPolylineSegmentTopology,
+};
+pub use polyline_segment_geometry::{
+    DxfPolylineOcsArcSegment, DxfPolylineOcsLineSegment, DxfPolylineSegmentGeometry,
+    DxfPolylineSegmentGeometryDirectory, DxfPolylineSegmentGeometryIssue,
+    DxfPolylineSegmentGeometrySemantics, DxfPolylineWcsLineSegment,
+};
+pub use polyline_segment_semantic::{
+    DxfPolylineSegmentCoordinateSystem, DxfPolylineSegmentSemanticDirectory,
+    DxfPolylineSegmentSemantics,
+};
+pub use polyline_segment_wcs_geometry::{
+    DxfPolylineTransformedWcsArcSegment, DxfPolylineTransformedWcsLineSegment,
+    DxfPolylineWcsSegmentGeometry, DxfPolylineWcsSegmentGeometryDirectory,
+    DxfPolylineWcsSegmentGeometryIssue, DxfPolylineWcsSegmentGeometrySemantics,
+};
+pub use polyline_segment_width::{
+    DxfPolylineEffectiveWidth, DxfPolylineEffectiveWidthOrigin, DxfPolylineSegmentEffectiveWidths,
+    DxfPolylineSegmentWidthDirectory, DxfPolylineSegmentWidthIssue,
+};
+pub use polyline_sequence::{
+    DxfPolylineSequenceDirectory, DxfPolylineSequenceEntry, DxfPolylineSequenceState,
+    DxfPolylineVertexRecordRange,
+};
+pub use polyline_vertex_card::{
+    DxfPolylineVertexCardDirectory, DxfPolylineVertexCardMember, DxfPolylineVertexCardMemberRange,
+    DxfPolylineVertexValueCard, DxfPolylineVertexValueCardState,
+};
+pub use polyline_vertex_integer_semantic::{
+    DxfPolylineVertexIntegerSemanticDirectory, DxfPolylineVertexIntegerSemanticIssue,
+    DxfPolylineVertexIntegerSemantics, DxfPolylineVertexSemanticI16, DxfPolylineVertexSemanticI32,
+};
+pub use polyline_vertex_semantic::{
+    DxfPolylineVertexSemanticDirectory, DxfPolylineVertexSemanticDouble,
+    DxfPolylineVertexSemanticIssue, DxfPolylineVertexSemantics,
+};
+pub use polyline_vertex_value::{
+    DxfPolylineVertexNumber, DxfPolylineVertexNumericIssue, DxfPolylineVertexValue,
+    DxfPolylineVertexValueDirectory, DxfPolylineVertexValueEntry, DxfPolylineVertexValueRange,
+    DxfPolylineVertexValueRole,
+};
+pub use progress::{
+    DxfCancellationToken, DxfReadControl, DxfReadObserver, DxfReadProgress, NoopDxfReadObserver,
+};
+pub use raw_document::{
+    DxfHeaderVariableLookup, DxfHeaderVariableLookupState, DxfRawDocumentConformance,
+    DxfRawDocumentFormat, DxfRawDocumentView, DxfRawGroup,
+};
+pub use raw_handle::{DxfRawHandleLookup, DxfRawHandleValue};
+pub use raw_record::{
+    DxfRawRecord, DxfRawRecordDirectory, DxfRawRecordRange, DxfRawRecordSection,
+    DxfRawRecordSectionKind, DxfRawRecordSectionState,
+};
+pub use read_options::{DxfReadMode, DxfReadOptions};
+pub use semantic_value::{
+    DxfRawValueProvenance, DxfSemanticFieldProvenance, DxfSemanticValue, DxfSemanticValueState,
+};
+pub use shape_wcs_insertion::{
+    DxfShapeInsertionComponent, DxfShapeWcsInsertion, DxfShapeWcsInsertionDirectory,
+    DxfShapeWcsInsertionIssue, DxfShapeWcsInsertionSemantic, DxfShapeWcsInsertionSemantics,
+};
+pub use shape_wcs_orientation::{
+    DxfShapeWcsOrientation, DxfShapeWcsOrientationDirectory, DxfShapeWcsOrientationIssue,
+    DxfShapeWcsOrientationSemantic, DxfShapeWcsOrientationSemantics,
+};
+pub use source::{DxfByteSource, DxfFileSource, DxfMemorySource};
+pub use source_id::DxfSourceId;
+pub use source_scan::{DxfSourceScanReceipt, scan_dxf_source};
+pub use spline_analytic::{
+    DxfSplineAnalyticData, DxfSplineAnalyticDirectory, DxfSplineAnalyticEntry,
+    DxfSplineAnalyticIssueKind, DxfSplineAnalyticIssues, DxfSplineAnalyticState,
+};
+pub use spline_analytic_value::{
+    DxfSplineAnalyticControlPoint, DxfSplineAnalyticKnot, DxfSplineAnalyticPoint,
+    DxfSplineAnalyticValueDirectory, DxfSplineAnalyticValueEntry, DxfSplineAnalyticValueIssueKind,
+    DxfSplineAnalyticValueIssues, DxfSplineAnalyticValueRange, DxfSplineAnalyticValueState,
+};
+pub use spline_auxiliary::{
+    DxfSplineAuxiliaryDirectory, DxfSplineVectorComponentState, DxfSplineVectorComponents,
+    DxfSplineVectorEntry, DxfSplineVectorKind, DxfSplineVectorState,
+    DxfSplineWeightCountDisposition, DxfSplineWeightEntry, DxfSplineWeightState,
+};
+pub use spline_auxiliary_semantic::{
+    DxfSplineAuxiliarySemanticDirectory, DxfSplineEffectiveVector, DxfSplineVectorSemanticEntry,
+    DxfSplineVectorSemanticIssue, DxfSplineVectorSemanticState, DxfSplineWeightSemanticEntry,
+    DxfSplineWeightSemanticState, DxfSplineWeightValueRange, DxfSplineWeightValueState,
+};
+pub use spline_card::{
+    DXF_SPLINE_ROLES, DxfSplineCardDirectory, DxfSplineCardMember, DxfSplineCardMemberRange,
+    DxfSplineCardState, DxfSplineFlags, DxfSplineFlagsSemantic, DxfSplineValueCard,
+};
+pub use spline_count_relation::{
+    DxfSplineCountDirectory, DxfSplineCountDisposition, DxfSplineCountEntry, DxfSplineCountKind,
+    DxfSplineCountState,
+};
+pub use spline_evidence::{
+    DxfSplineDirectory, DxfSplineNumber, DxfSplineNumericIssue, DxfSplineRecordEntry,
+    DxfSplineRecordKind, DxfSplineValue, DxfSplineValueRange, DxfSplineValueRole,
+};
+pub use spline_first_derivative::{
+    DxfSplineEvaluatedDifferential, DxfSplineEvaluatedVector, DxfSplineFirstDerivativeEvaluation,
+    DxfSplineFirstDerivativeState,
+};
+pub use spline_point_evaluation::{
+    DXF_SPLINE_EVALUATION_MAX_DEGREE, DxfSplineEvaluatedPoint, DxfSplineEvaluationInputKind,
+    DxfSplinePointEvaluation, DxfSplinePointEvaluationIssue, DxfSplinePointEvaluationState,
+};
+pub use spline_point_tuple::{
+    DxfSplinePointComponentCounts, DxfSplinePointComponents, DxfSplinePointKind,
+    DxfSplinePointTuple, DxfSplinePointTupleDirectory, DxfSplinePointTupleEntry,
+    DxfSplinePointTupleRange, DxfSplinePointTupleState,
+};
+pub use spline_relation::{
+    DxfSplineLinearPlanarRelation, DxfSplinePlanarNormalRelation, DxfSplineRationalWeightRelation,
+    DxfSplineRelationDirectory, DxfSplineRelationEntry,
+};
+pub use spline_scalar_semantic::{
+    DXF_SPLINE_SCALAR_ROLES, DxfSplineScalarDirectory, DxfSplineScalarEntry, DxfSplineScalarState,
+};
+pub use spline_topology::{
+    DxfSplineDegreeControlRelation, DxfSplineDegreeState, DxfSplineInvariantDisposition,
+    DxfSplineKnotOrderState, DxfSplineNurbsCountRelation, DxfSplinePeriodicClosedRelation,
+    DxfSplineTopologyDirectory, DxfSplineTopologyEntry,
+};
+pub use text_control::{
+    DxfDecodedTextSpan, DxfTextControlContext, DxfTextControlCursor, DxfTextControlError,
+    DxfTextControlIssue, DxfTextControlToken, DxfTextControlTokenKind,
+};
+pub use text_decoder::{
+    DxfLegacyCodePage, DxfTextDecodeResult, DxfTextDecodeStatus, DxfTextDecoder,
+};
+pub use text_encoder::{DxfTextEncodeResult, DxfTextEncodeStatus, DxfTextEncoder};
+pub use text_escape::{
+    DxfMifCodePage, DxfTextEscapeDecodeResult, DxfTextEscapeDecodeStatus, DxfTextEscapeIssue,
+    decode_dxf_text_escapes_to_utf8_without_replacement,
+};
+pub use text_layout::{
+    DxfTextGenerationFlags, DxfTextGenerationFlagsSemantic, DxfTextHorizontalJustification,
+    DxfTextHorizontalJustificationSemantic, DxfTextLayoutDirectory, DxfTextLayoutIssue,
+    DxfTextLayoutSemantics, DxfTextVerticalJustification, DxfTextVerticalJustificationSemantic,
+};
+pub use text_placement_anchor::{
+    DxfTextJustificationAxis, DxfTextOcsPlacementAnchor, DxfTextOcsPlacementAnchorDirectory,
+    DxfTextOcsPlacementAnchorIssue, DxfTextOcsPlacementAnchorKind,
+    DxfTextOcsPlacementAnchorSemantic, DxfTextOcsPlacementAnchorSemantics,
+    DxfTextPlacementComponent,
+};
+pub use text_shape_scalar::{
+    DxfShapeNumericSemantics, DxfTextNumericSemantics, DxfTextShapeDoubleValue,
+    DxfTextShapeInt16Value, DxfTextShapeScalarDirectory, DxfTextShapeScalarIssue,
+    DxfTextSymbolDoubleValue, DxfTextSymbolInt16Value, DxfTextSymbolInt32Value,
+    DxfTextSymbolScalarIssue,
+};
+pub use text_symbol_card::{
+    DxfTextSymbolCardDirectory, DxfTextSymbolCardMember, DxfTextSymbolCardMemberRange,
+    DxfTextSymbolValueCard, DxfTextSymbolValueCardState,
+};
+pub use text_symbol_evidence::{
+    DxfTextSymbolDirectory, DxfTextSymbolKind, DxfTextSymbolNumericIssue, DxfTextSymbolRecordEntry,
+    DxfTextSymbolValue, DxfTextSymbolValueData, DxfTextSymbolValueRange, DxfTextSymbolValueRole,
+};
+pub use text_symbol_text::{
+    DxfMTextChunkEntry, DxfMTextChunkKind, DxfMTextChunkRange, DxfMTextChunkSequence,
+    DxfMTextFieldSemantics, DxfShapeFieldSemantics, DxfTextFieldSemantics,
+    DxfTextSymbolSemanticStyle, DxfTextSymbolSemanticText, DxfTextSymbolStyleName,
+    DxfTextSymbolTextDirectory, DxfTextSymbolTextIssue, DxfToleranceFieldSemantics,
+};
+pub use text_transcode::{DxfTextTranscodeIssue, DxfTextTranscodePlan, DxfTextTranscodeReceipt};
+pub use text_view::DxfTextValueDecodeReceipt;
+pub use text_wcs_anchor::{
+    DxfTextExtrusionComponent, DxfTextWcsPlacementAnchor, DxfTextWcsPlacementAnchorDirectory,
+    DxfTextWcsPlacementAnchorIssue, DxfTextWcsPlacementAnchorSemantic,
+    DxfTextWcsPlacementAnchorSemantics,
+};
+pub use text_wcs_orientation::{
+    DxfTextWcsOrientation, DxfTextWcsOrientationDirectory, DxfTextWcsOrientationIssue,
+    DxfTextWcsOrientationSemantic, DxfTextWcsOrientationSemantics,
+};
+pub use tolerance_dimstyle_resolution::{
+    DxfToleranceDimStyleResolutionDirectory, DxfToleranceDimStyleResolutionEntry,
+    DxfToleranceDimStyleResolutionState, DxfToleranceDimStyleTargetRange,
+};
+pub use tolerance_wcs_placement::{
+    DxfToleranceWcsComponent, DxfToleranceWcsPlacement, DxfToleranceWcsPlacementDirectory,
+    DxfToleranceWcsPlacementIssue, DxfToleranceWcsPlacementSemantic,
+    DxfToleranceWcsPlacementSemantics, DxfToleranceWcsVector,
+};
+pub use transaction_plan::{
+    DxfTransactionByteRange, DxfTransactionPatch, DxfTransactionPlan, DxfTransactionPlanBuilder,
+};
+pub use transaction_write::{DxfTransactionWriteJournal, DxfTransactionWriteReceipt};
+pub use verbatim::DxfVerbatimWriteReceipt;
+
+/// Returns the SeaCad DXF core package version.
+#[must_use]
+pub const fn core_version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn package_version_is_exposed() {
+        assert_eq!(super::core_version(), env!("CARGO_PKG_VERSION"));
+    }
+}
