@@ -1,7 +1,4 @@
-#[path = "../src/rwa.rs"]
-mod rwa;
-
-use rwa::{compute_rwa_from_evidence, RwaComputationError, RwaEvidence, RwaModellability, RwaPolicy};
+use seacad_dxf_core::{compute_rwa_from_evidence, RwaComputationError, RwaEvidence, RwaModellability, RwaPolicy};
 
 fn evidence(factor_id: &str, exposure_units: u64) -> RwaEvidence {
     RwaEvidence {
