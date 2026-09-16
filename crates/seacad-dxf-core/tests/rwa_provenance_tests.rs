@@ -1,7 +1,7 @@
 #[path = "../src/rwa.rs"]
 mod rwa;
 
-use rwa::{compute_rwa_from_evidence, RwaEvidence, RwaModellability, RwaPolicy};
+use rwa::{compute_rwa_from_evidence, RwaComputationError, RwaEvidence, RwaModellability, RwaPolicy};
 
 fn evidence(factor_id: &str, exposure_units: u64) -> RwaEvidence {
     RwaEvidence {
@@ -53,4 +53,28 @@ fn t20_evidence_ordering_is_deterministic() {
     let forward = compute_rwa_from_evidence(&[a.clone(), b.clone()], &policy()).unwrap();
     let reverse = compute_rwa_from_evidence(&[b, a], &policy()).unwrap();
     assert_eq!(forward, reverse);
+}
+
+#[test]
+fn t21_empty_evidence_is_rejected() {
+    let error = compute_rwa_from_evidence(&[], &policy()).unwrap_err();
+    assert_eq!(error, RwaComputationError::EmptyEvidence);
+}
+
+#[test]
+fn t22_mixed_source_provenance_is_rejected() {
+    let mut second = evidence("beta", 200);
+    second.source_work_id = "work-15".to_owned();
+    let error = compute_rwa_from_evidence(&[evidence("alpha", 100), second], &policy()).unwrap_err();
+    assert!(matches!(error, RwaComputationError::MixedSourceWork { .. }));
+}
+
+#[test]
+fn t23_invalid_policy_basis_points_are_rejected() {
+    let invalid = RwaPolicy {
+        capital_ratio_bps: 100_001,
+        ..policy()
+    };
+    let error = compute_rwa_from_evidence(&[evidence("alpha", 100)], &invalid).unwrap_err();
+    assert_eq!(error, RwaComputationError::InvalidCapitalRatio { value_bps: 100_001 });
 }
