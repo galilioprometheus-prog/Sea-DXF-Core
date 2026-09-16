@@ -66,7 +66,7 @@ fn t22_mixed_source_provenance_is_rejected() {
     let mut second = evidence("beta", 200);
     second.source_work_id = "work-15".to_owned();
     let error = compute_rwa_from_evidence(&[evidence("alpha", 100), second], &policy()).unwrap_err();
-    assert!(matches!(error, RwaComputationError::MixedSourceWork { .. }));
+    assert_eq!(error, RwaComputationError::MixedSourceWork);
 }
 
 #[test]
@@ -76,5 +76,5 @@ fn t23_invalid_policy_basis_points_are_rejected() {
         ..policy()
     };
     let error = compute_rwa_from_evidence(&[evidence("alpha", 100)], &invalid).unwrap_err();
-    assert_eq!(error, RwaComputationError::InvalidCapitalRatio { value_bps: 100_001 });
+    assert_eq!(error, RwaComputationError::InvalidCapitalRatio);
 }
