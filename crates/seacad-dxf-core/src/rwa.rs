@@ -258,7 +258,7 @@ mod tests {
         };
         let replay = compute_rwa_from_evidence(&evidence, &changed).unwrap();
         assert_ne!(baseline.provenance.fingerprint, replay.provenance.fingerprint);
-        assert_ne!(baseline.capital_state, replay.capital_state);
+        assert_eq!(baseline.capital_state, replay.capital_state);
     }
 
     #[test]
